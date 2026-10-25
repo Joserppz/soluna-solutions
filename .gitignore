@@ -14,7 +14,7 @@ backend/.pytest_cache/
 backend/*.env
 
 # =========================
-# Frontend (Node / React / Vite)
+# Frontend (Node / React / Vite / Vue)
 # =========================
 node_modules/
 frontend/node_modules/
