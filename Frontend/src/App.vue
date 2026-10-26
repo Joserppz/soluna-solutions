@@ -107,6 +107,7 @@ onUnmounted(() => {
         <RouterLink to="/">Portal y Cronograma</RouterLink>
         <RouterLink v-if="session" to="/pacientes">Pacientes</RouterLink>
         <RouterLink v-if="session" to="/asistencia">Asistencia</RouterLink>
+        <RouterLink v-if="session" to="/inventario">Inventario</RouterLink>
         <RouterLink v-if="isAdmin" to="/usuarios">Usuarios</RouterLink>
         <RouterLink v-if="isAdmin" to="/bitacora">Bitácora</RouterLink>
 

@@ -6,6 +6,7 @@ import UsersView from '../views/UsersView.vue'
 import AuditView from '../views/AuditView.vue'
 import ScheduleView from '../views/ScheduleView.vue'
 import AttendanceView from '../views/AttendanceView.vue'
+import InventoryView from '../views/InventoryView.vue'
 import { addAudit, getSession } from '../services/aspar'
 
 const router = createRouter({
@@ -36,6 +37,12 @@ const router = createRouter({
       name: 'bitacora',
       component: AuditView,
       meta: { requiresAuth: true, adminOnly: true },
+    },
+    {
+      path: '/inventario',
+      name: 'inventario',
+      component: InventoryView,
+      meta: { requiresAuth: true },
     },
     {
       path: '/asistencia',
