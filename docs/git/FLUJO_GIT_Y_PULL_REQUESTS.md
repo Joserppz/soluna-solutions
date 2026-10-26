@@ -101,3 +101,45 @@ git am parches-por-tarea-historia/15-RAMA-SCRUM-57__subtarea-SCRUM-85.patch
 git checkout -b SCRUM-65 SCRUM-57
 git am parches-por-tarea-historia/16-RAMA-SCRUM-65__subtarea-SCRUM-108.patch
 ```
+
+## 4. Subtareas de Backend del Sprint 1 en sus ramas de Historia/Tarea (SCRUM-65 / SCRUM-107)
+
+Las subtareas de Backend siguen la misma convención: cada función se trabaja en la **rama de su Historia o Tarea** (`SCRUM-XX`) con un commit por subtarea (`tipo(SCRUM-XX/SCRUM-YY): ...`). Las ramas se encadenan a partir de `Sprint1`, por lo que cada rama contiene a la anterior y **se suben sin `--force`**: son *fast-forward* de las ramas `SCRUM-*` que ya existen en GitHub.
+
+| Orden | Rama (Historia / Tarea) | Subtarea de Backend | Commit | PR sugerido hacia `Sprint1` |
+| :--- | :--- | :--- | :--- | :--- |
+| **B01** | `SCRUM-64` | `SCRUM-104` | `feat(SCRUM-64/SCRUM-104): revisar entidades, relaciones y migraciones PostgreSQL para Supabase` | `[SCRUM-64] Modelo de datos y migración PostgreSQL/Supabase (SCRUM-104)` |
+| **B02** | `SCRUM-128` | `SCRUM-152` | `feat(SCRUM-128/SCRUM-152): integrar Ruff, pytest y migraciones versionadas en el Backend` | `[SCRUM-128] RNF11 Ruff, pytest y migraciones versionadas (SCRUM-152)` |
+| **B03** | `SCRUM-11` | `SCRUM-26`, `SCRUM-27` | `feat(SCRUM-11/SCRUM-26): ...` y `feat(SCRUM-11/SCRUM-27): ...` | `[SCRUM-11] RF01 Autenticación JWT y validación de credenciales (SCRUM-26, SCRUM-27)` |
+| **B04** | `SCRUM-12` | `SCRUM-29` | `feat(SCRUM-12/SCRUM-29): aplicar expiracion y validacion de sesion JWT` | `[SCRUM-12] RNF02 Expiración y validación de sesión (SCRUM-29)` |
+| **B05** | `SCRUM-13` | `SCRUM-31`, `SCRUM-32` | `feat(SCRUM-13/SCRUM-31): ...` y `feat(SCRUM-13/SCRUM-32): ...` | `[SCRUM-13] RF02 Modelo y CRUD de pacientes (SCRUM-31, SCRUM-32)` |
+| **B06** | `SCRUM-123` | `SCRUM-137` | `feat(SCRUM-123/SCRUM-137): restringir datos clinicos y archivos privados de pacientes` | `[SCRUM-123] RNF06 Datos clínicos y archivos privados (SCRUM-137)` |
+| **B07** | `SCRUM-129` | `SCRUM-160` | `feat(SCRUM-129/SCRUM-160): implementar administracion de usuarios y roles` | `[SCRUM-129] RF11 Administración de usuarios y roles (SCRUM-160)` |
+| **B08** | `SCRUM-135` | `SCRUM-178` | `feat(SCRUM-135/SCRUM-178): registrar auditoria de operaciones sensibles desde la capa de servicios` | `[SCRUM-135] RF17 Auditoría desde la capa de servicios (SCRUM-178)` |
+| **B09** | `SCRUM-58` | `SCRUM-86` | `feat(SCRUM-58/SCRUM-86): confirmar contrato API para login y pacientes` | `[SCRUM-58] Contrato API login y pacientes (SCRUM-86)` |
+| **B10** | `SCRUM-59` | `SCRUM-90` | `docs(SCRUM-59/SCRUM-90): ...` y `fix(SCRUM-59/SCRUM-90): ...` | `[SCRUM-59] Arranque de API, base de datos y migraciones (SCRUM-90)` |
+| **B11** | `SCRUM-61` | `SCRUM-95` | `ci(SCRUM-61/SCRUM-95): automatizar pruebas de API del Backend en GitHub Actions` | `[SCRUM-61] CI de pruebas de API (SCRUM-95)` |
+| **B12** | `SCRUM-136` | `SCRUM-182` | `docs(SCRUM-136/SCRUM-182): alinear servicios, datos y endpoints del Backend con el SRS` | `[SCRUM-136] Trazabilidad Backend con el SRS (SCRUM-182)` |
+| **B13** | `SCRUM-190` | `SCRUM-193` | `docs(SCRUM-190/SCRUM-193): validar reglas, datos y servicios del Backend en el BPMN` | `[SCRUM-190] Validación BPMN del Backend (SCRUM-193)` |
+| **B14** | `SCRUM-191` | `SCRUM-197` | `docs(SCRUM-191/SCRUM-197): validar campos, permisos y mensajes ...` | `[SCRUM-191] Campos, permisos y mensajes vs. modelo de datos (SCRUM-197)` |
+| **B15** | `SCRUM-57` | `SCRUM-84` | `docs(SCRUM-57/SCRUM-84): registrar evidencias de API, persistencia y seguridad del Backend` | `[SCRUM-57] Evidencias del Backend (SCRUM-84)` |
+| **B16** | `SCRUM-65` | `SCRUM-107` | `docs(SCRUM-65/SCRUM-107): trabajar cada funcion en rama propia y enlazar el PR` | `[SCRUM-65] Flujo Git del Backend y enlace de PR (SCRUM-107)` |
+
+### 4.1 Trabajar una función en su rama y enlazar el PR
+
+```bash
+git fetch origin
+git checkout SCRUM-13            # rama de la Historia
+# ... cambios de la subtarea ...
+git add Backend/
+git commit -m "feat(SCRUM-13/SCRUM-32): implementar CRUD y validaciones de pacientes"
+git push origin SCRUM-13
+```
+
+1. En GitHub: **Pull requests → New pull request**, con *base* `Sprint1` y *compare* `SCRUM-13`.
+2. Título: `[SCRUM-13] RF02 Modelo y CRUD de pacientes (SCRUM-31, SCRUM-32)`.
+3. Completa la plantilla `.github/pull_request_template.md`, indicando la subtarea de Backend.
+4. Si Jira está conectado con GitHub, la clave `SCRUM-XX` en la rama, el commit y el título enlaza el PR con la incidencia automáticamente. Si no, pega la URL del PR en el campo *Development* de la subtarea.
+5. Fusiona solo con los checks `ASPAR CI/CD — Backend` y `Frontend` en verde.
+
+Como las ramas están encadenadas, fusionar el PR de `SCRUM-65` en `Sprint1` incorpora todas las subtareas de Backend. Si se prefiere revisar por partes, se fusionan en el orden B01 → B16.
