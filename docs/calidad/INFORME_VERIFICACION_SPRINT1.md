@@ -44,3 +44,19 @@ Registro de las subtareas de verificación del Sprint 1: qué se probó, con qu�
 | Los errores siempre devuelven `detail` como texto | `test_contract_frontend.py::test_errores_devuelven_detail_como_texto` | ✅ |
 
 **Conclusión:** ningún endpoint protegido responde sin una sesión válida y activa.
+
+## SCRUM-69 — Validar registro, consulta y reglas de pacientes (SCRUM-13 · RF-02)
+
+| Caso | Prueba | Resultado |
+| :--- | :--- | :--- |
+| Alta de paciente con el formato que espera el Frontend (201) | `test_patients_api.py::test_crear_paciente_devuelve_201_con_formato_del_frontend`, E2E paso 3 | ✅ |
+| Listado, búsqueda por nombre o CI y consulta por id | `test_listar_y_buscar_pacientes`, `test_consultar_paciente_por_id`, `test_patient_model.py::test_busqueda_por_nombre_y_ci`, E2E paso 2 | ✅ |
+| La CI duplicada se rechaza (409) en la API y en la base | `test_ci_duplicada_es_409`, `test_patient_model.py::test_ci_duplicada_es_rechazada`, E2E paso 4 | ✅ |
+| Validaciones de nombre, CI, teléfono y contacto con los mismos mensajes del Frontend | `test_validaciones_con_los_mismos_mensajes_del_frontend`, `PatientsView.spec.ts::muestra el error de validación…` | ✅ |
+| Sin consentimiento no se activa el acceso; la base también lo impide | `test_no_se_activa_sin_consentimiento`, `test_acceso_activo_sin_consentimiento_es_rechazado_por_la_base`, `PantallasRequisitos.spec.ts::rechaza activar el acceso…` | ✅ |
+| El estadio de Hoehn y Yahr debe ser válido | `test_estadio_desconocido_es_rechazado` | ✅ |
+| Actualización parcial de la ficha y fecha de consentimiento | `test_actualizar_parcialmente_la_ficha`, `test_otorgar_consentimiento_registra_la_fecha` | ✅ |
+| El Voluntario no registra ni edita; solo el Administrador elimina | `test_voluntario_no_puede_registrar_ni_editar`, `test_solo_administrador_elimina_fichas` | ✅ |
+| Formulario y listado en pantalla | `PatientsView.spec.ts` (3 casos), `PantallasRequisitos.spec.ts::guarda la ficha válida…` | ⚠️ La pantalla no permite editar los datos personales (la API sí) |
+
+**Conclusión:** las reglas de pacientes se cumplen en la base, en la API y en la pantalla. Queda pendiente la pantalla de edición (Sprint 2).
