@@ -60,3 +60,18 @@ Registro de las subtareas de verificación del Sprint 1: qué se probó, con qu�
 | Formulario y listado en pantalla | `PatientsView.spec.ts` (3 casos), `PantallasRequisitos.spec.ts::guarda la ficha válida…` | ⚠️ La pantalla no permite editar los datos personales (la API sí) |
 
 **Conclusión:** las reglas de pacientes se cumplen en la base, en la API y en la pantalla. Queda pendiente la pantalla de edición (Sprint 2).
+
+## SCRUM-139 — Probar privacidad, permisos y no exposición de datos (SCRUM-123 · RNF-06)
+
+| Caso | Prueba | Resultado |
+| :--- | :--- | :--- |
+| El personal clínico ve la anamnesis solo con consentimiento y acceso `Activo` | `test_patient_privacy.py::test_personal_clinico_ve_la_anamnesis_con_consentimiento_activo`, E2E paso 5 | ✅ |
+| Recepción y Voluntario **no reciben** la anamnesis en la respuesta de la API | `test_recepcion_y_voluntario_no_ven_la_anamnesis`, E2E paso 6 | ✅ |
+| Sin consentimiento nadie ve la anamnesis, tampoco en el listado | `test_sin_consentimiento_nadie_ve_la_anamnesis`, `test_listado_tambien_oculta_la_anamnesis`, `test_patient_model.py::test_sin_acceso_clinico_la_anamnesis_sale_vacia` | ✅ |
+| Consultar una ficha clínica queda en la bitácora | `test_consulta_de_ficha_clinica_queda_auditada` | ✅ |
+| Recepción registra admisión y consentimiento, pero no evaluaciones | `test_recepcion_registra_filiacion_con_datos_de_admision`, `test_recepcion_no_registra_evaluaciones_clinicas`, `test_recepcion_puede_actualizar_consentimiento` | ✅ |
+| Documentos privados: URL temporal, tipos y tamaño permitidos, sin acceso para roles no clínicos | `test_subir_listar_y_obtener_enlace_temporal`, `test_roles_no_clinicos_no_listan_ni_descargan`, `test_rechaza_tipos_de_archivo_no_permitidos`, `test_rechaza_archivos_de_mas_de_10_mb`, `test_documento_de_otro_paciente_no_se_expone` | ✅ |
+| La pantalla oculta la anamnesis y bloquea la asistencia sin consentimiento | `PatientsView.spec.ts` (3 casos), `PantallasRequisitos.spec.ts::no permite marcar Presente…`, `RouterPermisos.spec.ts` | ✅ |
+| La pantalla de pacientes no ofrece a Recepción los campos clínicos | Revisión de pantallas (SCRUM-196) | ⚠️ Los muestra; el servidor los rechaza con 403 |
+
+**Conclusión:** los datos clínicos no salen de la API sin rol clínico y consentimiento. La observación de la pantalla no expone datos, pero confunde al usuario.
