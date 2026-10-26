@@ -1,5 +1,7 @@
 name: ASPAR CI/CD — Frontend Lint, Tests & Build (SCRUM-61 / SCRUM-96)
 
+# El Backend tiene su propio pipeline: .github/workflows/ci-backend.yml (SCRUM-95)
+
 on:
   push:
     branches:
@@ -48,25 +50,3 @@ jobs:
 
       - name: Compilar aplicación y verificar tipos TypeScript (SCRUM-96)
         run: npm run build
-
-  backend-api-smoke-test:
-    name: Validar API Backend FastAPI (SCRUM-87)
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: Backend
-
-    steps:
-      - name: Checkout del repositorio
-        uses: actions/checkout@v4
-
-      - name: Configurar Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Instalar FastAPI y Uvicorn para smoke test
-        run: pip install fastapi uvicorn pydantic
-
-      - name: Verificar inicialización de base de datos y sintaxis de API
-        run: python -c "import app.main as m; res = m.health_check(); assert res['status'] == 'ok'"

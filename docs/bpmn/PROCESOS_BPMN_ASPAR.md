@@ -27,3 +27,42 @@
 | **3.1 Consulta Pública** | Paciente / Familiar / Visitante | Accede a la portada pública sin necesidad de iniciar sesión. | `/` (`ScheduleView.vue`) | Visualiza misión institucional (modelo CETRAM), enlaces a Facebook/Instagram/TikTok (RF-08) y el cronograma sabatino ordenado (RF-10). |
 | **3.2 Donación QR / Libélula** | Donante Público | Visualiza el QR bancario oficial o completa el formulario de aporte vía **Pasarela Libélula**. | `/` (`ScheduleView.vue`) | Registra el aporte verificado en Bolivianos (Bs.), incrementa el contador de transparencia y genera evento en bitácora (RF-06). |
 | **3.3 Control y Exportación de Inventario** | Administrador / Coordinador | Registra bienes (`Préstamo Alcaldía`, `Propio ASPAR`, `Donación`) y pulsa **«Exportar Excel/CSV (RF-09)»** o **«Generar Acta PDF Alcaldía»**. | `/inventario` (`InventoryView.vue`) | Descarga reporte estructurado listo para auditoría municipal y registra la operación en la bitácora administrativa. |
+
+## 4. Validación de Reglas, Datos y Servicios del Backend contra el BPMN (SCRUM-190 / SCRUM-193)
+
+Cada tarea y compuerta del modelo BPMN se contrastó con la regla que la hace cumplir en el Backend, el dato que la sostiene y la prueba que la verifica.
+
+### Proceso 1: Autenticación, sesión y auditoría
+
+| Paso BPMN | Regla de negocio | Servicio / endpoint | Dato (tabla.columna) | Prueba | Resultado |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| 1.2 Ingreso de credenciales | Correo con formato válido; contraseña obligatoria | `schemas/auth.py` → `POST /auth/login` (422) | — | `test_auth_credentials.py` | ✅ Coincide |
+| 1.2 Bloqueo por intentos | 5 intentos fallidos bloquean la cuenta | `auth_service._register_failed_attempt` (423) | `users.failed_login_attempts`, `users.locked_until` | `test_cinco_intentos_fallidos_bloquean_la_cuenta` | ⚠️ El frontend bloquea **30 s** en el navegador; el Backend bloquea **15 min** en servidor (más seguro). Se recomienda alinear el mensaje del frontend. |
+| 1.3 Verificación JWT | Token firmado y sesión registrada | `auth_service.login`, `core/deps.get_current_user` | `sessions.id` (= `sid` del JWT) | `test_auth_login.py` | ✅ Coincide |
+| 1.3 Evento en bitácora | Login exitoso INFO, fallido WARNING | `audit_service.record` | `audit_logs` | `test_login_registra_auditoria` | ✅ Coincide |
+| 1.4 Compuerta de expiración | 15 min de inactividad / 30 min máximo | `core/deps.get_current_user` | `sessions.last_activity_at`, `sessions.expires_at` | `test_sessions.py` | ✅ Coincide; ahora también se valida en servidor |
+| 1.4 Renovar sesión | Extiende 30 min con el mismo `sid` | `POST /auth/refresh` | `sessions.refresh_count`, `sessions.refreshed_at` | `test_refresh_extiende_la_sesion...` | ✅ Coincide |
+| 1.4 Cierre de sesión | El token deja de servir | `POST /auth/logout` | `sessions.revoked_at` | `test_logout_revoca_la_sesion` | ✅ Coincide |
+
+### Proceso 2: Afiliación, consentimiento y anamnesis
+
+| Paso BPMN | Regla de negocio | Servicio / endpoint | Dato (tabla.columna) | Prueba | Resultado |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| 2.1 Registro de filiación | Nombre ≥ 3, CI de 5–10 dígitos (+extensión), teléfono de 7–12 dígitos, contacto obligatorio | `patient_service.validate_fields` (422) | `patients.*` | `test_validaciones_con_los_mismos_mensajes_del_frontend` | ✅ Mismos mensajes que el frontend |
+| 2.1 CI duplicada | No se registran dos fichas con la misma CI | `patient_service.create_patient` (409) | `patients.ci` (único) | `test_ci_duplicada_es_409` | ✅ Coincide |
+| 2.1 Roles | Recepción, Profesional y Administrador registran (el BPMN no menciona al Coordinador, que también puede) | `require_roles(*PATIENT_EDITOR_ROLES)` | `users.role` | `test_voluntario_no_puede_registrar_ni_editar` | ✅ Coincide; Voluntario excluido |
+| 2.2 Compuerta de consentimiento | Sin consentimiento no hay estado `Activo` | `patient_service.validate_fields` + coerción a `Pendiente` | `CHECK patients_activo_requiere_consentimiento` | `test_no_se_activa_sin_consentimiento`, `test_acceso_activo_sin_consentimiento_es_rechazado_por_la_base` | ✅ Garantizado también por la base de datos |
+| 2.2 Revocación | Revocar o retirar consentimiento se audita | `patient_service.update_patient` | `audit_logs` (CONSENTIMIENTO, WARNING) | `test_retirar_consentimiento_pasa_a_pendiente_y_audita_warning` | ✅ Coincide |
+| 2.3 Anamnesis multidisciplinaria | Solo personal clínico registra evaluaciones | `patient_service._forbid_clinical_fields` (403) | `patients.symptom_notes`, `*_evaluation`, `medications` | `test_recepcion_no_registra_evaluaciones_clinicas` | ⚠️ El BPMN asigna 2.3 a "Profesional / Admin"; el Backend también permite al Coordinador, que es un rol clínico. |
+| 2.3 Ver anamnesis | Solo con consentimiento y acceso `Activo` | `patient_service.can_view_clinical_record` | `patients.consent`, `patients.access_status` | `test_patient_privacy.py` | ✅ Ahora la API no envía la anamnesis si no corresponde |
+| 2.4 Marcación de asistencia | No marcar `Presente` sin consentimiento vigente | — | `attendance` | — | ⏳ Tabla lista; endpoints y regla en el Sprint 2 |
+
+### Proceso 3: Portal público, galería, donaciones e inventario
+
+| Paso BPMN | Dato disponible | Estado del Backend |
+| :--- | :--- | :--- |
+| 3.1 Consulta pública | `institutional_info`, `schedules.published` | ⏳ Endpoints públicos en el Sprint 2 |
+| 3.2 Donación QR / Libélula | `donations` (monto > 0, método y estado validados por `CHECK`) | ⏳ Endpoints en el Sprint 2 |
+| 3.3 Inventario Alcaldía | `inventory_items` (origen y estado validados por `CHECK`) | ⏳ Endpoints y exportación en el Sprint 2 |
+
+**Conclusión:** las reglas de los procesos 1 y 2 están implementadas en el servidor y cubiertas por pruebas automáticas. Hay dos diferencias menores documentadas (⚠️), y el proceso 3 cuenta con el modelo de datos validado para el Sprint 2.

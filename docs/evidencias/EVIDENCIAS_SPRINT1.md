@@ -40,3 +40,7 @@ Este documento reúne la evidencia visual organizada y el recorrido de aceptaci�
 2. En `/inventario`, se registran activos por origen (`Préstamo Alcaldía`, `Propio ASPAR`, `Donación`) y se exporta el reporte en **Excel/CSV** y **Acta PDF** para la Alcaldía.
 
 ![Evidencia 4 — Portal Público, Donaciones e Inventario Alcaldía](./04_portal_cronograma_inventario_scrum183.png)
+
+## 3. Evidencias del Backend (SCRUM-84)
+
+Las evidencias de API, persistencia en PostgreSQL/Supabase y seguridad del Backend están en [`EVIDENCIAS_BACKEND_SPRINT1.md`](./EVIDENCIAS_BACKEND_SPRINT1.md).
