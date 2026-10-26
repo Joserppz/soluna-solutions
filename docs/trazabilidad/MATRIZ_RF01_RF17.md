@@ -20,3 +20,34 @@ Esta matriz alinea los requisitos funcionales y no funcionales (**RF01–RF17** 
 | **RNF-02** | SCRUM-12 / SCRUM-67 | Sesiones JWT, expiración automática (30 min / 15 min inactividad), renovación y logout | `src/App.vue`, `src/router/index.ts` | `GET /api/v1/auth/verify`, `POST /api/v1/auth/logout` | Implementado y probado |
 | **RNF-06** | SCRUM-123 / SCRUM-138 | Protección de datos clínicos según consentimiento informado y estado de acceso | `src/views/PatientsView.vue`, `src/views/AttendanceView.vue` | `canViewClinicalRecord`, `updatePatient` | Implementado y probado |
 | **RNF-11** | SCRUM-128 / SCRUM-153 | Estándares de código (ESLint, Prettier, TypeScript) y pruebas de componentes | `eslint.config.mjs`, `.prettierrc.json`, `src/views/__test__/*.spec.ts` (Login, Pacientes, Usuarios, Bitácora) | Pipeline CI/CD GitHub Actions | Implementado y probado |
+
+## Trazabilidad del Backend: Servicios, Datos, Endpoints y Pruebas (SCRUM-136 / SCRUM-182)
+
+Alineación de cada requisito del SRS con su implementación en el Backend FastAPI sobre Supabase PostgreSQL. Las pruebas citadas están en `Backend/tests/` y se ejecutan en `.github/workflows/ci-backend.yml`.
+
+| ID Req. | Endpoint(s) `/api/v1` | Servicio / Componente C3 | Tabla(s) PostgreSQL | Pruebas automáticas | Estado Backend |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **RF-01** | `POST /auth/login`, `GET /auth/verify` | `services/auth_service.py`, `core/security.py` (bcrypt + JWT) | `users`, `sessions` | `test_auth_login.py`, `test_auth_credentials.py`, `test_security.py` | Implementado (SCRUM-26, SCRUM-27) |
+| **RF-02** | `GET/POST /patients`, `GET/PATCH/DELETE /patients/{id}` | `services/patient_service.py` | `patients` | `test_patients_api.py`, `test_patient_model.py` | Implementado (SCRUM-31, SCRUM-32) |
+| **RF-03 / RF-09** | — | — | `inventory_items` (migración 001) | `test_migrations.py` (esquema) | Modelo de datos listo; endpoints planificados para el Sprint 2 |
+| **RF-04 / RF-10** | — | — | `schedules` | `test_migrations.py` | Modelo de datos listo; endpoints en Sprint 2 |
+| **RF-05** | — | `adapters/storage.py` (reutilizable) | `media_assets` | `test_storage_adapter.py` | Adaptador de Storage listo; galería en Sprint 2 |
+| **RF-06** | — | — | `donations`, `institutional_info` | `test_migrations.py` | Modelo de datos listo; endpoints en Sprint 2 |
+| **RF-07 / RF-08** | — | — | `institutional_info` | `test_migrations.py` | Modelo de datos listo; endpoints en Sprint 2 |
+| **RF-11** | `GET/POST /users`, `PATCH /users/{id}`, `POST /users/{id}/reset-password` | `services/user_service.py` | `users`, `sessions` | `test_users_api.py` | Implementado (SCRUM-160) |
+| **RF-12 a RF-16** | — | — | `attendance` | `test_migrations.py` | Modelo de datos listo; endpoints en Sprint 2 |
+| **RF-17** | `GET /audit` | `services/audit_service.py` (único punto de escritura), `core/deps.py` (accesos denegados) | `audit_logs` (inmutable por trigger) | `test_audit.py` | Implementado (SCRUM-178) |
+| **RNF-02** | `POST /auth/refresh`, `POST /auth/logout` | `core/deps.py` (30 min máx., 15 min inactividad, revocación) | `sessions` | `test_sessions.py` | Implementado (SCRUM-29) |
+| **RNF-06** | `GET /patients*`, `/patients/{id}/documents*` | `patient_service.can_view_clinical_record`, `services/document_service.py` | `patients`, `patient_documents`, bucket privado `documentos-pacientes` | `test_patient_privacy.py` | Implementado (SCRUM-137) |
+| **RNF-11** | — | Ruff + pytest + migraciones versionadas (`scripts/migrate.py`) | `schema_migrations` | `test_migrations.py`, pipeline CI | Implementado (SCRUM-152, SCRUM-95) |
+
+### Diferencias resueltas entre la documentación anterior y la implementación
+
+| Tema | Antes (Sprint 1 inicial) | Ahora (Backend Supabase) |
+| :--- | :--- | :--- |
+| Base de datos | SQLite local `aspar.db` | Supabase PostgreSQL con migraciones versionadas |
+| Contraseñas | SHA-256 con sal fija | bcrypt (costo 12), exigido por RNF-02 |
+| Expiración de sesión | Solo en el token | Validada en servidor contra la tabla `sessions` (máximo, inactividad y logout) |
+| Protección RNF-06 | Solo en el frontend (`canViewClinicalRecord`) | También en el servidor: la anamnesis no sale de la API sin rol clínico y consentimiento |
+| Bitácora | Escritura desde frontend y backend | Solo el Backend escribe; la tabla es inmutable |
+| Contrato | Descrito en `MODELO_DATOS_Y_CONTRATOS.md` | Verificado por prueba automática contra `Frontend/src/types/aspar.ts` |
