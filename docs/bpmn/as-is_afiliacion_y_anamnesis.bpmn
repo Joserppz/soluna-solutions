@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Def_AsIsAfiliacion" targetNamespace="https://github.com/Joserppz/soluna-solutions/bpmn" exporter="ASPAR SCRUM-192" exporterVersion="1.0">
+  <bpmn:process id="AsIsAfiliacion" name="AS-IS: Afiliación de paciente y anamnesis (proceso actual, manual)" isExecutable="false">
+    <bpmn:startEvent id="AsIsAfiliacion_s" name="Llega un paciente nuevo">
+      <bpmn:outgoing>f1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:manualTask id="AsIsAfiliacion_t1" name="Pedir nombre, carnet, fotocopia y dirección">
+      <bpmn:incoming>f1</bpmn:incoming>
+      <bpmn:outgoing>f2</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:manualTask id="AsIsAfiliacion_t2" name="Anotar datos del cuidador en papel">
+      <bpmn:incoming>f2</bpmn:incoming>
+      <bpmn:outgoing>f3</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:exclusiveGateway id="AsIsAfiliacion_g1" name="¿Trae certificado del neurólogo?">
+      <bpmn:incoming>f3</bpmn:incoming>
+      <bpmn:outgoing>f4</bpmn:outgoing>
+      <bpmn:outgoing>f5</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:manualTask id="AsIsAfiliacion_t3" name="Anotar el diagnóstico del certificado">
+      <bpmn:incoming>f4</bpmn:incoming>
+      <bpmn:outgoing>f6</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:manualTask id="AsIsAfiliacion_t4" name="Validar diagnóstico por síntomas">
+      <bpmn:incoming>f5</bpmn:incoming>
+      <bpmn:outgoing>f7</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:exclusiveGateway id="AsIsAfiliacion_g2">
+      <bpmn:incoming>f6</bpmn:incoming>
+      <bpmn:incoming>f7</bpmn:incoming>
+      <bpmn:outgoing>f8</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:manualTask id="AsIsAfiliacion_t5" name="Evaluar (física, fono, psicológica) en hojas">
+      <bpmn:incoming>f8</bpmn:incoming>
+      <bpmn:outgoing>f9</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:manualTask id="AsIsAfiliacion_t6" name="Archivar las hojas en la sede">
+      <bpmn:incoming>f9</bpmn:incoming>
+      <bpmn:outgoing>f10</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:manualTask id="AsIsAfiliacion_t7" name="Coordinar con el equipo por WhatsApp">
+      <bpmn:incoming>f10</bpmn:incoming>
+      <bpmn:outgoing>f11</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:endEvent id="AsIsAfiliacion_e" name="Ficha en papel sin control de acceso">
+      <bpmn:incoming>f11</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="f1" sourceRef="AsIsAfiliacion_s" targetRef="AsIsAfiliacion_t1" />
+    <bpmn:sequenceFlow id="f2" sourceRef="AsIsAfiliacion_t1" targetRef="AsIsAfiliacion_t2" />
+    <bpmn:sequenceFlow id="f3" sourceRef="AsIsAfiliacion_t2" targetRef="AsIsAfiliacion_g1" />
+    <bpmn:sequenceFlow id="f4" name="Sí" sourceRef="AsIsAfiliacion_g1" targetRef="AsIsAfiliacion_t3" />
+    <bpmn:sequenceFlow id="f5" name="No" sourceRef="AsIsAfiliacion_g1" targetRef="AsIsAfiliacion_t4" />
+    <bpmn:sequenceFlow id="f6" sourceRef="AsIsAfiliacion_t3" targetRef="AsIsAfiliacion_g2" />
+    <bpmn:sequenceFlow id="f7" sourceRef="AsIsAfiliacion_t4" targetRef="AsIsAfiliacion_g2" />
+    <bpmn:sequenceFlow id="f8" sourceRef="AsIsAfiliacion_g2" targetRef="AsIsAfiliacion_t5" />
+    <bpmn:sequenceFlow id="f9" sourceRef="AsIsAfiliacion_t5" targetRef="AsIsAfiliacion_t6" />
+    <bpmn:sequenceFlow id="f10" sourceRef="AsIsAfiliacion_t6" targetRef="AsIsAfiliacion_t7" />
+    <bpmn:sequenceFlow id="f11" sourceRef="AsIsAfiliacion_t7" targetRef="AsIsAfiliacion_e" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_AsIsAfiliacion">
+    <bpmndi:BPMNPlane id="BPMNPlane_AsIsAfiliacion" bpmnElement="AsIsAfiliacion">
+      <bpmndi:BPMNShape id="AsIsAfiliacion_s_di" bpmnElement="AsIsAfiliacion_s">
+        <dc:Bounds x="57" y="52" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="AsIsAfiliacion_t1_di" bpmnElement="AsIsAfiliacion_t1">
+        <dc:Bounds x="175" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="AsIsAfiliacion_t2_di" bpmnElement="AsIsAfiliacion_t2">
+        <dc:Bounds x="325" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="AsIsAfiliacion_g1_di" bpmnElement="AsIsAfiliacion_g1" isMarkerVisible="true">
+        <dc:Bounds x="500" y="45" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="AsIsAfiliacion_t3_di" bpmnElement="AsIsAfiliacion_t3">
+        <dc:Bounds x="625" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="AsIsAfiliacion_g2_di" bpmnElement="AsIsAfiliacion_g2" isMarkerVisible="true">
+        <dc:Bounds x="800" y="45" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="AsIsAfiliacion_t5_di" bpmnElement="AsIsAfiliacion_t5">
+        <dc:Bounds x="925" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="AsIsAfiliacion_t6_di" bpmnElement="AsIsAfiliacion_t6">
+        <dc:Bounds x="1075" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="AsIsAfiliacion_t7_di" bpmnElement="AsIsAfiliacion_t7">
+        <dc:Bounds x="1225" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="AsIsAfiliacion_e_di" bpmnElement="AsIsAfiliacion_e">
+        <dc:Bounds x="1407" y="52" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="AsIsAfiliacion_t4_di" bpmnElement="AsIsAfiliacion_t4">
+        <dc:Bounds x="625" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="f1_di" bpmnElement="f1">
+        <di:waypoint x="93" y="70" />
+        <di:waypoint x="175" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f2_di" bpmnElement="f2">
+        <di:waypoint x="275" y="70" />
+        <di:waypoint x="325" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f3_di" bpmnElement="f3">
+        <di:waypoint x="425" y="70" />
+        <di:waypoint x="500" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f4_di" bpmnElement="f4">
+        <di:waypoint x="550" y="70" />
+        <di:waypoint x="625" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f5_di" bpmnElement="f5">
+        <di:waypoint x="525" y="95" />
+        <di:waypoint x="525" y="210" />
+        <di:waypoint x="625" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f6_di" bpmnElement="f6">
+        <di:waypoint x="725" y="70" />
+        <di:waypoint x="800" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f8_di" bpmnElement="f8">
+        <di:waypoint x="850" y="70" />
+        <di:waypoint x="925" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f9_di" bpmnElement="f9">
+        <di:waypoint x="1025" y="70" />
+        <di:waypoint x="1075" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f10_di" bpmnElement="f10">
+        <di:waypoint x="1175" y="70" />
+        <di:waypoint x="1225" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f11_di" bpmnElement="f11">
+        <di:waypoint x="1325" y="70" />
+        <di:waypoint x="1407" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f7_di" bpmnElement="f7">
+        <di:waypoint x="725" y="210" />
+        <di:waypoint x="825" y="210" />
+        <di:waypoint x="825" y="95" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

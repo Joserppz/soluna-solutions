@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Def_ToBeActividades" targetNamespace="https://github.com/Joserppz/soluna-solutions/bpmn" exporter="ASPAR SCRUM-192" exporterVersion="1.0">
+  <bpmn:process id="ToBeActividades" name="TO-BE: Actividades, multimedia, inventario y donaciones (proceso propuesto)" isExecutable="false">
+    <bpmn:startEvent id="ToBeActividades_s" name="Inicio de la semana de actividades">
+      <bpmn:outgoing>f1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:parallelGateway id="ToBeActividades_p1">
+      <bpmn:incoming>f1</bpmn:incoming>
+      <bpmn:outgoing>f2</bpmn:outgoing>
+      <bpmn:outgoing>f11</bpmn:outgoing>
+      <bpmn:outgoing>f13</bpmn:outgoing>
+      <bpmn:outgoing>f16</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:userTask id="ToBeActividades_t1" name="Publicar actividad (RF-04)">
+      <bpmn:incoming>f2</bpmn:incoming>
+      <bpmn:outgoing>f3</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="ToBeActividades_t2" name="Mostrar cronograma público (RF-10)">
+      <bpmn:incoming>f3</bpmn:incoming>
+      <bpmn:outgoing>f4</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="ToBeActividades_t3" name="Marcar asistencia">
+      <bpmn:incoming>f4</bpmn:incoming>
+      <bpmn:outgoing>f5</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="ToBeActividades_g1" name="¿Consentimiento vigente?">
+      <bpmn:incoming>f5</bpmn:incoming>
+      <bpmn:outgoing>f6</bpmn:outgoing>
+      <bpmn:outgoing>f7</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="ToBeActividades_t4" name="Registrar la asistencia">
+      <bpmn:incoming>f6</bpmn:incoming>
+      <bpmn:outgoing>f8</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="ToBeActividades_t5" name="Bloquear «Presente» (RNF-06)">
+      <bpmn:incoming>f7</bpmn:incoming>
+      <bpmn:outgoing>f9</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="ToBeActividades_g2">
+      <bpmn:incoming>f8</bpmn:incoming>
+      <bpmn:incoming>f9</bpmn:incoming>
+      <bpmn:outgoing>f10</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="ToBeActividades_t6" name="Subir fotos y videos a la nube (RF-05)">
+      <bpmn:incoming>f11</bpmn:incoming>
+      <bpmn:outgoing>f12</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="ToBeActividades_t7" name="Registrar o dar de baja material (RF-03)">
+      <bpmn:incoming>f13</bpmn:incoming>
+      <bpmn:outgoing>f14</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="ToBeActividades_t8" name="Exportar reporte a la Alcaldía (RF-09)">
+      <bpmn:incoming>f14</bpmn:incoming>
+      <bpmn:outgoing>f15</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="ToBeActividades_t9" name="Donar por QR o Libélula (RF-06)">
+      <bpmn:incoming>f16</bpmn:incoming>
+      <bpmn:outgoing>f17</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="ToBeActividades_t10" name="Registrar aporte en el contador">
+      <bpmn:incoming>f17</bpmn:incoming>
+      <bpmn:outgoing>f18</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:parallelGateway id="ToBeActividades_p2">
+      <bpmn:incoming>f10</bpmn:incoming>
+      <bpmn:incoming>f12</bpmn:incoming>
+      <bpmn:incoming>f15</bpmn:incoming>
+      <bpmn:incoming>f18</bpmn:incoming>
+      <bpmn:outgoing>f19</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:endEvent id="ToBeActividades_e" name="Información centralizada y auditada">
+      <bpmn:incoming>f19</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="f1" sourceRef="ToBeActividades_s" targetRef="ToBeActividades_p1" />
+    <bpmn:sequenceFlow id="f2" sourceRef="ToBeActividades_p1" targetRef="ToBeActividades_t1" />
+    <bpmn:sequenceFlow id="f3" sourceRef="ToBeActividades_t1" targetRef="ToBeActividades_t2" />
+    <bpmn:sequenceFlow id="f4" sourceRef="ToBeActividades_t2" targetRef="ToBeActividades_t3" />
+    <bpmn:sequenceFlow id="f5" sourceRef="ToBeActividades_t3" targetRef="ToBeActividades_g1" />
+    <bpmn:sequenceFlow id="f6" name="Sí" sourceRef="ToBeActividades_g1" targetRef="ToBeActividades_t4" />
+    <bpmn:sequenceFlow id="f7" name="No" sourceRef="ToBeActividades_g1" targetRef="ToBeActividades_t5" />
+    <bpmn:sequenceFlow id="f8" sourceRef="ToBeActividades_t4" targetRef="ToBeActividades_g2" />
+    <bpmn:sequenceFlow id="f9" sourceRef="ToBeActividades_t5" targetRef="ToBeActividades_g2" />
+    <bpmn:sequenceFlow id="f10" sourceRef="ToBeActividades_g2" targetRef="ToBeActividades_p2" />
+    <bpmn:sequenceFlow id="f11" sourceRef="ToBeActividades_p1" targetRef="ToBeActividades_t6" />
+    <bpmn:sequenceFlow id="f12" sourceRef="ToBeActividades_t6" targetRef="ToBeActividades_p2" />
+    <bpmn:sequenceFlow id="f13" sourceRef="ToBeActividades_p1" targetRef="ToBeActividades_t7" />
+    <bpmn:sequenceFlow id="f14" sourceRef="ToBeActividades_t7" targetRef="ToBeActividades_t8" />
+    <bpmn:sequenceFlow id="f15" sourceRef="ToBeActividades_t8" targetRef="ToBeActividades_p2" />
+    <bpmn:sequenceFlow id="f16" sourceRef="ToBeActividades_p1" targetRef="ToBeActividades_t9" />
+    <bpmn:sequenceFlow id="f17" sourceRef="ToBeActividades_t9" targetRef="ToBeActividades_t10" />
+    <bpmn:sequenceFlow id="f18" sourceRef="ToBeActividades_t10" targetRef="ToBeActividades_p2" />
+    <bpmn:sequenceFlow id="f19" sourceRef="ToBeActividades_p2" targetRef="ToBeActividades_e" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_ToBeActividades">
+    <bpmndi:BPMNPlane id="BPMNPlane_ToBeActividades" bpmnElement="ToBeActividades">
+      <bpmndi:BPMNShape id="ToBeActividades_s_di" bpmnElement="ToBeActividades_s">
+        <dc:Bounds x="57" y="52" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ToBeActividades_p1_di" bpmnElement="ToBeActividades_p1">
+        <dc:Bounds x="200" y="45" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ToBeActividades_t1_di" bpmnElement="ToBeActividades_t1">
+        <dc:Bounds x="325" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ToBeActividades_t2_di" bpmnElement="ToBeActividades_t2">
+        <dc:Bounds x="475" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ToBeActividades_t3_di" bpmnElement="ToBeActividades_t3">
+        <dc:Bounds x="625" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ToBeActividades_g1_di" bpmnElement="ToBeActividades_g1" isMarkerVisible="true">
+        <dc:Bounds x="800" y="45" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ToBeActividades_t4_di" bpmnElement="ToBeActividades_t4">
+        <dc:Bounds x="925" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ToBeActividades_g2_di" bpmnElement="ToBeActividades_g2" isMarkerVisible="true">
+        <dc:Bounds x="1100" y="45" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ToBeActividades_p2_di" bpmnElement="ToBeActividades_p2">
+        <dc:Bounds x="1250" y="45" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ToBeActividades_e_di" bpmnElement="ToBeActividades_e">
+        <dc:Bounds x="1407" y="52" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ToBeActividades_t6_di" bpmnElement="ToBeActividades_t6">
+        <dc:Bounds x="325" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ToBeActividades_t5_di" bpmnElement="ToBeActividades_t5">
+        <dc:Bounds x="925" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ToBeActividades_t7_di" bpmnElement="ToBeActividades_t7">
+        <dc:Bounds x="325" y="310" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ToBeActividades_t8_di" bpmnElement="ToBeActividades_t8">
+        <dc:Bounds x="475" y="310" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ToBeActividades_t9_di" bpmnElement="ToBeActividades_t9">
+        <dc:Bounds x="325" y="450" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ToBeActividades_t10_di" bpmnElement="ToBeActividades_t10">
+        <dc:Bounds x="475" y="450" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="f1_di" bpmnElement="f1">
+        <di:waypoint x="93" y="70" />
+        <di:waypoint x="200" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f2_di" bpmnElement="f2">
+        <di:waypoint x="250" y="70" />
+        <di:waypoint x="325" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f11_di" bpmnElement="f11">
+        <di:waypoint x="225" y="95" />
+        <di:waypoint x="225" y="210" />
+        <di:waypoint x="325" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f13_di" bpmnElement="f13">
+        <di:waypoint x="225" y="95" />
+        <di:waypoint x="225" y="350" />
+        <di:waypoint x="325" y="350" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f16_di" bpmnElement="f16">
+        <di:waypoint x="225" y="95" />
+        <di:waypoint x="225" y="490" />
+        <di:waypoint x="325" y="490" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f3_di" bpmnElement="f3">
+        <di:waypoint x="425" y="70" />
+        <di:waypoint x="475" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f4_di" bpmnElement="f4">
+        <di:waypoint x="575" y="70" />
+        <di:waypoint x="625" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f5_di" bpmnElement="f5">
+        <di:waypoint x="725" y="70" />
+        <di:waypoint x="800" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f6_di" bpmnElement="f6">
+        <di:waypoint x="850" y="70" />
+        <di:waypoint x="925" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f7_di" bpmnElement="f7">
+        <di:waypoint x="825" y="95" />
+        <di:waypoint x="825" y="210" />
+        <di:waypoint x="925" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f8_di" bpmnElement="f8">
+        <di:waypoint x="1025" y="70" />
+        <di:waypoint x="1100" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f10_di" bpmnElement="f10">
+        <di:waypoint x="1150" y="70" />
+        <di:waypoint x="1250" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f19_di" bpmnElement="f19">
+        <di:waypoint x="1300" y="70" />
+        <di:waypoint x="1407" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f12_di" bpmnElement="f12">
+        <di:waypoint x="425" y="210" />
+        <di:waypoint x="450" y="210" />
+        <di:waypoint x="450" y="140" />
+        <di:waypoint x="1200" y="140" />
+        <di:waypoint x="1200" y="70" />
+        <di:waypoint x="1250" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f9_di" bpmnElement="f9">
+        <di:waypoint x="1025" y="210" />
+        <di:waypoint x="1125" y="210" />
+        <di:waypoint x="1125" y="95" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f14_di" bpmnElement="f14">
+        <di:waypoint x="425" y="350" />
+        <di:waypoint x="475" y="350" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f15_di" bpmnElement="f15">
+        <di:waypoint x="575" y="350" />
+        <di:waypoint x="1275" y="350" />
+        <di:waypoint x="1275" y="95" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f17_di" bpmnElement="f17">
+        <di:waypoint x="425" y="490" />
+        <di:waypoint x="475" y="490" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f18_di" bpmnElement="f18">
+        <di:waypoint x="575" y="490" />
+        <di:waypoint x="1275" y="490" />
+        <di:waypoint x="1275" y="95" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

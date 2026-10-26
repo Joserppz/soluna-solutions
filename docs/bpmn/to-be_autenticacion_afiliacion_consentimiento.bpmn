@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Def_ToBeAfiliacion" targetNamespace="https://github.com/Joserppz/soluna-solutions/bpmn" exporter="ASPAR SCRUM-192" exporterVersion="1.0">
+  <bpmn:process id="ToBeAfiliacion" name="TO-BE: Autenticación, afiliación y consentimiento (proceso propuesto, Sprint 1)" isExecutable="false">
+    <bpmn:startEvent id="ToBeAfiliacion_s" name="El personal abre /login">
+      <bpmn:outgoing>f1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="ToBeAfiliacion_t1" name="Ingresar correo y contraseña">
+      <bpmn:incoming>f1</bpmn:incoming>
+      <bpmn:outgoing>f2</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="ToBeAfiliacion_t2" name="Validar credenciales (bcrypt)">
+      <bpmn:incoming>f2</bpmn:incoming>
+      <bpmn:outgoing>f3</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="ToBeAfiliacion_g1" name="¿Válidas y cuenta activa?">
+      <bpmn:incoming>f3</bpmn:incoming>
+      <bpmn:outgoing>f4</bpmn:outgoing>
+      <bpmn:outgoing>f6</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="ToBeAfiliacion_t3" name="Registrar intento; al 5.º bloquear 15 min">
+      <bpmn:incoming>f4</bpmn:incoming>
+      <bpmn:outgoing>f5</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="ToBeAfiliacion_e0" name="Acceso denegado">
+      <bpmn:incoming>f5</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:serviceTask id="ToBeAfiliacion_t4" name="Crear sesión JWT (30/15 min) y auditar">
+      <bpmn:incoming>f6</bpmn:incoming>
+      <bpmn:outgoing>f7</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="ToBeAfiliacion_t5" name="Registrar filiación y cuidador">
+      <bpmn:incoming>f7</bpmn:incoming>
+      <bpmn:incoming>f10</bpmn:incoming>
+      <bpmn:outgoing>f8</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="ToBeAfiliacion_g2" name="¿Datos válidos y CI nueva?">
+      <bpmn:incoming>f8</bpmn:incoming>
+      <bpmn:outgoing>f9</bpmn:outgoing>
+      <bpmn:outgoing>f11</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="ToBeAfiliacion_t6" name="Corregir los datos indicados">
+      <bpmn:incoming>f9</bpmn:incoming>
+      <bpmn:outgoing>f10</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="ToBeAfiliacion_t7" name="Guardar ficha en PostgreSQL y auditar">
+      <bpmn:incoming>f11</bpmn:incoming>
+      <bpmn:outgoing>f12</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="ToBeAfiliacion_g3" name="¿Consentimiento informado firmado?">
+      <bpmn:incoming>f12</bpmn:incoming>
+      <bpmn:outgoing>f13</bpmn:outgoing>
+      <bpmn:outgoing>f15</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="ToBeAfiliacion_t8" name="Acceso «Pendiente»: anamnesis protegida">
+      <bpmn:incoming>f13</bpmn:incoming>
+      <bpmn:outgoing>f14</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="ToBeAfiliacion_e1" name="Ficha digital protegida">
+      <bpmn:incoming>f14</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:userTask id="ToBeAfiliacion_t9" name="Marcar consentimiento y acceso «Activo»">
+      <bpmn:incoming>f15</bpmn:incoming>
+      <bpmn:outgoing>f16</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="ToBeAfiliacion_t10" name="Registrar anamnesis y evaluaciones">
+      <bpmn:incoming>f16</bpmn:incoming>
+      <bpmn:outgoing>f17</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="ToBeAfiliacion_e2" name="Expediente clínico activo">
+      <bpmn:incoming>f17</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="f1" sourceRef="ToBeAfiliacion_s" targetRef="ToBeAfiliacion_t1" />
+    <bpmn:sequenceFlow id="f2" sourceRef="ToBeAfiliacion_t1" targetRef="ToBeAfiliacion_t2" />
+    <bpmn:sequenceFlow id="f3" sourceRef="ToBeAfiliacion_t2" targetRef="ToBeAfiliacion_g1" />
+    <bpmn:sequenceFlow id="f4" name="No" sourceRef="ToBeAfiliacion_g1" targetRef="ToBeAfiliacion_t3" />
+    <bpmn:sequenceFlow id="f5" sourceRef="ToBeAfiliacion_t3" targetRef="ToBeAfiliacion_e0" />
+    <bpmn:sequenceFlow id="f6" name="Sí" sourceRef="ToBeAfiliacion_g1" targetRef="ToBeAfiliacion_t4" />
+    <bpmn:sequenceFlow id="f7" sourceRef="ToBeAfiliacion_t4" targetRef="ToBeAfiliacion_t5" />
+    <bpmn:sequenceFlow id="f8" sourceRef="ToBeAfiliacion_t5" targetRef="ToBeAfiliacion_g2" />
+    <bpmn:sequenceFlow id="f9" name="No" sourceRef="ToBeAfiliacion_g2" targetRef="ToBeAfiliacion_t6" />
+    <bpmn:sequenceFlow id="f10" sourceRef="ToBeAfiliacion_t6" targetRef="ToBeAfiliacion_t5" />
+    <bpmn:sequenceFlow id="f11" name="Sí" sourceRef="ToBeAfiliacion_g2" targetRef="ToBeAfiliacion_t7" />
+    <bpmn:sequenceFlow id="f12" sourceRef="ToBeAfiliacion_t7" targetRef="ToBeAfiliacion_g3" />
+    <bpmn:sequenceFlow id="f13" name="No" sourceRef="ToBeAfiliacion_g3" targetRef="ToBeAfiliacion_t8" />
+    <bpmn:sequenceFlow id="f14" sourceRef="ToBeAfiliacion_t8" targetRef="ToBeAfiliacion_e1" />
+    <bpmn:sequenceFlow id="f15" name="Sí" sourceRef="ToBeAfiliacion_g3" targetRef="ToBeAfiliacion_t9" />
+    <bpmn:sequenceFlow id="f16" sourceRef="ToBeAfiliacion_t9" targetRef="ToBeAfiliacion_t10" />
+    <bpmn:sequenceFlow id="f17" sourceRef="ToBeAfiliacion_t10" targetRef="ToBeAfiliacion_e2" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_ToBeAfiliacion">
+    <bpmndi:BPMNPlane id="BPMNPlane_ToBeAfiliacion" bpmnElement="ToBeAfiliacion">
+      <bpmndi:BPMNShape id="ToBeAfiliacion_s_di" bpmnElement="ToBeAfiliacion_s">
+        <dc:Bounds x="57" y="52" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ToBeAfiliacion_t1_di" bpmnElement="ToBeAfiliacion_t1">
+        <dc:Bounds x="175" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ToBeAfiliacion_t2_di" bpmnElement="ToBeAfiliacion_t2">
+        <dc:Bounds x="325" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ToBeAfiliacion_g1_di" bpmnElement="ToBeAfiliacion_g1" isMarkerVisible="true">
+        <dc:Bounds x="500" y="45" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ToBeAfiliacion_t3_di" bpmnElement="ToBeAfiliacion_t3">
+        <dc:Bounds x="625" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ToBeAfiliacion_e0_di" bpmnElement="ToBeAfiliacion_e0">
+        <dc:Bounds x="807" y="52" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ToBeAfiliacion_t4_di" bpmnElement="ToBeAfiliacion_t4">
+        <dc:Bounds x="625" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ToBeAfiliacion_t5_di" bpmnElement="ToBeAfiliacion_t5">
+        <dc:Bounds x="775" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ToBeAfiliacion_g2_di" bpmnElement="ToBeAfiliacion_g2" isMarkerVisible="true">
+        <dc:Bounds x="950" y="185" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ToBeAfiliacion_t6_di" bpmnElement="ToBeAfiliacion_t6">
+        <dc:Bounds x="1075" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ToBeAfiliacion_t7_di" bpmnElement="ToBeAfiliacion_t7">
+        <dc:Bounds x="1075" y="310" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ToBeAfiliacion_g3_di" bpmnElement="ToBeAfiliacion_g3" isMarkerVisible="true">
+        <dc:Bounds x="1250" y="325" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ToBeAfiliacion_t8_di" bpmnElement="ToBeAfiliacion_t8">
+        <dc:Bounds x="1375" y="310" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ToBeAfiliacion_e1_di" bpmnElement="ToBeAfiliacion_e1">
+        <dc:Bounds x="1557" y="332" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ToBeAfiliacion_t9_di" bpmnElement="ToBeAfiliacion_t9">
+        <dc:Bounds x="1375" y="450" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ToBeAfiliacion_t10_di" bpmnElement="ToBeAfiliacion_t10">
+        <dc:Bounds x="1525" y="450" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ToBeAfiliacion_e2_di" bpmnElement="ToBeAfiliacion_e2">
+        <dc:Bounds x="1707" y="472" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="f1_di" bpmnElement="f1">
+        <di:waypoint x="93" y="70" />
+        <di:waypoint x="175" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f2_di" bpmnElement="f2">
+        <di:waypoint x="275" y="70" />
+        <di:waypoint x="325" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f3_di" bpmnElement="f3">
+        <di:waypoint x="425" y="70" />
+        <di:waypoint x="500" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f4_di" bpmnElement="f4">
+        <di:waypoint x="550" y="70" />
+        <di:waypoint x="625" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f6_di" bpmnElement="f6">
+        <di:waypoint x="525" y="95" />
+        <di:waypoint x="525" y="210" />
+        <di:waypoint x="625" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f5_di" bpmnElement="f5">
+        <di:waypoint x="725" y="70" />
+        <di:waypoint x="807" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f7_di" bpmnElement="f7">
+        <di:waypoint x="725" y="210" />
+        <di:waypoint x="775" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f8_di" bpmnElement="f8">
+        <di:waypoint x="875" y="210" />
+        <di:waypoint x="950" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f9_di" bpmnElement="f9">
+        <di:waypoint x="1000" y="210" />
+        <di:waypoint x="1075" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f11_di" bpmnElement="f11">
+        <di:waypoint x="975" y="235" />
+        <di:waypoint x="975" y="350" />
+        <di:waypoint x="1075" y="350" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f10_di" bpmnElement="f10">
+        <di:waypoint x="1125" y="250" />
+        <di:waypoint x="1125" y="280" />
+        <di:waypoint x="825" y="280" />
+        <di:waypoint x="825" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f12_di" bpmnElement="f12">
+        <di:waypoint x="1175" y="350" />
+        <di:waypoint x="1250" y="350" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f13_di" bpmnElement="f13">
+        <di:waypoint x="1300" y="350" />
+        <di:waypoint x="1375" y="350" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f15_di" bpmnElement="f15">
+        <di:waypoint x="1275" y="375" />
+        <di:waypoint x="1275" y="490" />
+        <di:waypoint x="1375" y="490" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f14_di" bpmnElement="f14">
+        <di:waypoint x="1475" y="350" />
+        <di:waypoint x="1557" y="350" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f16_di" bpmnElement="f16">
+        <di:waypoint x="1475" y="490" />
+        <di:waypoint x="1525" y="490" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f17_di" bpmnElement="f17">
+        <di:waypoint x="1625" y="490" />
+        <di:waypoint x="1707" y="490" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Def_AsIsActividades" targetNamespace="https://github.com/Joserppz/soluna-solutions/bpmn" exporter="ASPAR SCRUM-192" exporterVersion="1.0">
+  <bpmn:process id="AsIsActividades" name="AS-IS: Actividades sabatinas, multimedia, inventario y donaciones (proceso actual)" isExecutable="false">
+    <bpmn:startEvent id="AsIsActividades_s" name="Semana de actividades sabatinas">
+      <bpmn:outgoing>f1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:manualTask id="AsIsActividades_t1" name="Avisar el cronograma por WhatsApp">
+      <bpmn:incoming>f1</bpmn:incoming>
+      <bpmn:outgoing>f2</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:manualTask id="AsIsActividades_t2" name="Realizar la actividad sabatina">
+      <bpmn:incoming>f2</bpmn:incoming>
+      <bpmn:outgoing>f3</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:manualTask id="AsIsActividades_t3" name="Anotar la asistencia en papel">
+      <bpmn:incoming>f3</bpmn:incoming>
+      <bpmn:outgoing>f4</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:manualTask id="AsIsActividades_t4" name="Tomar fotos y videos">
+      <bpmn:incoming>f4</bpmn:incoming>
+      <bpmn:outgoing>f5</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:exclusiveGateway id="AsIsActividades_g1" name="¿Hay espacio en Drive/Gmail?">
+      <bpmn:incoming>f5</bpmn:incoming>
+      <bpmn:outgoing>f6</bpmn:outgoing>
+      <bpmn:outgoing>f7</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:manualTask id="AsIsActividades_t5" name="Subir a Drive y redes sociales">
+      <bpmn:incoming>f6</bpmn:incoming>
+      <bpmn:outgoing>f8</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:manualTask id="AsIsActividades_t6" name="Borrar material o dejarlo en el celular">
+      <bpmn:incoming>f7</bpmn:incoming>
+      <bpmn:outgoing>f9</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:exclusiveGateway id="AsIsActividades_g2">
+      <bpmn:incoming>f8</bpmn:incoming>
+      <bpmn:incoming>f9</bpmn:incoming>
+      <bpmn:outgoing>f10</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:manualTask id="AsIsActividades_t7" name="Actualizar inventario en papel">
+      <bpmn:incoming>f10</bpmn:incoming>
+      <bpmn:outgoing>f11</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:manualTask id="AsIsActividades_t8" name="Recibir aportes sin registro público">
+      <bpmn:incoming>f11</bpmn:incoming>
+      <bpmn:outgoing>f12</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:endEvent id="AsIsActividades_e" name="Datos dispersos en papel, WhatsApp y Drive">
+      <bpmn:incoming>f12</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="f1" sourceRef="AsIsActividades_s" targetRef="AsIsActividades_t1" />
+    <bpmn:sequenceFlow id="f2" sourceRef="AsIsActividades_t1" targetRef="AsIsActividades_t2" />
+    <bpmn:sequenceFlow id="f3" sourceRef="AsIsActividades_t2" targetRef="AsIsActividades_t3" />
+    <bpmn:sequenceFlow id="f4" sourceRef="AsIsActividades_t3" targetRef="AsIsActividades_t4" />
+    <bpmn:sequenceFlow id="f5" sourceRef="AsIsActividades_t4" targetRef="AsIsActividades_g1" />
+    <bpmn:sequenceFlow id="f6" name="Sí" sourceRef="AsIsActividades_g1" targetRef="AsIsActividades_t5" />
+    <bpmn:sequenceFlow id="f7" name="No" sourceRef="AsIsActividades_g1" targetRef="AsIsActividades_t6" />
+    <bpmn:sequenceFlow id="f8" sourceRef="AsIsActividades_t5" targetRef="AsIsActividades_g2" />
+    <bpmn:sequenceFlow id="f9" sourceRef="AsIsActividades_t6" targetRef="AsIsActividades_g2" />
+    <bpmn:sequenceFlow id="f10" sourceRef="AsIsActividades_g2" targetRef="AsIsActividades_t7" />
+    <bpmn:sequenceFlow id="f11" sourceRef="AsIsActividades_t7" targetRef="AsIsActividades_t8" />
+    <bpmn:sequenceFlow id="f12" sourceRef="AsIsActividades_t8" targetRef="AsIsActividades_e" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_AsIsActividades">
+    <bpmndi:BPMNPlane id="BPMNPlane_AsIsActividades" bpmnElement="AsIsActividades">
+      <bpmndi:BPMNShape id="AsIsActividades_s_di" bpmnElement="AsIsActividades_s">
+        <dc:Bounds x="57" y="52" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="AsIsActividades_t1_di" bpmnElement="AsIsActividades_t1">
+        <dc:Bounds x="175" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="AsIsActividades_t2_di" bpmnElement="AsIsActividades_t2">
+        <dc:Bounds x="325" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="AsIsActividades_t3_di" bpmnElement="AsIsActividades_t3">
+        <dc:Bounds x="475" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="AsIsActividades_t4_di" bpmnElement="AsIsActividades_t4">
+        <dc:Bounds x="625" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="AsIsActividades_g1_di" bpmnElement="AsIsActividades_g1" isMarkerVisible="true">
+        <dc:Bounds x="800" y="45" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="AsIsActividades_t5_di" bpmnElement="AsIsActividades_t5">
+        <dc:Bounds x="925" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="AsIsActividades_g2_di" bpmnElement="AsIsActividades_g2" isMarkerVisible="true">
+        <dc:Bounds x="1100" y="45" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="AsIsActividades_t7_di" bpmnElement="AsIsActividades_t7">
+        <dc:Bounds x="1225" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="AsIsActividades_t8_di" bpmnElement="AsIsActividades_t8">
+        <dc:Bounds x="1375" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="AsIsActividades_e_di" bpmnElement="AsIsActividades_e">
+        <dc:Bounds x="1557" y="52" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="AsIsActividades_t6_di" bpmnElement="AsIsActividades_t6">
+        <dc:Bounds x="925" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="f1_di" bpmnElement="f1">
+        <di:waypoint x="93" y="70" />
+        <di:waypoint x="175" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f2_di" bpmnElement="f2">
+        <di:waypoint x="275" y="70" />
+        <di:waypoint x="325" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f3_di" bpmnElement="f3">
+        <di:waypoint x="425" y="70" />
+        <di:waypoint x="475" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f4_di" bpmnElement="f4">
+        <di:waypoint x="575" y="70" />
+        <di:waypoint x="625" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f5_di" bpmnElement="f5">
+        <di:waypoint x="725" y="70" />
+        <di:waypoint x="800" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f6_di" bpmnElement="f6">
+        <di:waypoint x="850" y="70" />
+        <di:waypoint x="925" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f7_di" bpmnElement="f7">
+        <di:waypoint x="825" y="95" />
+        <di:waypoint x="825" y="210" />
+        <di:waypoint x="925" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f8_di" bpmnElement="f8">
+        <di:waypoint x="1025" y="70" />
+        <di:waypoint x="1100" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f10_di" bpmnElement="f10">
+        <di:waypoint x="1150" y="70" />
+        <di:waypoint x="1225" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f11_di" bpmnElement="f11">
+        <di:waypoint x="1325" y="70" />
+        <di:waypoint x="1375" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f12_di" bpmnElement="f12">
+        <di:waypoint x="1475" y="70" />
+        <di:waypoint x="1557" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f9_di" bpmnElement="f9">
+        <di:waypoint x="1025" y="210" />
+        <di:waypoint x="1125" y="210" />
+        <di:waypoint x="1125" y="95" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

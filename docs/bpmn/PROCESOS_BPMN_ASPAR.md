@@ -1,5 +1,61 @@
 # Modelado de Procesos BPMN 2.0 y Revisión de Pasos de Usuario en la Interfaz (SCRUM-190 / SCRUM-194)
 
+## 0. Flujo actual (AS-IS) y propuesto (TO-BE) según los requisitos (SCRUM-190 / SCRUM-192)
+
+El proceso **actual** sale del análisis AS-IS de la entrevista con ASPAR (`docs/entrevistas/DOCUMENTO_1.pdf`, §2 y §3). El **propuesto** sigue los requisitos del SRS y su adenda, y lo que ya implementa la rama `Sprint1`. Cada diagrama está en formato **BPMN 2.0 XML** (`.bpmn`), editable en [bpmn.io](https://demo.bpmn.io) o Camunda Modeler, y tiene su imagen exportada.
+
+| Proceso | AS-IS (actual) | TO-BE (propuesto) |
+| :--- | :--- | :--- |
+| Afiliación, anamnesis y acceso | [`as-is_afiliacion_y_anamnesis.bpmn`](./as-is_afiliacion_y_anamnesis.bpmn) | [`to-be_autenticacion_afiliacion_consentimiento.bpmn`](./to-be_autenticacion_afiliacion_consentimiento.bpmn) |
+| Actividades, multimedia, inventario y donaciones | [`as-is_actividades_multimedia_inventario.bpmn`](./as-is_actividades_multimedia_inventario.bpmn) | [`to-be_actividades_multimedia_inventario_donaciones.bpmn`](./to-be_actividades_multimedia_inventario_donaciones.bpmn) |
+
+**Notación:** ✋ tarea manual (en papel o WhatsApp) · 👤 tarea de usuario en el sistema · ⚙️ tarea automática del sistema · ✖ decisión (compuerta exclusiva) · ➕ tareas en paralelo.
+
+### 0.1 Afiliación de paciente y anamnesis
+
+**AS-IS:** todo se registra a mano en hojas hechas por los voluntarios. El diagnóstico se toma del certificado del neurólogo o, si no lo hay, se valida observando los síntomas. La coordinación se hace por WhatsApp.
+
+![AS-IS afiliación y anamnesis](./as-is_afiliacion_y_anamnesis.png)
+
+**TO-BE:** el personal inicia sesión, registra la ficha con validaciones y la anamnesis solo se habilita con consentimiento firmado. Todas las compuertas tienen sus dos salidas (en el diagrama anterior, la de consentimiento no tenía camino «No»).
+
+![TO-BE autenticación, afiliación y consentimiento](./to-be_autenticacion_afiliacion_consentimiento.png)
+
+### 0.2 Actividades, multimedia, inventario y donaciones
+
+**AS-IS:** el cronograma se avisa por WhatsApp, la asistencia y el inventario se llevan en papel, las fotos llenan el Drive de la asociación y las donaciones llegan sin registro público.
+
+![AS-IS actividades, multimedia e inventario](./as-is_actividades_multimedia_inventario.png)
+
+**TO-BE:** cuatro procesos que corren en paralelo durante la semana, todos dentro del sistema y con registro en la base de datos.
+
+![TO-BE actividades, multimedia, inventario y donaciones](./to-be_actividades_multimedia_inventario_donaciones.png)
+
+### 0.3 Comparación AS-IS → TO-BE
+
+| Problema del proceso actual (entrevista) | Cambio en el proceso propuesto | Requisito | Estado en `Sprint1` |
+| :--- | :--- | :--- | :--- |
+| Fichas y anamnesis en hojas de papel, difíciles de buscar | Ficha digital con búsqueda por nombre, CI y estado | RF-02 | ✅ Implementado |
+| Cualquiera con acceso a las hojas lee los datos clínicos | Login por rol y anamnesis solo con consentimiento y acceso `Activo` | RF-01, RF-11, RNF-06 | ✅ Implementado |
+| No queda registro de quién consultó o cambió una ficha | Bitácora inmutable de operaciones sensibles | RF-17 | ✅ Implementado |
+| El diagnóstico sin certificado no queda documentado | Campo «certificado neurológico» y notas de síntomas en la anamnesis | RF-02 | ✅ Implementado |
+| Asistencia anotada en papel | Marcación de asistencia con bloqueo RNF-06 | RF-12 a RF-16 (por confirmar), RNF-06 | ⚠️ Pantalla lista; datos solo locales (⏳ Sprint 2) |
+| Cronograma avisado solo por WhatsApp | Cronograma público en el portal sin iniciar sesión | RF-04, RF-10 | ⚠️ Visible; la edición por el administrador es del Sprint 2 |
+| Fotos y videos llenan Google Drive / Gmail | Almacenamiento en la nube independiente | RF-05 | ⏳ Adaptador de Storage listo; galería en el Sprint 2 |
+| Inventario en listas de papel, sin auditoría | Registro, baja y exportación de reportes para la Alcaldía | RF-03, RF-09 | ⚠️ Registro y CSV listos; baja, PDF y Backend en el Sprint 2 |
+| Donaciones sin canal formal ni transparencia | QR oficial, pasarela Libélula y contador de aportes | RF-06 | ⚠️ QR y registro local; Libélula en el Sprint 2 |
+| Pérdida de información en WhatsApp | Toda la información queda en PostgreSQL, accesible según el rol | RF-02, RF-11 | ✅ Para pacientes y usuarios |
+
+### 0.4 Cómo editar los diagramas
+
+1. Abrir el archivo `.bpmn` en <https://demo.bpmn.io> (*Open diagram*) o en Camunda Modeler.
+2. Editar y guardar como `.bpmn` y exportar la imagen como PNG con el mismo nombre.
+3. Si cambia un paso que ve el usuario, actualizar también las tablas de las secciones 1 a 4.
+
+---
+
+### Diagrama inicial del Sprint 1 (referencia)
+
 ![Diagrama BPMN 2.0 ASPAR](./diagrama_procesos_bpmn_aspar.png)
 
 ## 1. Proceso 1: Autenticación Administrativa, Gestión de Sesión y Auditoría (RF-01, RNF-02, RF-17)
