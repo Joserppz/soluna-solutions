@@ -11,12 +11,25 @@ Repositorio oficial de **Soluna Solutions** para el proyecto **ASPAR (Asociació
 ## Arquitectura del Repositorio
 
 - [`Frontend/`](./Frontend/README.md): Aplicación web SPA en Vue 3 + TypeScript + Vite (Portal público y Panel administrativo/clínico).
-- [`Backend/`](./Backend/app/main.py): API RESTful en Python + FastAPI con autenticación JWT, gestión de pacientes/anamnesis, usuarios/roles y bitácora de auditoría.
+- [`Backend/`](./Backend/README.md): API RESTful en Python + FastAPI sobre **Supabase PostgreSQL**, con autenticación JWT, sesiones, pacientes/anamnesis con protección RNF-06, documentos privados, usuarios/roles y bitácora de auditoría.
 - [`docs/`](./docs/):
   - `docs/entrevistas/DOCUMENTO_1.pdf`: Minuta de entrevista y relevamiento AS-IS / TO-BE.
   - `docs/srs/DOCUMENTO_2.pdf`: Especificación de Requisitos de Software (SRS v1.0).
+  - [`docs/api/CONTRATO_API_LOGIN_PACIENTES.md`](./docs/api/CONTRATO_API_LOGIN_PACIENTES.md): Contrato API Backend ↔ Frontend.
   - `docs/arquitectura/DOCUMENTO_3.pdf` y [`MODELO_DATOS_Y_CONTRATOS.md`](./docs/arquitectura/MODELO_DATOS_Y_CONTRATOS.md): Modelo C4 (C1, C2, C3) y contratos de datos.
   - [`docs/trazabilidad/MATRIZ_RF01_RF17.md`](./docs/trazabilidad/MATRIZ_RF01_RF17.md): Trazabilidad completa RF01–RF17 y RNF01–RNF11.
   - `docs/bpmn/`: Modelado de procesos principales en BPMN 2.0 y revisión de pasos de usuario.
   - `docs/wireframes/`: Wireframes del portal público y del panel administrativo.
   - `docs/evidencias/`: Capturas organizadas y recorrido de aceptación del Sprint 1.
+
+## Puesta en marcha rápida
+
+| Paso | Backend (`Backend/`) | Frontend (`Frontend/`) |
+| :--- | :--- | :--- |
+| 1. Requisitos | Python 3.12+ y un proyecto Supabase | Node.js 22 LTS |
+| 2. Dependencias | `python3.12 -m venv .venv`, `source .venv/bin/activate`, `pip install -r requirements-dev.txt` | `npm install` |
+| 3. Entorno | `cp .env.example .env` y completar `DATABASE_URL` y `JWT_SECRET` | `cp .env.example .env` |
+| 4. Base de datos | `python -m scripts.migrate` (o `--baseline 001` si la 001 ya se ejecutó en el SQL Editor) | — |
+| 5. Ejecutar | `uvicorn app.main:app --reload` → <http://localhost:8000/docs> | `npm run dev` → <http://localhost:5173> |
+
+La guía completa del Backend (variables, migraciones, permisos por rol, pruebas y problemas frecuentes) está en [`Backend/README.md`](./Backend/README.md).
