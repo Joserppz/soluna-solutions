@@ -1,3 +1,4 @@
+import pytest
 from sqlalchemy import text
 
 from scripts.migrate import MIGRATION_PATTERN, available_migrations
@@ -42,5 +43,20 @@ def test_migraciones_crean_las_tablas_del_modelo(migrated_engine):
 @requires_db
 def test_reaplicar_migraciones_no_hace_nada(migrated_engine):
     from scripts.migrate import apply_migrations
+
+    assert apply_migrations(migrated_engine) == []
+
+
+@requires_db
+def test_base_creada_a_mano_exige_baseline(migrated_engine):
+    from scripts.migrate import MigrationError, apply_migrations, baseline
+
+    with migrated_engine.begin() as conn:
+        conn.execute(text("delete from schema_migrations"))
+    try:
+        with pytest.raises(MigrationError, match="--baseline 001"):
+            apply_migrations(migrated_engine)
+    finally:
+        baseline(migrated_engine, "999")
 
     assert apply_migrations(migrated_engine) == []

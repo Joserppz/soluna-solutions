@@ -64,8 +64,25 @@ def applied_versions(engine: Engine) -> set[str]:
         return set(conn.execute(text("select version from public.schema_migrations")).scalars())
 
 
+class MigrationError(RuntimeError):
+    pass
+
+
+def _schema_created_by_hand(engine: Engine, done: set[str]) -> bool:
+    if done:
+        return False
+    with engine.connect() as conn:
+        return conn.execute(text("select to_regclass('public.users') is not null")).scalar_one()
+
+
 def apply_migrations(engine: Engine) -> list[str]:
     done = applied_versions(engine)
+    if _schema_created_by_hand(engine, done):
+        raise MigrationError(
+            "La base ya tiene las tablas de la migración 001 pero no figura en "
+            "schema_migrations (se ejecutó a mano en el SQL Editor). Ejecuta primero: "
+            "python -m scripts.migrate --baseline 001"
+        )
     applied = []
     for version, path in available_migrations():
         if version in done:
@@ -113,7 +130,10 @@ def main() -> None:
         marked = baseline(engine, args.baseline)
         print("Marcadas como aplicadas:", ", ".join(marked) if marked else "ninguna")
         return
-    applied = apply_migrations(engine)
+    try:
+        applied = apply_migrations(engine)
+    except MigrationError as exc:
+        raise SystemExit(f"ERROR: {exc}") from exc
     print("Migraciones aplicadas:", ", ".join(applied) if applied else "ninguna (todo al día)")
 
 
