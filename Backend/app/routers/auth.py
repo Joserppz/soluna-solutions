@@ -1,0 +1,31 @@
+from fastapi import APIRouter, Depends, Request
+from sqlalchemy.orm import Session
+
+from app.core.database import get_db
+from app.core.deps import CurrentUser, client_ip, get_current_user
+from app.schemas.auth import LoginRequest, LoginResponse, UserOut, VerifyResponse
+from app.services import auth_service
+
+router = APIRouter(prefix="/api/v1/auth", tags=["Autenticación"])
+
+
+@router.post("/login", response_model=LoginResponse)
+def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)):
+    result = auth_service.login(
+        db, payload.email, payload.password, client_ip(request), request.headers.get("user-agent")
+    )
+    return LoginResponse(
+        access_token=result.access_token,
+        expires_in=result.expires_in,
+        idle_timeout=result.idle_timeout,
+        user=UserOut.model_validate(result.user, from_attributes=True),
+    )
+
+
+@router.get("/verify", response_model=VerifyResponse)
+def verify(current: CurrentUser = Depends(get_current_user)):
+    user = current.user
+    return VerifyResponse(
+        valid=True,
+        user={"sub": user.id, "email": user.email, "name": user.name, "role": user.role},
+    )

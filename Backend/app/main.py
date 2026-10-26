@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import CORS_ORIGINS
 from app.core.database import get_db
+from app.routers import auth
 
 app = FastAPI(
     title="ASPAR API - Soluna Solutions",
@@ -28,6 +29,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(auth.router)
 
 
 @app.get("/api/v1/health", tags=["Sistema"])
