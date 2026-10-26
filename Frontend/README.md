@@ -6,7 +6,7 @@ Interfaz web tipo **Single Page Application (SPA)** desarrollada con **Vue 3 + T
 
 - **Node.js**: `>= 20.19.0` (recomendado `v20 LTS` o `v22 LTS`)
 - **npm**: `>= 10.0.0`
-- **Backend API (opcional para desarrollo local autónomo, requerido para integración E2E)**: Python `3.11+` con FastAPI (`uvicorn app.main:app --reload --port 8000`)
+- **Backend API (opcional para desarrollo local autónomo, requerido para integración E2E)**: Python `3.12+` con FastAPI (`uvicorn app.main:app --reload --port 8000`)
 
 ## 2. Configuración de Variables de Entorno (`.env`)
 
@@ -14,13 +14,11 @@ Interfaz web tipo **Single Page Application (SPA)** desarrollada con **Vue 3 + T
    ```bash
    cp .env.example .env
    ```
-2. Ajusta las variables según tu entorno local o de despliegue:
+2. Ajusta la URL de la API si no corre en `localhost:8000`:
    ```dotenv
    VITE_API_BASE_URL=http://localhost:8000/api/v1
-   VITE_APP_NAME="ASPAR - Asociación de Parkinson Mario Lagrava"
-   VITE_SESSION_MAX_AGE_MINUTES=30
-   VITE_SESSION_IDLE_MINUTES=15
    ```
+   Es la única variable que lee el código. Los tiempos de sesión los define el Backend (`Backend/.env`).
 
 ## 3. Instalación y Ejecución
 
