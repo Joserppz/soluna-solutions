@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import CORS_ORIGINS
 from app.core.database import get_db
+from app.core.errors import register_error_handlers
 from app.routers import auth
 
 app = FastAPI(
@@ -30,6 +31,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+register_error_handlers(app)
 app.include_router(auth.router)
 
 

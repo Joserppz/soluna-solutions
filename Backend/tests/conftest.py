@@ -13,7 +13,7 @@ TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
 
 # Se fija antes de importar la app para que las pruebas nunca usen la base del .env
 os.environ["DATABASE_URL"] = TEST_DATABASE_URL or "postgresql://pruebas:pruebas@localhost:1/pruebas"
-os.environ["JWT_SECRET"] = "secreto-solo-para-pruebas"
+os.environ["JWT_SECRET"] = "secreto-solo-para-pruebas-automatizadas-aspar"
 
 if TEST_DATABASE_URL and "supabase" in TEST_DATABASE_URL:
     pytest.exit("TEST_DATABASE_URL no puede apuntar a Supabase: las pruebas borran el esquema.")

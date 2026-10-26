@@ -39,7 +39,7 @@ def test_token_alterado_es_rechazado():
     )
     forged = jwt.encode(
         {**jwt.decode(token, options={"verify_signature": False}), "role": "Administrador"},
-        "otro-secreto",
+        "otro-secreto-de-un-atacante-de-32-bytes",
         algorithm="HS256",
     )
 

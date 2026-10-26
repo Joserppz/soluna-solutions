@@ -8,12 +8,20 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.config import SESSION_IDLE_LIMIT_SECONDS, SESSION_MAX_AGE_SECONDS
-from app.core.security import create_access_token, verify_password
+from app.core.security import create_access_token, hash_password, verify_password
 from app.models import User, UserSession
 from app.repositories import session_repository, user_repository
 from app.services import audit_service
 
 INVALID_CREDENTIALS = "Correo o contraseña incorrectos, o usuario inactivo."
+ACCOUNT_LOCKED = (
+    "Cuenta bloqueada temporalmente por {minutes} minutos tras 5 intentos fallidos (RNF-02)."
+)
+MAX_FAILED_ATTEMPTS = 5
+LOCK_MINUTES = 15
+# Hash de referencia para gastar el mismo tiempo cuando el correo no existe y no
+# revelar qué cuentas están registradas.
+_DUMMY_HASH = hash_password("aspar-usuario-inexistente")
 
 
 @dataclass
@@ -35,19 +43,26 @@ def login(
 ) -> LoginResult:
     email = email.strip().lower()
     user = user_repository.get_by_email(db, email)
+    now = datetime.now(UTC)
 
-    if user is None or not user.active or not verify_password(password, user.password_hash):
+    if user is not None and user.locked_until is not None and user.locked_until > now:
+        minutes = max(1, int((user.locked_until - now).total_seconds() // 60) + 1)
         audit_service.record(
             db,
             actor=email,
             actor_role="Sistema",
             category="AUTENTICACION",
             severity="WARNING",
-            action="Intento fallido de inicio de sesión",
-            detail=f"Credenciales inválidas o cuenta inactiva para {email}",
+            action="Intento de acceso a cuenta bloqueada",
+            detail=f"La cuenta {email} sigue bloqueada por intentos fallidos",
             ip_address=ip,
         )
         db.commit()
+        raise HTTPException(status.HTTP_423_LOCKED, ACCOUNT_LOCKED.format(minutes=minutes))
+
+    password_ok = verify_password(password, user.password_hash if user else _DUMMY_HASH)
+    if user is None or not user.active or not password_ok:
+        _register_failed_attempt(db, user, email, ip, now)
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, INVALID_CREDENTIALS)
 
     now = datetime.now(UTC)
@@ -63,6 +78,8 @@ def login(
         ),
     )
     user.last_login_at = now
+    user.failed_login_attempts = 0
+    user.locked_until = None
     audit_service.record(
         db,
         actor=user.email,
@@ -80,3 +97,30 @@ def login(
         idle_timeout=SESSION_IDLE_LIMIT_SECONDS,
         user=user,
     )
+
+
+def _register_failed_attempt(
+    db: Session, user: User | None, email: str, ip: str | None, now: datetime
+) -> None:
+    severity = "WARNING"
+    detail = f"Credenciales inválidas o cuenta inactiva para {email}"
+    if user is not None and user.active:
+        user.failed_login_attempts += 1
+        if user.failed_login_attempts >= MAX_FAILED_ATTEMPTS:
+            user.locked_until = now + timedelta(minutes=LOCK_MINUTES)
+            user.failed_login_attempts = 0
+            severity = "CRITICAL"
+            detail = (
+                f"Cuenta {email} bloqueada {LOCK_MINUTES} min tras {MAX_FAILED_ATTEMPTS} intentos"
+            )
+    audit_service.record(
+        db,
+        actor=email,
+        actor_role="Sistema",
+        category="AUTENTICACION",
+        severity=severity,
+        action="Intento fallido de inicio de sesión",
+        detail=detail,
+        ip_address=ip,
+    )
+    db.commit()
