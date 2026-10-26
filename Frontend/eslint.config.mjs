@@ -28,5 +28,12 @@ export default tseslint.config(
       'vue/multi-word-component-names': 'off',
     },
   },
+  {
+    // Script de recorrido E2E en CommonJS (SCRUM-88), ejecutado con Node
+    files: ['e2e/**/*.cjs'],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
   prettier,
 )
