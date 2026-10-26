@@ -1,5 +1,7 @@
 # Arquitectura C4, Modelo de Datos E-R y Contratos de API (SCRUM-64 / SCRUM-105)
 
+> **Versión vigente de los diagramas:** [`C4_Y_MODELO_ER_ACTUALIZADO.md`](./C4_Y_MODELO_ER_ACTUALIZADO.md) (C1, C2, C3 y E-R completo según la implementación del Sprint 1) y [registro de decisiones técnicas (ADR)](./adr/README.md) (SCRUM-106).
+
 ## 1. Alineación con la Arquitectura C4 (FastAPI + PostgreSQL + Vue 3 SPA)
 
 El diseño de tipos y formularios del Frontend (`Frontend/src/types/aspar.ts`) refleja los componentes definidos en los diagramas **C1, C2 y C3**:
