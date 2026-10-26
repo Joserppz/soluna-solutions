@@ -4,11 +4,13 @@ on:
   push:
     branches:
       - main
+      - 'Sprint*'
       - 'SCRUM-*'
       - 'feature/**'
   pull_request:
     branches:
       - main
+      - 'Sprint*'
 
 jobs:
   frontend-quality-and-build:
