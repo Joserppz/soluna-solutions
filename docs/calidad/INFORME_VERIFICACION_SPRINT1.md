@@ -75,3 +75,16 @@ Registro de las subtareas de verificación del Sprint 1: qué se probó, con qu�
 | La pantalla de pacientes no ofrece a Recepción los campos clínicos | Revisión de pantallas (SCRUM-196) | ⚠️ Los muestra; el servidor los rechaza con 403 |
 
 **Conclusión:** los datos clínicos no salen de la API sin rol clínico y consentimiento. La observación de la pantalla no expone datos, pero confunde al usuario.
+
+## SCRUM-180 — Verificar bitácora, acceso de solo lectura e integridad (SCRUM-135 · RF-17)
+
+| Caso | Prueba | Resultado |
+| :--- | :--- | :--- |
+| Solo el Administrador consulta la bitácora; el intento de otro rol queda registrado | `test_audit.py::test_solo_administrador_consulta_y_el_intento_queda_registrado`, `RouterPermisos.spec.ts`, `AuditView.spec.ts::bloquea la consulta…` | ✅ |
+| **Solo lectura:** la API únicamente expone `GET /audit` | Revisión de `app/routers/audit.py` y `docs/api/openapi.json` | ✅ |
+| **Integridad:** la base rechaza `UPDATE` y `DELETE` sobre `audit_logs` | `test_la_bitacora_no_se_puede_modificar_ni_borrar` | ✅ |
+| Las operaciones sensibles (login, pacientes, consentimiento, usuarios) generan eventos | `test_operaciones_sensibles_quedan_en_la_bitacora`, `test_login_registra_auditoria` | ✅ |
+| Filtros por categoría, severidad y actor; un filtro inválido da 422 | `test_filtros_por_categoria_severidad_y_actor`, `test_filtro_invalido_es_422`, `AuditView.spec.ts` (2 casos) | ✅ |
+| Una categoría desconocida no se puede registrar | `test_categoria_desconocida_es_rechazada_en_el_servicio` | ✅ |
+
+**Conclusión:** la bitácora es de solo lectura para la API y no se puede alterar en la base (ADR-006).
