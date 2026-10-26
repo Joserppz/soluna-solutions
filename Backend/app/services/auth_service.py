@@ -124,3 +124,45 @@ def _register_failed_attempt(
         ip_address=ip,
     )
     db.commit()
+
+
+@dataclass
+class RefreshResult:
+    access_token: str
+    expires_in: int
+
+
+def refresh(db: Session, user: User, session: UserSession, ip: str | None) -> RefreshResult:
+    now = datetime.now(UTC)
+    session.expires_at = now + timedelta(seconds=SESSION_MAX_AGE_SECONDS)
+    session.refreshed_at = now
+    session.refresh_count += 1
+    audit_service.record(
+        db,
+        actor=user.email,
+        actor_role=user.role,
+        category="AUTENTICACION",
+        severity="INFO",
+        action="Renovación de token JWT",
+        detail=f"Se renovó el token de sesión activa para {user.email}",
+        ip_address=ip,
+    )
+    db.commit()
+    return RefreshResult(
+        access_token=issue_token(user, session), expires_in=SESSION_MAX_AGE_SECONDS
+    )
+
+
+def logout(db: Session, user: User, session: UserSession, ip: str | None) -> None:
+    session.revoked_at = datetime.now(UTC)
+    audit_service.record(
+        db,
+        actor=user.email,
+        actor_role=user.role,
+        category="AUTENTICACION",
+        severity="INFO",
+        action="Cierre de sesión",
+        detail=f"Sesión finalizada correctamente por {user.email}",
+        ip_address=ip,
+    )
+    db.commit()

@@ -3,7 +3,14 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.deps import CurrentUser, client_ip, get_current_user
-from app.schemas.auth import LoginRequest, LoginResponse, UserOut, VerifyResponse
+from app.schemas.auth import (
+    LoginRequest,
+    LoginResponse,
+    MessageResponse,
+    RefreshResponse,
+    UserOut,
+    VerifyResponse,
+)
 from app.services import auth_service
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Autenticación"])
@@ -29,3 +36,15 @@ def verify(current: CurrentUser = Depends(get_current_user)):
         valid=True,
         user={"sub": user.id, "email": user.email, "name": user.name, "role": user.role},
     )
+
+
+@router.post("/refresh", response_model=RefreshResponse)
+def refresh(current: CurrentUser = Depends(get_current_user), db: Session = Depends(get_db)):
+    result = auth_service.refresh(db, current.user, current.session, current.ip)
+    return RefreshResponse(access_token=result.access_token, expires_in=result.expires_in)
+
+
+@router.post("/logout", response_model=MessageResponse)
+def logout(current: CurrentUser = Depends(get_current_user), db: Session = Depends(get_db)):
+    auth_service.logout(db, current.user, current.session, current.ip)
+    return MessageResponse(message="Sesión cerrada correctamente")

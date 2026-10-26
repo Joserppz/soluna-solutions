@@ -49,3 +49,13 @@ class LoginResponse(BaseModel):
 class VerifyResponse(BaseModel):
     valid: bool
     user: dict
+
+
+class RefreshResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"  # noqa: S105 - tipo de token OAuth2, no una contraseña
+    expires_in: int
+
+
+class MessageResponse(BaseModel):
+    message: str
