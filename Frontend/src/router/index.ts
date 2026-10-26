@@ -1,11 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '../views/LoginView.vue'
 import PatientsView from '../views/PatientsView.vue'
+import RegisterPatientView from '../views/RegisterPatientView.vue'
 import UsersView from '../views/UsersView.vue'
 import AuditView from '../views/AuditView.vue'
 import ScheduleView from '../views/ScheduleView.vue'
 import AttendanceView from '../views/AttendanceView.vue'
-import { getSession } from '../services/aspar'
+import { addAudit, getSession } from '../services/aspar'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -16,6 +17,12 @@ const router = createRouter({
       path: '/pacientes',
       name: 'pacientes',
       component: PatientsView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/pacientes/nuevo',
+      name: 'registrar-paciente',
+      component: RegisterPatientView,
       meta: { requiresAuth: true },
     },
     {
@@ -47,6 +54,14 @@ router.beforeEach((to) => {
   }
 
   if (to.meta.adminOnly && session?.role !== 'Administrador') {
+    if (session) {
+      addAudit(
+        'Intento de acceso restringido bloqueado',
+        `El rol ${session.role} (${session.email}) intentó acceder a ${to.fullPath}`,
+        'SISTEMA',
+        'WARNING',
+      )
+    }
     return { name: 'cronograma' }
   }
 
