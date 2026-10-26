@@ -2,6 +2,47 @@
 
 Esta matriz alinea los requisitos funcionales y no funcionales (**RF01–RF17** y **RNF01–RNF11**) con las pantallas implementadas en el Frontend Vue 3, los endpoints del Backend FastAPI y los casos de prueba verificados.
 
+> **Versión vigente:** la sección [Trazabilidad integral](#trazabilidad-integral-rfrnf--jira--c4--pruebas-scrum-136--scrum-181) une requisito, historia y subtareas de Jira, contenedor y componente C4, pantalla, endpoint y pruebas. Las tablas siguientes se conservan como registro de cada etapa del sprint. Los requisitos RF-11, RF-17, RNF-06 y RNF-11 se definen en la [adenda del SRS](../srs/SRS_ADENDA_SPRINT1.md).
+
+## Trazabilidad integral: RF/RNF → Jira → C4 → pruebas (SCRUM-136 / SCRUM-181)
+
+**Columnas Jira:** subtareas de Frontend (F), Backend (B) y verificación (V) de cada historia. **C4:** contenedor del C2 → componente del C3 ([diagramas vigentes](../arquitectura/C4_Y_MODELO_ER_ACTUALIZADO.md)). **E2E:** paso del [recorrido integrado](../evidencias/RECORRIDO_INTEGRADO_LOGIN_PACIENTES.md).
+**Estado:** ✅ implementado y probado · ⚠️ implementado con pendientes · ⏳ planificado para el Sprint 2 · ❔ sin verificar
+
+| Req. | Historia | Subtareas F / B / V | Contenedor → componente C4 | Pantalla | Endpoint `/api/v1` | Pruebas Frontend | Pruebas Backend | E2E | Estado |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **RF-01** | SCRUM-11 | 66 / 26, 27 / 28 | SPA → `LoginView` · API → `routers/auth`, `auth_service`, `core/security` | `LoginView.vue` | `POST /auth/login` | `LoginView.spec.ts` (validaciones, intento fallido, 423, API caída) | `test_auth_login.py`, `test_auth_credentials.py`, `test_security.py` | 1, 7, 8 | ✅ |
+| **RNF-02** | SCRUM-12 | 67 / 29 / 30 | SPA → `App.vue` · API → `core/deps` (JWT + `sessions`) | `App.vue` | `GET /auth/verify`, `POST /auth/refresh`, `POST /auth/logout` | `LoginView.spec.ts` (renovación local y con API, cierre) | `test_sessions.py`, `test_security.py` | 9 | ✅ · `App.vue` sin prueba de componente |
+| **RF-02** | SCRUM-13 | 68 / 31, 32 / 69 | SPA → `PatientsView`, `RegisterPatientView` · API → `routers/patients`, `patient_service` | `PatientsView.vue`, `RegisterPatientView.vue` | `GET/POST /patients`, `GET/PATCH/DELETE /patients/{id}` | `PatientsView.spec.ts`, `PantallasRequisitos.spec.ts` | `test_patients_api.py`, `test_patient_model.py` | 2, 3, 4 | ⚠️ Falta pantalla para editar la ficha |
+| **RNF-06** | SCRUM-123 | 138 / 137 / 139 | API → `patient_service.can_view_clinical_record`, `document_service`, `adapters/storage` · BD → `CHECK` de consentimiento | `PatientsView.vue`, `AttendanceView.vue` | `GET /patients*`, `/patients/{id}/documents*` | `PatientsView.spec.ts`, `PantallasRequisitos.spec.ts`, `RouterPermisos.spec.ts` | `test_patient_privacy.py`, `test_storage_adapter.py` | 5, 6 | ⚠️ La pantalla muestra campos clínicos a Recepción |
+| **RF-11** | SCRUM-129 | 161 / 160 / 162 | SPA → `UsersView`, guardia `adminOnly` · API → `routers/users`, `user_service`, `require_roles` | `UsersView.vue` | `GET/POST /users`, `PATCH /users/{id}`, `POST /users/{id}/reset-password` | `UsersView.spec.ts`, `RouterPermisos.spec.ts` | `test_users_api.py` | — | ⚠️ La pantalla no muestra la contraseña temporal |
+| **RF-17** | SCRUM-135 | 179 / 178 / 180 | SPA → `AuditView` · API → `routers/audit`, `audit_service` · BD → trigger de inmutabilidad | `AuditView.vue` | `GET /audit` | `AuditView.spec.ts`, `RouterPermisos.spec.ts` | `test_audit.py` | — | ✅ |
+| **RNF-11** | SCRUM-128 | 153 / 152 / 154 | CI → `ci-frontend.yml`, `ci-backend.yml` | — | — | ESLint, Prettier, `vue-tsc` | Ruff, `test_migrations.py`, `test_openapi.py`, `test_contract_frontend.py` | — | ✅ |
+| **RNF-05** | SCRUM-61 | 96 / 95 / 97 | CI → cobertura con mínimo de 70% | — | — | Vitest: 79,47% de líneas | pytest: 96,94% | — | ✅ |
+| **RF-03 / RF-09** | SCRUM-136 | 183 / — / — | SPA → `InventoryView` · BD → `inventory_items` | `InventoryView.vue` | ⏳ | `PantallasRequisitos.spec.ts` (registro, filtro, CSV) | `test_migrations.py` (esquema) | — | ⏳ Sin «dar de baja» ni PDF; datos solo locales |
+| **RF-04 / RF-10** | SCRUM-136 | 183 / — / — | SPA → `ScheduleView` · BD → `schedules` | `ScheduleView.vue` (`/`) | ⏳ | `PantallasRequisitos.spec.ts` (portal) | `test_migrations.py` | — | ⏳ Cronograma sin edición |
+| **RF-05** | SCRUM-136 | 183 / — / — | SPA → `ScheduleView` · API → `adapters/storage` · BD → `media_assets` | `ScheduleView.vue` | ⏳ | — | `test_storage_adapter.py` | — | ⏳ Carga visible al público |
+| **RF-06** | SCRUM-136 | 183 / — / — | SPA → `ScheduleView` · BD → `donations` | `ScheduleView.vue` | ⏳ | `PantallasRequisitos.spec.ts` (donación QR) | `test_migrations.py` | — | ⏳ Libélula simulada |
+| **RF-07 / RF-08** | SCRUM-136 | 183 / — / — | SPA → `ScheduleView` · BD → `institutional_info` | `ScheduleView.vue` | ⏳ | `PantallasRequisitos.spec.ts` (redes y requisitos) | `test_migrations.py` | — | ⏳ Contenido sin edición |
+| **RF-12 a RF-16** | Por confirmar en Jira | — | SPA → `AttendanceView` · BD → `attendance` | `AttendanceView.vue` | ⏳ | `PantallasRequisitos.spec.ts` (bloqueo RNF-06) | `test_migrations.py` | — | ❔ Definición pendiente en el SRS |
+| **RNF-01, RNF-03, RNF-04** | — | — | — | — | — | — | — | — | ❔ Sin verificar (ver adenda §3) |
+
+### Tareas técnicas del Sprint 1 y su evidencia
+
+| Tarea | Subtareas F / B / V | Evidencia |
+| :--- | :--- | :--- |
+| SCRUM-57 Aceptación y evidencias | 85 / 84 / 83 | `docs/evidencias/`, `docs/calidad/DEFINICION_DE_HECHO_Y_ESTADO_SPRINT1.md` |
+| SCRUM-58 Integración login y pacientes | 87 / 86 / 88 | `docs/api/CONTRATO_API_LOGIN_PACIENTES.md`, `docs/evidencias/RECORRIDO_INTEGRADO_LOGIN_PACIENTES.md` |
+| SCRUM-59 README y `.env.example` | 91 / 90 / 89 | `README.md`, `Frontend/README.md`, `Backend/README.md`, `*/.env.example` |
+| SCRUM-61 CI/CD | 96 / 95 / 97 | `.github/workflows/`, `docs/evidencias/EVIDENCIAS_CI_Y_COBERTURA_SPRINT1.md` |
+| SCRUM-64 C4, datos y migraciones | 105 / 104 / 106 | `docs/arquitectura/C4_Y_MODELO_ER_ACTUALIZADO.md`, `docs/arquitectura/adr/`, `Backend/migrations/` |
+| SCRUM-65 Flujo de Git | 108 / 107 / 109 | `docs/git/FLUJO_GIT_Y_PULL_REQUESTS.md` |
+| SCRUM-136 Trazabilidad | 183 / 182 / 181 | Esta matriz |
+| SCRUM-190 BPMN 2.0 | 194 / 193 / 192 | `docs/bpmn/` |
+| SCRUM-191 Wireframes | 195 / 197 / 196 | `docs/wireframes/WIREFRAMES_Y_FLUJOS_ASPAR.md` |
+
+## Registro inicial del Frontend (SCRUM-136 / SCRUM-183)
+
 | ID Req. | Historia / Subtarea Jira | Descripción del Requisito | Pantalla / Componente Frontend | Endpoint Backend / Servicio | Estado |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **RF-01** | SCRUM-11 / SCRUM-66 | Inicio de sesión administrativo con validaciones y bloqueo por intentos fallidos | `src/views/LoginView.vue` | `POST /api/v1/auth/login` (`signInWithApi`) | Implementado y probado |
