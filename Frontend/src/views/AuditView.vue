@@ -56,7 +56,9 @@ onMounted(async () => {
 
 <template>
   <section class="page-heading">
-    <span class="eyebrow">Solo administradores · RF-17 (SCRUM-135 / SCRUM-179)</span>
+    <span class="eyebrow"
+      >Solo administradores · RF-17 (SCRUM-135 / SCRUM-179)</span
+    >
     <h1>Bitácora de auditoría de operaciones sensibles</h1>
     <p>
       Supervisa inicios de sesión, cambios de consentimiento informado, altas de

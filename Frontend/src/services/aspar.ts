@@ -365,11 +365,7 @@ export function signIn(email: string, password: string): boolean {
     (item) => item.email.toLowerCase() === normalizedEmail,
   )
 
-  if (
-    !user ||
-    !user.active ||
-    DEMO_PASSWORDS[normalizedEmail] !== password
-  ) {
+  if (!user || !user.active || DEMO_PASSWORDS[normalizedEmail] !== password) {
     addAudit(
       'Intento fallido de inicio de sesión',
       `Credenciales inválidas o cuenta inactiva para ${normalizedEmail || 'correo vacío'}`,
@@ -777,10 +773,7 @@ export function getAttendance(): AttendanceEntry[] {
   return readStorage(ATTENDANCE_STORAGE_KEY, getDefaultAttendance())
 }
 
-export function updateAttendance(
-  id: string,
-  status: AttendanceStatus,
-): void {
+export function updateAttendance(id: string, status: AttendanceStatus): void {
   const updatedEntries = getAttendance().map((entry) =>
     entry.id === id ? { ...entry, status } : entry,
   )

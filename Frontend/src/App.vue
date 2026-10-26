@@ -111,7 +111,11 @@ onUnmounted(() => {
         <RouterLink v-if="isAdmin" to="/usuarios">Usuarios</RouterLink>
         <RouterLink v-if="isAdmin" to="/bitacora">Bitácora</RouterLink>
 
-        <span v-if="session" class="session-badge" title="Tiempo restante de sesión activa (RNF-02)">
+        <span
+          v-if="session"
+          class="session-badge"
+          title="Tiempo restante de sesión activa (RNF-02)"
+        >
           <strong>{{ session.role }}</strong> · {{ formattedRemaining }}
         </span>
 

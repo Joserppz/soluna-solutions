@@ -46,7 +46,8 @@ function submitItem() {
 
 function exportReport(format: 'CSV' | 'PDF') {
   if (format === 'CSV') {
-    const header = 'Codigo,Material,Categoria,Cantidad,Origen,Estado,Ubicacion\n'
+    const header =
+      'Codigo,Material,Categoria,Cantidad,Origen,Estado,Ubicacion\n'
     const rows = filteredItems.value
       .map(
         (i) =>

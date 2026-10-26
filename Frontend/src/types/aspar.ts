@@ -6,11 +6,7 @@
  */
 
 export type UserRole =
-  | 'Administrador'
-  | 'Coordinador'
-  | 'Profesional'
-  | 'Recepción'
-  | 'Voluntario'
+  'Administrador' | 'Coordinador' | 'Profesional' | 'Recepción' | 'Voluntario'
 
 export type AccessStatus = 'Activo' | 'Pendiente' | 'Revocado'
 
@@ -23,7 +19,8 @@ export type ParkinsonStage =
   | 'Otro trastorno del movimiento'
 
 export type InventoryOrigin = 'Propio ASPAR' | 'Préstamo Alcaldía' | 'Donación'
-export type InventoryCondition = 'Óptimo' | 'Bueno' | 'En mantenimiento' | 'Baja'
+export type InventoryCondition =
+  'Óptimo' | 'Bueno' | 'En mantenimiento' | 'Baja'
 
 export type AuditSeverity = 'INFO' | 'WARNING' | 'CRITICAL'
 
@@ -126,7 +123,12 @@ export interface ScheduleItem {
   date: string
   time: string
   title: string
-  category: 'Fisioterapia' | 'Arteterapia' | 'Fonoaudiología' | 'Psicología' | 'Bienestar'
+  category:
+    | 'Fisioterapia'
+    | 'Arteterapia'
+    | 'Fonoaudiología'
+    | 'Psicología'
+    | 'Bienestar'
   professional: string
   location: string
   spots: number

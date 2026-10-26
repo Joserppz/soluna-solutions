@@ -172,7 +172,9 @@ function submitMedia() {
   <section class="section-block">
     <div class="section-title">
       <div>
-        <span class="eyebrow">Almacenamiento Cloud S3 / Cloudinary · RF-05</span>
+        <span class="eyebrow"
+          >Almacenamiento Cloud S3 / Cloudinary · RF-05</span
+        >
         <h2>Galería Multimedia de Jornadas Sabatinas</h2>
       </div>
       <span class="count-pill">{{ mediaAssets.length }} archivos en Cloud</span>
@@ -227,8 +229,8 @@ function submitMedia() {
         <h3>Código QR Oficial ASPAR</h3>
         <p>
           Escanea el QR institucional o utiliza la pasarela
-          <strong>Libélula</strong> para apoyar la compra de balones terapéuticos,
-          colchonetas y el fondo pro-sede propia de ASPAR.
+          <strong>Libélula</strong> para apoyar la compra de balones
+          terapéuticos, colchonetas y el fondo pro-sede propia de ASPAR.
         </p>
         <div class="qr-box" aria-label="Código QR Bancario Oficial ASPAR">
           <strong>QR BANCO ASPAR · CUENTA OFICIAL</strong>
@@ -236,7 +238,10 @@ function submitMedia() {
         </div>
         <h4>Requisitos de afiliación (RF-07):</h4>
         <ul class="req-list">
-          <li v-for="req in institutionalInfo.enrollmentRequirements" :key="req">
+          <li
+            v-for="req in institutionalInfo.enrollmentRequirements"
+            :key="req"
+          >
             {{ req }}
           </li>
         </ul>

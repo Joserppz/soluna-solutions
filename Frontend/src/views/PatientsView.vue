@@ -100,9 +100,7 @@ function submitPatient() {
     })
   } catch (cause) {
     error.value =
-      cause instanceof Error
-        ? cause.message
-        : 'No se pudo guardar el paciente.'
+      cause instanceof Error ? cause.message : 'No se pudo guardar el paciente.'
   }
 }
 
@@ -134,7 +132,9 @@ onMounted(async () => {
 
 <template>
   <section class="page-heading">
-    <span class="eyebrow">Gestión de pacientes y anamnesis · RF-02 / RNF-06</span>
+    <span class="eyebrow"
+      >Gestión de pacientes y anamnesis · RF-02 / RNF-06</span
+    >
     <h1>Fichas de pacientes y anamnesis digital</h1>
     <p>
       Registra pacientes, datos de familiares/cuidadores, evaluaciones clínicas
@@ -188,7 +188,9 @@ onMounted(async () => {
         </div>
 
         <div class="field">
-          <label for="patient-emergency">Contacto de emergencia / Cuidador</label>
+          <label for="patient-emergency"
+            >Contacto de emergencia / Cuidador</label
+          >
           <input
             id="patient-emergency"
             v-model.trim="form.emergencyContact"
@@ -207,7 +209,9 @@ onMounted(async () => {
         </div>
 
         <div class="field">
-          <label for="patient-diagnosis">Diagnóstico neurológico (Anamnesis)</label>
+          <label for="patient-diagnosis"
+            >Diagnóstico neurológico (Anamnesis)</label
+          >
           <input
             id="patient-diagnosis"
             v-model.trim="form.diagnosis"
@@ -374,10 +378,7 @@ onMounted(async () => {
           </button>
         </div>
 
-        <div
-          v-if="selectedPatientId === patient.id"
-          class="anamnesis-panel"
-        >
+        <div v-if="selectedPatientId === patient.id" class="anamnesis-panel">
           <template v-if="canViewClinicalRecord(patient)">
             <div class="anamnesis-grid">
               <div>

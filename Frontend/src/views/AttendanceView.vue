@@ -75,11 +75,7 @@ function formatDate(date: string): string {
     </div>
 
     <div v-if="entries.length > 0" class="attendance-list">
-      <article
-        v-for="entry in entries"
-        :key="entry.id"
-        class="attendance-row"
-      >
+      <article v-for="entry in entries" :key="entry.id" class="attendance-row">
         <div class="attendance-person">
           <span class="avatar">{{ entry.patientName.charAt(0) }}</span>
 
@@ -108,10 +104,7 @@ function formatDate(date: string): string {
         </div>
 
         <div class="attendance-actions">
-          <span
-            class="status"
-            :class="`status-${entry.status.toLowerCase()}`"
-          >
+          <span class="status" :class="`status-${entry.status.toLowerCase()}`">
             {{ entry.status }}
           </span>
 
@@ -134,8 +127,6 @@ function formatDate(date: string): string {
       </article>
     </div>
 
-    <div v-else class="empty-state">
-      No hay registros de asistencia.
-    </div>
+    <div v-else class="empty-state">No hay registros de asistencia.</div>
   </section>
 </template>

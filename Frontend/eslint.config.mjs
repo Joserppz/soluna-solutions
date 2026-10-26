@@ -10,8 +10,19 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   ...vue.configs['flat/recommended'],
   {
+    files: ['**/*.vue'],
     languageOptions: {
-      globals: globals.browser,
+      parserOptions: {
+        parser: tseslint.parser,
+      },
+    },
+  },
+  {
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
     },
     rules: {
       'vue/multi-word-component-names': 'off',

@@ -68,7 +68,11 @@ onMounted(async () => {
     </p>
   </section>
 
-  <form class="card form-card wide-card" novalidate @submit.prevent="submitUser">
+  <form
+    class="card form-card wide-card"
+    novalidate
+    @submit.prevent="submitUser"
+  >
     <h2>Crear usuario</h2>
 
     <div class="form-grid">
@@ -96,7 +100,11 @@ onMounted(async () => {
       <div class="field">
         <label for="user-role">Rol</label>
         <select id="user-role" v-model="role">
-          <option v-for="itemRole in USER_ROLES" :key="itemRole" :value="itemRole">
+          <option
+            v-for="itemRole in USER_ROLES"
+            :key="itemRole"
+            :value="itemRole"
+          >
             {{ itemRole }}
           </option>
         </select>
@@ -131,7 +139,11 @@ onMounted(async () => {
 
       <select v-model="roleFilter" aria-label="Filtrar usuarios por rol">
         <option value="Todos">Todos los roles</option>
-        <option v-for="itemRole in USER_ROLES" :key="itemRole" :value="itemRole">
+        <option
+          v-for="itemRole in USER_ROLES"
+          :key="itemRole"
+          :value="itemRole"
+        >
           {{ itemRole }}
         </option>
       </select>
@@ -156,7 +168,11 @@ onMounted(async () => {
             )
           "
         >
-          <option v-for="itemRole in USER_ROLES" :key="itemRole" :value="itemRole">
+          <option
+            v-for="itemRole in USER_ROLES"
+            :key="itemRole"
+            :value="itemRole"
+          >
             {{ itemRole }}
           </option>
         </select>
