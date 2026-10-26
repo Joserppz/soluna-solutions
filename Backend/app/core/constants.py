@@ -13,3 +13,14 @@ AUDIT_CATEGORIES = (
     "SISTEMA",
 )
 AUDIT_SEVERITIES = ("INFO", "WARNING", "CRITICAL")
+
+ACCESS_STATUSES = ("Activo", "Pendiente", "Revocado")
+
+PARKINSON_STAGES = (
+    "Estadio I (Leve unilateral)",
+    "Estadio II (Bilateral sin alteración del equilibrio)",
+    "Estadio III (Moderado con inestabilidad postural)",
+    "Estadio IV (Incapacidad grave pero camina con ayuda)",
+    "Estadio V (Dependencia completa)",
+    "Otro trastorno del movimiento",
+)
