@@ -55,6 +55,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 | `npm run lint` | `eslint .` | Ejecuta el análisis estático con ESLint + `typescript-eslint` + `eslint-plugin-vue` |
 | `npm run format` | `prettier --write .` | Formatea el código fuente siguiendo `.prettierrc.json` |
 | `npm run test:run` | `vitest run` | Ejecuta la suite de pruebas de componentes y servicios en `src/views/__test__/` |
+| `npm run test:coverage` | `vitest run --coverage` | Igual que `test:run`, mide la cobertura y falla si baja del 70% (RNF-05 / SCRUM-97) |
 
 ## 5. Cuentas de Prueba por Rol (RF-01 / RF-11)
 

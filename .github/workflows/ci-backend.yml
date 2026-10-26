@@ -73,12 +73,23 @@ jobs:
           DATABASE_URL="$MIGRATIONS_DATABASE_URL" JWT_SECRET="ci-secreto-solo-para-migraciones-aspar" python -m scripts.migrate
           DATABASE_URL="$MIGRATIONS_DATABASE_URL" JWT_SECRET="ci-secreto-solo-para-migraciones-aspar" python -m scripts.migrate --status
 
-      - name: Ejecutar pruebas unitarias y de API con pytest
-        run: pytest --junitxml=pytest-report.xml
+      - name: Ejecutar pruebas con pytest y medir cobertura (SCRUM-97)
+        run: >-
+          pytest --junitxml=pytest-report.xml
+          --cov=app --cov-report=term-missing --cov-report=xml --cov-report=markdown-append:cobertura.md
+          --cov-fail-under=70
+
+      - name: Registrar cobertura en el resumen del pipeline (SCRUM-97)
+        if: always()
+        run: |
+          echo "### Cobertura del Backend (mínimo 70%)" >> "$GITHUB_STEP_SUMMARY"
+          cat cobertura.md >> "$GITHUB_STEP_SUMMARY" || true
 
       - name: Publicar reporte de pruebas
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: backend-pytest-report
-          path: Backend/pytest-report.xml
+          path: |
+            Backend/pytest-report.xml
+            Backend/coverage.xml

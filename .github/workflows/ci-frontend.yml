@@ -45,8 +45,25 @@ jobs:
       - name: Verificar formato de código con Prettier
         run: npx prettier --check src/ eslint.config.mjs vite.config.ts vitest.config.ts
 
-      - name: Ejecutar pruebas unitarias y de componentes con Vitest (SCRUM-153)
-        run: npm run test:run
+      - name: Ejecutar pruebas con Vitest y medir cobertura (SCRUM-153 / SCRUM-97)
+        run: npm run test:coverage
+
+      - name: Registrar cobertura en el resumen del pipeline (SCRUM-97)
+        if: always()
+        run: |
+          node -e "
+          const t = require('./coverage/coverage-summary.json').total;
+          const row = (k, n) => '| ' + n + ' | ' + t[k].pct + '% | ' + t[k].covered + '/' + t[k].total + ' |';
+          console.log(['### Cobertura del Frontend (mínimo 70%)', '', '| Métrica | Cobertura | Cubierto |', '| :--- | ---: | ---: |',
+            row('lines', 'Líneas'), row('statements', 'Sentencias'), row('functions', 'Funciones'), row('branches', 'Ramas')].join('\\n'));
+          " >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publicar reporte de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: Frontend/coverage/
 
       - name: Compilar aplicación y verificar tipos TypeScript (SCRUM-96)
         run: npm run build
