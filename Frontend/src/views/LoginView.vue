@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { signIn, signInWithApi } from '../services/aspar'
+import { signInWithApi } from '../services/aspar'
 import { getApiBaseUrl } from '../services/api'
 
 const email = ref('')
@@ -14,6 +14,8 @@ const lockedUntil = ref(0)
 const router = useRouter()
 const route = useRoute()
 const apiBaseUrl = getApiBaseUrl()
+// Las cuentas de prueba solo se muestran en desarrollo, nunca en el build de producción
+const showDemoAccounts = import.meta.env.DEV
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -66,15 +68,11 @@ async function submitLogin() {
 
   isSubmitting.value = true
   try {
-    let authenticated = signIn(email.value, password.value)
-
-    if (!authenticated) {
-      const apiResult = await signInWithApi(email.value, password.value)
-      authenticated = apiResult.ok
-    } else {
-      // Sincroniza token JWT con el backend si está en ejecución
-      signInWithApi(email.value, password.value).catch(() => undefined)
-    }
+    // Intenta el Backend y, si no responde, usa el modo local (un solo registro por intento)
+    const { ok: authenticated } = await signInWithApi(
+      email.value,
+      password.value,
+    )
 
     if (!authenticated) {
       failedAttempts.value += 1
@@ -163,7 +161,7 @@ async function submitLogin() {
         {{ isSubmitting ? 'Verificando credenciales...' : 'Ingresar' }}
       </button>
 
-      <div class="demo-hint">
+      <div v-if="showDemoAccounts" class="demo-hint">
         <strong>Cuentas de verificación por rol (Jira / SRS):</strong>
         <br />
         Admin (Greta): <strong>admin@aspar.org</strong> /

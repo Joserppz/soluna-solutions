@@ -79,6 +79,8 @@ export interface Session {
   token: string
   expiresAt: number
   lastActivityAt: number
+  // 'api' = token firmado por el Backend; 'local' = modo demo sin Backend
+  source?: 'api' | 'local'
 }
 
 export interface LoginRequestDto {
@@ -92,6 +94,12 @@ export interface LoginResponseDto {
   expires_in: number
   idle_timeout: number
   user: User
+}
+
+export interface RefreshResponseDto {
+  access_token: string
+  token_type: 'bearer'
+  expires_in: number
 }
 
 export interface AuditEvent {

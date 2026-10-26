@@ -8,6 +8,7 @@ import type {
   LoginRequestDto,
   LoginResponseDto,
   Patient,
+  RefreshResponseDto,
   Session,
   User,
 } from '../types/aspar'
@@ -84,6 +85,12 @@ export const asparApiClient = {
       '/auth/verify',
       { method: 'GET' },
     )
+  },
+
+  refresh(): Promise<RefreshResponseDto> {
+    return apiRequest<RefreshResponseDto>('/auth/refresh', {
+      method: 'POST',
+    })
   },
 
   logout(): Promise<{ message: string }> {

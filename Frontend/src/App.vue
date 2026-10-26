@@ -10,7 +10,6 @@ import {
   touchSession,
   type Session,
 } from './services/aspar'
-import { asparApiClient } from './services/api'
 
 const route = useRoute()
 const router = useRouter()
@@ -58,13 +57,15 @@ function registerActivity() {
   syncSession()
 }
 
-function handleRenewSession() {
-  const renewed = renewSession()
+async function handleRenewSession() {
+  const renewed = await renewSession()
   if (renewed) {
     session.value = renewed
     sessionAlert.value = ''
     syncSession()
-    asparApiClient.verifySession().catch(() => undefined)
+  } else {
+    sessionAlert.value =
+      'No se pudo renovar la sesión con el servidor. Guarda tu trabajo y vuelve a iniciar sesión.'
   }
 }
 

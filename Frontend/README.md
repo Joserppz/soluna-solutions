@@ -40,8 +40,11 @@ npm run dev
 ```bash
 # En otra terminal, desde la carpeta Backend/
 cd Backend
+export JWT_SECRET="$(python -c 'import secrets; print(secrets.token_urlsafe(32))')"
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
+
+> El Backend lee `JWT_SECRET` de la variable de entorno (ver `Backend/.env.example`). Si no se define, usa un valor solo apto para desarrollo local.
 
 ## 4. Scripts de Calidad, Pruebas y Construcción (SCRUM-153 / SCRUM-96)
 
@@ -54,6 +57,8 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 | `npm run test:run` | `vitest run` | Ejecuta la suite de pruebas de componentes y servicios en `src/views/__test__/` |
 
 ## 5. Cuentas de Prueba por Rol (RF-01 / RF-11)
+
+> Estas cuentas solo se muestran en la pantalla de login en modo desarrollo (`npm run dev`); el build de producción las oculta.
 
 | Rol Jira / ASPAR | Correo Electrónico | Contraseña | Permisos Clave |
 | :--- | :--- | :--- | :--- |

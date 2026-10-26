@@ -12,6 +12,7 @@ import base64
 import hashlib
 import hmac
 import json
+import os
 import sqlite3
 import time
 import uuid
@@ -24,9 +25,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 DB_PATH = Path(__file__).resolve().parent.parent / "aspar.db"
-JWT_SECRET = "aspar-soluna-secret-key-2026-ucb"
-SESSION_MAX_AGE_SECONDS = 30 * 60
-SESSION_IDLE_LIMIT_SECONDS = 15 * 60
+# El secreto se toma del entorno; el valor por defecto solo sirve para desarrollo local
+JWT_SECRET = os.environ.get("JWT_SECRET", "dev-only-cambiar-en-produccion")
+SESSION_MAX_AGE_SECONDS = int(os.environ.get("SESSION_MAX_AGE_SECONDS", 30 * 60))
+SESSION_IDLE_LIMIT_SECONDS = int(os.environ.get("SESSION_IDLE_LIMIT_SECONDS", 15 * 60))
 
 app = FastAPI(
     title="ASPAR API - Soluna Solutions",
@@ -382,6 +384,32 @@ def login(payload: LoginPayload) -> Dict[str, Any]:
 @app.get("/api/v1/auth/verify")
 def verify_session(user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
     return {"valid": True, "user": user}
+
+
+@app.post("/api/v1/auth/refresh")
+def refresh_session(user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
+    now_ms = int(time.time() * 1000)
+    token_payload = {
+        "sub": user["sub"],
+        "email": user["email"],
+        "name": user.get("name"),
+        "role": user["role"],
+        "iat": now_ms,
+        "exp": now_ms + SESSION_MAX_AGE_SECONDS * 1000,
+    }
+    log_audit_db(
+        actor=user["email"],
+        actor_role=user["role"],
+        category="AUTENTICACION",
+        severity="INFO",
+        action="Renovación de token JWT",
+        detail=f"Se renovó el token de sesión activa para {user['email']}",
+    )
+    return {
+        "access_token": create_jwt_token(token_payload),
+        "token_type": "bearer",
+        "expires_in": SESSION_MAX_AGE_SECONDS,
+    }
 
 
 @app.post("/api/v1/auth/logout")

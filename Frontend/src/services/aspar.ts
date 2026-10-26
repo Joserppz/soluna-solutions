@@ -393,6 +393,7 @@ export function signIn(email: string, password: string): boolean {
     token,
     expiresAt,
     lastActivityAt: now,
+    source: 'local',
   }
 
   writeStorage('aspar_session', session)
@@ -420,6 +421,7 @@ export async function signInWithApi(
       token: response.access_token,
       expiresAt: now + response.expires_in * 1000,
       lastActivityAt: now,
+      source: 'api',
     }
     writeStorage('aspar_session', session)
     addAudit(
@@ -430,6 +432,8 @@ export async function signInWithApi(
     )
     return { ok: true }
   } catch {
+    // Backend no disponible o credenciales rechazadas: se intenta el modo local
+    // una sola vez para no duplicar el registro del intento en la bitácora.
     const localSuccess = signIn(email, password)
     if (!localSuccess) {
       return {
@@ -452,19 +456,40 @@ export function touchSession(): void {
   })
 }
 
-export function renewSession(): Session | null {
+export async function renewSession(): Promise<Session | null> {
   const session = getSession()
   if (!session) return null
 
   const now = Date.now()
-  const expiresAt = now + SESSION_MAX_AGE
-  const token = encodeJwtToken({
-    sub: session.userId,
-    email: session.email,
-    role: session.role,
-    iat: now,
-    exp: expiresAt,
-  })
+  let token: string
+  let expiresAt: number
+
+  if (session.source === 'api') {
+    // Un token del Backend solo puede renovarlo el Backend; un token local
+    // sería rechazado por la API en la siguiente petición.
+    try {
+      const response = await asparApiClient.refresh()
+      token = response.access_token
+      expiresAt = now + response.expires_in * 1000
+    } catch {
+      addAudit(
+        'Renovación de token rechazada',
+        `El Backend no renovó la sesión de ${session.email}`,
+        'AUTENTICACION',
+        'WARNING',
+      )
+      return null
+    }
+  } else {
+    expiresAt = now + SESSION_MAX_AGE
+    token = encodeJwtToken({
+      sub: session.userId,
+      email: session.email,
+      role: session.role,
+      iat: now,
+      exp: expiresAt,
+    })
+  }
 
   const updated: Session = {
     ...session,

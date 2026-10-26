@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import LoginView from '../LoginView.vue'
 import PatientsView from '../PatientsView.vue'
@@ -36,10 +36,16 @@ function createTestRouter() {
   })
 }
 
+// Sin Backend en las pruebas: toda llamada a la API falla y se usa el modo local
+function stubOfflineApi() {
+  vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')))
+}
+
 describe('SCRUM-153 / SCRUM-66: LoginView y validaciones de autenticación', () => {
   beforeEach(() => {
     localStorage.clear()
-    vi.restoreAllMocks()
+    vi.unstubAllGlobals()
+    stubOfflineApi()
   })
 
   it('muestra mensaje de validación si el formulario se envía vacío', async () => {
@@ -87,26 +93,53 @@ describe('SCRUM-153 / SCRUM-66: LoginView y validaciones de autenticación', () 
     await wrapper.find('#email').setValue('admin@aspar.org')
     await wrapper.find('#password').setValue('Admin2026!')
     await wrapper.find('form').trigger('submit.prevent')
+    await flushPromises()
 
     const session = getSession()
     expect(session).not.toBeNull()
     expect(session?.email).toBe('admin@aspar.org')
     expect(session?.role).toBe('Administrador')
     expect(session?.token.split('.')).toHaveLength(3)
+    expect(session?.source).toBe('local')
+  })
+
+  it('registra un solo evento en la bitácora por cada intento fallido', async () => {
+    const router = createTestRouter()
+    await router.push('/login')
+    await router.isReady()
+
+    const wrapper = mount(LoginView, {
+      global: { plugins: [router] },
+    })
+
+    await wrapper.find('#email').setValue('admin@aspar.org')
+    await wrapper.find('#password').setValue('ClaveIncorrecta1')
+    await wrapper.find('form').trigger('submit.prevent')
+    await flushPromises()
+
+    const failedAttempts = getAuditEvents().filter(
+      (event) => event.action === 'Intento fallido de inicio de sesión',
+    )
+    expect(failedAttempts).toHaveLength(1)
+    expect(wrapper.find('[role="alert"]').text()).toContain(
+      'Correo o contraseña incorrectos',
+    )
   })
 })
 
 describe('SCRUM-67: Sesiones JWT, expiración y cierre de sesión', () => {
   beforeEach(() => {
     localStorage.clear()
+    vi.unstubAllGlobals()
+    stubOfflineApi()
   })
 
-  it('permite renovar el token de sesión activa y cerrar sesión limpiando el almacenamiento', () => {
+  it('permite renovar el token de sesión activa y cerrar sesión limpiando el almacenamiento', async () => {
     expect(signIn('admin@aspar.org', 'Admin2026!')).toBe(true)
     const initialSession = getSession()
     expect(initialSession).not.toBeNull()
 
-    const renewed = renewSession()
+    const renewed = await renewSession()
     expect(renewed).not.toBeNull()
     expect(renewed?.expiresAt).toBeGreaterThanOrEqual(
       initialSession?.expiresAt ?? 0,
@@ -114,6 +147,48 @@ describe('SCRUM-67: Sesiones JWT, expiración y cierre de sesión', () => {
 
     signOut('Prueba unitaria')
     expect(getSession()).toBeNull()
+  })
+
+  it('renueva una sesión del Backend pidiendo un nuevo token a la API', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          access_token: 'h.p.firma-backend',
+          token_type: 'bearer',
+          expires_in: 1800,
+        }),
+      }),
+    )
+    signIn('admin@aspar.org', 'Admin2026!')
+    const current = getSession()!
+    localStorage.setItem(
+      'aspar_session',
+      JSON.stringify({ ...current, source: 'api' }),
+    )
+
+    const renewed = await renewSession()
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/auth/refresh'),
+      expect.objectContaining({ method: 'POST' }),
+    )
+    expect(renewed?.token).toBe('h.p.firma-backend')
+  })
+
+  it('no genera un token local si el Backend rechaza la renovación', async () => {
+    signIn('admin@aspar.org', 'Admin2026!')
+    const current = getSession()!
+    localStorage.setItem(
+      'aspar_session',
+      JSON.stringify({ ...current, source: 'api' }),
+    )
+
+    const renewed = await renewSession()
+
+    expect(renewed).toBeNull()
+    expect(getSession()?.token).toBe(current.token)
   })
 })
 
