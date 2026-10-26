@@ -1,0 +1,70 @@
+name: ASPAR CI/CD — Frontend Lint, Tests & Build (SCRUM-61 / SCRUM-96)
+
+on:
+  push:
+    branches:
+      - main
+      - 'SCRUM-*'
+      - 'feature/**'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  frontend-quality-and-build:
+    name: Validar ESLint, Prettier, TypeScript, Vitest y Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Frontend
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 22 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: Frontend/package-lock.json
+
+      - name: Instalar dependencias del Frontend
+        run: npm ci
+
+      - name: Preparar archivo .env desde .env.example
+        run: cp .env.example .env
+
+      - name: Ejecutar análisis estático con ESLint (SCRUM-153)
+        run: npm run lint
+
+      - name: Verificar formato de código con Prettier
+        run: npx prettier --check src/ eslint.config.mjs vite.config.ts vitest.config.ts
+
+      - name: Ejecutar pruebas unitarias y de componentes con Vitest (SCRUM-153)
+        run: npm run test:run
+
+      - name: Compilar aplicación y verificar tipos TypeScript (SCRUM-96)
+        run: npm run build
+
+  backend-api-smoke-test:
+    name: Validar API Backend FastAPI (SCRUM-87)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Backend
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar FastAPI y Uvicorn para smoke test
+        run: pip install fastapi uvicorn pydantic
+
+      - name: Verificar inicialización de base de datos y sintaxis de API
+        run: python -c "import app.main as m; res = m.health_check(); assert res['status'] == 'ok'"
