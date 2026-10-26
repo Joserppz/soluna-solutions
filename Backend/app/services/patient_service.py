@@ -7,7 +7,12 @@ from datetime import UTC, date, datetime
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.constants import ACCESS_STATUSES, PARKINSON_STAGES
+from app.core.constants import (
+    ACCESS_STATUSES,
+    CLINICAL_ONLY_COLUMNS,
+    CLINICAL_ROLES,
+    PARKINSON_STAGES,
+)
 from app.core.deps import CurrentUser
 from app.models import Patient
 from app.repositories import patient_repository
@@ -18,6 +23,34 @@ CI_PATTERN = re.compile(r"^\d{5,10}(-[0-9A-Za-z]{1,3})?$")
 PHONE_PATTERN = re.compile(r"^\d{7,12}$")
 DUPLICATE_CI = "Ya existe un paciente registrado con esa Cédula de Identidad."
 NOT_FOUND = "Paciente no encontrado."
+
+
+CLINICAL_DATA_FORBIDDEN = (
+    "Solo el personal clínico (Administrador, Coordinador, Profesional) puede registrar "
+    "síntomas, evaluaciones y medicación (RNF-06)."
+)
+
+
+def can_view_clinical_record(role: str, patient: Patient) -> bool:
+    """Misma regla que canViewClinicalRecord() del frontend, aplicada en el servidor."""
+    return role in CLINICAL_ROLES and patient.consent and patient.access_status == "Activo"
+
+
+def _forbid_clinical_fields(db: Session, current: CurrentUser, columns: set[str]) -> None:
+    if current.user.role in CLINICAL_ROLES or not columns & set(CLINICAL_ONLY_COLUMNS):
+        return
+    audit_service.record(
+        db,
+        actor=current.user.email,
+        actor_role=current.user.role,
+        category="PACIENTES",
+        severity="WARNING",
+        action="Intento de registrar datos clínicos sin permiso",
+        detail=f"El rol {current.user.role} intentó editar evaluaciones clínicas",
+        ip_address=current.ip,
+    )
+    db.commit()
+    raise HTTPException(status.HTTP_403_FORBIDDEN, CLINICAL_DATA_FORBIDDEN)
 
 
 def _bad_request(message: str) -> HTTPException:
@@ -64,8 +97,30 @@ def get_patient(db: Session, patient_id: str) -> Patient:
     return patient
 
 
+def view_patient(db: Session, patient_id: str, current: CurrentUser) -> tuple[Patient, bool]:
+    """Consulta de una ficha; si se muestra la anamnesis, queda en la bitácora."""
+    patient = get_patient(db, patient_id)
+    clinical_access = can_view_clinical_record(current.user.role, patient)
+    if clinical_access:
+        audit_service.record(
+            db,
+            actor=current.user.email,
+            actor_role=current.user.role,
+            category="PACIENTES",
+            severity="INFO",
+            action="Consulta de ficha clínica",
+            detail=f"Consultó la anamnesis de {patient.name} ({patient.id})",
+            ip_address=current.ip,
+        )
+        db.commit()
+    return patient, clinical_access
+
+
 def create_patient(db: Session, data: PatientIn, current: CurrentUser) -> Patient:
     anamnesis = data.anamnesis or ClinicalAnamnesis()
+    _forbid_clinical_fields(
+        db, current, {column for column, value in anamnesis.model_dump().items() if value}
+    )
     validate_fields(
         name=data.name,
         ci=data.ci,
@@ -114,6 +169,10 @@ def update_patient(
     db: Session, patient_id: str, data: PatientUpdate, current: CurrentUser
 ) -> Patient:
     patient = get_patient(db, patient_id)
+    anamnesis_changes = (
+        data.anamnesis.model_dump(exclude_unset=True, exclude_none=True) if data.anamnesis else {}
+    )
+    _forbid_clinical_fields(db, current, set(anamnesis_changes))
     changes = data.model_dump(exclude_unset=True, exclude_none=True, exclude={"anamnesis"})
     previous_consent, previous_access = patient.consent, patient.access_status
 

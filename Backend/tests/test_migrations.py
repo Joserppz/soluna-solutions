@@ -34,8 +34,9 @@ def test_migraciones_crean_las_tablas_del_modelo(migrated_engine):
         "media_assets",
         "donations",
         "institutional_info",
+        "patient_documents",
     } <= tables
-    assert "001" in applied
+    assert {"001", "002"} <= applied
 
 
 @requires_db

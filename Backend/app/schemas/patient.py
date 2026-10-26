@@ -35,6 +35,7 @@ class PatientOut(CamelModel):
     consent_date: str
     access_status: str
     anamnesis: ClinicalAnamnesis
+    clinical_access: bool
     created_at: str
     updated_at: str
 
@@ -91,7 +92,20 @@ class PatientUpdate(CamelModel):
         return value or None
 
 
-def to_patient_out(patient: Patient) -> PatientOut:
+RESTRICTED_ANAMNESIS = ClinicalAnamnesis(
+    diagnosis="",
+    stage="",
+    neurologist_certificate=False,
+    symptom_notes="",
+    physical_evaluation="",
+    speech_evaluation="",
+    psychological_evaluation="",
+    medications="",
+)
+
+
+def to_patient_out(patient: Patient, clinical_access: bool) -> PatientOut:
+    """Convierte a DTO; sin acceso clínico (RNF-06) la anamnesis sale vacía."""
     return PatientOut(
         id=patient.id,
         name=patient.name,
@@ -103,9 +117,29 @@ def to_patient_out(patient: Patient) -> PatientOut:
         consent=patient.consent,
         consent_date=patient.consent_date.isoformat() if patient.consent_date else "",
         access_status=patient.access_status,
-        anamnesis=ClinicalAnamnesis(
-            **{column: getattr(patient, column) for column in Patient.ANAMNESIS_COLUMNS}
+        anamnesis=(
+            ClinicalAnamnesis(
+                **{column: getattr(patient, column) for column in Patient.ANAMNESIS_COLUMNS}
+            )
+            if clinical_access
+            else RESTRICTED_ANAMNESIS
         ),
+        clinical_access=clinical_access,
         created_at=patient.created_at.isoformat(),
         updated_at=patient.updated_at.isoformat(),
     )
+
+
+class PatientDocumentOut(CamelModel):
+    id: str
+    patient_id: str
+    document_type: str
+    file_name: str
+    content_type: str
+    size_bytes: int
+    uploaded_at: str
+
+
+class SignedUrlOut(CamelModel):
+    url: str
+    expires_in: int

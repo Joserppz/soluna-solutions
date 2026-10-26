@@ -38,7 +38,7 @@ def build_patient(**overrides) -> Patient:
 
 
 def test_salida_usa_camel_case_igual_que_el_frontend():
-    out = to_patient_out(build_patient()).model_dump(by_alias=True)
+    out = to_patient_out(build_patient(), clinical_access=True).model_dump(by_alias=True)
 
     assert set(out) == {
         "id",
@@ -52,6 +52,7 @@ def test_salida_usa_camel_case_igual_que_el_frontend():
         "consentDate",
         "accessStatus",
         "anamnesis",
+        "clinicalAccess",
         "createdAt",
         "updatedAt",
     }
@@ -69,9 +70,20 @@ def test_salida_usa_camel_case_igual_que_el_frontend():
 
 
 def test_sin_consentimiento_la_fecha_sale_vacia():
-    out = to_patient_out(build_patient(consent=False, consent_date=None, access_status="Pendiente"))
+    out = to_patient_out(
+        build_patient(consent=False, consent_date=None, access_status="Pendiente"),
+        clinical_access=False,
+    )
 
     assert out.consent_date == ""
+
+
+def test_sin_acceso_clinico_la_anamnesis_sale_vacia():
+    out = to_patient_out(build_patient(), clinical_access=False)
+
+    assert out.clinical_access is False
+    assert out.anamnesis.medications == ""
+    assert out.anamnesis.diagnosis == ""
 
 
 def test_entrada_acepta_camel_case_y_fecha_vacia():

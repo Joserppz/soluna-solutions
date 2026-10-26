@@ -18,8 +18,9 @@ def list_patients(
     current: CurrentUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    role = current.user.role
     return [
-        to_patient_out(patient)
+        to_patient_out(patient, patient_service.can_view_clinical_record(role, patient))
         for patient in patient_service.list_patients(db, search, access_status)
     ]
 
@@ -30,7 +31,8 @@ def get_patient(
     current: CurrentUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return to_patient_out(patient_service.get_patient(db, patient_id))
+    patient, clinical_access = patient_service.view_patient(db, patient_id, current)
+    return to_patient_out(patient, clinical_access)
 
 
 @router.post(
@@ -44,7 +46,10 @@ def create_patient(
     current: CurrentUser = Depends(require_roles(*PATIENT_EDITOR_ROLES)),
     db: Session = Depends(get_db),
 ):
-    return to_patient_out(patient_service.create_patient(db, payload, current))
+    patient = patient_service.create_patient(db, payload, current)
+    return to_patient_out(
+        patient, patient_service.can_view_clinical_record(current.user.role, patient)
+    )
 
 
 @router.patch("/{patient_id}", response_model=PatientOut, response_model_by_alias=True)
@@ -54,7 +59,10 @@ def update_patient(
     current: CurrentUser = Depends(require_roles(*PATIENT_EDITOR_ROLES)),
     db: Session = Depends(get_db),
 ):
-    return to_patient_out(patient_service.update_patient(db, patient_id, payload, current))
+    patient = patient_service.update_patient(db, patient_id, payload, current)
+    return to_patient_out(
+        patient, patient_service.can_view_clinical_record(current.user.role, patient)
+    )
 
 
 @router.delete("/{patient_id}", response_model=MessageResponse)

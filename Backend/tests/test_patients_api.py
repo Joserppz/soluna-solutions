@@ -48,7 +48,7 @@ def test_listar_y_buscar_pacientes(client, auth_headers):
 
 
 def test_crear_paciente_devuelve_201_con_formato_del_frontend(client, auth_headers, db_session):
-    response = create(client, auth_headers("Recepción"))
+    response = create(client, auth_headers("Profesional"))
 
     assert response.status_code == 201
     body = response.json()

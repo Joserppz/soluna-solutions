@@ -19,3 +19,9 @@ CORS_ORIGINS = [
     for origin in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",")
     if origin.strip()
 ]
+
+# Supabase Storage para documentos privados de pacientes (opcional en desarrollo)
+SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+PATIENT_DOCUMENTS_BUCKET = os.getenv("PATIENT_DOCUMENTS_BUCKET", "documentos-pacientes")
+SIGNED_URL_SECONDS = int(os.getenv("SIGNED_URL_SECONDS", "300"))
