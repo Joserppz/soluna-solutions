@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { savePatient } from '../services/aspar'
+import { RouterLink, useRouter } from 'vue-router'
+import { savePatient, type AccessStatus } from '../services/aspar'
 
 const router = useRouter()
 const guardado = ref(false)
@@ -11,6 +11,8 @@ const form = reactive({
   ci: '',
   phone: '',
   emergencyContact: '',
+  consent: false,
+  accessStatus: 'Pendiente' as AccessStatus,
 })
 
 function submitForm() {
@@ -49,8 +51,26 @@ function submitForm() {
 
       <div class="field">
         <label for="emergency">Contacto de emergencia</label>
-        <input id="emergency" v-model.trim="form.emergencyContact" required />
+        <input
+          id="emergency"
+          v-model.trim="form.emergencyContact"
+          required
+        />
       </div>
+
+      <div class="field">
+        <label for="accessStatus">Estado de acceso</label>
+        <select id="accessStatus" v-model="form.accessStatus">
+          <option value="Activo">Activo</option>
+          <option value="Pendiente">Pendiente</option>
+          <option value="Revocado">Revocado</option>
+        </select>
+      </div>
+
+      <label class="checkbox-field">
+        <input v-model="form.consent" type="checkbox" />
+        Consentimiento informado recibido
+      </label>
     </div>
 
     <p v-if="guardado" class="success-message" role="status">
@@ -58,7 +78,10 @@ function submitForm() {
     </p>
 
     <div class="form-actions">
-      <RouterLink class="button button-secondary" to="/">Cancelar</RouterLink>
+      <RouterLink class="button button-secondary" to="/">
+        Cancelar
+      </RouterLink>
+
       <button class="button button-primary" type="submit">
         Guardar paciente
       </button>

@@ -3,17 +3,33 @@ import { computed } from 'vue'
 import { schedule } from '../services/aspar'
 
 const sesionesOrdenadas = computed(() =>
-  [...schedule].sort((a, b) =>
-    `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`),
-  ),
+  [...schedule].sort((a, b) => {
+    const fechaA = `${a.date} ${a.time}`
+    const fechaB = `${b.date} ${b.time}`
+    return fechaA.localeCompare(fechaB)
+  }),
 )
+
+function getDate(date: string): Date {
+  return new Date(`${date}T12:00:00`)
+}
 
 function formatDate(date: string): string {
   return new Intl.DateTimeFormat('es-BO', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
-  }).format(new Date(`${date}T12:00:00`))
+  }).format(getDate(date))
+}
+
+function getDayNumber(date: string): number {
+  return getDate(date).getDate()
+}
+
+function getShortMonth(date: string): string {
+  return new Intl.DateTimeFormat('es-BO', {
+    month: 'short',
+  }).format(getDate(date))
 }
 </script>
 
@@ -26,6 +42,7 @@ function formatDate(date: string): string {
         Consulta los próximos encuentros, terapias y espacios de bienestar.
       </p>
     </div>
+
     <div class="hero-badge" aria-hidden="true">ASPAR</div>
   </section>
 
@@ -35,24 +52,33 @@ function formatDate(date: string): string {
         <span class="eyebrow">Próximos encuentros</span>
         <h2>Cronograma</h2>
       </div>
-      <span class="count-pill">{{ sesionesOrdenadas.length }} actividades</span>
+
+      <span class="count-pill">
+        {{ sesionesOrdenadas.length }} actividades
+      </span>
     </div>
 
-    <div v-if="sesionesOrdenadas.length" class="schedule-list">
+    <div v-if="sesionesOrdenadas.length > 0" class="schedule-list">
       <article
         v-for="item in sesionesOrdenadas"
         :key="item.id"
         class="card schedule-card"
       >
         <div class="date-tile">
-          <span>{{ new Date(`${item.date}T12:00:00`).getDate() }}</span>
-          <small>{{ new Date(`${item.date}T12:00:00`).toLocaleDateString('es-BO', { month: 'short' }) }}</small>
+          <span>{{ getDayNumber(item.date) }}</span>
+          <small>{{ getShortMonth(item.date) }}</small>
         </div>
 
         <div class="schedule-info">
-          <span class="schedule-date">{{ formatDate(item.date) }} · {{ item.time }}</span>
+          <span class="schedule-date">
+            {{ formatDate(item.date) }} · {{ item.time }}
+          </span>
+
           <h3>{{ item.title }}</h3>
-          <p>{{ item.professional }} <span>·</span> {{ item.location }}</p>
+
+          <p>
+            {{ item.professional }} · {{ item.location }}
+          </p>
         </div>
 
         <span class="open-label">Abierto</span>

@@ -266,3 +266,135 @@ export function updateUser(
   writeStorage('aspar_users', updatedUsers)
   addAudit('Actualización de usuario', `Actualizó el usuario ${id}`)
 }
+
+export type AttendanceStatus = 'Pendiente' | 'Presente' | 'Ausente'
+
+export interface AttendanceEntry {
+  id: string
+  patientName: string
+  date: string
+  time: string
+  activity: string
+  status: AttendanceStatus
+}
+
+const ATTENDANCE_STORAGE_KEY = 'aspar_attendance'
+
+function dateInDays(offset: number): string {
+  const date = new Date()
+  date.setHours(12, 0, 0, 0)
+  date.setDate(date.getDate() + offset)
+
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
+function getDefaultAttendance(): AttendanceEntry[] {
+  return [
+    {
+      id: 'a-1',
+      patientName: 'Elena Rojas',
+      date: dateInDays(1),
+      time: '09:00',
+      activity: 'Terapia física grupal',
+      status: 'Pendiente',
+    },
+    {
+      id: 'a-2',
+      patientName: 'Miguel Fernández',
+      date: dateInDays(1),
+      time: '09:00',
+      activity: 'Terapia física grupal',
+      status: 'Pendiente',
+    },
+  ]
+}
+
+export function getAttendance(): AttendanceEntry[] {
+  const stored = localStorage.getItem(ATTENDANCE_STORAGE_KEY)
+
+  if (!stored) {
+    const initialEntries = getDefaultAttendance()
+    localStorage.setItem(
+      ATTENDANCE_STORAGE_KEY,
+      JSON.stringify(initialEntries),
+    )
+    return initialEntries
+  }
+
+  try {
+    return JSON.parse(stored) as AttendanceEntry[]
+  } catch {
+    const initialEntries = getDefaultAttendance()
+    localStorage.setItem(
+      ATTENDANCE_STORAGE_KEY,
+      JSON.stringify(initialEntries),
+    )
+    return initialEntries
+  }
+}
+
+export function updateAttendance(
+  id: string,
+  status: AttendanceStatus,
+): void {
+  const updatedEntries = getAttendance().map((entry) =>
+    entry.id === id ? { ...entry, status } : entry,
+  )
+
+  localStorage.setItem(
+    ATTENDANCE_STORAGE_KEY,
+    JSON.stringify(updatedEntries),
+  )
+}
+
+export interface ScheduleItem {
+  id: string
+  date: string
+  time: string
+  title: string
+  professional: string
+  location: string
+}
+
+function scheduleDateInDays(offset: number): string {
+  const date = new Date()
+  date.setHours(12, 0, 0, 0)
+  date.setDate(date.getDate() + offset)
+
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
+export const schedule: ScheduleItem[] = [
+  {
+    id: 's-1',
+    date: scheduleDateInDays(1),
+    time: '09:00',
+    title: 'Terapia física grupal',
+    professional: 'Lic. Ana Flores',
+    location: 'Sala de rehabilitación',
+  },
+  {
+    id: 's-2',
+    date: scheduleDateInDays(2),
+    time: '10:30',
+    title: 'Taller de bienestar',
+    professional: 'Lic. Marco Rojas',
+    location: 'Salón principal',
+  },
+  {
+    id: 's-3',
+    date: scheduleDateInDays(4),
+    time: '09:30',
+    title: 'Ejercicios de movilidad',
+    professional: 'Lic. Ana Flores',
+    location: 'Sala de rehabilitación',
+  },
+]
