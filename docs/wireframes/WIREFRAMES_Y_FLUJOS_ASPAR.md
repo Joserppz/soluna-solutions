@@ -82,3 +82,40 @@ Se contrastó cada campo de los formularios (`v-model` de las vistas Vue) con su
 | `search` | `actor` | Texto libre | `?actor=` |
 
 **Permiso:** solo `Administrador`. Un valor de filtro fuera de la lista devuelve `422` con la lista de valores válidos.
+
+## 4. Revisión de Wireframes contra Requisitos y Criterios de Aceptación (SCRUM-191 / SCRUM-196)
+
+Se revisó cada bloque de los dos wireframes contra el requisito que declara (texto del SRS, `docs/srs/DOCUMENTO_2.pdf`, y de las historias del Sprint 1), la pantalla implementada en `Frontend/src/views/` y una prueba automática que lo comprueba. Las pruebas de pantalla están en `Frontend/src/views/__test__/PantallasRequisitos.spec.ts` y las de permisos en `RouterPermisos.spec.ts`.
+
+**Leyenda:** ✅ cumple · ⚠️ cumple con observaciones · ❌ no cumple · ⏳ planificado para el Sprint 2
+
+### 4.1 Portal público (`/`, `ScheduleView.vue`)
+
+| Bloque del wireframe | Requisito | Criterio de aceptación revisado | Implementación | Prueba | Resultado |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Cabecera con navegación | RF-10 | El público navega sin iniciar sesión | La barra muestra «Portal y Cronograma» e «Iniciar sesión»; no tiene los enlaces separados «Galería» y «Donar» del wireframe | — | ⚠️ Diferencia visual menor |
+| Hero CETRAM y redes sociales | RF-07, RF-08 | Enlaces funcionales a Facebook, Instagram y TikTok oficiales | Botones con las URLs de `institutionalInfo.socialLinks` | `muestra el cronograma ordenado y los enlaces oficiales…` | ✅ |
+| Cronograma sabatino público | RF-04, RF-10 | Los usuarios no registrados ven las actividades ordenadas por fecha | Tarjetas ordenadas por fecha y hora, sin requerir sesión | `muestra el cronograma ordenado…` | ✅ |
+| Galería multimedia | RF-05 | Subida de fotos y videos a un almacenamiento independiente de Google Drive | El formulario de carga está **visible para cualquier visitante** y solo guarda metadatos en el navegador | — | ❌ La carga debe quedar solo para el personal autenticado; el almacenamiento real (`adapters/storage.py`) se conecta en el Sprint 2 |
+| QR bancario y formulario de donación | RF-06 | Desplegar el QR oficial y un botón de pasarela de pago | QR y formulario con método `QR Bancario` / `Pasarela Libélula`; el aporte se registra localmente | `registra una donación por QR bancario (RF-06)` | ⚠️ La pasarela Libélula es simulada (⏳ integración real en el Sprint 2) |
+| Requisitos de inscripción | RF-07 | Mostrar los requisitos de inscripción al público | Lista `institutionalInfo.enrollmentRequirements` | `muestra el cronograma ordenado…` | ✅ Visualización · ⏳ RF-07 también pide que el administrador **edite** el contenido: no hay pantalla de edición |
+
+### 4.2 Panel administrativo y clínico
+
+| Bloque del wireframe | Requisito | Criterio de aceptación revisado | Implementación | Prueba | Resultado |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Barra con rol y contador de sesión | RNF-02 | Mostrar rol y tiempo restante; renovar y cerrar sesión | `App.vue`: insignia `Rol · MM:SS`, banner de renovación y «Cerrar sesión» | `LoginView.spec.ts` (renovación y cierre) | ✅ |
+| Formulario de filiación y anamnesis | RF-02 | Registrar datos personales, de contacto, del cuidador y diagnósticos | `PatientsView.vue` y `RegisterPatientView.vue` con las mismas validaciones del Backend | `PatientsView.spec.ts`, `guarda la ficha válida y vuelve al listado` | ⚠️ El formulario muestra las evaluaciones clínicas a **Recepción**, pero el Backend las rechaza (403). Deben ocultarse para ese rol |
+| Edición de la ficha | RF-02 | «Registrar, **editar** y consultar» | Desde el listado solo se cambian consentimiento y estado de acceso; no se editan datos personales ni la anamnesis (el Backend sí tiene `PATCH /patients/{id}`) | — | ⚠️ Falta la pantalla de edición |
+| Listado con protección RNF-06 | RNF-06 | La anamnesis solo se ve con consentimiento y acceso `Activo` | Aviso 🔒 cuando no corresponde; el Backend tampoco envía los datos | `PatientsView.spec.ts`, `test_patient_privacy.py` | ✅ |
+| Alta de personal y directorio | RF-11 | El Administrador crea usuarios, asigna los 5 roles y desactiva cuentas | `UsersView.vue` con los 5 roles, filtro por rol y activar/desactivar | `UsersView.spec.ts`, `RouterPermisos.spec.ts` | ⚠️ El Backend devuelve una contraseña temporal (`temporaryPassword`) que la pantalla **no muestra**; sin ella el usuario nuevo no puede ingresar |
+| Control patrimonial | RF-03, RF-09 | Registrar, clasificar y **dar de baja** material; exportar PDF/Excel para la Alcaldía | Registro, filtro por origen y exportación CSV real | `registra un material y lo filtra por origen`, `exporta el reporte CSV…` | ⚠️ No existe «dar de baja» y el botón «Acta PDF» solo muestra un aviso (no genera el archivo) · ⏳ endpoints de inventario en el Sprint 2 |
+| Asistencia sabatina | RNF-06 (RF-12 a RF-16) | No marcar `Presente` a un paciente sin consentimiento vigente | Bloqueo con alerta RNF-06 | `no permite marcar Presente…`, `marca la asistencia…` | ✅ (⏳ persistencia en el Backend en el Sprint 2) |
+| Bitácora solo Administrador | RF-17 | Solo el Administrador consulta; filtros por categoría, severidad y actor | `AuditView.vue` y guardia `adminOnly` del router | `AuditView.spec.ts`, `RouterPermisos.spec.ts`, `test_audit.py` | ✅ |
+| Cronograma editable por el administrador | RF-04 | Los administradores **publican y actualizan** el cronograma | El wireframe del panel no incluye esta pantalla y el cronograma es fijo en el código | — | ❌ Falta en wireframe e implementación (⏳ Sprint 2) |
+
+### 4.3 Resultado de la revisión
+
+- **Cumplen:** 8 bloques. **Con observaciones:** 7. **No cumplen:** 2 (carga de galería abierta al público y cronograma sin edición).
+- Las observaciones del Sprint 1 que afectan a pantallas ya entregadas (evaluaciones visibles para Recepción, contraseña temporal no mostrada) se registran como pendientes del frontend en el estado real del sprint (`docs/calidad/DEFINICION_DE_HECHO_Y_ESTADO_SPRINT1.md`).
+- Para el Sprint 2 se debe actualizar el wireframe del panel con las pantallas que faltan: edición de ficha, edición del cronograma (RF-04), contenido institucional (RF-07) y baja de inventario (RF-03).
