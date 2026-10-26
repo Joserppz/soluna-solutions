@@ -34,8 +34,8 @@ Esas ejecuciones son anteriores a la medición de cobertura. A partir de este ca
 
 | Componente | Pruebas | Líneas | Sentencias | Funciones | Ramas | Mínimo RNF-05 |
 | :--- | ---: | ---: | ---: | ---: | ---: | :--- |
-| **Backend** (`Backend/app`) | 97 | — | **96,94%** (983/1014) | — | — | ✅ Cumple |
-| **Frontend** (`Frontend/src`) | 36 | **79,47%** (573/721) | 78,05% (594/761) | 71,71% (142/198) | 80,02% (549/686) | ✅ Cumple |
+| **Backend** (`Backend/app`) | 99 | — | **96,94%** (983/1014) | — | — | ✅ Cumple |
+| **Frontend** (`Frontend/src`) | 38 | **80,30%** (583/726) | 78,98% (605/766) | 71,85% (143/199) | 80,14% (553/690) | ✅ Cumple |
 
 **Evolución del Frontend durante el Sprint 1:**
 
@@ -43,19 +43,20 @@ Esas ejecuciones son anteriores a la medición de cobertura. A partir de este ca
 | :--- | ---: | ---: |
 | Primera medición (solo pruebas de Login, Pacientes, Usuarios y Bitácora) | 22 | 53,73% |
 | + permisos por rol en el router (SCRUM-162) | 28 | 63,66% |
-| + pruebas de pantallas contra requisitos (SCRUM-196) | 36 | **79,47%** |
+| + pruebas de pantallas contra requisitos (SCRUM-196) | 36 | 79,47% |
+| + integración del login con la API (SCRUM-88) | 38 | **80,30%** |
 
 ### 3.2 Frontend por archivo
 
 | Archivo | Sentencias | Ramas | Funciones | Líneas |
 | :--- | ---: | ---: | ---: | ---: |
 | `router/index.ts` | 100% | 92,85% | 100% | 100% |
-| `services/api.ts` | 76,74% | 65,38% | 92,85% | 82,05% |
-| `services/aspar.ts` | 81,81% | 70% | 93,87% | 83,11% |
+| `services/api.ts` | 91,3% | 69,23% | 93,33% | 95,23% |
+| `services/aspar.ts` | 81,96% | 70,39% | 93,87% | 83,25% |
 | `views/AttendanceView.vue` | 93,33% | 87,5% | 87,5% | 96,55% |
 | `views/AuditView.vue` | 96,96% | 96,77% | 100% | 100% |
 | `views/InventoryView.vue` | 90,56% | 92,15% | 73,33% | 92% |
-| `views/LoginView.vue` | 91,52% | 92,45% | 100% | 91,07% |
+| `views/LoginView.vue` | 91,52% | 90,9% | 100% | 91,07% |
 | `views/PatientsView.vue` | 82,27% | 90,59% | 57,69% | 83,11% |
 | `views/RegisterPatientView.vue` | 79,16% | 98,63% | 47,36% | 79,16% |
 | `views/ScheduleView.vue` | 86% | 90,47% | 81,25% | 87,75% |
@@ -84,7 +85,7 @@ Esas ejecuciones son anteriores a la medición de cobertura. A partir de este ca
 | Zona | Motivo | Riesgo | Acción |
 | :--- | :--- | :--- | :--- |
 | `Frontend/src/App.vue` (0%) | Barra superior, contador y banner de sesión; se prueba la lógica en `aspar.ts`, no el componente | Medio: un error visual en la renovación no se detectaría | Agregar prueba de componente en el Sprint 2 |
-| `services/api.ts` (ramas 65%) | Respuestas de error con cuerpo no JSON | Bajo | Cubrir al conectar los módulos del Sprint 2 |
+| `services/api.ts` (ramas 69%) | Respuestas de error con cuerpo no JSON | Bajo | Cubrir al conectar los módulos del Sprint 2 |
 | `core/database.py` (61%) | Creación del motor con la base real | Bajo: la cubre el paso de migraciones del CI | — |
 
 ## 4. Cómo reproducir las cifras

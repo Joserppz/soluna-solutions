@@ -44,3 +44,10 @@ Este documento reúne la evidencia visual organizada y el recorrido de aceptaci�
 ## 3. Evidencias del Backend (SCRUM-84)
 
 Las evidencias de API, persistencia en PostgreSQL/Supabase y seguridad del Backend están en [`EVIDENCIAS_BACKEND_SPRINT1.md`](./EVIDENCIAS_BACKEND_SPRINT1.md).
+
+## 4. Verificación, recorrido integrado y estado real (SCRUM-83, SCRUM-88, SCRUM-97)
+
+- Recorrido de punta a punta Frontend + API + PostgreSQL: [`RECORRIDO_INTEGRADO_LOGIN_PACIENTES.md`](./RECORRIDO_INTEGRADO_LOGIN_PACIENTES.md).
+- CI y cobertura real: [`EVIDENCIAS_CI_Y_COBERTURA_SPRINT1.md`](./EVIDENCIAS_CI_Y_COBERTURA_SPRINT1.md).
+- Casos probados por subtarea: [`../calidad/INFORME_VERIFICACION_SPRINT1.md`](../calidad/INFORME_VERIFICACION_SPRINT1.md).
+- Definición de Hecho, estado real y pendientes: [`../calidad/DEFINICION_DE_HECHO_Y_ESTADO_SPRINT1.md`](../calidad/DEFINICION_DE_HECHO_Y_ESTADO_SPRINT1.md). La tabla del §1 de este documento marca todo como «Cumple»; el estado real, con sus observaciones, está en ese documento.
