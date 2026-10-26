@@ -1,15 +1,43 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import {
   getAttendance,
+  getPatients,
   updateAttendance,
+  type AttendanceEntry,
   type AttendanceStatus,
+  type Patient,
 } from '../services/aspar'
 
 const entries = ref(getAttendance())
+const patients = ref<Patient[]>(getPatients())
+const accessNotice = ref('')
 
-function mark(id: string, status: AttendanceStatus) {
-  updateAttendance(id, status)
+const patientByName = computed(() => {
+  const map = new Map<string, Patient>()
+  for (const p of patients.value) {
+    map.set(p.name.toLowerCase(), p)
+  }
+  return map
+})
+
+function getEntryPatient(entry: AttendanceEntry): Patient | undefined {
+  return patientByName.value.get(entry.patientName.toLowerCase())
+}
+
+function isAttendanceBlocked(entry: AttendanceEntry): boolean {
+  const patient = getEntryPatient(entry)
+  if (!patient) return false
+  return !patient.consent || patient.accessStatus === 'Revocado'
+}
+
+function mark(entry: AttendanceEntry, status: AttendanceStatus) {
+  accessNotice.value = ''
+  if (isAttendanceBlocked(entry) && status === 'Presente') {
+    accessNotice.value = `Protección de datos (RNF-06): ${entry.patientName} no cuenta con consentimiento informado activo o tiene el acceso revocado.`
+    return
+  }
+  updateAttendance(entry.id, status)
   entries.value = getAttendance()
 }
 
@@ -24,10 +52,17 @@ function formatDate(date: string): string {
 
 <template>
   <section class="page-heading">
-    <span class="eyebrow">Control de actividades</span>
+    <span class="eyebrow">Control de actividades · RNF-06</span>
     <h1>Marcación de asistencia</h1>
-    <p>Registra la participación de los pacientes en cada actividad.</p>
+    <p>
+      Registra la participación de los pacientes verificando su estado de
+      consentimiento informado y acceso.
+    </p>
   </section>
+
+  <p v-if="accessNotice" class="form-error card notice-card" role="alert">
+    {{ accessNotice }}
+  </p>
 
   <section class="card table-card">
     <div class="section-title table-heading">
@@ -51,6 +86,20 @@ function formatDate(date: string): string {
           <div>
             <strong>{{ entry.patientName }}</strong>
             <small>{{ entry.activity }}</small>
+            <small
+              v-if="getEntryPatient(entry)"
+              :class="
+                isAttendanceBlocked(entry)
+                  ? 'consent-pill consent-blocked'
+                  : 'consent-pill consent-ok'
+              "
+            >
+              {{
+                isAttendanceBlocked(entry)
+                  ? 'Sin consentimiento / Acceso restringido'
+                  : 'Consentimiento vigente'
+              }}
+            </small>
           </div>
         </div>
 
@@ -69,7 +118,7 @@ function formatDate(date: string): string {
           <button
             class="button button-small button-present"
             type="button"
-            @click="mark(entry.id, 'Presente')"
+            @click="mark(entry, 'Presente')"
           >
             Presente
           </button>
@@ -77,7 +126,7 @@ function formatDate(date: string): string {
           <button
             class="button button-small button-absent"
             type="button"
-            @click="mark(entry.id, 'Ausente')"
+            @click="mark(entry, 'Ausente')"
           >
             Ausente
           </button>

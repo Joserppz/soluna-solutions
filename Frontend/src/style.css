@@ -276,3 +276,114 @@ select {
     width: 100%;
   }
 }
+/* SCRUM-66, SCRUM-67, SCRUM-68, SCRUM-138: Estilos de sesión, anamnesis y protección de datos */
+.field-hint-error {
+  display: block;
+  margin-top: 5px;
+  color: #a43e3e;
+  font-size: 12px;
+}
+
+.session-badge {
+  padding: 5px 10px;
+  border-radius: 99px;
+  background: var(--mint);
+  color: var(--green-dark);
+  font-size: 12px;
+}
+
+.session-banner {
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.session-banner-warning {
+  background: #fff7e0;
+  color: #7c5800;
+  border-bottom: 1px solid #f0dc9c;
+}
+
+.session-banner-expired {
+  background: #f9eeee;
+  color: #a43e3e;
+  border-bottom: 1px solid #ebcccc;
+}
+
+.subsection-heading {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.patient-item-block {
+  border-top: 1px solid var(--line);
+}
+
+.patient-item-block .patient-row {
+  border-top: 0;
+}
+
+.anamnesis-panel {
+  margin: 0 22px 16px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #f5f8f6;
+  border: 1px solid var(--line);
+}
+
+.anamnesis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px 16px;
+  font-size: 13px;
+}
+
+.anamnesis-grid strong {
+  display: block;
+  color: var(--green-dark);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.protected-notice {
+  margin: 0;
+  color: #8a4b0f;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.notice-card {
+  padding: 14px 18px;
+  margin-bottom: 18px;
+}
+
+.consent-pill {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.consent-ok {
+  background: #edf6ee;
+  color: #26724e;
+}
+
+.consent-blocked {
+  background: #f9eeee;
+  color: #a43e3e;
+}
