@@ -49,8 +49,8 @@ jobs:
       - name: Compilar aplicación y verificar tipos TypeScript (SCRUM-96)
         run: npm run build
 
-  backend-api-smoke-test:
-    name: Validar API Backend FastAPI (SCRUM-87)
+  backend-lint-and-tests:
+    name: Validar Backend FastAPI con Ruff y pytest (SCRUM-152)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -64,9 +64,17 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: Backend/requirements-dev.txt
 
-      - name: Instalar FastAPI y Uvicorn para smoke test
-        run: pip install fastapi uvicorn pydantic
+      - name: Instalar dependencias del Backend
+        run: pip install -r requirements-dev.txt
 
-      - name: Verificar inicialización de base de datos y sintaxis de API
-        run: python -c "import app.main as m; res = m.health_check(); assert res['status'] == 'ok'"
+      - name: Analizar código con Ruff
+        run: ruff check .
+
+      - name: Verificar formato con Ruff
+        run: ruff format --check .
+
+      - name: Ejecutar pruebas unitarias con pytest
+        run: pytest
