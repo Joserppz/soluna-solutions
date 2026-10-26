@@ -1,6 +1,7 @@
 """Registro de auditoría de operaciones sensibles desde la capa de servicios (RF-17)."""
 
 import uuid
+from datetime import datetime
 
 from sqlalchemy.orm import Session
 
@@ -36,4 +37,29 @@ def record(
             detail=detail,
             ip_address=ip_address or "127.0.0.1",
         ),
+    )
+
+
+def list_entries(
+    db: Session,
+    *,
+    category: str | None,
+    severity: str | None,
+    actor: str | None,
+    date_from: datetime | None,
+    date_to: datetime | None,
+    limit: int,
+) -> list[AuditLog]:
+    if category and category not in AUDIT_CATEGORIES:
+        raise ValueError("Categoría inválida. Usa: " + ", ".join(AUDIT_CATEGORIES) + ".")
+    if severity and severity not in AUDIT_SEVERITIES:
+        raise ValueError("Severidad inválida. Usa: " + ", ".join(AUDIT_SEVERITIES) + ".")
+    return audit_repository.list_entries(
+        db,
+        category=category,
+        severity=severity,
+        actor=actor,
+        date_from=date_from,
+        date_to=date_to,
+        limit=limit,
     )

@@ -1,0 +1,34 @@
+"""DTO de la bitácora: AuditEvent de Frontend/src/types/aspar.ts."""
+
+from pydantic import BaseModel, ConfigDict
+from pydantic.alias_generators import to_camel
+
+from app.models import AuditLog
+
+
+class AuditEventOut(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
+    id: str
+    date: str
+    actor: str
+    actor_role: str
+    category: str
+    severity: str
+    action: str
+    detail: str
+    ip_address: str
+
+
+def to_audit_out(entry: AuditLog) -> AuditEventOut:
+    return AuditEventOut(
+        id=entry.id,
+        date=entry.date.isoformat(),
+        actor=entry.actor,
+        actor_role=entry.actor_role,
+        category=entry.category,
+        severity=entry.severity,
+        action=entry.action,
+        detail=entry.detail,
+        ip_address=entry.ip_address,
+    )

@@ -67,10 +67,31 @@ def get_current_user(
 
 
 def require_roles(*roles: str):
-    """Permite el acceso solo a los roles indicados (403 para el resto)."""
+    """Permite el acceso solo a los roles indicados; los rechazos quedan en la bitácora."""
 
-    def checker(current: CurrentUser = Depends(get_current_user)) -> CurrentUser:
+    def checker(
+        request: Request,
+        current: CurrentUser = Depends(get_current_user),
+        db: Session = Depends(get_db),
+    ) -> CurrentUser:
         if current.user.role not in roles:
+            # Import diferido: audit_service depende de los modelos, no de deps
+            from app.services import audit_service
+
+            audit_service.record(
+                db,
+                actor=current.user.email,
+                actor_role=current.user.role,
+                category="SISTEMA",
+                severity="WARNING",
+                action="Intento de acceso restringido bloqueado",
+                detail=(
+                    f"El rol {current.user.role} intentó {request.method} {request.url.path} "
+                    f"(permitido para: {', '.join(roles)})"
+                ),
+                ip_address=current.ip,
+            )
+            db.commit()
             raise HTTPException(
                 status.HTTP_403_FORBIDDEN,
                 f"El rol {current.user.role} no tiene permisos para esta operación.",

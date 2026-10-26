@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from app.core.config import CORS_ORIGINS
 from app.core.database import get_db
 from app.core.errors import register_error_handlers
-from app.routers import auth, patient_documents, patients, users
+from app.routers import audit, auth, patient_documents, patients, users
 
 app = FastAPI(
     title="ASPAR API - Soluna Solutions",
@@ -36,6 +36,7 @@ app.include_router(auth.router)
 app.include_router(patients.router)
 app.include_router(patient_documents.router)
 app.include_router(users.router)
+app.include_router(audit.router)
 
 
 @app.get("/api/v1/health", tags=["Sistema"])
