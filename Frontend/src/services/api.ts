@@ -36,6 +36,17 @@ function getBearerToken(): string | null {
   }
 }
 
+/** Error con respuesta HTTP de la API (el servidor sí respondió). */
+export class ApiError extends Error {
+  readonly status: number
+
+  constructor(status: number, message: string) {
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+  }
+}
+
 export async function apiRequest<T>(
   endpoint: string,
   options: RequestInit = {},
@@ -66,7 +77,7 @@ export async function apiRequest<T>(
     } catch {
       // ignore JSON parse failure
     }
-    throw new Error(errorDetail)
+    throw new ApiError(response.status, errorDetail)
   }
 
   return (await response.json()) as T

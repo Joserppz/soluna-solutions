@@ -1,4 +1,4 @@
-import { asparApiClient } from './api'
+import { ApiError, asparApiClient } from './api'
 import type {
   AccessStatus,
   AttendanceEntry,
@@ -431,9 +431,14 @@ export async function signInWithApi(
       'INFO',
     )
     return { ok: true }
-  } catch {
-    // Backend no disponible o credenciales rechazadas: se intenta el modo local
-    // una sola vez para no duplicar el registro del intento en la bitácora.
+  } catch (cause) {
+    // Si la API respondió (401, 423, 422...), su decisión es la final: el modo
+    // local no puede saltarse un rechazo o un bloqueo del servidor.
+    if (cause instanceof ApiError) {
+      return { ok: false, message: cause.message }
+    }
+    // Backend no disponible: se intenta el modo local una sola vez para no
+    // duplicar el registro del intento en la bitácora.
     const localSuccess = signIn(email, password)
     if (!localSuccess) {
       return {

@@ -69,7 +69,7 @@ async function submitLogin() {
   isSubmitting.value = true
   try {
     // Intenta el Backend y, si no responde, usa el modo local (un solo registro por intento)
-    const { ok: authenticated } = await signInWithApi(
+    const { ok: authenticated, message } = await signInWithApi(
       email.value,
       password.value,
     )
@@ -81,7 +81,8 @@ async function submitLogin() {
         error.value =
           'Cuenta bloqueada temporalmente por 30 segundos tras 5 intentos fallidos (RNF-02).'
       } else {
-        error.value = 'Correo o contraseña incorrectos, o usuario inactivo.'
+        error.value =
+          message ?? 'Correo o contraseña incorrectos, o usuario inactivo.'
       }
       return
     }

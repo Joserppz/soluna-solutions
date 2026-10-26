@@ -127,6 +127,55 @@ describe('SCRUM-153 / SCRUM-66: LoginView y validaciones de autenticación', () 
   })
 })
 
+describe('SCRUM-88: integración del login con la API', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    vi.unstubAllGlobals()
+  })
+
+  it('si la API bloquea la cuenta (423) no abre una sesión local', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 423,
+        json: async () => ({
+          detail: 'Cuenta bloqueada temporalmente por 15 minutos.',
+        }),
+      }),
+    )
+    const router = createTestRouter()
+    await router.push('/login')
+    await router.isReady()
+    const wrapper = mount(LoginView, { global: { plugins: [router] } })
+
+    await wrapper.find('#email').setValue('recepcion@aspar.org')
+    await wrapper.find('#password').setValue('Recep2026!')
+    await wrapper.find('form').trigger('submit.prevent')
+    await flushPromises()
+
+    expect(getSession()).toBeNull()
+    expect(wrapper.find('[role="alert"]').text()).toContain(
+      'Cuenta bloqueada temporalmente por 15 minutos.',
+    )
+  })
+
+  it('si la API no responde usa el modo local de respaldo', async () => {
+    stubOfflineApi()
+    const router = createTestRouter()
+    await router.push('/login')
+    await router.isReady()
+    const wrapper = mount(LoginView, { global: { plugins: [router] } })
+
+    await wrapper.find('#email').setValue('recepcion@aspar.org')
+    await wrapper.find('#password').setValue('Recep2026!')
+    await wrapper.find('form').trigger('submit.prevent')
+    await flushPromises()
+
+    expect(getSession()?.source).toBe('local')
+  })
+})
+
 describe('SCRUM-67: Sesiones JWT, expiración y cierre de sesión', () => {
   beforeEach(() => {
     localStorage.clear()
