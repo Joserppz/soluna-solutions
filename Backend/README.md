@@ -75,6 +75,7 @@ uvicorn app.main:app --reload
 
 - Salud: <http://localhost:8000/api/v1/health>
 - Documentación interactiva (Swagger): <http://localhost:8000/docs>
+- Especificación publicada en el repositorio: [`docs/api/openapi.json`](../docs/api/openapi.json). Si cambias un endpoint o un esquema, regénerala con `python -m scripts.export_openapi` (no necesita base de datos); `tests/test_openapi.py` falla si quedó desactualizada.
 
 **Usuarios iniciales** (migración 001; cambia las contraseñas antes de producción):
 
@@ -119,6 +120,7 @@ El contrato detallado con el frontend está en [`docs/api/CONTRATO_API_LOGIN_PAC
 ruff check .
 ruff format --check .
 pytest
+pytest --cov=app --cov-report=term-missing   # cobertura (mínimo 70%, RNF-05)
 ```
 
 - Sin más configuración, `pytest` ejecuta las **pruebas unitarias** (seguridad, migraciones, mapeos, contrato, adaptador de Storage) y omite las que necesitan base de datos.

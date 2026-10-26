@@ -15,7 +15,8 @@ Repositorio oficial de **Soluna Solutions** para el proyecto **ASPAR (Asociació
 - [`docs/`](./docs/):
   - `docs/entrevistas/DOCUMENTO_1.pdf`: Minuta de entrevista y relevamiento AS-IS / TO-BE.
   - `docs/srs/DOCUMENTO_2.pdf`: Especificación de Requisitos de Software (SRS v1.0).
-  - [`docs/api/CONTRATO_API_LOGIN_PACIENTES.md`](./docs/api/CONTRATO_API_LOGIN_PACIENTES.md): Contrato API Backend ↔ Frontend.
+  - [`docs/api/CONTRATO_API_LOGIN_PACIENTES.md`](./docs/api/CONTRATO_API_LOGIN_PACIENTES.md) y [`docs/api/openapi.json`](./docs/api/openapi.json): Contrato API Backend ↔ Frontend y especificación OpenAPI.
+  - [`docs/srs/SRS_ADENDA_SPRINT1.md`](./docs/srs/SRS_ADENDA_SPRINT1.md): Adenda al SRS con RF-11, RF-17, RNF-06 y RNF-11 y los cambios de RF-01, RNF-02 y RNF-05.
   - `docs/arquitectura/DOCUMENTO_3.pdf` y [`MODELO_DATOS_Y_CONTRATOS.md`](./docs/arquitectura/MODELO_DATOS_Y_CONTRATOS.md): Modelo C4 (C1, C2, C3) y contratos de datos.
   - [`docs/arquitectura/C4_Y_MODELO_ER_ACTUALIZADO.md`](./docs/arquitectura/C4_Y_MODELO_ER_ACTUALIZADO.md) y [`docs/arquitectura/adr/`](./docs/arquitectura/adr/README.md): Diagramas C4 y E-R vigentes y decisiones técnicas (ADR).
   - [`docs/trazabilidad/MATRIZ_RF01_RF17.md`](./docs/trazabilidad/MATRIZ_RF01_RF17.md): Trazabilidad completa RF01–RF17 y RNF01–RNF11.

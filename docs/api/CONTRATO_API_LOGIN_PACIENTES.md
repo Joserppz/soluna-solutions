@@ -2,6 +2,7 @@
 
 Contrato confirmado entre el **Backend FastAPI** (`Backend/app/routers/`) y el **Frontend Vue 3** (`Frontend/src/services/api.ts`, tipos en `Frontend/src/types/aspar.ts`). La prueba automática [`Backend/tests/test_contract_frontend.py`](../../Backend/tests/test_contract_frontend.py) lee las interfaces TypeScript y falla en CI si una respuesta deja de cumplirlas.
 
+- **Especificación OpenAPI completa:** [`openapi.json`](./openapi.json) (14 rutas, generada con `python -m scripts.export_openapi`).
 - **Base URL:** `VITE_API_BASE_URL` (por defecto `http://localhost:8000/api/v1`).
 - **Autenticación:** cabecera `Authorization: Bearer <access_token>` en todo excepto `POST /auth/login` y `GET /health`.
 - **Formato:** JSON en camelCase para pacientes, usuarios y bitácora; snake_case en el login (`access_token`, `expires_in`), igual que `LoginResponseDto`.
