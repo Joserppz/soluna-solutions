@@ -60,6 +60,37 @@ class PatientIn(CamelModel):
         return value or None
 
 
+class ClinicalAnamnesisUpdate(CamelModel):
+    diagnosis: str | None = None
+    stage: str | None = None
+    neurologist_certificate: bool | None = None
+    symptom_notes: str | None = None
+    physical_evaluation: str | None = None
+    speech_evaluation: str | None = None
+    psychological_evaluation: str | None = None
+    medications: str | None = None
+
+
+class PatientUpdate(CamelModel):
+    """PATCH parcial: solo se modifican los campos enviados."""
+
+    name: str | None = None
+    ci: str | None = None
+    phone: str | None = None
+    address: str | None = None
+    emergency_contact: str | None = None
+    caregiver_relation: str | None = None
+    consent: bool | None = None
+    consent_date: date | None = None
+    access_status: str | None = None
+    anamnesis: ClinicalAnamnesisUpdate | None = None
+
+    @field_validator("consent_date", mode="before")
+    @classmethod
+    def empty_date_is_none(cls, value):
+        return value or None
+
+
 def to_patient_out(patient: Patient) -> PatientOut:
     return PatientOut(
         id=patient.id,

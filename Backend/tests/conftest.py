@@ -66,3 +66,31 @@ def client(db_session):
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
+
+
+# Usuarios sembrados por la migración 001: rol -> (correo, contraseña)
+SEED_USERS = {
+    "Administrador": ("dayana.rojas@ucb.edu.bo", "Admin123"),
+    "Coordinador": ("coordinacion@aspar.org", "Coord2026!"),
+    "Profesional": ("demo@aspar.org", "Aspar2026!"),
+    "Recepción": ("recepcion@aspar.org", "Recep2026!"),
+    "Voluntario": ("voluntario@aspar.org", "Voluntario2026!"),
+}
+
+
+@pytest.fixture
+def auth_headers(client):
+    """Devuelve una función rol -> cabecera Authorization con un token válido."""
+    cache: dict[str, dict[str, str]] = {}
+
+    def headers_for(role: str = "Administrador") -> dict[str, str]:
+        if role not in cache:
+            email, password = SEED_USERS[role]
+            response = client.post(
+                "/api/v1/auth/login", json={"email": email, "password": password}
+            )
+            assert response.status_code == 200, response.text
+            cache[role] = {"Authorization": f"Bearer {response.json()['access_token']}"}
+        return cache[role]
+
+    return headers_for

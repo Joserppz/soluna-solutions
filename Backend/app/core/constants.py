@@ -24,3 +24,6 @@ PARKINSON_STAGES = (
     "Estadio V (Dependencia completa)",
     "Otro trastorno del movimiento",
 )
+
+# Roles que pueden registrar y editar fichas de pacientes
+PATIENT_EDITOR_ROLES = ("Administrador", "Coordinador", "Profesional", "Recepción")

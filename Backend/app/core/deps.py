@@ -64,3 +64,17 @@ def get_current_user(
     session.last_activity_at = now
     db.commit()
     return CurrentUser(user=user, session=session, ip=client_ip(request))
+
+
+def require_roles(*roles: str):
+    """Permite el acceso solo a los roles indicados (403 para el resto)."""
+
+    def checker(current: CurrentUser = Depends(get_current_user)) -> CurrentUser:
+        if current.user.role not in roles:
+            raise HTTPException(
+                status.HTTP_403_FORBIDDEN,
+                f"El rol {current.user.role} no tiene permisos para esta operación.",
+            )
+        return current
+
+    return checker
