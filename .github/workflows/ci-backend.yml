@@ -1,0 +1,84 @@
+name: ASPAR CI/CD — Backend Lint, Migraciones y Pruebas de API (SCRUM-61 / SCRUM-95)
+
+on:
+  push:
+    branches:
+      - main
+      - 'Sprint*'
+      - 'SCRUM-*'
+      - 'feature/**'
+    paths:
+      - 'Backend/**'
+      - 'Frontend/src/types/**'
+      - '.github/workflows/ci-backend.yml'
+  pull_request:
+    branches:
+      - main
+      - 'Sprint*'
+    paths:
+      - 'Backend/**'
+      - 'Frontend/src/types/**'
+      - '.github/workflows/ci-backend.yml'
+
+jobs:
+  backend-quality-and-api-tests:
+    name: Ruff, migraciones y pytest contra PostgreSQL 16
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Backend
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: aspar
+          POSTGRES_PASSWORD: aspar_ci
+          POSTGRES_DB: aspar_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U aspar -d aspar_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      TEST_DATABASE_URL: postgresql://aspar:aspar_ci@localhost:5432/aspar_test
+      MIGRATIONS_DATABASE_URL: postgresql://aspar:aspar_ci@localhost:5432/aspar_migraciones
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: Backend/requirements-dev.txt
+
+      - name: Instalar dependencias del Backend
+        run: pip install -r requirements-dev.txt
+
+      - name: Analizar código con Ruff
+        run: ruff check . --output-format=github
+
+      - name: Verificar formato con Ruff
+        run: ruff format --check .
+
+      - name: Aplicar migraciones versionadas sobre una base vacía
+        run: |
+          psql "postgresql://aspar:aspar_ci@localhost:5432/aspar_test" -c "create database aspar_migraciones"
+          DATABASE_URL="$MIGRATIONS_DATABASE_URL" JWT_SECRET="ci-secreto-solo-para-migraciones-aspar" python -m scripts.migrate
+          DATABASE_URL="$MIGRATIONS_DATABASE_URL" JWT_SECRET="ci-secreto-solo-para-migraciones-aspar" python -m scripts.migrate --status
+
+      - name: Ejecutar pruebas unitarias y de API con pytest
+        run: pytest --junitxml=pytest-report.xml
+
+      - name: Publicar reporte de pruebas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-pytest-report
+          path: Backend/pytest-report.xml

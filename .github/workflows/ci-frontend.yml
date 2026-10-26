@@ -1,5 +1,7 @@
 name: ASPAR CI/CD — Frontend Lint, Tests & Build (SCRUM-61 / SCRUM-96)
 
+# El Backend tiene su propio pipeline: .github/workflows/ci-backend.yml (SCRUM-95)
+
 on:
   push:
     branches:
@@ -48,33 +50,3 @@ jobs:
 
       - name: Compilar aplicación y verificar tipos TypeScript (SCRUM-96)
         run: npm run build
-
-  backend-lint-and-tests:
-    name: Validar Backend FastAPI con Ruff y pytest (SCRUM-152)
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: Backend
-
-    steps:
-      - name: Checkout del repositorio
-        uses: actions/checkout@v4
-
-      - name: Configurar Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: 'pip'
-          cache-dependency-path: Backend/requirements-dev.txt
-
-      - name: Instalar dependencias del Backend
-        run: pip install -r requirements-dev.txt
-
-      - name: Analizar código con Ruff
-        run: ruff check .
-
-      - name: Verificar formato con Ruff
-        run: ruff format --check .
-
-      - name: Ejecutar pruebas unitarias con pytest
-        run: pytest
