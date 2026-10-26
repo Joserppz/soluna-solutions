@@ -143,3 +143,79 @@ git push origin SCRUM-13
 5. Fusiona solo con los checks `ASPAR CI/CD — Backend` y `Frontend` en verde.
 
 Como las ramas están encadenadas, fusionar el PR de `SCRUM-65` en `Sprint1` incorpora todas las subtareas de Backend. Si se prefiere revisar por partes, se fusionan en el orden B01 → B16.
+
+## 5. Convención de Git del proyecto (SCRUM-65 / SCRUM-109)
+
+### 5.1 Ramas
+
+| Rama | Uso | Se integra en |
+| :--- | :--- | :--- |
+| `main` | Versión entregada al cierre de cada sprint | — |
+| `SprintN` (por ejemplo `Sprint1`) | Integración de todo el trabajo del sprint | `main`, con un PR al cierre del sprint |
+| `SCRUM-XX` | Historia o tarea padre de Jira; contiene los commits de todas sus subtareas (Frontend, Backend y verificación) | `SprintN`, por PR |
+
+- El nombre de la rama es **exactamente** la clave de Jira (`SCRUM-11`, no `scrum-11` ni `feature/login`).
+- Una rama nueva siempre sale de la rama del sprint actualizada: `git fetch origin && git checkout -b SCRUM-XX origin/Sprint1`.
+
+### 5.2 Commits
+
+Formato: `tipo(SCRUM-XX/SCRUM-YY): descripción en infinitivo y minúsculas`
+
+| Parte | Regla | Ejemplo |
+| :--- | :--- | :--- |
+| `tipo` | `feat` (funcionalidad), `fix` (corrección), `test` (pruebas o verificación), `docs` (documentación), `ci` (pipelines), `refactor`, `chore` | `test` |
+| `SCRUM-XX` | Historia o tarea padre (la rama) | `SCRUM-11` |
+| `SCRUM-YY` | **Una** subtarea por commit | `SCRUM-28` |
+| Descripción | Qué cambia, sin punto final; el cuerpo explica el porqué | `registrar la verificacion del flujo de inicio de sesion` |
+
+- Un commit por subtarea. Si una subtarea necesita una corrección y su evidencia, se hacen dos commits con la misma clave (por ejemplo `fix(SCRUM-58/SCRUM-88)` y `test(SCRUM-58/SCRUM-88)`).
+- Sin claves sueltas ni mensajes genéricos («Cambios frontend», «arreglos»).
+- El autor del commit es la persona responsable de la subtarea en Jira.
+
+### 5.3 Pull Requests
+
+1. **Título:** `[SCRUM-XX] Requisito o tarea (SCRUM-YY, SCRUM-ZZ)`.
+2. **Descripción:** la plantilla `.github/pull_request_template.md` completa, con las subtareas de Frontend, Backend y verificación que incluye.
+3. **Checks:** `ASPAR CI/CD — Frontend` y `ASPAR CI/CD — Backend` en verde, incluida la cobertura mínima de 70%.
+4. **Fusión:** con *Create a merge commit* (no *squash*), para conservar un commit por subtarea y su enlace con Jira.
+5. Al cerrar el sprint: PR `SprintN` → `main` con el resumen del sprint.
+
+### 5.4 Enlace con Jira
+
+Con la aplicación **GitHub for Jira** instalada, Jira enlaza automáticamente en el panel *Development* de cada incidencia toda rama, commit o PR cuyo nombre o mensaje contenga su clave. Por eso cada commit lleva la clave de la historia **y** de la subtarea. Si la aplicación no está instalada, se pega la URL del PR en el campo *Development* o en un comentario de la subtarea.
+
+## 6. Verificación de la trazabilidad Jira ↔ Git del Sprint 1 (SCRUM-65 / SCRUM-109)
+
+Revisión del historial de `Sprint1` (commits desde `main`) contra las subtareas del sprint. **F** = Frontend, **B** = Backend, **V** = verificación.
+
+| Historia / Tarea | F | Commit F | B | Commit(s) B | V | Commit(s) V |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| SCRUM-11 RF-01 | 66 | `714c834`, `d03fd2b` | 26, 27 | `3837b4a`, `a53aa15` | 28 | este PR |
+| SCRUM-12 RNF-02 | 67 | `ac68956`, `d03fd2b` | 29 | `9554351` | 30 | este PR |
+| SCRUM-13 RF-02 | 68 | `1c5889e` | 31, 32 | `b87317a`, `5363bf4` | 69 | este PR |
+| SCRUM-123 RNF-06 | 138 | `1fd6560` | 137 | `c604b21` | 139 | este PR |
+| SCRUM-128 RNF-11 | 153 | `34c86a7`, `d03fd2b` | 152 | `69f158c` | 154 | este PR |
+| SCRUM-129 RF-11 | 161 | `882e430` | 160 | `666819e` | 162 | este PR |
+| SCRUM-135 RF-17 | 179 | `0be748d` | 178 | `683937c` | 180 | este PR |
+| SCRUM-57 Aceptación | 85 | `2f30c71` | 84 | `1501a2d` | 83 | este PR |
+| SCRUM-58 Integración | 87 | `ee239c2` | 86 | `de83080` | 88 | este PR |
+| SCRUM-59 README y `.env` | 91 | `370bd02` | 90 | `1d2079a`, `1a80557` | 89 | este PR |
+| SCRUM-61 CI/CD | 96 | `f9e933d`, `195a8be` | 95 | `e6dac07` | 97 | este PR |
+| SCRUM-64 C4 y datos | 105 | `8af4ccf` | 104 | `e866c85` | 106 | este PR |
+| SCRUM-65 Flujo de Git | 108 | `6029eba` | 107 | `f28b4e3` | 109 | este PR |
+| SCRUM-136 Trazabilidad | 183 | `43f1454` | 182 | `bce54ef` | 181 | este PR |
+| SCRUM-190 BPMN | 194 | `92c47e1` | 193 | `b7e4809` | 192 | este PR |
+| SCRUM-191 Wireframes | 195 | `7c987c6` | 197 | `319a8e6` | 196 | este PR |
+
+**Resultado:** las **50 subtareas** del Sprint 1 (16 de Frontend, 18 de Backend y 16 de verificación) tienen al menos un commit con su clave (las 16 de verificación, en el PR de este cambio).
+
+### 6.1 Observaciones
+
+| # | Observación | Impacto | Acción |
+| :--- | :--- | :--- | :--- |
+| 1 | Los 4 primeros commits del frontend (`5f7636c`, `c0b4b0e`, `d84a82f`, `c81696e`) usan «Cambios frontend SCRUM-…», sin tipo ni historia | Jira los enlaza a la subtarea, pero no a la historia | Ninguna (ya están en el historial); aplicar la convención 5.2 desde ahora |
+| 2 | `d03fd2b` usa tres claves (`SCRUM-153/SCRUM-66/SCRUM-67`) en un mismo commit | Un solo commit aparece en tres subtareas | Un commit por subtarea (5.2) |
+| 3 | Los commits del Frontend llegaron a `Sprint1` al crear la rama desde `SCRUM-65`, **sin PR** | Sus subtareas no tienen PR enlazado | El PR de cierre `Sprint1` → `main` los incluye; usar PR siempre (5.3) |
+| 4 | El PR #4 (`SCRUM-65` → `Sprint1`) se tituló «Scrum 65», sin descripción, y agrupa las 19 subtareas de Backend | Las 16 historias del Backend enlazan al mismo PR y la revisión fue en bloque | Título y plantilla según 5.3; un PR por historia cuando sea posible |
+| 5 | Las subtareas de verificación no tenían commits | No aparecían en el panel *Development* de Jira | Resuelto en este PR: un commit por subtarea |
+| 6 | Desde el repositorio no se puede comprobar si Jira muestra los enlaces | — | Revisar en Jira el panel *Development* de 3 subtareas al azar tras fusionar este PR |
