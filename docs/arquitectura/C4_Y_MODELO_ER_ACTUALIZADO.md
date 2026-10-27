@@ -7,7 +7,7 @@ Los diagramas originales (`modelos/c4/C1.jpeg`, `C2.jpeg`, `C3.jpeg` y `docs/arq
 | Nivel | Diagrama original | Implementación del Sprint 1 | ADR |
 | :--- | :--- | :--- | :--- |
 | C1 | Personal ASPAR, público y sistema web; servicios externos de almacenamiento y pagos | Sin cambios. Libélula todavía no está integrada (Sprint 2) | — |
-| C2 | SPA Vue 3, API FastAPI, PostgreSQL y Cloud Storage | PostgreSQL **gestionado en Supabase**; Cloud Storage = **Supabase Storage** (bucket privado) | ADR-002, ADR-007 |
+| C2 | SPA Vue 3, API FastAPI, PostgreSQL y Cloud Storage | PostgreSQL **gestionado en Supabase**; el «Cloud Storage» se divide en **Supabase Storage** (bucket privado, documentos de pacientes) y **Cloudinary** (galería multimedia, RNF-10, sprints siguientes) | ADR-002, ADR-007, ADR-010 |
 | C3 | JWT Auth Middleware, Routers, Services, Repositories (SQLAlchemy), Adapters | Igual, más **sesiones en servidor**, **bitácora** como servicio transversal y routers de usuarios, bitácora y documentos | ADR-001, ADR-003, ADR-006 |
 | Datos | E-R a cargo de la arquitecta | 12 tablas en 2 migraciones SQL versionadas | ADR-002 |
 
@@ -18,13 +18,15 @@ flowchart LR
     publico["👥 Público general<br/>(pacientes, familiares, donantes)"]
     personal["👩‍⚕️ Personal ASPAR<br/>(Administrador, Coordinador, Profesional,<br/>Recepción, Voluntario)"]
     sistema["🖥️ Sistema Web ASPAR<br/>Portal público y panel de gestión"]
-    storage["☁️ Supabase Storage<br/>(documentos y multimedia)"]
+    storage["🔒 Supabase Storage<br/>(documentos privados de pacientes)"]
+    cloudinary["🖼️ Cloudinary<br/>(galería multimedia · RNF-10)"]
     pagos["💳 Pasarela Libélula / QR bancario<br/>(Sprint 2)"]
     redes["📱 Redes sociales<br/>(Facebook, Instagram, TikTok)"]
 
     publico -- "consulta cronograma, dona" --> sistema
     personal -- "gestiona pacientes, usuarios,<br/>inventario y bitácora" --> sistema
     sistema -- "guarda archivos privados" --> storage
+    sistema -. "publica fotos y videos (sprints siguientes)" .-> cloudinary
     sistema -. "procesa donaciones" .-> pagos
     sistema -- "enlaces oficiales" --> redes
 ```
@@ -45,11 +47,14 @@ flowchart TB
         bucket[["Storage<br/>bucket privado<br/>documentos-pacientes"]]
     end
 
+    cloudinary[["Cloudinary<br/>galería multimedia<br/>(sprints siguientes, RNF-10)"]]
+
     usuario -- "HTTPS" --> spa
     spa -- "REST JSON /api/v1<br/>Authorization: Bearer JWT" --> api
     api -- "SQLAlchemy + psycopg2" --> db
     api -- "REST con service_role key<br/>URLs firmadas de 300 s" --> bucket
     spa -. "nunca accede directamente (ADR-007)" .-x db
+    api -. "carga y URLs públicas<br/>(ADR-010)" .-> cloudinary
 ```
 
 ## 4. Nivel C3 — Componentes de la API
@@ -233,3 +238,4 @@ erDiagram
 
 - Reemplazar las imágenes `modelos/c4/C2.jpeg` y `C3.jpeg` por versiones que incluyan Supabase y las sesiones en servidor, o enlazar este documento como versión vigente.
 - Revisión de estos diagramas y de los ADR por la arquitecta del proyecto.
+- Al implementar RF-05, agregar al C3 un adaptador de Cloudinary junto a `adapters/storage.py` (ADR-010).

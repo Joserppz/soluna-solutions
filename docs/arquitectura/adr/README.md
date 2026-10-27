@@ -13,5 +13,6 @@ Cada ADR documenta una decisión técnica: el contexto, la decisión, las altern
 | [ADR-007](./ADR-007-supabase-solo-desde-el-backend.md) | Supabase accesible solo desde el Backend (RLS sin políticas) | Aceptada | RNF-06 |
 | [ADR-008](./ADR-008-modo-local-de-respaldo-en-frontend.md) | Modo local de respaldo en el Frontend, solo si la API no responde | Aceptada (temporal) | RF-01, RF-02 |
 | [ADR-009](./ADR-009-contrato-verificado-por-prueba.md) | Contrato Frontend ↔ Backend verificado por una prueba automática | Aceptada | RNF-11 |
+| [ADR-010](./ADR-010-multimedia-en-cloudinary.md) | Galería multimedia en Cloudinary y documentos privados en Supabase Storage | Propuesta | RF-05, RNF-06, RNF-10 |
 
 **Formato:** cada archivo sigue la plantilla *Contexto → Decisión → Alternativas → Consecuencias → Evidencia*. Una decisión nueva o que reemplaza a otra se agrega como un ADR nuevo con el número siguiente; los ADR aceptados no se editan, se marcan como «Reemplazada por ADR-XXX».
