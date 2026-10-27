@@ -21,10 +21,15 @@ Esta matriz alinea los requisitos funcionales y no funcionales (**RF01–RF17** 
 | **RNF-05** | SCRUM-61 | 96 / 95 / 97 | CI → cobertura con mínimo de 70% | — | — | Vitest: 80,30% de líneas | pytest: 96,94% | — | ✅ |
 | **RF-03 / RF-09** | SCRUM-136 | 183 / — / — | SPA → `InventoryView` · BD → `inventory_items` | `InventoryView.vue` | ⏳ | `PantallasRequisitos.spec.ts` (registro, filtro, CSV) | `test_migrations.py` (esquema) | — | ⏳ Sin «dar de baja» ni PDF; datos solo locales |
 | **RF-04 / RF-10** | SCRUM-136 | 183 / — / — | SPA → `ScheduleView` · BD → `schedules` | `ScheduleView.vue` (`/`) | ⏳ | `PantallasRequisitos.spec.ts` (portal) | `test_migrations.py` | — | ⏳ Cronograma sin edición |
-| **RF-05** | SCRUM-136 | 183 / — / — | SPA → `ScheduleView` · API → `adapters/storage` · BD → `media_assets` | `ScheduleView.vue` | ⏳ | — | `test_storage_adapter.py` | — | ⏳ Carga visible al público |
+| **RF-05** | SCRUM-136 | 183 / — / — | SPA → `ScheduleView` · Cloudinary (RNF-10) · BD → `media_assets` | `ScheduleView.vue` | ⏳ | — | `test_storage_adapter.py` | — | ⏳ Carga visible al público |
 | **RF-06** | SCRUM-136 | 183 / — / — | SPA → `ScheduleView` · BD → `donations` | `ScheduleView.vue` | ⏳ | `PantallasRequisitos.spec.ts` (donación QR) | `test_migrations.py` | — | ⏳ Libélula simulada |
 | **RF-07 / RF-08** | SCRUM-136 | 183 / — / — | SPA → `ScheduleView` · BD → `institutional_info` | `ScheduleView.vue` | ⏳ | `PantallasRequisitos.spec.ts` (redes y requisitos) | `test_migrations.py` | — | ⏳ Contenido sin edición |
-| **RF-12 a RF-16** | Por confirmar en Jira | — | SPA → `AttendanceView` · BD → `attendance` | `AttendanceView.vue` | ⏳ | `PantallasRequisitos.spec.ts` (bloqueo RNF-06) | `test_migrations.py` | — | ❔ Definición pendiente en el SRS |
+| **RF-12** Asistencia | SCRUM-130 | 164 / 163 / 165 | SPA → `AttendanceView` · BD → `attendance` | `AttendanceView.vue` | ⏳ | `PantallasRequisitos.spec.ts` (bloqueo RNF-06) | `test_migrations.py` | — | ⏳ Pantalla lista; API y resumen mensual en sprints siguientes |
+| **RF-13** Movimientos de inventario | SCRUM-131 | 167 / 166 / 168 | SPA → `InventoryView` · BD → `inventory_items` | — | ⏳ | — | — | — | ⏳ Sin iniciar |
+| **RF-14** Donaciones | SCRUM-132 | 170 / 169 / 171 | SPA → `ScheduleView` · BD → `donations` | `ScheduleView.vue` (registro público) | ⏳ | `PantallasRequisitos.spec.ts` (donación QR) | `test_migrations.py` | — | ⏳ Registro solo local; falta panel y resumen por canal |
+| **RF-15** Meta de recaudación | SCRUM-133 | 173 / 172 / 174 | SPA → `ScheduleView` (contador) · BD → `donations` | `ScheduleView.vue` | ⏳ | — | — | — | ⏳ Contador local; falta la meta y el cálculo sobre donaciones confirmadas |
+| **RF-16** Contacto y preinscripciones | SCRUM-134 | 176 / 175 / 177 | — | — | ⏳ | — | — | — | ⏳ Sin iniciar |
+| **RNF-07 a RNF-10** | SCRUM-124 a SCRUM-127 | ver adenda §1.1 | Infraestructura y Cloudinary | — | — | — | — | — | ⏳ Planificados |
 | **RNF-01, RNF-03, RNF-04** | — | — | — | — | — | — | — | — | ❔ Sin verificar (ver adenda §3) |
 
 ### Tareas técnicas del Sprint 1 y su evidencia
@@ -56,7 +61,7 @@ Esta matriz alinea los requisitos funcionales y no funcionales (**RF01–RF17** 
 | **RF-09** | SCRUM-183 | Exportación de reportes de inventario en CSV/PDF para la Alcaldía | `src/views/InventoryView.vue` (`exportReport`) | Exportador CSV/Acta PDF | Implementado y probado |
 | **RF-10** | SCRUM-183 | Visualización pública del cronograma sabatino sin requerir login | `src/views/ScheduleView.vue` (Ruta pública `/`) | `schedule` | Implementado y probado |
 | **RF-11** | SCRUM-129 / SCRUM-161 | Gestión de usuarios y roles alineados con Jira (`Administrador`, `Coordinador`, `Profesional`, `Recepción`, `Voluntario`) | `src/views/UsersView.vue` | `GET/POST/PATCH /api/v1/users` | Implementado y probado |
-| **RF-12 a RF-16** | SCRUM-183 | Control de asistencia sabatina y seguimiento por actividad | `src/views/AttendanceView.vue` | `getAttendance`, `updateAttendance` | Implementado y probado |
+| **RF-12** | SCRUM-183 | Control de asistencia sabatina y seguimiento por actividad | `src/views/AttendanceView.vue` | `getAttendance`, `updateAttendance` | Implementado y probado |
 | **RF-17** | SCRUM-135 / SCRUM-179 | Registro y consulta de auditoría de operaciones sensibles solo para Administrador | `src/views/AuditView.vue` | `GET /api/v1/audit` (`syncAuditFromApi`) | Implementado y probado |
 | **RNF-02** | SCRUM-12 / SCRUM-67 | Sesiones JWT, expiración automática (30 min / 15 min inactividad), renovación y logout | `src/App.vue`, `src/router/index.ts` | `GET /api/v1/auth/verify`, `POST /api/v1/auth/logout` | Implementado y probado |
 | **RNF-06** | SCRUM-123 / SCRUM-138 | Protección de datos clínicos según consentimiento informado y estado de acceso | `src/views/PatientsView.vue`, `src/views/AttendanceView.vue` | `canViewClinicalRecord`, `updatePatient` | Implementado y probado |
@@ -76,7 +81,7 @@ Alineación de cada requisito del SRS con su implementación en el Backend FastA
 | **RF-06** | — | — | `donations`, `institutional_info` | `test_migrations.py` | Modelo de datos listo; endpoints en Sprint 2 |
 | **RF-07 / RF-08** | — | — | `institutional_info` | `test_migrations.py` | Modelo de datos listo; endpoints en Sprint 2 |
 | **RF-11** | `GET/POST /users`, `PATCH /users/{id}`, `POST /users/{id}/reset-password` | `services/user_service.py` | `users`, `sessions` | `test_users_api.py` | Implementado (SCRUM-160) |
-| **RF-12 a RF-16** | — | — | `attendance` | `test_migrations.py` | Modelo de datos listo; endpoints en Sprint 2 |
+| **RF-12** | — | — | `attendance` | `test_migrations.py` | Modelo de datos listo; endpoints en Sprint 2 |
 | **RF-17** | `GET /audit` | `services/audit_service.py` (único punto de escritura), `core/deps.py` (accesos denegados) | `audit_logs` (inmutable por trigger) | `test_audit.py` | Implementado (SCRUM-178) |
 | **RNF-02** | `POST /auth/refresh`, `POST /auth/logout` | `core/deps.py` (30 min máx., 15 min inactividad, revocación) | `sessions` | `test_sessions.py` | Implementado (SCRUM-29) |
 | **RNF-06** | `GET /patients*`, `/patients/{id}/documents*` | `patient_service.can_view_clinical_record`, `services/document_service.py` | `patients`, `patient_documents`, bucket privado `documentos-pacientes` | `test_patient_privacy.py` | Implementado (SCRUM-137) |

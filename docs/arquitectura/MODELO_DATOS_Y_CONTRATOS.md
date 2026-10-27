@@ -81,7 +81,7 @@ erDiagram
 | `patients` | 1:N `attendance` (`ON DELETE SET NULL`) | CI única, `CHECK` de estadio Hoehn y Yahr y estado de acceso, **`CHECK access_status <> 'Activo' OR consent`** | RF-02, RNF-06 |
 | `audit_logs` | — (registra actor por email para conservar el historial aunque se elimine el usuario) | `CHECK` de categoría y severidad; **trigger que impide `UPDATE`/`DELETE`** (bitácora inmutable) | RF-17 |
 | `schedules` | 1:N `attendance` | `CHECK` de categoría, cupos `>= 0`, bandera `published` para el portal | RF-04, RF-10 |
-| `attendance` | N:1 `patients`, N:1 `schedules` | Índice único (paciente, actividad), `CHECK` de estado | RF-12 a RF-16 |
+| `attendance` | N:1 `patients`, N:1 `schedules` | Índice único (paciente, actividad), `CHECK` de estado | RF-12 |
 | `inventory_items` | — | Código único, `CHECK` de categoría, origen (`Propio ASPAR`, `Préstamo Alcaldía`, `Donación`) y estado físico, cantidad `>= 0` | RF-03, RF-09 |
 | `media_assets` | N:1 `users` | `CHECK` de tipo (`Imagen`, `Video`), tamaño `>= 0` | RF-05 |
 | `donations` | — | Monto `> 0`, `CHECK` de método y estado | RF-06 |
