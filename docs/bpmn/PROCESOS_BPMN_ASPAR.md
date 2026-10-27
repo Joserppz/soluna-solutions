@@ -39,11 +39,11 @@ El proceso **actual** sale del análisis AS-IS de la entrevista con ASPAR (`docs
 | Cualquiera con acceso a las hojas lee los datos clínicos | Login por rol y anamnesis solo con consentimiento y acceso `Activo` | RF-01, RF-11, RNF-06 | ✅ Implementado |
 | No queda registro de quién consultó o cambió una ficha | Bitácora inmutable de operaciones sensibles | RF-17 | ✅ Implementado |
 | El diagnóstico sin certificado no queda documentado | Campo «certificado neurológico» y notas de síntomas en la anamnesis | RF-02 | ✅ Implementado |
-| Asistencia anotada en papel | Marcación de asistencia con bloqueo RNF-06 | RF-12 a RF-16 (por confirmar), RNF-06 | ⚠️ Pantalla lista; datos solo locales (⏳ Sprint 2) |
+| Asistencia anotada en papel | Marcación de asistencia con bloqueo RNF-06 y resumen mensual | RF-12, RNF-06 | ⚠️ Pantalla lista; datos solo locales (⏳ Sprint 2) |
 | Cronograma avisado solo por WhatsApp | Cronograma público en el portal sin iniciar sesión | RF-04, RF-10 | ⚠️ Visible; la edición por el administrador es del Sprint 2 |
-| Fotos y videos llenan Google Drive / Gmail | Almacenamiento en la nube independiente | RF-05 | ⏳ Adaptador de Storage listo; galería en el Sprint 2 |
-| Inventario en listas de papel, sin auditoría | Registro, baja y exportación de reportes para la Alcaldía | RF-03, RF-09 | ⚠️ Registro y CSV listos; baja, PDF y Backend en el Sprint 2 |
-| Donaciones sin canal formal ni transparencia | QR oficial, pasarela Libélula y contador de aportes | RF-06 | ⚠️ QR y registro local; Libélula en el Sprint 2 |
+| Fotos y videos llenan Google Drive / Gmail | Galería en Cloudinary con control de cuota | RF-05, RNF-10 | ⏳ Galería y Cloudinary en el Sprint 2 |
+| Inventario en listas de papel, sin auditoría | Registro, baja, movimientos con historial y reportes para la Alcaldía | RF-03, RF-09, RF-13 | ⚠️ Registro y CSV listos; baja, PDF y Backend en el Sprint 2 |
+| Donaciones sin canal formal ni transparencia | QR oficial, pasarela Libélula, registro por canal y meta pública de recaudación | RF-06, RF-14, RF-15 | ⚠️ QR y registro local; Libélula en el Sprint 2 |
 | Pérdida de información en WhatsApp | Toda la información queda en PostgreSQL, accesible según el rol | RF-02, RF-11 | ✅ Para pacientes y usuarios |
 
 ### 0.4 Cómo editar los diagramas
