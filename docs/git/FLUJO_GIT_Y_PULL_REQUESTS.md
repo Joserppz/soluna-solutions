@@ -190,24 +190,24 @@ Revisión del historial de `Sprint1` (commits desde `main`) contra las subtareas
 
 | Historia / Tarea | F | Commit F | B | Commit(s) B | V | Commit(s) V |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| SCRUM-11 RF-01 | 66 | `714c834`, `d03fd2b` | 26, 27 | `3837b4a`, `a53aa15` | 28 | este PR |
-| SCRUM-12 RNF-02 | 67 | `ac68956`, `d03fd2b` | 29 | `9554351` | 30 | este PR |
-| SCRUM-13 RF-02 | 68 | `1c5889e` | 31, 32 | `b87317a`, `5363bf4` | 69 | este PR |
-| SCRUM-123 RNF-06 | 138 | `1fd6560` | 137 | `c604b21` | 139 | este PR |
-| SCRUM-128 RNF-11 | 153 | `34c86a7`, `d03fd2b` | 152 | `69f158c` | 154 | este PR |
-| SCRUM-129 RF-11 | 161 | `882e430` | 160 | `666819e` | 162 | este PR |
-| SCRUM-135 RF-17 | 179 | `0be748d` | 178 | `683937c` | 180 | este PR |
-| SCRUM-57 Aceptación | 85 | `2f30c71` | 84 | `1501a2d` | 83 | este PR |
-| SCRUM-58 Integración | 87 | `ee239c2` | 86 | `de83080` | 88 | este PR |
-| SCRUM-59 README y `.env` | 91 | `370bd02` | 90 | `1d2079a`, `1a80557` | 89 | este PR |
-| SCRUM-61 CI/CD | 96 | `f9e933d`, `195a8be` | 95 | `e6dac07` | 97 | este PR |
-| SCRUM-64 C4 y datos | 105 | `8af4ccf` | 104 | `e866c85` | 106 | este PR |
-| SCRUM-65 Flujo de Git | 108 | `6029eba` | 107 | `f28b4e3` | 109 | este PR |
-| SCRUM-136 Trazabilidad | 183 | `43f1454` | 182 | `bce54ef` | 181 | este PR |
-| SCRUM-190 BPMN | 194 | `92c47e1` | 193 | `b7e4809` | 192 | este PR |
-| SCRUM-191 Wireframes | 195 | `7c987c6` | 197 | `319a8e6` | 196 | este PR |
+| SCRUM-11 RF-01 | 66 | `714c834`, `d03fd2b` | 26, 27 | `3837b4a`, `a53aa15` | 28 | `6c7da71` |
+| SCRUM-12 RNF-02 | 67 | `ac68956`, `d03fd2b` | 29 | `9554351` | 30 | `eb33c87` |
+| SCRUM-13 RF-02 | 68 | `1c5889e` | 31, 32 | `b87317a`, `5363bf4` | 69 | `54ca7a1` |
+| SCRUM-123 RNF-06 | 138 | `1fd6560` | 137 | `c604b21` | 139 | `0f7e240` |
+| SCRUM-128 RNF-11 | 153 | `34c86a7`, `d03fd2b` | 152 | `69f158c` | 154 | `fc453e6` |
+| SCRUM-129 RF-11 | 161 | `882e430` | 160 | `666819e` | 162 | `434e8de` |
+| SCRUM-135 RF-17 | 179 | `0be748d` | 178 | `683937c` | 180 | `40c98dd` |
+| SCRUM-57 Aceptación | 85 | `2f30c71` | 84 | `1501a2d` | 83 | `fe1def6` |
+| SCRUM-58 Integración | 87 | `ee239c2` | 86 | `de83080` | 88 | `12554ee`, `2c5871b` |
+| SCRUM-59 README y `.env` | 91 | `370bd02` | 90 | `1d2079a`, `1a80557` | 89 | `9a4cadd` |
+| SCRUM-61 CI/CD | 96 | `f9e933d`, `195a8be` | 95 | `e6dac07` | 97 | `f3c325f` |
+| SCRUM-64 C4 y datos | 105 | `8af4ccf` | 104 | `e866c85` | 106 | `4b49f40` |
+| SCRUM-65 Flujo de Git | 108 | `6029eba` | 107 | `f28b4e3` | 109 | `5c9bc37` |
+| SCRUM-136 Trazabilidad | 183 | `43f1454` | 182 | `bce54ef` | 181 | `6b47730` |
+| SCRUM-190 BPMN | 194 | `92c47e1` | 193 | `b7e4809` | 192 | `ef89a01` |
+| SCRUM-191 Wireframes | 195 | `7c987c6` | 197 | `319a8e6` | 196 | `03c3600` |
 
-**Resultado:** las **50 subtareas** del Sprint 1 (16 de Frontend, 18 de Backend y 16 de verificación) tienen al menos un commit con su clave (las 16 de verificación, en el PR de este cambio).
+**Resultado:** las **50 subtareas** del Sprint 1 (16 de Frontend, 18 de Backend y 16 de verificación) tienen al menos un commit con su clave en `Sprint1`. Los commits de corrección posteriores llevan la misma clave de su subtarea.
 
 ### 6.1 Observaciones
 
@@ -217,5 +217,6 @@ Revisión del historial de `Sprint1` (commits desde `main`) contra las subtareas
 | 2 | `d03fd2b` usa tres claves (`SCRUM-153/SCRUM-66/SCRUM-67`) en un mismo commit | Un solo commit aparece en tres subtareas | Un commit por subtarea (5.2) |
 | 3 | Los commits del Frontend llegaron a `Sprint1` al crear la rama desde `SCRUM-65`, **sin PR** | Sus subtareas no tienen PR enlazado | El PR de cierre `Sprint1` → `main` los incluye; usar PR siempre (5.3) |
 | 4 | El PR #4 (`SCRUM-65` → `Sprint1`) se tituló «Scrum 65», sin descripción, y agrupa las 19 subtareas de Backend | Las 16 historias del Backend enlazan al mismo PR y la revisión fue en bloque | Título y plantilla según 5.3; un PR por historia cuando sea posible |
-| 5 | Las subtareas de verificación no tenían commits | No aparecían en el panel *Development* de Jira | Resuelto en este PR: un commit por subtarea |
-| 6 | Desde el repositorio no se puede comprobar si Jira muestra los enlaces | — | Revisar en Jira el panel *Development* de 3 subtareas al azar tras fusionar este PR |
+| 5 | Las subtareas de verificación no tenían commits | No aparecían en el panel *Development* de Jira | Resuelto: un commit por subtarea (`434e8de` a `fe1def6`) |
+| 6 | Los 17 commits de verificación se subieron **directo a `Sprint1`**, sin PR | Como en la observación 3, esas subtareas no tienen PR enlazado | Se incluyen en el PR de cierre `Sprint1` → `main`; desde el Sprint 2, todo cambio entra por PR (5.3) |
+| 7 | Desde el repositorio no se puede comprobar si Jira muestra los enlaces | — | Revisar en Jira el panel *Development* de 3 subtareas al azar (por ejemplo SCRUM-28, SCRUM-137 y SCRUM-161) |
