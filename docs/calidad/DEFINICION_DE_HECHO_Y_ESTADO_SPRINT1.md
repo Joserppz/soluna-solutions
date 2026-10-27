@@ -37,11 +37,11 @@ Una **historia** está hecha cuando todas sus subtareas (Frontend, Backend y ver
 | SCRUM-61 CI/CD | ✅ | ⚠️ | ✅ | ✅ | — | ✅ | ✅ | ✅ Hecho | — |
 | SCRUM-64 C4, datos y migraciones | ✅ | ⚠️ | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ Con observaciones | ADR y diagramas pendientes de revisión de la arquitecta; imágenes `C2.jpeg` / `C3.jpeg` sin actualizar |
 | SCRUM-65 Flujo de Git | ✅ | ⚠️ | ✅ | — | — | ✅ | ✅ | ✅ Hecho | — |
-| SCRUM-136 Trazabilidad | ✅ | ⚠️ | ✅ | — | — | ✅ | ✅ | ⚠️ Con observaciones | RF-12 a RF-16 sin definición en el SRS |
+| SCRUM-136 Trazabilidad | ✅ | ⚠️ | ✅ | — | — | ✅ | ✅ | ✅ Hecho | RF-12 a RF-16 y RNF-07 a RNF-10 registrados con su historia de Jira (adenda §1.1) |
 | SCRUM-190 BPMN 2.0 | ✅ | ⚠️ | ✅ | — | — | ✅ | ✅ | ✅ Hecho | — |
 | SCRUM-191 Wireframes | ✅ | ⚠️ | ✅ | ✅ | — | ✅ | ✅ | ⚠️ Con observaciones | 2 bloques no cumplen (carga de galería pública y cronograma sin edición); pasan al Sprint 2 |
 
-**Sobre D2:** las subtareas de Frontend llegaron a `Sprint1` sin PR y las de Backend en un único PR (#4) sin descripción ni plantilla. Las de verificación entran con el PR de este cambio. Queda como observación de proceso para el Sprint 2 ([observaciones del flujo Git](../git/FLUJO_GIT_Y_PULL_REQUESTS.md#61-observaciones)).
+**Sobre D2:** las subtareas de Frontend llegaron a `Sprint1` sin PR y las de Backend en un único PR (#4) sin descripción ni plantilla. Las 17 de verificación también se subieron directo a `Sprint1`, sin PR (commits `434e8de` a `fe1def6`). Queda como observación de proceso para el Sprint 2 ([observaciones del flujo Git](../git/FLUJO_GIT_Y_PULL_REQUESTS.md#61-observaciones)).
 
 ## 3. Estado real medido
 
@@ -68,7 +68,7 @@ Una **historia** está hecha cuando todas sus subtareas (Frontend, Backend y ver
 | P4 | Tomar las 4 capturas del proyecto Supabase real | SCRUM-57 / SCRUM-84 | Backend | Media |
 | P5 | Revisar los ADR y los diagramas C4 actualizados | SCRUM-64 / SCRUM-106 | Arquitectura | Media |
 | P6 | Abrir el PR de cierre `Sprint1` → `main` con la plantilla | SCRUM-65 | Dirección | Media |
-| P7 | Transcribir RF-12 a RF-16 y RNF-07 a RNF-10 desde Jira a la adenda del SRS | SCRUM-136 | Dirección | Media |
+| P7 | ~~Transcribir RF-12 a RF-16 y RNF-07 a RNF-10 desde Jira~~ ✅ Registrados en la adenda §1.1; falta su descripción y métrica al refinar cada historia | SCRUM-136 | Dirección | Baja |
 | P8 | Ajustar el aviso 🔒 para que indique el motivo real (rol o consentimiento) | SCRUM-123 | Frontend | Baja |
 | P9 | Prueba de componente para `App.vue` | SCRUM-12 | Frontend | Baja |
 
@@ -79,11 +79,15 @@ Una **historia** está hecha cuando todas sus subtareas (Frontend, Backend y ver
 | RF-02 | Pantalla de edición de la ficha del paciente |
 | RF-03 / RF-09 | Endpoints de inventario, «dar de baja» y generación real del acta PDF |
 | RF-04 / RF-10 | Edición y publicación del cronograma por el administrador, con Backend |
-| RF-05 | Galería conectada a Supabase Storage y carga solo para el personal autenticado |
+| RF-05 / RNF-10 | Galería en Cloudinary con control de cuota y carga solo para el personal autenticado (ADR-010) |
 | RF-06 | Integración real con la pasarela Libélula y registro de donaciones en el Backend |
 | RF-07 / RF-08 | Edición del contenido institucional |
-| RF-12 a RF-16 | Endpoints de asistencia con la regla RNF-06 en el servidor |
+| RF-12 | API de asistencia con la regla RNF-06 en el servidor y resumen mensual |
+| RF-13 | Movimientos transaccionales de inventario con historial |
+| RF-14 / RF-15 | Registro de donaciones por canal, resumen mensual y meta pública sobre donaciones confirmadas |
+| RF-16 | Formulario público de contacto y preinscripciones con límite de solicitudes |
 | RNF-01, RNF-03, RNF-04 | Definir el hosting, prueba de carga y auditoría de accesibilidad WCAG 2.1 AA |
+| RNF-07 a RNF-09 | Respaldo y recuperación (RPO/RTO), compatibilidad de navegadores y pantallas, prueba de usabilidad y manual |
 
 ## 5. Resultado de la revisión de aceptación
 
