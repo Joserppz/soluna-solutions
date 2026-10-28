@@ -19,6 +19,18 @@ const sessionAlert = ref('')
 let expiryTimer = 0
 
 const isAdmin = computed(() => session.value?.role === 'Administrador')
+
+// Barra del portal público (wireframe del portal): una sección activa a la vez
+const portalLinks = [
+  { label: 'Portal', to: '/', hash: '' },
+  { label: 'Cronograma', to: '/#cronograma', hash: '#cronograma' },
+  { label: 'Galería', to: '/#galeria', hash: '#galeria' },
+  { label: 'Donar', to: '/#donar', hash: '#donar' },
+]
+
+function isPortalSection(hash: string) {
+  return route.path === '/' && (route.hash || '') === hash
+}
 const isExpiringSoon = computed(
   () =>
     Boolean(session.value) &&
@@ -104,38 +116,61 @@ onUnmounted(() => {
         </span>
       </RouterLink>
 
-      <nav class="nav-links" aria-label="Navegación principal">
-        <RouterLink to="/">Portal</RouterLink>
-        <RouterLink to="/#cronograma">Cronograma</RouterLink>
-        <RouterLink to="/#galeria">Galería</RouterLink>
-        <RouterLink to="/#donar">Donar</RouterLink>
-        <RouterLink v-if="session" to="/pacientes">Pacientes</RouterLink>
-        <RouterLink v-if="session" to="/asistencia">Asistencia</RouterLink>
-        <RouterLink v-if="session" to="/inventario">Inventario</RouterLink>
-        <RouterLink v-if="isAdmin" to="/usuarios">Usuarios</RouterLink>
-        <RouterLink v-if="isAdmin" to="/bitacora">Bitácora</RouterLink>
-
-        <span
-          v-if="session"
-          class="session-badge"
-          title="Tiempo restante de sesión activa (RNF-02)"
+      <!-- Sin sesión: barra del portal público. Con sesión: barra del panel. -->
+      <nav v-if="!session" class="nav-links" aria-label="Navegación del portal">
+        <RouterLink
+          v-for="link in portalLinks"
+          :key="link.to"
+          :to="link.to"
+          active-class=""
+          exact-active-class=""
+          :class="{ 'is-current': isPortalSection(link.hash) }"
         >
-          <strong>{{ session.role }}</strong> · {{ formattedRemaining }}
+          {{ link.label }}
+        </RouterLink>
+        <RouterLink to="/login" class="nav-login" active-class="is-current">
+          Iniciar sesión
+        </RouterLink>
+      </nav>
+
+      <nav v-else class="nav-links" aria-label="Navegación del panel">
+        <RouterLink to="/pacientes" active-class="is-current">
+          Pacientes
+        </RouterLink>
+        <RouterLink to="/asistencia" active-class="is-current">
+          Asistencia
+        </RouterLink>
+        <RouterLink to="/inventario" active-class="is-current">
+          Inventario
+        </RouterLink>
+        <RouterLink v-if="isAdmin" to="/usuarios" active-class="is-current">
+          Usuarios
+        </RouterLink>
+        <RouterLink v-if="isAdmin" to="/bitacora" active-class="is-current">
+          Bitácora
+        </RouterLink>
+
+        <span class="nav-session">
+          <span
+            class="session-badge"
+            title="Tiempo restante de sesión activa (RNF-02)"
+          >
+            <strong>{{ session.role }}</strong> · {{ formattedRemaining }}
+          </span>
+
+          <button
+            v-if="isExpiringSoon"
+            class="button button-small button-present"
+            type="button"
+            @click="handleRenewSession"
+          >
+            Renovar sesión
+          </button>
+
+          <button class="link-button" type="button" @click="logout">
+            Cerrar sesión
+          </button>
         </span>
-
-        <button
-          v-if="session && isExpiringSoon"
-          class="button button-small button-present"
-          type="button"
-          @click="handleRenewSession"
-        >
-          Renovar sesión
-        </button>
-
-        <button v-if="session" class="link-button" @click="logout">
-          Cerrar sesión
-        </button>
-        <RouterLink v-else to="/login">Iniciar sesión</RouterLink>
       </nav>
     </header>
 

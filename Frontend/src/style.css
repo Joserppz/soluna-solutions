@@ -91,16 +91,31 @@ a {
 
 .nav-links {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 25px;
+  justify-content: flex-end;
+  gap: 8px 22px;
   font-size: 14px;
 }
-.nav-links a {
+.nav-links a,
+.nav-links .link-button {
   color: #61736f;
+  white-space: nowrap;
 }
-.nav-links a.router-link-active {
+/* Solo el enlace de la página o sección actual va resaltado */
+.nav-links a.is-current {
   color: var(--green-dark);
   font-weight: 700;
+}
+.nav-session {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-left: 18px;
+  border-left: 1px solid var(--line);
+}
+.session-badge {
+  white-space: nowrap;
 }
 .nav-links .nav-login {
   color: var(--green);
@@ -507,8 +522,14 @@ input:focus {
   .nav-links {
     width: 100%;
     flex-wrap: wrap;
+    justify-content: flex-start;
     gap: 12px 18px;
     font-size: 13px;
+  }
+  .nav-session {
+    width: 100%;
+    padding-left: 0;
+    border-left: 0;
   }
   .page-container {
     width: min(100% - 28px, 1000px);

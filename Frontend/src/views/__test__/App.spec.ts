@@ -91,6 +91,31 @@ describe('SCRUM-67: App.vue — sesión en la barra superior', () => {
     )
   })
 
+  it('en el portal resalta solo la sección actual', async () => {
+    const { wrapper } = await mountApp('/#galeria')
+    const actuales = wrapper.findAll('nav a.is-current').map((a) => a.text())
+
+    expect(actuales).toEqual(['Galería'])
+  })
+
+  it('con sesión muestra la barra del panel, sin los enlaces del portal', async () => {
+    signIn('admin@aspar.org', 'Admin2026!')
+    const { wrapper } = await mountApp('/pacientes')
+    const enlaces = wrapper.findAll('nav a').map((a) => a.text())
+
+    expect(enlaces).toEqual([
+      'Pacientes',
+      'Asistencia',
+      'Inventario',
+      'Usuarios',
+      'Bitácora',
+    ])
+    expect(wrapper.findAll('nav a.is-current').map((a) => a.text())).toEqual([
+      'Pacientes',
+    ])
+    expect(wrapper.find('.nav-session .session-badge').exists()).toBe(true)
+  })
+
   it('muestra el rol y el menú que corresponde a cada rol', async () => {
     signIn('admin@aspar.org', 'Admin2026!')
     let { wrapper } = await mountApp()
