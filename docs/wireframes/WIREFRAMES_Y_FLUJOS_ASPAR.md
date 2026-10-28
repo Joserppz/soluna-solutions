@@ -119,3 +119,26 @@ Se revisó cada bloque de los dos wireframes contra el requisito que declara (te
 - **Cumplen:** 8 bloques. **Con observaciones:** 7. **No cumplen:** 2 (carga de galería abierta al público y cronograma sin edición).
 - Las observaciones del Sprint 1 que afectan a pantallas ya entregadas (evaluaciones visibles para Recepción, contraseña temporal no mostrada) se registran como pendientes del frontend en el estado real del sprint (`docs/calidad/DEFINICION_DE_HECHO_Y_ESTADO_SPRINT1.md`).
 - Para el Sprint 2 se debe actualizar el wireframe del panel con las pantallas que faltan: edición de ficha, edición del cronograma (RF-04), contenido institucional (RF-07) y baja de inventario (RF-03).
+
+### 4.4 Re-verificación tras las correcciones del cierre (28/10/2026)
+
+Las observaciones de la revisión se corrigieron y se volvieron a verificar con pruebas automáticas y con el recorrido integrado:
+
+| Bloque | Resultado en §4.1–4.2 | Corrección | Prueba | Resultado ahora |
+| :--- | :--- | :--- | :--- | :--- |
+| Cabecera con navegación | ⚠️ Faltaban «Galería» y «Donar» | Enlaces Portal, Cronograma, Galería, Donar e Iniciar sesión, como en el wireframe | `App.spec.ts::la cabecera enlaza a las secciones del portal…` | ✅ |
+| Galería multimedia | ❌ Carga abierta al público | El formulario de carga solo aparece al personal con sesión | `PantallasRequisitos.spec.ts::el público ve la galería, pero solo el personal…` | ✅ (Cloudinary, en sprints siguientes) |
+| Formulario de filiación y anamnesis | ⚠️ Evaluaciones visibles para Recepción | Campos clínicos solo para el personal clínico; el Voluntario no ve el formulario | `PatientsView.spec.ts` (SCRUM-138), recorrido integrado paso 11 | ✅ |
+| Edición de la ficha | ⚠️ Faltaba la pantalla | Botón «Editar ficha» con validaciones y reglas RNF-06 | `PatientsView.spec.ts` (SCRUM-68, 6 casos) | ✅ |
+| Alta de personal y directorio | ⚠️ Contraseña temporal no mostrada | Se muestra una sola vez al crear o restablecer | `UsersView.spec.ts` (SCRUM-161), recorrido integrado paso 10 | ✅ |
+| Listado con protección RNF-06 | ✅ | El aviso 🔒 indica el motivo real (rol, consentimiento o estado) | `PatientsView.spec.ts::el aviso 🔒 indica el motivo real…` | ✅ |
+
+**Resultado final de la revisión:** de los 15 bloques, **los 12 que corresponden a requisitos del Sprint 1 cumplen**. Los 3 restantes dependen de requisitos planificados para sprints siguientes y se revisarán con ellos:
+
+| Bloque | Requisito pendiente | Historia |
+| :--- | :--- | :--- |
+| QR bancario y formulario de donación | Pasarela Libélula real, registro por canal y meta pública (RF-06, RF-14, RF-15) | SCRUM-21, SCRUM-132, SCRUM-133 |
+| Control patrimonial | «Dar de baja», acta PDF y endpoints de inventario (RF-03, RF-09, RF-13) | SCRUM-14, SCRUM-15, SCRUM-131 |
+| Cronograma editable por el administrador | Publicación y edición del cronograma (RF-04) | SCRUM-16 |
+
+El wireframe del panel se ampliará con esas pantallas y con la edición del contenido institucional (RF-07).
