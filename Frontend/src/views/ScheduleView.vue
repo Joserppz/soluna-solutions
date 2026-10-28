@@ -4,12 +4,15 @@ import {
   addMediaAsset,
   getDonations,
   getMediaAssets,
+  getSession,
   institutionalInfo,
   registerDonation,
   schedule,
 } from '../services/aspar'
 
 const mediaAssets = ref(getMediaAssets())
+// RF-05: el público solo ve la galería; la carga es para el personal con sesión
+const canUploadMedia = getSession() !== null
 const donations = ref(getDonations())
 const donationSuccess = ref('')
 
@@ -70,7 +73,7 @@ function submitDonation() {
 }
 
 function submitMedia() {
-  if (!mediaForm.title.trim()) return
+  if (!canUploadMedia || !mediaForm.title.trim()) return
   addMediaAsset(
     mediaForm.title,
     mediaForm.type,
@@ -194,7 +197,11 @@ function submitMedia() {
         </p>
       </article>
 
-      <form class="card form-card" @submit.prevent="submitMedia">
+      <form
+        v-if="canUploadMedia"
+        class="card form-card"
+        @submit.prevent="submitMedia"
+      >
         <h3>Subir foto o video a Cloud Storage</h3>
         <label for="media-title">Título de la actividad</label>
         <input

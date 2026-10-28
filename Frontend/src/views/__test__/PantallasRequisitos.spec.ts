@@ -44,6 +44,16 @@ describe('Portal público (/) — RF-04, RF-06, RF-07, RF-08, RF-10', () => {
     }
   })
 
+  it('el público ve la galería, pero solo el personal con sesión puede subir archivos (RF-05)', () => {
+    const publico = mount(ScheduleView)
+    expect(publico.find('#media-title').exists()).toBe(false)
+    expect(publico.find('#donor-name').exists()).toBe(true)
+
+    signIn('coordinacion@aspar.org', 'Coord2026!')
+    const personal = mount(ScheduleView)
+    expect(personal.find('#media-title').exists()).toBe(true)
+  })
+
   it('registra una donación por QR bancario (RF-06)', async () => {
     const before = getDonations().length
     const wrapper = mount(ScheduleView)
