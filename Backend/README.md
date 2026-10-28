@@ -77,7 +77,7 @@ uvicorn app.main:app --reload
 - Documentación interactiva (Swagger): <http://localhost:8000/docs>
 - Especificación publicada en el repositorio: [`docs/api/openapi.json`](../docs/api/openapi.json). Si cambias un endpoint o un esquema, regénerala con `python -m scripts.export_openapi` (no necesita base de datos); `tests/test_openapi.py` falla si quedó desactualizada.
 
-**Usuarios iniciales** (migración 001; cambia las contraseñas antes de producción):
+**Usuarios iniciales** (migración 001; rota sus contraseñas antes de producción, ver 5.1):
 
 | Correo | Rol |
 | :--- | :--- |
@@ -87,6 +87,19 @@ uvicorn app.main:app --reload
 | `demo@aspar.org` | Profesional |
 | `recepcion@aspar.org` | Recepción |
 | `voluntario@aspar.org` | Voluntario |
+
+### 5.1 Antes de usar datos reales: rotar las contraseñas iniciales
+
+Las contraseñas de estas cuentas están escritas en la migración 001, así que **cualquiera que lea el repositorio puede entrar**. En la base de producción (Supabase), ejecuta una vez:
+
+```bash
+python -m scripts.rotar_contrasenas_iniciales --dry-run   # lista las cuentas que siguen con la contraseña inicial
+python -m scripts.rotar_contrasenas_iniciales             # las cambia por contraseñas aleatorias
+```
+
+- Las contraseñas nuevas se muestran **una sola vez**: entrégalas a cada persona por un canal privado.
+- Se cierran las sesiones de esas cuentas y cada cambio queda en la bitácora (`Rotación de contraseña inicial`).
+- Volver a ejecutarlo no modifica cuentas que ya se rotaron. Una cuenta de demostración que no se vaya a usar se puede **desactivar** desde `/usuarios`.
 
 ## 6. Endpoints (`/api/v1`)
 
