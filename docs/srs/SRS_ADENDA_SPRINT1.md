@@ -33,7 +33,7 @@ Estos requisitos ya tienen historia en Jira, pero no forman parte del Sprint 1. 
 | :--- | :--- | :--- | :--- |
 | **RF-01** | Inicio de sesión «exclusivo para administradores» | El inicio de sesión es para **todo el personal** de ASPAR; lo que cada rol puede hacer lo define RF-11. | El equipo de Recepción, Profesionales y Voluntarios necesita registrar fichas y asistencia. |
 | **RNF-02** | bcrypt y expiración tras **30 min de inactividad** | bcrypt costo 12; sesión **máxima de 30 min** y expiración por **15 min de inactividad**, ambas validadas en el servidor; renovación explícita; **bloqueo de 15 min tras 5 intentos fallidos**. | Historia SCRUM-12 y ADR-003 / ADR-004. Es más estricto que el texto original. |
-| **RNF-05** | Cobertura ≥ 70% del backend **Node.js/Express** | Cobertura ≥ 70% del **Backend Python/FastAPI (pytest)** y también del **Frontend (Vitest)**; el CI falla por debajo del mínimo. | La arquitectura aprobada (C2) usa FastAPI, no Node.js. Medición real: Backend 96,94%, Frontend 80,30% de líneas. |
+| **RNF-05** | Cobertura ≥ 70% del backend **Node.js/Express** | Cobertura ≥ 70% del **Backend Python/FastAPI (pytest)** y también del **Frontend (Vitest)**; el CI falla por debajo del mínimo. | La arquitectura aprobada (C2) usa FastAPI, no Node.js. Medición real al cierre: Backend 96,94%, Frontend 89,26% de líneas. |
 | **RNF-04** | Disponibilidad 99,5% mensual del hosting | Sin cambio de texto. El hosting de la base es Supabase (plan gratuito); el de la API y el Frontend está **pendiente de definir**. | ADR-002. |
 
 ## 3. Estado de verificación de los RNF al cierre del Sprint 1
