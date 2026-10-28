@@ -44,9 +44,19 @@ Esas ejecuciones son anteriores a la medición de cobertura. A partir de este ca
 | Primera medición (solo pruebas de Login, Pacientes, Usuarios y Bitácora) | 22 | 53,73% |
 | + permisos por rol en el router (SCRUM-162) | 28 | 63,66% |
 | + pruebas de pantallas contra requisitos (SCRUM-196) | 36 | 79,47% |
-| + integración del login con la API (SCRUM-88) | 38 | **80,30%** |
+| + integración del login con la API (SCRUM-88) | 38 | 80,30% |
+| + correcciones del cierre: usuarios, pacientes por rol, edición de fichas, `App.vue` y cabecera | 65 | **89,26%** |
 
-### 3.2 Frontend por archivo
+### 3.1.1 Medición de cierre (28/10/2026)
+
+| Componente | Pruebas | Líneas | Sentencias | Funciones | Ramas |
+| :--- | ---: | ---: | ---: | ---: | ---: |
+| **Backend** | 103 | — | **96,94%** (983/1014) | — | — |
+| **Frontend** | 65 | **89,26%** (748/838) | 87,71% (778/887) | 83,84% (192/229) | 84,14% (674/801) |
+
+Por archivo del Frontend al cierre: `App.vue` 93,54% · `router/index.ts` 100% · `api.ts` 95,34% · `aspar.ts` 87,36% · `AttendanceView` 96,55% · `AuditView` 100% · `InventoryView` 92% · `LoginView` 91,07% · `PatientsView` 89% · `RegisterPatientView` 79,16% · `ScheduleView` 87,23% · `UsersView` 85,33% (líneas). La tabla siguiente es la medición intermedia del Sprint 1.
+
+### 3.2 Frontend por archivo (medición intermedia)
 
 | Archivo | Sentencias | Ramas | Funciones | Líneas |
 | :--- | ---: | ---: | ---: | ---: |
@@ -84,7 +94,7 @@ Esas ejecuciones son anteriores a la medición de cobertura. A partir de este ca
 
 | Zona | Motivo | Riesgo | Acción |
 | :--- | :--- | :--- | :--- |
-| `Frontend/src/App.vue` (0%) | Barra superior, contador y banner de sesión; se prueba la lógica en `aspar.ts`, no el componente | Medio: un error visual en la renovación no se detectaría | Agregar prueba de componente en el Sprint 2 |
+| `Frontend/src/App.vue` (0% en la medición intermedia) | Barra superior, contador y banner de sesión | — | ✅ Resuelto al cierre: `App.spec.ts` (93,54%) |
 | `services/api.ts` (ramas 69%) | Respuestas de error con cuerpo no JSON | Bajo | Cubrir al conectar los módulos del Sprint 2 |
 | `core/database.py` (61%) | Creación del motor con la base real | Bajo: la cubre el paso de migraciones del CI | — |
 
