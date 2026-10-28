@@ -11,6 +11,11 @@ import { addAudit, getSession } from '../services/aspar'
 
 const router = createRouter({
   history: createWebHistory(),
+  // Enlaces de la cabecera a las secciones del portal (#cronograma, #galeria, #donar)
+  scrollBehavior(to) {
+    if (to.hash) return { el: to.hash, behavior: 'smooth' }
+    return { top: 0 }
+  },
   routes: [
     { path: '/', name: 'cronograma', component: ScheduleView },
     { path: '/login', name: 'login', component: LoginView },

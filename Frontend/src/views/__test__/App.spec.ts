@@ -74,6 +74,23 @@ describe('SCRUM-67: App.vue — sesión en la barra superior', () => {
     expect(wrapper.text()).not.toContain('Pacientes')
   })
 
+  it('la cabecera enlaza a las secciones del portal como en el wireframe', async () => {
+    const { wrapper } = await mountApp()
+    const hrefs = wrapper
+      .findAll('nav a')
+      .map((link) => link.attributes('href'))
+
+    expect(hrefs).toEqual(
+      expect.arrayContaining([
+        '/',
+        '/#cronograma',
+        '/#galeria',
+        '/#donar',
+        '/login',
+      ]),
+    )
+  })
+
   it('muestra el rol y el menú que corresponde a cada rol', async () => {
     signIn('admin@aspar.org', 'Admin2026!')
     let { wrapper } = await mountApp()

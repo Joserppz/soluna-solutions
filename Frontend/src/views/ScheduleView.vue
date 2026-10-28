@@ -127,7 +127,7 @@ function submitMedia() {
     <div class="hero-badge" aria-hidden="true">ASPAR</div>
   </section>
 
-  <section class="section-block">
+  <section id="cronograma" class="section-block">
     <div class="section-title">
       <div>
         <span class="eyebrow">Próximos encuentros · RF-04 / RF-10</span>
@@ -172,7 +172,7 @@ function submitMedia() {
     </div>
   </section>
 
-  <section class="section-block">
+  <section id="galeria" class="section-block">
     <div class="section-title">
       <div>
         <span class="eyebrow"
@@ -222,7 +222,7 @@ function submitMedia() {
     </div>
   </section>
 
-  <section class="section-block">
+  <section id="donar" class="section-block">
     <div class="section-title">
       <div>
         <span class="eyebrow">Captación de Fondos y Transparencia · RF-06</span>

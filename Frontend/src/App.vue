@@ -105,7 +105,10 @@ onUnmounted(() => {
       </RouterLink>
 
       <nav class="nav-links" aria-label="Navegación principal">
-        <RouterLink to="/">Portal y Cronograma</RouterLink>
+        <RouterLink to="/">Portal</RouterLink>
+        <RouterLink to="/#cronograma">Cronograma</RouterLink>
+        <RouterLink to="/#galeria">Galería</RouterLink>
+        <RouterLink to="/#donar">Donar</RouterLink>
         <RouterLink v-if="session" to="/pacientes">Pacientes</RouterLink>
         <RouterLink v-if="session" to="/asistencia">Asistencia</RouterLink>
         <RouterLink v-if="session" to="/inventario">Inventario</RouterLink>
