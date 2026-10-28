@@ -101,6 +101,7 @@ describe('SCRUM-153 / SCRUM-66: LoginView y validaciones de autenticación', () 
     expect(session?.role).toBe('Administrador')
     expect(session?.token.split('.')).toHaveLength(3)
     expect(session?.source).toBe('local')
+    expect(router.currentRoute.value.path).toBe('/pacientes')
   })
 
   it('registra un solo evento en la bitácora por cada intento fallido', async () => {

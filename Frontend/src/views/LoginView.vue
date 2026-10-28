@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { signInWithApi } from '../services/aspar'
+import { getSession, panelHomeFor, signInWithApi } from '../services/aspar'
 import { getApiBaseUrl } from '../services/api'
 
 const email = ref('')
@@ -88,8 +88,14 @@ async function submitLogin() {
     }
 
     failedAttempts.value = 0
+    // Vuelve a la página que pidió el usuario o a la pantalla de trabajo de su rol
+    const session = getSession()
     const redirect =
-      typeof route.query.redirect === 'string' ? route.query.redirect : '/'
+      typeof route.query.redirect === 'string'
+        ? route.query.redirect
+        : session
+          ? panelHomeFor(session.role)
+          : '/'
 
     await router.push(redirect)
   } finally {

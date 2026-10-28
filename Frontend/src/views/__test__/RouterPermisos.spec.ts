@@ -37,7 +37,7 @@ describe('SCRUM-162: permisos por rol en el router', () => {
 
       const route = await goTo(path)
 
-      expect(route.name).toBe('cronograma')
+      expect(route.name).toBe('asistencia')
       const blocked = getAuditEvents().find(
         (event) => event.action === 'Intento de acceso restringido bloqueado',
       )
@@ -72,15 +72,17 @@ describe('SCRUM-162: permisos por rol en el router', () => {
 
   it('solo el Administrador y el Coordinador gestionan el cronograma (RF-04)', async () => {
     signIn('demo@aspar.org', 'Aspar2026!')
-    expect((await goTo('/cronograma/gestion')).name).toBe('cronograma')
+    expect((await goTo('/cronograma/gestion')).name).toBe('pacientes')
 
     signIn('coordinacion@aspar.org', 'Coord2026!')
     expect((await goTo('/cronograma/gestion')).name).toBe('gestion-cronograma')
   })
 
-  it('con sesión activa, volver al login lleva al inicio', async () => {
+  it('con sesión activa, volver al login lleva a la pantalla de trabajo del rol', async () => {
     signIn('admin@aspar.org', 'Admin2026!')
+    expect((await goTo('/login')).name).toBe('pacientes')
 
-    expect((await goTo('/login')).name).toBe('cronograma')
+    signIn('voluntario@aspar.org', 'Voluntario2026!')
+    expect((await goTo('/login')).name).toBe('asistencia')
   })
 })

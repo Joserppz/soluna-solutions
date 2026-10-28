@@ -8,7 +8,7 @@ import ScheduleView from '../views/ScheduleView.vue'
 import AttendanceView from '../views/AttendanceView.vue'
 import InventoryView from '../views/InventoryView.vue'
 import ScheduleManagementView from '../views/ScheduleManagementView.vue'
-import { addAudit, getSession } from '../services/aspar'
+import { addAudit, getSession, panelHomeFor } from '../services/aspar'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -84,12 +84,13 @@ router.beforeEach((to) => {
         'SISTEMA',
         'WARNING',
       )
+      return { path: panelHomeFor(session.role) }
     }
     return { name: 'cronograma' }
   }
 
   if (to.name === 'login' && session) {
-    return { name: 'cronograma' }
+    return { path: panelHomeFor(session.role) }
   }
 })
 

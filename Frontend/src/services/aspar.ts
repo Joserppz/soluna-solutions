@@ -422,6 +422,14 @@ export function signIn(email: string, password: string): boolean {
   return true
 }
 
+/**
+ * Pantalla de trabajo de cada rol al iniciar sesión: el Voluntario marca la
+ * asistencia; el resto del personal empieza por las fichas de pacientes.
+ */
+export function panelHomeFor(role: UserRole): string {
+  return role === 'Voluntario' ? '/asistencia' : '/pacientes'
+}
+
 /** El modo local de demostración solo se habilita en desarrollo o con VITE_DEMO_MODE=true. */
 export function isLocalModeAllowed(): boolean {
   return import.meta.env.DEV || import.meta.env.VITE_DEMO_MODE === 'true'
