@@ -189,6 +189,44 @@ async function main() {
     `GET /auth/verify con el token cerrado → ${despues.status}`,
   )
 
+  // 10. El Administrador crea un usuario de Recepción y este entra con su contraseña temporal
+  await login('admin@aspar.org', 'Admin2026!')
+  await page.goto(`${FRONT}/usuarios`)
+  await page.waitForTimeout(1200)
+  await page.fill('#user-name', 'Lic. Sofía Morales')
+  await page.fill('#user-email', 'sofia.morales@aspar.org')
+  await page.selectOption('#user-role', 'Recepción')
+  await page.click('form button[type=submit]')
+  await page.waitForTimeout(1500)
+  const temporal = (
+    await page.locator('.credential-password').textContent()
+  )?.trim()
+  await page
+    .locator('.credential-card')
+    .screenshot({ path: `${outDir}/07_contrasena_temporal.png` })
+  s = await login('sofia.morales@aspar.org', temporal || '')
+  check(
+    '10. Usuario nuevo con contraseña temporal',
+    s?.source === 'api' && s.role === 'Recepción',
+    `contraseña mostrada=${Boolean(temporal)}, sesión source=${s?.source}, rol=${s?.role}`,
+  )
+
+  // 11. Recepción registra la filiación sin campos clínicos
+  await page.goto(`${FRONT}/pacientes`)
+  await page.waitForTimeout(1200)
+  const camposClinicos = await page
+    .locator('#patient-phys, #patient-speech, #patient-psych')
+    .count()
+  check(
+    '11. Formulario de Recepción sin campos clínicos',
+    s !== null && camposClinicos === 0,
+    `campos clínicos visibles=${camposClinicos}`,
+  )
+  await page
+    .locator('form')
+    .first()
+    .screenshot({ path: `${outDir}/08_formulario_recepcion.png` })
+
   console.log('\nLlamadas del frontend a la API:')
   for (const call of calls) console.log(`  ${call}`)
   await browser.close()
