@@ -841,13 +841,14 @@ select {
 .credential-card {
   max-width: 760px;
   margin-bottom: 24px;
+  padding: 24px 28px;
   border: 1px solid var(--green);
   background: var(--mint);
 }
 
 .credential-password {
   display: inline-block;
-  margin: 6px 0 4px;
+  margin: 6px 0 12px;
   padding: 8px 14px;
   border: 1px dashed var(--green);
   border-radius: 9px;
