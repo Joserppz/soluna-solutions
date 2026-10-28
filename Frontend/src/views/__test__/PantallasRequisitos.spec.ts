@@ -105,6 +105,30 @@ describe('Registrar paciente (/pacientes/nuevo) — RF-02, RNF-06', () => {
   })
 })
 
+describe('Registrar paciente según el rol — RNF-06 (SCRUM-138)', () => {
+  it('Recepción no ve evaluaciones ni medicación', () => {
+    signIn('recepcion@aspar.org', 'Recep2026!')
+    const wrapper = mount(RegisterPatientView, {
+      global: { plugins: [testRouter()] },
+    })
+
+    expect(wrapper.find('#name').exists()).toBe(true)
+    expect(wrapper.find('#physicalEval').exists()).toBe(false)
+    expect(wrapper.find('#medications').exists()).toBe(false)
+    expect(wrapper.find('.field-note').exists()).toBe(true)
+  })
+
+  it('el Voluntario no ve el formulario de registro', () => {
+    signIn('voluntario@aspar.org', 'Voluntario2026!')
+    const wrapper = mount(RegisterPatientView, {
+      global: { plugins: [testRouter()] },
+    })
+
+    expect(wrapper.find('form').exists()).toBe(false)
+    expect(wrapper.find('[role="status"]').text()).toContain('Voluntario')
+  })
+})
+
 describe('Asistencia (/asistencia) — RNF-06', () => {
   it('no permite marcar Presente a un paciente sin consentimiento', async () => {
     signIn('voluntario@aspar.org', 'Voluntario2026!')

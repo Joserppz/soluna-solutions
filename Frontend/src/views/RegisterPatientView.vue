@@ -3,12 +3,19 @@ import { reactive, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import {
   PARKINSON_STAGES,
+  canEditPatients,
+  canRegisterClinicalNotes,
+  getSession,
   savePatient,
   type AccessStatus,
   type ParkinsonStage,
 } from '../services/aspar'
 
 const router = useRouter()
+// Permisos por rol, iguales a los del Backend (RNF-06)
+const currentRole = getSession()?.role
+const canEdit = canEditPatients()
+const canClinical = canRegisterClinicalNotes()
 const guardado = ref(false)
 const error = ref('')
 
@@ -80,7 +87,12 @@ function submitForm() {
     </p>
   </section>
 
-  <form class="card form-card wide-card" @submit.prevent="submitForm">
+  <section v-if="!canEdit" class="card notice-card" role="status">
+    Tu rol ({{ currentRole }}) no puede registrar fichas de pacientes.
+    <RouterLink to="/pacientes">Volver al listado</RouterLink>
+  </section>
+
+  <form v-else class="card form-card wide-card" @submit.prevent="submitForm">
     <h2>1. Datos de filiación y cuidador</h2>
     <div class="form-grid">
       <div class="field">
@@ -161,7 +173,12 @@ function submitForm() {
         </select>
       </div>
 
-      <div class="field">
+      <p v-if="!canClinical" class="muted field-note">
+        Las evaluaciones clínicas y la medicación las registra el personal
+        clínico (Administrador, Coordinador o Profesional).
+      </p>
+
+      <div v-if="canClinical" class="field">
         <label for="physicalEval">Evaluación fisioterapéutica / motora</label>
         <input
           id="physicalEval"
@@ -170,7 +187,7 @@ function submitForm() {
         />
       </div>
 
-      <div class="field">
+      <div v-if="canClinical" class="field">
         <label for="speechEval">Evaluación de fonoaudiología</label>
         <input
           id="speechEval"
@@ -179,7 +196,7 @@ function submitForm() {
         />
       </div>
 
-      <div class="field">
+      <div v-if="canClinical" class="field">
         <label for="psychEval">Evaluación psicológica y cognitiva</label>
         <input
           id="psychEval"
@@ -188,7 +205,7 @@ function submitForm() {
         />
       </div>
 
-      <div class="field">
+      <div v-if="canClinical" class="field">
         <label for="medications">Esquema de medicación actual</label>
         <input
           id="medications"

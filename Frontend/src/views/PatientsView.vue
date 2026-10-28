@@ -2,7 +2,11 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import {
   PARKINSON_STAGES,
+  canEditPatients,
+  canRegisterClinicalNotes,
   canViewClinicalRecord,
+  clinicalAccessNotice,
+  getSession,
   getPatients,
   savePatient,
   syncPatientsFromApi,
@@ -18,6 +22,10 @@ const statusFilter = ref<'Todos' | AccessStatus>('Todos')
 const error = ref('')
 const successMsg = ref('')
 const selectedPatientId = ref<string | null>(null)
+// Permisos por rol, iguales a los del Backend (RNF-06)
+const currentRole = getSession()?.role
+const canEdit = canEditPatients()
+const canClinical = canRegisterClinicalNotes()
 
 const form = reactive({
   name: '',
@@ -142,7 +150,12 @@ onMounted(async () => {
     </p>
   </section>
 
-  <section class="card form-card wide-card">
+  <section v-if="!canEdit" class="card notice-card" role="status">
+    Tu rol ({{ currentRole }}) puede consultar el listado de pacientes, pero no
+    registrar ni editar fichas.
+  </section>
+
+  <section v-else class="card form-card wide-card">
     <h2>Registrar paciente y anamnesis</h2>
 
     <form novalidate @submit.prevent="submitPatient">
@@ -228,7 +241,12 @@ onMounted(async () => {
           </select>
         </div>
 
-        <div class="field">
+        <p v-if="!canClinical" class="muted field-note">
+          Las evaluaciones clínicas las registra el personal clínico
+          (Administrador, Coordinador o Profesional).
+        </p>
+
+        <div v-if="canClinical" class="field">
           <label for="patient-phys">Evaluación física / fisioterapia</label>
           <input
             id="patient-phys"
@@ -237,7 +255,7 @@ onMounted(async () => {
           />
         </div>
 
-        <div class="field">
+        <div v-if="canClinical" class="field">
           <label for="patient-speech">Evaluación fonoaudiológica</label>
           <input
             id="patient-speech"
@@ -246,7 +264,7 @@ onMounted(async () => {
           />
         </div>
 
-        <div class="field">
+        <div v-if="canClinical" class="field">
           <label for="patient-psych">Evaluación psicológica</label>
           <input
             id="patient-psych"
@@ -337,6 +355,7 @@ onMounted(async () => {
           <label class="checkbox-field compact">
             <input
               :checked="patient.consent"
+              :disabled="!canEdit"
               type="checkbox"
               @change="
                 changeConsent(
@@ -352,6 +371,7 @@ onMounted(async () => {
             Acceso
             <select
               :value="patient.accessStatus"
+              :disabled="!canEdit"
               @change="
                 changeAccess(
                   patient,
@@ -416,8 +436,7 @@ onMounted(async () => {
             </div>
           </template>
           <p v-else class="protected-notice" role="status">
-            🔒 Datos clínicos de anamnesis protegidos (RNF-06): requiere
-            consentimiento informado firmado y estado de acceso «Activo».
+            🔒 {{ clinicalAccessNotice(patient) }}
           </p>
         </div>
       </article>

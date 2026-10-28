@@ -55,6 +55,22 @@ export const USER_ROLES: UserRole[] = [
   'Voluntario',
 ]
 
+// RNF-06: mismos grupos de roles que Backend/app/core/constants.py
+export const CLINICAL_ROLES: UserRole[] = [
+  'Administrador',
+  'Coordinador',
+  'Profesional',
+]
+export const PATIENT_EDITOR_ROLES: UserRole[] = [...CLINICAL_ROLES, 'Recepción']
+
+const CLINICAL_ONLY_FIELDS = [
+  'symptomNotes',
+  'physicalEvaluation',
+  'speechEvaluation',
+  'psychologicalEvaluation',
+  'medications',
+] as const
+
 export const PARKINSON_STAGES: ParkinsonStage[] = [
   'Estadio I (Leve unilateral)',
   'Estadio II (Bilateral sin alteración del equilibrio)',
@@ -610,7 +626,7 @@ export function savePatient(patient: PatientInput): Patient {
     accessStatus: patient.consent ? patient.accessStatus : 'Pendiente',
     anamnesis: {
       ...DEFAULT_ANAMNESIS,
-      ...(patient.anamnesis || {}),
+      ...withoutForbiddenClinicalFields(patient.anamnesis || {}),
     },
     createdAt: nowIso,
     updatedAt: nowIso,
@@ -691,14 +707,48 @@ export function updatePatient(
 }
 
 export function canViewClinicalRecord(patient: Patient): boolean {
+  return clinicalAccessNotice(patient) === null
+}
+
+/** Recepción, Profesional, Coordinador y Administrador registran y editan fichas. */
+export function canEditPatients(): boolean {
+  const role = getSession()?.role
+  return Boolean(role && PATIENT_EDITOR_ROLES.includes(role))
+}
+
+/** Solo el personal clínico registra evaluaciones, síntomas y medicación. */
+export function canRegisterClinicalNotes(): boolean {
+  const role = getSession()?.role
+  return Boolean(role && CLINICAL_ROLES.includes(role))
+}
+
+/**
+ * RNF-06: explica por qué la anamnesis no se muestra, o devuelve null si se puede ver.
+ * Primero se revisa el rol y después el consentimiento, igual que el Backend.
+ */
+export function clinicalAccessNotice(patient: Patient): string | null {
   const session = getSession()
-  if (!session) return false
-  if (!patient.consent || patient.accessStatus !== 'Activo') return false
-  return (
-    session.role === 'Administrador' ||
-    session.role === 'Coordinador' ||
-    session.role === 'Profesional'
-  )
+  if (!session) return 'Inicia sesión para consultar datos clínicos.'
+  if (!CLINICAL_ROLES.includes(session.role)) {
+    return `Tu rol (${session.role}) no tiene acceso a los datos clínicos. Solo el personal clínico (Administrador, Coordinador o Profesional) puede consultarlos (RNF-06).`
+  }
+  if (!patient.consent) {
+    return 'El paciente no tiene consentimiento informado firmado: sus datos clínicos están protegidos (RNF-06).'
+  }
+  if (patient.accessStatus !== 'Activo') {
+    return `El acceso clínico de este paciente está «${patient.accessStatus}»: sus datos clínicos están protegidos (RNF-06).`
+  }
+  return null
+}
+
+// Igual que el Backend: quien no es personal clínico no envía evaluaciones ni medicación
+function withoutForbiddenClinicalFields(
+  anamnesis: Partial<ClinicalAnamnesis>,
+): Partial<ClinicalAnamnesis> {
+  if (canRegisterClinicalNotes()) return anamnesis
+  const allowed = { ...anamnesis }
+  for (const field of CLINICAL_ONLY_FIELDS) delete allowed[field]
+  return allowed
 }
 
 // Contraseña que reciben los usuarios creados o restablecidos en el modo local de demostración

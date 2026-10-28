@@ -857,3 +857,10 @@ select {
   letter-spacing: 0.04em;
   user-select: all;
 }
+
+/* RNF-06: aviso en lugar de los campos clínicos para roles no clínicos */
+.field-note {
+  grid-column: 1 / -1;
+  margin: 4px 0;
+  font-size: 13px;
+}

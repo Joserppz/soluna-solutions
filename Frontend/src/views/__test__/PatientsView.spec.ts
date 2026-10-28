@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import PatientsView from '../PatientsView.vue'
-import { getPatients, signIn } from '../../services/aspar'
+import { getPatients, savePatient, signIn } from '../../services/aspar'
 
 async function mountPatients() {
   const wrapper = mount(PatientsView)
@@ -109,5 +109,97 @@ describe('SCRUM-138: PatientsView — consentimiento y estados de acceso', () =>
 
     const updated = patientBlock(wrapper, 'Elena Rojas')
     expect(updated.find('.protected-notice').exists()).toBe(true)
+  })
+})
+
+describe('SCRUM-138: campos y acciones de pacientes según el rol (RNF-06)', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    vi.unstubAllGlobals()
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')))
+  })
+
+  it('Recepción registra la filiación sin ver los campos clínicos', async () => {
+    signIn('recepcion@aspar.org', 'Recep2026!')
+    const wrapper = await mountPatients()
+
+    expect(wrapper.find('#patient-phys').exists()).toBe(false)
+    expect(wrapper.find('#patient-speech').exists()).toBe(false)
+    expect(wrapper.find('#patient-psych').exists()).toBe(false)
+    expect(wrapper.find('.field-note').text()).toContain('personal clínico')
+
+    await wrapper.find('#patient-name').setValue('Rosa Mamani')
+    await wrapper.find('#patient-ci').setValue('6849201')
+    await wrapper.find('#patient-phone').setValue('70112233')
+    await wrapper.find('#patient-emergency').setValue('Pedro Mamani')
+    await wrapper.find('form').trigger('submit.prevent')
+
+    expect(wrapper.find('.success-message').exists()).toBe(true)
+  })
+
+  it('el Profesional ve y registra las evaluaciones clínicas', async () => {
+    signIn('demo@aspar.org', 'Aspar2026!')
+    const wrapper = await mountPatients()
+
+    expect(wrapper.find('#patient-phys').exists()).toBe(true)
+    expect(wrapper.find('.field-note').exists()).toBe(false)
+  })
+
+  it('el Voluntario consulta el listado pero no registra ni edita', async () => {
+    signIn('voluntario@aspar.org', 'Voluntario2026!')
+    const wrapper = await mountPatients()
+
+    expect(wrapper.find('#patient-name').exists()).toBe(false)
+    expect(wrapper.find('.notice-card').text()).toContain('Voluntario')
+    const elena = patientBlock(wrapper, 'Elena Rojas')
+    expect(
+      elena.find('input[type="checkbox"]').attributes('disabled'),
+    ).toBeDefined()
+    expect(
+      elena.find('.access-control select').attributes('disabled'),
+    ).toBeDefined()
+  })
+
+  it('el aviso 🔒 indica el motivo real: el rol o el consentimiento', async () => {
+    signIn('voluntario@aspar.org', 'Voluntario2026!')
+    let wrapper = await mountPatients()
+    let elena = patientBlock(wrapper, 'Elena Rojas')
+    await elena.find('button').trigger('click')
+    expect(elena.find('.protected-notice').text()).toContain(
+      'Tu rol (Voluntario) no tiene acceso',
+    )
+
+    signIn('admin@aspar.org', 'Admin2026!')
+    wrapper = await mountPatients()
+    const miguel = patientBlock(wrapper, 'Miguel Fernández')
+    await miguel.find('button').trigger('click')
+    expect(miguel.find('.protected-notice').text()).toContain(
+      'no tiene consentimiento informado firmado',
+    )
+    elena = patientBlock(wrapper, 'Elena Rojas')
+    await elena.find('button').trigger('click')
+    expect(elena.find('.anamnesis-grid').exists()).toBe(true)
+  })
+
+  it('el servicio descarta las evaluaciones que envía un rol no clínico', () => {
+    signIn('recepcion@aspar.org', 'Recep2026!')
+
+    const created = savePatient({
+      name: 'Luis Condori',
+      ci: '5512345',
+      phone: '71234567',
+      emergencyContact: 'Ana Condori',
+      consent: false,
+      accessStatus: 'Pendiente',
+      anamnesis: {
+        diagnosis: 'Enfermedad de Parkinson',
+        physicalEvaluation: 'No debería guardarse',
+        medications: 'No debería guardarse',
+      },
+    })
+
+    expect(created.anamnesis.diagnosis).toBe('Enfermedad de Parkinson')
+    expect(created.anamnesis.physicalEvaluation).toBe('')
+    expect(created.anamnesis.medications).toBe('')
   })
 })
