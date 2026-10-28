@@ -19,6 +19,11 @@ const sessionAlert = ref('')
 let expiryTimer = 0
 
 const isAdmin = computed(() => session.value?.role === 'Administrador')
+const canManageSchedule = computed(
+  () =>
+    session.value?.role === 'Administrador' ||
+    session.value?.role === 'Coordinador',
+)
 
 // Barra del portal público (wireframe del portal): una sección activa a la vez
 const portalLinks = [
@@ -142,6 +147,13 @@ onUnmounted(() => {
         </RouterLink>
         <RouterLink to="/inventario" active-class="is-current">
           Inventario
+        </RouterLink>
+        <RouterLink
+          v-if="canManageSchedule"
+          to="/cronograma/gestion"
+          active-class="is-current"
+        >
+          Cronograma
         </RouterLink>
         <RouterLink v-if="isAdmin" to="/usuarios" active-class="is-current">
           Usuarios

@@ -91,7 +91,7 @@ Lo que depende del código está terminado. Estas acciones las hacen personas co
 | Requisito | Pendiente |
 | :--- | :--- |
 | RF-03 / RF-09 | Endpoints de inventario, «dar de baja» y generación real del acta PDF |
-| RF-04 / RF-10 | Edición y publicación del cronograma por el administrador, con Backend |
+| RF-04 / RF-10 | API de cronogramas (SCRUM-37, SCRUM-76). La pantalla de gestión del Frontend (SCRUM-74) se adelantó al Sprint 1 y guarda los datos en el navegador hasta que exista la API |
 | RF-05 / RNF-10 | Galería en Cloudinary con control de cuota (ADR-010) |
 | RF-06 | Integración real con la pasarela Libélula y registro de donaciones en el Backend |
 | RF-07 / RF-08 | Edición del contenido institucional |

@@ -70,6 +70,14 @@ describe('SCRUM-162: permisos por rol en el router', () => {
     expect(canViewClinicalRecord(conConsentimiento)).toBe(true)
   })
 
+  it('solo el Administrador y el Coordinador gestionan el cronograma (RF-04)', async () => {
+    signIn('demo@aspar.org', 'Aspar2026!')
+    expect((await goTo('/cronograma/gestion')).name).toBe('cronograma')
+
+    signIn('coordinacion@aspar.org', 'Coord2026!')
+    expect((await goTo('/cronograma/gestion')).name).toBe('gestion-cronograma')
+  })
+
   it('con sesión activa, volver al login lleva al inicio', async () => {
     signIn('admin@aspar.org', 'Admin2026!')
 

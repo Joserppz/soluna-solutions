@@ -1020,7 +1020,7 @@ export function updateAttendance(id: string, status: AttendanceStatus): void {
   )
 }
 
-export const schedule: ScheduleItem[] = [
+const DEFAULT_SCHEDULE: ScheduleItem[] = [
   {
     id: 's-1',
     date: dateInDays(1),
@@ -1029,6 +1029,7 @@ export const schedule: ScheduleItem[] = [
     category: 'Fisioterapia',
     professional: 'Lic. Ana Flores',
     location: 'Sala de rehabilitación ASPAR',
+    published: true,
     spots: 18,
   },
   {
@@ -1039,6 +1040,7 @@ export const schedule: ScheduleItem[] = [
     category: 'Arteterapia',
     professional: 'Lic. Marco Rojas',
     location: 'Salón principal',
+    published: true,
     spots: 20,
   },
   {
@@ -1049,9 +1051,162 @@ export const schedule: ScheduleItem[] = [
     category: 'Fonoaudiología',
     professional: 'Lic. Valeria Camacho',
     location: 'Consultorio 2',
+    published: true,
     spots: 12,
   },
 ]
+
+// RF-04 / RF-10 (SCRUM-16 / SCRUM-74): gestión del cronograma de actividades
+const SCHEDULE_STORAGE_KEY = 'aspar_schedule'
+
+export const SCHEDULE_CATEGORIES: ScheduleItem['category'][] = [
+  'Fisioterapia',
+  'Arteterapia',
+  'Fonoaudiología',
+  'Psicología',
+  'Bienestar',
+]
+
+export type ScheduleInput = Omit<ScheduleItem, 'id'>
+
+function byDateAndTime(a: ScheduleItem, b: ScheduleItem): number {
+  return `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`)
+}
+
+/** Todas las actividades, publicadas u ocultas, ordenadas por fecha y hora. */
+export function getSchedule(): ScheduleItem[] {
+  return readStorage<ScheduleItem[]>(SCHEDULE_STORAGE_KEY, DEFAULT_SCHEDULE)
+    .map((item) => ({ ...item, published: item.published ?? true }))
+    .sort(byDateAndTime)
+}
+
+/** RF-10: lo que ve el público en el portal. */
+export function getPublicSchedule(): ScheduleItem[] {
+  return getSchedule().filter((item) => item.published)
+}
+
+/** RF-04: publican y actualizan el cronograma el Administrador y el Coordinador. */
+export function canManageSchedule(): boolean {
+  const role = getSession()?.role
+  return role === 'Administrador' || role === 'Coordinador'
+}
+
+export function validateScheduleInput(
+  input: ScheduleInput,
+  { isNew }: { isNew: boolean },
+): string | null {
+  if (input.title.trim().length < 3) {
+    return 'El título de la actividad debe tener al menos 3 caracteres.'
+  }
+  if (!SCHEDULE_CATEGORIES.includes(input.category)) {
+    return 'Selecciona una categoría válida.'
+  }
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(input.date) ||
+    Number.isNaN(new Date(`${input.date}T12:00:00`).getTime())
+  ) {
+    return 'Ingresa una fecha válida.'
+  }
+  if (isNew && input.date < dateInDays(0)) {
+    return 'La fecha de la actividad no puede ser anterior a hoy.'
+  }
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(input.time)) {
+    return 'Ingresa una hora válida (HH:MM).'
+  }
+  if (input.professional.trim().length < 3) {
+    return 'Indica el profesional a cargo (al menos 3 caracteres).'
+  }
+  if (input.location.trim().length < 3) {
+    return 'Indica el lugar de la actividad (al menos 3 caracteres).'
+  }
+  if (!Number.isInteger(input.spots) || input.spots < 0 || input.spots > 200) {
+    return 'Los cupos deben ser un número entero entre 0 y 200.'
+  }
+  return null
+}
+
+function assertCanManageSchedule(): void {
+  if (!canManageSchedule()) {
+    throw new Error(
+      'Solo el Administrador y el Coordinador pueden gestionar el cronograma.',
+    )
+  }
+}
+
+/** Crea una actividad o, si recibe `id`, actualiza la existente. */
+export function saveScheduleItem(
+  input: ScheduleInput,
+  id?: string,
+): ScheduleItem {
+  assertCanManageSchedule()
+  const validationError = validateScheduleInput(input, { isNew: !id })
+  if (validationError) throw new Error(validationError)
+
+  const list = getSchedule()
+  const item: ScheduleItem = {
+    id: id ?? crypto.randomUUID(),
+    date: input.date,
+    time: input.time,
+    title: input.title.trim(),
+    category: input.category,
+    professional: input.professional.trim(),
+    location: input.location.trim(),
+    spots: input.spots,
+    published: input.published ?? true,
+  }
+  if (id && !list.some((existing) => existing.id === id)) {
+    throw new Error('No se encontró la actividad.')
+  }
+  writeStorage(
+    SCHEDULE_STORAGE_KEY,
+    id
+      ? list.map((existing) => (existing.id === id ? item : existing))
+      : [...list, item],
+  )
+  addAudit(
+    id
+      ? 'Actualización de actividad del cronograma'
+      : 'Nueva actividad en el cronograma',
+    `${item.title} el ${item.date} a las ${item.time} (${item.published ? 'publicada' : 'oculta'})`,
+    'CRONOGRAMA',
+    'INFO',
+  )
+  return item
+}
+
+export function setSchedulePublished(id: string, published: boolean): void {
+  assertCanManageSchedule()
+  const list = getSchedule()
+  const target = list.find((item) => item.id === id)
+  if (!target) throw new Error('No se encontró la actividad.')
+  writeStorage(
+    SCHEDULE_STORAGE_KEY,
+    list.map((item) => (item.id === id ? { ...item, published } : item)),
+  )
+  addAudit(
+    published ? 'Publicación de actividad' : 'Actividad ocultada del portal',
+    `${target.title} el ${target.date}`,
+    'CRONOGRAMA',
+    'INFO',
+  )
+}
+
+export function deleteScheduleItem(id: string): void {
+  assertCanManageSchedule()
+  const list = getSchedule()
+  const target = list.find((item) => item.id === id)
+  if (!target) throw new Error('No se encontró la actividad.')
+  writeStorage(
+    SCHEDULE_STORAGE_KEY,
+    list.filter((item) => item.id !== id),
+  )
+  addAudit(
+    'Eliminación de actividad del cronograma',
+    `${target.title} el ${target.date}`,
+    'CRONOGRAMA',
+    'WARNING',
+  )
+}
 
 const DEFAULT_INVENTORY: InventoryItem[] = [
   {

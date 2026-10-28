@@ -107,6 +107,7 @@ describe('SCRUM-67: App.vue — sesión en la barra superior', () => {
       'Pacientes',
       'Asistencia',
       'Inventario',
+      'Cronograma',
       'Usuarios',
       'Bitácora',
     ])

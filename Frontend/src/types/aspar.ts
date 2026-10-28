@@ -140,6 +140,8 @@ export interface ScheduleItem {
   professional: string
   location: string
   spots: number
+  // RF-04: visible en el portal público (columna schedules.published)
+  published?: boolean
 }
 
 export interface InventoryItem {

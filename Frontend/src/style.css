@@ -886,3 +886,10 @@ select {
   margin: 4px 0;
   font-size: 13px;
 }
+
+/* RF-04: acciones de cada actividad en la gestión del cronograma */
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

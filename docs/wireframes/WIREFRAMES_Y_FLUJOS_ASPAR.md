@@ -127,18 +127,18 @@ Las observaciones de la revisión se corrigieron y se volvieron a verificar con 
 | Bloque | Resultado en §4.1–4.2 | Corrección | Prueba | Resultado ahora |
 | :--- | :--- | :--- | :--- | :--- |
 | Cabecera con navegación | ⚠️ Faltaban «Galería» y «Donar» | Enlaces Portal, Cronograma, Galería, Donar e Iniciar sesión, como en el wireframe | `App.spec.ts::la cabecera enlaza a las secciones del portal…` | ✅ |
+| Cronograma editable por el administrador | ❌ Faltaba la pantalla | Pantalla `/cronograma/gestion` para el Administrador y el Coordinador: crear, editar, publicar u ocultar y eliminar actividades (SCRUM-74) | `ScheduleManagementView.spec.ts` (6 casos), `RouterPermisos.spec.ts` | ✅ Frontend · ⏳ API de cronogramas (SCRUM-37) |
 | Galería multimedia | ❌ Carga abierta al público | El formulario de carga solo aparece al personal con sesión | `PantallasRequisitos.spec.ts::el público ve la galería, pero solo el personal…` | ✅ (Cloudinary, en sprints siguientes) |
 | Formulario de filiación y anamnesis | ⚠️ Evaluaciones visibles para Recepción | Campos clínicos solo para el personal clínico; el Voluntario no ve el formulario | `PatientsView.spec.ts` (SCRUM-138), recorrido integrado paso 11 | ✅ |
 | Edición de la ficha | ⚠️ Faltaba la pantalla | Botón «Editar ficha» con validaciones y reglas RNF-06 | `PatientsView.spec.ts` (SCRUM-68, 6 casos) | ✅ |
 | Alta de personal y directorio | ⚠️ Contraseña temporal no mostrada | Se muestra una sola vez al crear o restablecer | `UsersView.spec.ts` (SCRUM-161), recorrido integrado paso 10 | ✅ |
 | Listado con protección RNF-06 | ✅ | El aviso 🔒 indica el motivo real (rol, consentimiento o estado) | `PatientsView.spec.ts::el aviso 🔒 indica el motivo real…` | ✅ |
 
-**Resultado final de la revisión:** de los 15 bloques, **los 12 que corresponden a requisitos del Sprint 1 cumplen**. Los 3 restantes dependen de requisitos planificados para sprints siguientes y se revisarán con ellos:
+**Resultado final de la revisión:** de los 15 bloques, **13 cumplen**: los 12 de requisitos del Sprint 1 y el cronograma editable, cuya pantalla se adelantó (SCRUM-74). Los 2 restantes dependen de historias de sprints siguientes:
 
 | Bloque | Requisito pendiente | Historia |
 | :--- | :--- | :--- |
 | QR bancario y formulario de donación | Pasarela Libélula real, registro por canal y meta pública (RF-06, RF-14, RF-15) | SCRUM-21, SCRUM-132, SCRUM-133 |
 | Control patrimonial | «Dar de baja», acta PDF y endpoints de inventario (RF-03, RF-09, RF-13) | SCRUM-14, SCRUM-15, SCRUM-131 |
-| Cronograma editable por el administrador | Publicación y edición del cronograma (RF-04) | SCRUM-16 |
 
 El wireframe del panel se ampliará con esas pantallas y con la edición del contenido institucional (RF-07).

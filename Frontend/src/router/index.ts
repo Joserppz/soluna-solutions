@@ -7,6 +7,7 @@ import AuditView from '../views/AuditView.vue'
 import ScheduleView from '../views/ScheduleView.vue'
 import AttendanceView from '../views/AttendanceView.vue'
 import InventoryView from '../views/InventoryView.vue'
+import ScheduleManagementView from '../views/ScheduleManagementView.vue'
 import { addAudit, getSession } from '../services/aspar'
 
 const router = createRouter({
@@ -50,6 +51,13 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      // RF-04 (SCRUM-74): publicar y actualizar el cronograma
+      path: '/cronograma/gestion',
+      name: 'gestion-cronograma',
+      component: ScheduleManagementView,
+      meta: { requiresAuth: true, roles: ['Administrador', 'Coordinador'] },
+    },
+    {
       path: '/asistencia',
       name: 'asistencia',
       component: AttendanceView,
@@ -65,7 +73,10 @@ router.beforeEach((to) => {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
 
-  if (to.meta.adminOnly && session?.role !== 'Administrador') {
+  const allowedRoles = to.meta.adminOnly
+    ? ['Administrador']
+    : (to.meta.roles as string[] | undefined)
+  if (allowedRoles && (!session || !allowedRoles.includes(session.role))) {
     if (session) {
       addAudit(
         'Intento de acceso restringido bloqueado',

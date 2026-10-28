@@ -6,8 +6,8 @@ import {
   getMediaAssets,
   getSession,
   institutionalInfo,
+  getPublicSchedule,
   registerDonation,
-  schedule,
 } from '../services/aspar'
 
 const mediaAssets = ref(getMediaAssets())
@@ -30,13 +30,8 @@ const mediaForm = reactive({
   sizeMb: 3.5,
 })
 
-const sesionesOrdenadas = computed(() =>
-  [...schedule].sort((a, b) => {
-    const fechaA = `${a.date} ${a.time}`
-    const fechaB = `${b.date} ${b.time}`
-    return fechaA.localeCompare(fechaB)
-  }),
-)
+// RF-10: el portal muestra solo las actividades publicadas, ordenadas por fecha
+const sesionesOrdenadas = computed(() => getPublicSchedule())
 
 function getDate(date: string): Date {
   return new Date(`${date}T12:00:00`)
