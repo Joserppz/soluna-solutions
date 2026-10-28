@@ -2,7 +2,7 @@
 import { computed, reactive, ref } from 'vue'
 import {
   addMediaAsset,
-  getDonations,
+  getDonationSummary,
   getMediaAssets,
   getSession,
   institutionalInfo,
@@ -13,13 +13,15 @@ import {
 const mediaAssets = ref(getMediaAssets())
 // RF-05: el público solo ve la galería; la carga es para el personal con sesión
 const canUploadMedia = getSession() !== null
-const donations = ref(getDonations())
 const donationSuccess = ref('')
+const donationError = ref('')
+const donationSummary = ref(getDonationSummary())
 
 const donationForm = reactive({
   donorName: '',
   amountBs: 100,
   method: 'QR Bancario' as 'QR Bancario' | 'Pasarela Libélula',
+  reference: '',
   purpose: 'Equipamiento de fisioterapia y espacio propio ASPAR',
 })
 
@@ -56,15 +58,24 @@ function getShortMonth(date: string): string {
 }
 
 function submitDonation() {
-  const record = registerDonation(
-    donationForm.donorName,
-    Number(donationForm.amountBs) || 50,
-    donationForm.method,
-    donationForm.purpose,
-  )
-  donations.value = getDonations()
-  donationSuccess.value = `Aporte registrado por Bs. ${record.amountBs} vía ${record.method}. ¡Gracias por apoyar a ASPAR!`
-  donationForm.donorName = ''
+  donationError.value = ''
+  donationSuccess.value = ''
+  try {
+    const record = registerDonation(
+      donationForm.donorName,
+      Number(donationForm.amountBs),
+      donationForm.method,
+      donationForm.purpose,
+      donationForm.reference,
+    )
+    donationSummary.value = getDonationSummary()
+    donationSuccess.value = `¡Gracias por apoyar a ASPAR! Registramos tu aporte de Bs. ${record.amountBs} vía ${record.method}. Quedará confirmado cuando la asociación lo verifique con el banco o la pasarela.`
+    donationForm.donorName = ''
+    donationForm.reference = ''
+  } catch (cause) {
+    donationError.value =
+      cause instanceof Error ? cause.message : 'No se pudo registrar el aporte.'
+  }
 }
 
 function submitMedia() {
@@ -223,7 +234,10 @@ function submitMedia() {
         <span class="eyebrow">Captación de Fondos y Transparencia · RF-06</span>
         <h2>Módulo de Donaciones (QR Bancario y Pasarela Libélula)</h2>
       </div>
-      <span class="count-pill">{{ donations.length }} aportes verificados</span>
+      <span class="count-pill donation-counter">
+        {{ donationSummary.confirmedCount }} aportes confirmados · Bs.
+        {{ donationSummary.confirmedTotalBs.toLocaleString('es-BO') }}
+      </span>
     </div>
 
     <div class="portal-grid">
@@ -273,6 +287,23 @@ function submitMedia() {
           <option value="Pasarela Libélula">Pasarela de Pagos Libélula</option>
         </select>
 
+        <label for="donor-reference">
+          Nro. de comprobante o transacción (opcional)
+        </label>
+        <input
+          id="donor-reference"
+          v-model.trim="donationForm.reference"
+          placeholder="Ayuda a confirmar tu aporte más rápido"
+        />
+
+        <p class="muted field-note">
+          Tu aporte se suma al contador público cuando la asociación lo confirma
+          con el extracto del banco o la pasarela.
+        </p>
+
+        <p v-if="donationError" class="form-error" role="alert">
+          {{ donationError }}
+        </p>
         <p v-if="donationSuccess" class="success-message" role="status">
           {{ donationSuccess }}
         </p>

@@ -1354,26 +1354,64 @@ export function getDonations(): DonationRecord[] {
   return readStorage('aspar_donations', DEFAULT_DONATIONS)
 }
 
+export type DonationSummary = {
+  confirmedCount: number
+  confirmedTotalBs: number
+  pendingCount: number
+}
+
+/**
+ * RF-06 / RF-15: lo que el portal muestra como transparencia. Solo suman los
+ * aportes confirmados contra el banco o la pasarela; los declarados quedan pendientes.
+ */
+export function getDonationSummary(): DonationSummary {
+  const donations = getDonations()
+  const confirmed = donations.filter((item) => item.status === 'Verificado')
+  return {
+    confirmedCount: confirmed.length,
+    confirmedTotalBs: confirmed.reduce(
+      (total, item) => total + item.amountBs,
+      0,
+    ),
+    pendingCount: donations.length - confirmed.length,
+  }
+}
+
+/**
+ * RF-06 (SCRUM-94): registra el aporte que declara un donante desde el portal.
+ * Queda «Pendiente» hasta que la asociación lo confirme con el extracto bancario
+ * o con la respuesta de la pasarela (panel de donaciones, SCRUM-170).
+ */
 export function registerDonation(
   donorName: string,
   amountBs: number,
   method: DonationRecord['method'],
   purpose: string,
+  reference = '',
 ): DonationRecord {
+  if (!Number.isFinite(amountBs) || amountBs <= 0) {
+    throw new Error('Ingresa un monto mayor a 0 Bs.')
+  }
+  if (amountBs > 100000) {
+    throw new Error(
+      'Para aportes mayores a Bs. 100.000 comunícate directamente con la asociación.',
+    )
+  }
   const donations = getDonations()
   const record: DonationRecord = {
     id: crypto.randomUUID(),
     donorName: donorName.trim() || 'Donante Solidario',
-    amountBs,
+    amountBs: Math.round(amountBs * 100) / 100,
     method,
     purpose: purpose.trim() || 'Fondo general de rehabilitación ASPAR',
-    status: 'Verificado',
+    status: 'Pendiente',
+    reference: reference.trim() || undefined,
     date: new Date().toISOString().slice(0, 10),
   }
   writeStorage('aspar_donations', [record, ...donations])
   addAudit(
-    'Registro de donación verificada',
-    `Donación de Bs. ${record.amountBs} vía ${record.method} (${record.donorName})`,
+    'Registro de donación pendiente de confirmación',
+    `Donación declarada de Bs. ${record.amountBs} vía ${record.method} (${record.donorName}${record.reference ? `, comprobante ${record.reference}` : ''})`,
     'DONACIONES',
     'INFO',
   )

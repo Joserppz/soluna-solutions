@@ -174,6 +174,8 @@ export interface DonationRecord {
   method: 'QR Bancario' | 'Pasarela Libélula' | 'Transferencia Directa'
   purpose: string
   status: 'Verificado' | 'Pendiente'
+  // Nro. de transacción o comprobante (columna donations.reference)
+  reference?: string
   date: string
 }
 

@@ -7,6 +7,7 @@ import RegisterPatientView from '../RegisterPatientView.vue'
 import ScheduleView from '../ScheduleView.vue'
 import {
   getAttendance,
+  getDonationSummary,
   getDonations,
   getInventory,
   getPatients,
@@ -65,6 +66,49 @@ describe('Portal público (/) — RF-04, RF-06, RF-07, RF-08, RF-10', () => {
 
     expect(getDonations()).toHaveLength(before + 1)
     expect(wrapper.text()).toContain('Bs. 150 vía QR Bancario')
+  })
+
+  it('el aporte declarado queda pendiente y no suma al contador público hasta confirmarse', async () => {
+    const wrapper = mount(ScheduleView)
+    const contadorAntes = wrapper.find('.donation-counter').text()
+
+    await wrapper.find('#donor-name').setValue('Donante de prueba')
+    await wrapper.find('#donor-amount').setValue(200)
+    await wrapper.find('#donor-reference').setValue('TRX-000123')
+    await wrapper.findAll('form').at(-1)!.trigger('submit.prevent')
+
+    const registrado = getDonations()[0]!
+    expect(registrado.status).toBe('Pendiente')
+    expect(registrado.reference).toBe('TRX-000123')
+    expect(wrapper.find('.donation-counter').text()).toBe(contadorAntes)
+    expect(getDonationSummary().pendingCount).toBe(1)
+    expect(wrapper.find('.success-message').text()).toContain(
+      'Quedará confirmado',
+    )
+  })
+
+  it('rechaza un monto inválido sin registrar el aporte', async () => {
+    const before = getDonations().length
+    const wrapper = mount(ScheduleView)
+
+    await wrapper.find('#donor-amount').setValue(0)
+    await wrapper.findAll('form').at(-1)!.trigger('submit.prevent')
+
+    expect(wrapper.find('.form-error').text()).toContain('mayor a 0')
+    expect(getDonations()).toHaveLength(before)
+  })
+
+  it('el contador público suma solo los aportes confirmados', () => {
+    const summary = getDonationSummary()
+    const confirmados = getDonations().filter((d) => d.status === 'Verificado')
+
+    expect(summary.confirmedCount).toBe(confirmados.length)
+    expect(summary.confirmedTotalBs).toBe(
+      confirmados.reduce((total, d) => total + d.amountBs, 0),
+    )
+    expect(mount(ScheduleView).find('.donation-counter').text()).toContain(
+      `${summary.confirmedCount} aportes confirmados`,
+    )
   })
 })
 
