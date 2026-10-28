@@ -658,6 +658,79 @@ export function savePatient(patient: PatientInput): Patient {
   return newPatient
 }
 
+export type PatientDataChanges = Pick<
+  PatientInput,
+  | 'name'
+  | 'ci'
+  | 'phone'
+  | 'address'
+  | 'emergencyContact'
+  | 'caregiverRelation'
+  | 'anamnesis'
+>
+
+/**
+ * RF-02 (SCRUM-68): edita los datos de filiación y la anamnesis de una ficha con las
+ * mismas validaciones del alta. El consentimiento y el acceso se cambian en el listado.
+ */
+export function editPatientData(id: string, data: PatientDataChanges): Patient {
+  const patients = getPatients()
+  const current = patients.find((patient) => patient.id === id)
+  if (!current) throw new Error('No se encontró la ficha del paciente.')
+
+  const validationError = validatePatientInput({
+    ...data,
+    consent: current.consent,
+    accessStatus: current.accessStatus,
+  })
+  if (validationError) throw new Error(validationError)
+
+  const ci = data.ci.trim()
+  if (
+    patients.some(
+      (patient) =>
+        patient.id !== id &&
+        patient.ci.trim().toLowerCase() === ci.toLowerCase(),
+    )
+  ) {
+    throw new Error(
+      'Ya existe un paciente registrado con esa Cédula de Identidad.',
+    )
+  }
+
+  const anamnesisChanges = withoutForbiddenClinicalFields(data.anamnesis || {})
+  const changes = {
+    name: data.name.trim(),
+    ci,
+    phone: data.phone.trim(),
+    address: (data.address ?? '').trim() || 'La Paz, Bolivia',
+    emergencyContact: data.emergencyContact.trim(),
+    caregiverRelation:
+      (data.caregiverRelation ?? '').trim() || 'Familiar / Cuidador',
+  }
+  const updated: Patient = {
+    ...current,
+    ...changes,
+    anamnesis: { ...current.anamnesis, ...anamnesisChanges },
+    updatedAt: new Date().toISOString(),
+  }
+
+  writeStorage(
+    'aspar_patients',
+    patients.map((patient) => (patient.id === id ? updated : patient)),
+  )
+  addAudit(
+    'Actualización de ficha de paciente',
+    `Editó la ficha de ${updated.name} (CI: ${updated.ci})`,
+    'PACIENTES',
+    'INFO',
+  )
+  asparApiClient
+    .patchPatient(id, { ...changes, anamnesis: { ...anamnesisChanges } })
+    .catch(() => undefined)
+  return updated
+}
+
 export function updatePatient(
   id: string,
   changes: Partial<Omit<Patient, 'id'>>,

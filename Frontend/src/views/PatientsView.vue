@@ -6,6 +6,7 @@ import {
   canRegisterClinicalNotes,
   canViewClinicalRecord,
   clinicalAccessNotice,
+  editPatientData,
   getSession,
   getPatients,
   savePatient,
@@ -26,6 +27,13 @@ const selectedPatientId = ref<string | null>(null)
 const currentRole = getSession()?.role
 const canEdit = canEditPatients()
 const canClinical = canRegisterClinicalNotes()
+// RF-02: ficha en edición (null = formulario de alta)
+const editingId = ref<string | null>(null)
+const editingName = ref('')
+const editingCanViewClinical = ref(false)
+const showClinicalFields = computed(
+  () => canClinical && (!editingId.value || editingCanViewClinical.value),
+)
 
 const form = reactive({
   name: '',
@@ -60,11 +68,101 @@ const filteredPatients = computed(() => {
   })
 })
 
+function resetForm() {
+  Object.assign(form, {
+    name: '',
+    ci: '',
+    phone: '',
+    address: '',
+    emergencyContact: '',
+    caregiverRelation: 'Familiar / Cuidador',
+    consent: false,
+    accessStatus: 'Pendiente',
+    diagnosis: 'Enfermedad de Parkinson idiopática',
+    stage: 'Estadio I (Leve unilateral)',
+    neurologistCertificate: false,
+    symptomNotes: '',
+    physicalEvaluation: '',
+    speechEvaluation: '',
+    psychologicalEvaluation: '',
+    medications: '',
+  })
+}
+
+function startEdit(patient: Patient) {
+  error.value = ''
+  successMsg.value = ''
+  editingId.value = patient.id
+  editingName.value = patient.name
+  // Los datos clínicos solo se cargan si el rol puede verlos (RNF-06)
+  editingCanViewClinical.value = canViewClinicalRecord(patient)
+  const clinical = editingCanViewClinical.value
+  Object.assign(form, {
+    name: patient.name,
+    ci: patient.ci,
+    phone: patient.phone,
+    address: patient.address,
+    emergencyContact: patient.emergencyContact,
+    caregiverRelation: patient.caregiverRelation,
+    consent: patient.consent,
+    accessStatus: patient.accessStatus,
+    diagnosis: patient.anamnesis.diagnosis,
+    stage: patient.anamnesis.stage,
+    neurologistCertificate: patient.anamnesis.neurologistCertificate,
+    symptomNotes: clinical ? patient.anamnesis.symptomNotes : '',
+    physicalEvaluation: clinical ? patient.anamnesis.physicalEvaluation : '',
+    speechEvaluation: clinical ? patient.anamnesis.speechEvaluation : '',
+    psychologicalEvaluation: clinical
+      ? patient.anamnesis.psychologicalEvaluation
+      : '',
+    medications: clinical ? patient.anamnesis.medications : '',
+  })
+}
+
+function cancelEdit() {
+  editingId.value = null
+  error.value = ''
+  resetForm()
+}
+
+function clinicalAnamnesisFromForm() {
+  return {
+    symptomNotes: form.symptomNotes,
+    physicalEvaluation: form.physicalEvaluation,
+    speechEvaluation: form.speechEvaluation,
+    psychologicalEvaluation: form.psychologicalEvaluation,
+    medications: form.medications,
+  }
+}
+
 function submitPatient() {
   error.value = ''
   successMsg.value = ''
 
   try {
+    if (editingId.value) {
+      const updated = editPatientData(editingId.value, {
+        name: form.name,
+        ci: form.ci,
+        phone: form.phone,
+        address: form.address,
+        emergencyContact: form.emergencyContact,
+        caregiverRelation: form.caregiverRelation,
+        anamnesis: {
+          diagnosis: form.diagnosis,
+          stage: form.stage,
+          neurologistCertificate: form.neurologistCertificate,
+          // Sin acceso a la anamnesis no se envían campos clínicos vacíos
+          ...(showClinicalFields.value ? clinicalAnamnesisFromForm() : {}),
+        },
+      })
+      patients.value = getPatients()
+      successMsg.value = `Ficha de ${updated.name} actualizada.`
+      editingId.value = null
+      resetForm()
+      return
+    }
+
     savePatient({
       name: form.name,
       ci: form.ci,
@@ -78,34 +176,13 @@ function submitPatient() {
         diagnosis: form.diagnosis,
         stage: form.stage,
         neurologistCertificate: form.neurologistCertificate,
-        symptomNotes: form.symptomNotes,
-        physicalEvaluation: form.physicalEvaluation,
-        speechEvaluation: form.speechEvaluation,
-        psychologicalEvaluation: form.psychologicalEvaluation,
-        medications: form.medications,
+        ...clinicalAnamnesisFromForm(),
       },
     })
     patients.value = getPatients()
     successMsg.value =
       'Ficha de paciente y anamnesis digital guardadas y sincronizadas.'
-    Object.assign(form, {
-      name: '',
-      ci: '',
-      phone: '',
-      address: '',
-      emergencyContact: '',
-      caregiverRelation: 'Familiar / Cuidador',
-      consent: false,
-      accessStatus: 'Pendiente',
-      diagnosis: 'Enfermedad de Parkinson idiopática',
-      stage: 'Estadio I (Leve unilateral)',
-      neurologistCertificate: false,
-      symptomNotes: '',
-      physicalEvaluation: '',
-      speechEvaluation: '',
-      psychologicalEvaluation: '',
-      medications: '',
-    })
+    resetForm()
   } catch (cause) {
     error.value =
       cause instanceof Error ? cause.message : 'No se pudo guardar el paciente.'
@@ -156,7 +233,13 @@ onMounted(async () => {
   </section>
 
   <section v-else class="card form-card wide-card">
-    <h2>Registrar paciente y anamnesis</h2>
+    <h2>
+      {{
+        editingId
+          ? `Editar ficha de ${editingName}`
+          : 'Registrar paciente y anamnesis'
+      }}
+    </h2>
 
     <form novalidate @submit.prevent="submitPatient">
       <div class="form-grid">
@@ -241,12 +324,15 @@ onMounted(async () => {
           </select>
         </div>
 
-        <p v-if="!canClinical" class="muted field-note">
-          Las evaluaciones clínicas las registra el personal clínico
-          (Administrador, Coordinador o Profesional).
+        <p v-if="!showClinicalFields" class="muted field-note">
+          {{
+            canClinical
+              ? 'Los datos clínicos de este paciente están protegidos (RNF-06): se editan cuando tenga consentimiento y acceso «Activo».'
+              : 'Las evaluaciones clínicas las registra el personal clínico (Administrador, Coordinador o Profesional).'
+          }}
         </p>
 
-        <div v-if="canClinical" class="field">
+        <div v-if="showClinicalFields" class="field">
           <label for="patient-phys">Evaluación física / fisioterapia</label>
           <input
             id="patient-phys"
@@ -255,7 +341,7 @@ onMounted(async () => {
           />
         </div>
 
-        <div v-if="canClinical" class="field">
+        <div v-if="showClinicalFields" class="field">
           <label for="patient-speech">Evaluación fonoaudiológica</label>
           <input
             id="patient-speech"
@@ -264,7 +350,7 @@ onMounted(async () => {
           />
         </div>
 
-        <div v-if="canClinical" class="field">
+        <div v-if="showClinicalFields" class="field">
           <label for="patient-psych">Evaluación psicológica</label>
           <input
             id="patient-psych"
@@ -273,7 +359,7 @@ onMounted(async () => {
           />
         </div>
 
-        <div class="field">
+        <div v-if="!editingId" class="field">
           <label for="patient-access">Estado de acceso</label>
           <select id="patient-access" v-model="form.accessStatus">
             <option>Activo</option>
@@ -282,7 +368,7 @@ onMounted(async () => {
           </select>
         </div>
 
-        <label class="checkbox-field">
+        <label v-if="!editingId" class="checkbox-field">
           <input v-model="form.consent" type="checkbox" />
           Consentimiento informado recibido
         </label>
@@ -298,9 +384,21 @@ onMounted(async () => {
         {{ successMsg }}
       </p>
 
+      <p v-if="editingId" class="muted field-note">
+        El consentimiento y el estado de acceso se cambian desde el listado.
+      </p>
+
       <div class="form-actions">
+        <button
+          v-if="editingId"
+          class="button button-secondary"
+          type="button"
+          @click="cancelEdit"
+        >
+          Cancelar edición
+        </button>
         <button class="button button-primary" type="submit">
-          Guardar paciente
+          {{ editingId ? 'Guardar cambios' : 'Guardar paciente' }}
         </button>
       </div>
     </form>
@@ -395,6 +493,15 @@ onMounted(async () => {
                 ? 'Ocultar anamnesis'
                 : 'Ver anamnesis'
             }}
+          </button>
+
+          <button
+            v-if="canEdit"
+            class="button button-small button-secondary"
+            type="button"
+            @click="startEdit(patient)"
+          >
+            Editar ficha
           </button>
         </div>
 

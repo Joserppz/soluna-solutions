@@ -5,6 +5,7 @@
 
 import type {
   AuditEvent,
+  ClinicalAnamnesis,
   LoginRequestDto,
   LoginResponseDto,
   Patient,
@@ -123,7 +124,9 @@ export const asparApiClient = {
 
   patchPatient(
     id: string,
-    changes: Partial<Omit<Patient, 'id'>>,
+    changes: Partial<Omit<Patient, 'id' | 'anamnesis'>> & {
+      anamnesis?: Partial<ClinicalAnamnesis>
+    },
   ): Promise<Patient> {
     return apiRequest<Patient>(`/patients/${id}`, {
       method: 'PATCH',

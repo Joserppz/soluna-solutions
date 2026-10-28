@@ -203,3 +203,114 @@ describe('SCRUM-138: campos y acciones de pacientes según el rol (RNF-06)', () 
     expect(created.anamnesis.medications).toBe('')
   })
 })
+
+describe('SCRUM-68: editar la ficha del paciente (RF-02)', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    vi.unstubAllGlobals()
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')))
+  })
+
+  function editButton(block: ReturnType<typeof patientBlock>) {
+    return block
+      .findAll('button')
+      .find((button) => button.text() === 'Editar ficha')
+  }
+
+  it('el Administrador edita los datos de filiación y la evaluación clínica', async () => {
+    signIn('admin@aspar.org', 'Admin2026!')
+    const wrapper = await mountPatients()
+
+    await editButton(patientBlock(wrapper, 'Elena Rojas'))!.trigger('click')
+    expect(wrapper.find('h2').text()).toContain('Editar ficha de Elena Rojas')
+    expect(
+      (wrapper.find('#patient-phone').element as HTMLInputElement).value,
+    ).toBe('70000001')
+
+    await wrapper.find('#patient-phone').setValue('71999888')
+    await wrapper.find('#patient-phys').setValue('Marcha estable con bastón')
+    await wrapper.find('form').trigger('submit.prevent')
+
+    const elena = getPatients().find((p) => p.name === 'Elena Rojas')!
+    expect(elena.phone).toBe('71999888')
+    expect(elena.anamnesis.physicalEvaluation).toBe('Marcha estable con bastón')
+    expect(wrapper.find('.success-message').text()).toContain('actualizada')
+    expect(wrapper.find('h2').text()).toContain('Registrar paciente')
+  })
+
+  it('valida los datos y rechaza una CI de otro paciente', async () => {
+    signIn('admin@aspar.org', 'Admin2026!')
+    const wrapper = await mountPatients()
+    const miguel = getPatients().find((p) => p.name === 'Miguel Fernández')!
+
+    await editButton(patientBlock(wrapper, 'Elena Rojas'))!.trigger('click')
+    await wrapper.find('#patient-phone').setValue('12')
+    await wrapper.find('form').trigger('submit.prevent')
+    expect(wrapper.find('.form-error').text()).toContain('teléfono')
+
+    await wrapper.find('#patient-phone').setValue('70000001')
+    await wrapper.find('#patient-ci').setValue(miguel.ci)
+    await wrapper.find('form').trigger('submit.prevent')
+    expect(wrapper.find('.form-error').text()).toContain(
+      'Ya existe un paciente',
+    )
+  })
+
+  it('Recepción edita la filiación sin ver ni borrar los datos clínicos', async () => {
+    signIn('recepcion@aspar.org', 'Recep2026!')
+    const before = getPatients().find((p) => p.name === 'Elena Rojas')!
+    const wrapper = await mountPatients()
+
+    await editButton(patientBlock(wrapper, 'Elena Rojas'))!.trigger('click')
+    expect(wrapper.find('#patient-phys').exists()).toBe(false)
+    await wrapper.find('#patient-address').setValue('Miraflores, La Paz')
+    await wrapper.find('form').trigger('submit.prevent')
+
+    const after = getPatients().find((p) => p.name === 'Elena Rojas')!
+    expect(after.address).toBe('Miraflores, La Paz')
+    expect(after.anamnesis.physicalEvaluation).toBe(
+      before.anamnesis.physicalEvaluation,
+    )
+  })
+
+  it('sin consentimiento, el personal clínico no ve ni pisa la anamnesis al editar', async () => {
+    signIn('admin@aspar.org', 'Admin2026!')
+    const before = getPatients().find((p) => p.name === 'Miguel Fernández')!
+    const wrapper = await mountPatients()
+
+    await editButton(patientBlock(wrapper, 'Miguel Fernández'))!.trigger(
+      'click',
+    )
+    expect(wrapper.find('#patient-phys').exists()).toBe(false)
+    expect(wrapper.find('.field-note').text()).toContain('protegidos')
+    await wrapper.find('form').trigger('submit.prevent')
+
+    const after = getPatients().find((p) => p.name === 'Miguel Fernández')!
+    expect(after.anamnesis.psychologicalEvaluation).toBe(
+      before.anamnesis.psychologicalEvaluation,
+    )
+  })
+
+  it('el Voluntario no tiene el botón de editar', async () => {
+    signIn('voluntario@aspar.org', 'Voluntario2026!')
+    const wrapper = await mountPatients()
+
+    expect(editButton(patientBlock(wrapper, 'Elena Rojas'))).toBeUndefined()
+  })
+
+  it('cancelar la edición vuelve al formulario de alta vacío', async () => {
+    signIn('admin@aspar.org', 'Admin2026!')
+    const wrapper = await mountPatients()
+
+    await editButton(patientBlock(wrapper, 'Elena Rojas'))!.trigger('click')
+    await wrapper
+      .findAll('button')
+      .find((button) => button.text() === 'Cancelar edición')!
+      .trigger('click')
+
+    expect(wrapper.find('h2').text()).toContain('Registrar paciente')
+    expect(
+      (wrapper.find('#patient-name').element as HTMLInputElement).value,
+    ).toBe('')
+  })
+})
