@@ -25,6 +25,8 @@ Registro de las subtareas de verificación del Sprint 1: qué se probó, con qu�
 | La pantalla valida formulario vacío, formato de correo y mínimo de 8 caracteres | `LoginView.spec.ts` (2 casos) | ✅ |
 | Un intento fallido deja un solo registro en la bitácora | `LoginView.spec.ts::registra un solo evento…`, `test_login_registra_auditoria` | ✅ |
 | Con la cuenta bloqueada por el servidor, la pantalla no abre sesión local | `LoginView.spec.ts::si la API bloquea la cuenta (423)…`, E2E paso 8 | ✅ (defecto encontrado y corregido en SCRUM-88) |
+| En producción, si la API no responde, no se entra con las contraseñas de demostración | `LoginView.spec.ts::en producción no usa las contraseñas de demostración…` | ✅ (corregido al cierre) |
+| Las contraseñas sembradas se pueden rotar y las anteriores dejan de servir | `test_rotar_contrasenas.py` (4 casos) | ✅ |
 
 **Conclusión:** el flujo de inicio de sesión cumple RF-01 en la API y en la pantalla.
 
@@ -57,9 +59,10 @@ Registro de las subtareas de verificación del Sprint 1: qué se probó, con qu�
 | El estadio de Hoehn y Yahr debe ser válido | `test_estadio_desconocido_es_rechazado` | ✅ |
 | Actualización parcial de la ficha y fecha de consentimiento | `test_actualizar_parcialmente_la_ficha`, `test_otorgar_consentimiento_registra_la_fecha` | ✅ |
 | El Voluntario no registra ni edita; solo el Administrador elimina | `test_voluntario_no_puede_registrar_ni_editar`, `test_solo_administrador_elimina_fichas` | ✅ |
-| Formulario y listado en pantalla | `PatientsView.spec.ts` (3 casos), `PantallasRequisitos.spec.ts::guarda la ficha válida…` | ⚠️ La pantalla no permite editar los datos personales (la API sí) |
+| Formulario y listado en pantalla | `PatientsView.spec.ts` (3 casos), `PantallasRequisitos.spec.ts::guarda la ficha válida…` | ✅ |
+| Edición de la ficha con validaciones, CI duplicada y protección de la anamnesis | `PatientsView.spec.ts` (SCRUM-68, 6 casos) | ✅ (pantalla agregada al cierre) |
 
-**Conclusión:** las reglas de pacientes se cumplen en la base, en la API y en la pantalla. Queda pendiente la pantalla de edición (Sprint 2).
+**Conclusión:** las reglas de pacientes se cumplen en la base, en la API y en la pantalla, incluida la edición de fichas.
 
 ## SCRUM-139 — Probar privacidad, permisos y no exposición de datos (SCRUM-123 · RNF-06)
 
@@ -72,9 +75,10 @@ Registro de las subtareas de verificación del Sprint 1: qué se probó, con qu�
 | Recepción registra admisión y consentimiento, pero no evaluaciones | `test_recepcion_registra_filiacion_con_datos_de_admision`, `test_recepcion_no_registra_evaluaciones_clinicas`, `test_recepcion_puede_actualizar_consentimiento` | ✅ |
 | Documentos privados: URL temporal, tipos y tamaño permitidos, sin acceso para roles no clínicos | `test_subir_listar_y_obtener_enlace_temporal`, `test_roles_no_clinicos_no_listan_ni_descargan`, `test_rechaza_tipos_de_archivo_no_permitidos`, `test_rechaza_archivos_de_mas_de_10_mb`, `test_documento_de_otro_paciente_no_se_expone` | ✅ |
 | La pantalla oculta la anamnesis y bloquea la asistencia sin consentimiento | `PatientsView.spec.ts` (3 casos), `PantallasRequisitos.spec.ts::no permite marcar Presente…`, `RouterPermisos.spec.ts` | ✅ |
-| La pantalla de pacientes no ofrece a Recepción los campos clínicos | Revisión de pantallas (SCRUM-196) | ⚠️ Los muestra; el servidor los rechaza con 403 |
+| La pantalla de pacientes no ofrece a Recepción los campos clínicos y el Voluntario no edita | `PatientsView.spec.ts` (SCRUM-138, 5 casos), `PantallasRequisitos.spec.ts`, recorrido integrado paso 11 | ✅ (corregido al cierre) |
+| El aviso 🔒 indica el motivo real (rol, consentimiento o estado) | `PatientsView.spec.ts::el aviso 🔒 indica el motivo real…` | ✅ |
 
-**Conclusión:** los datos clínicos no salen de la API sin rol clínico y consentimiento. La observación de la pantalla no expone datos, pero confunde al usuario.
+**Conclusión:** los datos clínicos no salen de la API sin rol clínico y consentimiento, y la pantalla solo ofrece a cada rol lo que el servidor le permite.
 
 ## SCRUM-180 — Verificar bitácora, acceso de solo lectura e integridad (SCRUM-135 · RF-17)
 
@@ -88,3 +92,7 @@ Registro de las subtareas de verificación del Sprint 1: qué se probó, con qu�
 | Una categoría desconocida no se puede registrar | `test_categoria_desconocida_es_rechazada_en_el_servicio` | ✅ |
 
 **Conclusión:** la bitácora es de solo lectura para la API y no se puede alterar en la base (ADR-006).
+
+## Cierre del Sprint 1 — re-verificación (28/10/2026)
+
+Tras las correcciones del cierre se volvieron a ejecutar todas las pruebas: **103 del Backend** (96,94% de cobertura) y **65 del Frontend** (89,26% de líneas), y el **recorrido integrado con 11 de 11 pasos** (se agregaron el alta de un usuario que entra con su contraseña temporal y el formulario de Recepción sin campos clínicos). Las subtareas SCRUM-161, SCRUM-138, SCRUM-68 y SCRUM-67 de Frontend y SCRUM-104 de Backend recibieron correcciones con sus pruebas; el detalle está en [`DEFINICION_DE_HECHO_Y_ESTADO_SPRINT1.md`](./DEFINICION_DE_HECHO_Y_ESTADO_SPRINT1.md) §4.1.
