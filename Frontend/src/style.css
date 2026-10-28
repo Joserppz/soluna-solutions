@@ -107,6 +107,10 @@ a {
   color: var(--green-dark);
   font-weight: 700;
 }
+.nav-links .nav-portal {
+  color: var(--green);
+  font-weight: 600;
+}
 .nav-session {
   display: flex;
   align-items: center;
@@ -892,4 +896,22 @@ select {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+/* Barra del panel en anchos intermedios: menos espacio entre enlaces */
+@media (max-width: 1200px) and (min-width: 721px) {
+  .topbar {
+    gap: 16px;
+  }
+  .brand small {
+    max-width: 150px;
+  }
+  .nav-links {
+    gap: 8px 14px;
+    font-size: 13px;
+  }
+  .nav-session {
+    gap: 10px;
+    padding-left: 12px;
+  }
 }

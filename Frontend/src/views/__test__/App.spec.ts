@@ -110,11 +110,28 @@ describe('SCRUM-67: App.vue — sesión en la barra superior', () => {
       'Cronograma',
       'Usuarios',
       'Bitácora',
+      'Ver portal',
     ])
     expect(wrapper.findAll('nav a.is-current').map((a) => a.text())).toEqual([
       'Pacientes',
     ])
     expect(wrapper.find('.nav-session .session-badge').exists()).toBe(true)
+  })
+
+  it('con sesión, «Ver portal» lleva al portal público sin cerrar la sesión', async () => {
+    signIn('coordinacion@aspar.org', 'Coord2026!')
+    const { wrapper, router } = await mountApp('/pacientes')
+
+    const verPortal = wrapper
+      .findAll('nav a')
+      .find((link) => link.text() === 'Ver portal')!
+    expect(verPortal.attributes('href')).toBe('/')
+    await verPortal.trigger('click')
+    await flushPromises()
+
+    expect(router.currentRoute.value.path).toBe('/')
+    expect(getSession()?.role).toBe('Coordinador')
+    expect(wrapper.find('nav a.is-current').text()).toBe('Ver portal')
   })
 
   it('muestra el rol y el menú que corresponde a cada rol', async () => {

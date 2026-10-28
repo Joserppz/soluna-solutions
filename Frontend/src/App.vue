@@ -162,6 +162,16 @@ onUnmounted(() => {
           Bitácora
         </RouterLink>
 
+        <RouterLink
+          to="/"
+          class="nav-portal"
+          active-class=""
+          exact-active-class="is-current"
+          title="Ver el portal público como lo ven los visitantes"
+        >
+          Ver portal
+        </RouterLink>
+
         <span class="nav-session">
           <span
             class="session-badge"
