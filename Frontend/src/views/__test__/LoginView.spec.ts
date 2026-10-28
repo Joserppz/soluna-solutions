@@ -174,6 +174,30 @@ describe('SCRUM-88: integración del login con la API', () => {
 
     expect(getSession()?.source).toBe('local')
   })
+
+  it('en producción no usa las contraseñas de demostración si la API no responde', async () => {
+    stubOfflineApi()
+    vi.stubEnv('DEV', false)
+    vi.stubEnv('VITE_DEMO_MODE', '')
+    try {
+      const router = createTestRouter()
+      await router.push('/login')
+      await router.isReady()
+      const wrapper = mount(LoginView, { global: { plugins: [router] } })
+
+      await wrapper.find('#email').setValue('recepcion@aspar.org')
+      await wrapper.find('#password').setValue('Recep2026!')
+      await wrapper.find('form').trigger('submit.prevent')
+      await flushPromises()
+
+      expect(getSession()).toBeNull()
+      expect(wrapper.find('[role="alert"]').text()).toContain(
+        'No se pudo conectar con el servidor',
+      )
+    } finally {
+      vi.unstubAllEnvs()
+    }
+  })
 })
 
 describe('SCRUM-67: Sesiones JWT, expiración y cierre de sesión', () => {

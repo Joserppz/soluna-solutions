@@ -18,7 +18,7 @@ Interfaz web tipo **Single Page Application (SPA)** desarrollada con **Vue 3 + T
    ```dotenv
    VITE_API_BASE_URL=http://localhost:8000/api/v1
    ```
-   Es la única variable que lee el código. Los tiempos de sesión los define el Backend (`Backend/.env`).
+   `VITE_DEMO_MODE=true` habilita el modo local de demostración en un build de producción (con `npm run dev` siempre está activo). Por defecto es `false`: en producción, si la API no responde, nadie entra con las cuentas de prueba. Los tiempos de sesión los define el Backend (`Backend/.env`).
 
 ## 3. Instalación y Ejecución
 

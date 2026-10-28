@@ -48,7 +48,7 @@ La guía completa del Backend (variables, migraciones, permisos por rol, pruebas
 | Archivo | Variables obligatorias | Opcionales |
 | :--- | :--- | :--- |
 | [`Backend/.env.example`](./Backend/.env.example) | `DATABASE_URL`, `JWT_SECRET` (mínimo 32 caracteres aleatorios) | `SESSION_MAX_AGE_SECONDS`, `SESSION_IDLE_LIMIT_SECONDS`, `CORS_ORIGINS`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `PATIENT_DOCUMENTS_BUCKET`, `SIGNED_URL_SECONDS` |
-| [`Frontend/.env.example`](./Frontend/.env.example) | — | `VITE_API_BASE_URL` (por defecto `http://localhost:8000/api/v1`) |
+| [`Frontend/.env.example`](./Frontend/.env.example) | — | `VITE_API_BASE_URL` (por defecto `http://localhost:8000/api/v1`), `VITE_DEMO_MODE` (por defecto `false`) |
 
 Los archivos `.env` reales **nunca** se suben al repositorio. La API se niega a arrancar si `JWT_SECRET` es el valor de ejemplo.
 

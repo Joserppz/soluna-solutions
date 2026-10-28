@@ -406,6 +406,11 @@ export function signIn(email: string, password: string): boolean {
   return true
 }
 
+/** El modo local de demostración solo se habilita en desarrollo o con VITE_DEMO_MODE=true. */
+export function isLocalModeAllowed(): boolean {
+  return import.meta.env.DEV || import.meta.env.VITE_DEMO_MODE === 'true'
+}
+
 export async function signInWithApi(
   email: string,
   password: string,
@@ -437,8 +442,16 @@ export async function signInWithApi(
     if (cause instanceof ApiError) {
       return { ok: false, message: cause.message }
     }
-    // Backend no disponible: se intenta el modo local una sola vez para no
-    // duplicar el registro del intento en la bitácora.
+    // Backend no disponible: el modo local (contraseñas de demostración) solo
+    // existe en desarrollo; en producción nunca reemplaza al servidor (ADR-008).
+    if (!isLocalModeAllowed()) {
+      return {
+        ok: false,
+        message:
+          'No se pudo conectar con el servidor. Intenta nuevamente en unos minutos.',
+      }
+    }
+    // Se intenta una sola vez para no duplicar el registro en la bitácora.
     const localSuccess = signIn(email, password)
     if (!localSuccess) {
       return {
