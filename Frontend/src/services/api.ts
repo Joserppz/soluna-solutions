@@ -140,8 +140,8 @@ export const asparApiClient = {
     email: string
     role: string
     department?: string
-  }): Promise<User> {
-    return apiRequest<User>('/users', {
+  }): Promise<User & { temporaryPassword?: string | null }> {
+    return apiRequest<User & { temporaryPassword?: string | null }>('/users', {
       method: 'POST',
       body: JSON.stringify(payload),
     })
@@ -155,6 +155,15 @@ export const asparApiClient = {
       method: 'PATCH',
       body: JSON.stringify(changes),
     })
+  },
+
+  resetPassword(
+    id: string,
+  ): Promise<{ message: string; temporaryPassword?: string | null }> {
+    return apiRequest<{ message: string; temporaryPassword?: string | null }>(
+      `/users/${id}/reset-password`,
+      { method: 'POST', body: JSON.stringify({}) },
+    )
   },
 
   fetchAuditLogs(params?: {

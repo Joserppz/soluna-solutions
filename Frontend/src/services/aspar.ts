@@ -701,6 +701,9 @@ export function canViewClinicalRecord(patient: Patient): boolean {
   )
 }
 
+// Contraseña que reciben los usuarios creados o restablecidos en el modo local de demostración
+const LOCAL_TEMPORARY_PASSWORD = 'Aspar2026!'
+
 export function createUser(
   name: string,
   email: string,
@@ -733,7 +736,7 @@ export function createUser(
     createdAt: new Date().toISOString(),
   }
 
-  DEMO_PASSWORDS[cleanEmail] = 'Aspar2026!'
+  DEMO_PASSWORDS[cleanEmail] = LOCAL_TEMPORARY_PASSWORD
   writeStorage('aspar_users', [...users, user])
   addAudit(
     'Creación de usuario',
@@ -752,6 +755,70 @@ export function createUser(
     .catch(() => undefined)
 
   return user
+}
+
+export type UserCredentialResult = {
+  user: User
+  temporaryPassword: string | null
+}
+
+/**
+ * RF-11 (SCRUM-161): crea el usuario en la API y devuelve la contraseña temporal
+ * que genera el Backend, para mostrarla una sola vez al Administrador.
+ */
+export async function createUserWithApi(
+  name: string,
+  email: string,
+  role: UserRole,
+  department = 'General',
+): Promise<UserCredentialResult> {
+  try {
+    const { temporaryPassword, ...user } = await asparApiClient.createUser({
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      role,
+      department: department.trim() || 'General',
+    })
+    writeStorage('aspar_users', [
+      ...getUsers().filter((item) => item.id !== user.id),
+      user,
+    ])
+    return { user, temporaryPassword: temporaryPassword ?? null }
+  } catch (cause) {
+    if (cause instanceof ApiError) throw new Error(cause.message, { cause })
+    if (!isLocalModeAllowed()) {
+      throw new Error(
+        'No se pudo conectar con el servidor. El usuario no se creó.',
+        { cause },
+      )
+    }
+    const user = createUser(name, email, role, department)
+    return { user, temporaryPassword: LOCAL_TEMPORARY_PASSWORD }
+  }
+}
+
+/** RF-11: restablece la contraseña de un usuario y devuelve la temporal nueva. */
+export async function resetUserPassword(user: User): Promise<string | null> {
+  try {
+    const response = await asparApiClient.resetPassword(user.id)
+    return response.temporaryPassword ?? null
+  } catch (cause) {
+    if (cause instanceof ApiError) throw new Error(cause.message, { cause })
+    if (!isLocalModeAllowed()) {
+      throw new Error(
+        'No se pudo conectar con el servidor. La contraseña no se cambió.',
+        { cause },
+      )
+    }
+    DEMO_PASSWORDS[user.email.toLowerCase()] = LOCAL_TEMPORARY_PASSWORD
+    addAudit(
+      'Restablecimiento de contraseña',
+      `Restableció la contraseña de ${user.email}`,
+      'USUARIOS_ROLES',
+      'WARNING',
+    )
+    return LOCAL_TEMPORARY_PASSWORD
+  }
 }
 
 export function updateUser(

@@ -836,3 +836,24 @@ select {
   gap: 8px;
   margin-bottom: 4px;
 }
+
+/* SCRUM-161: contraseña temporal que se muestra una sola vez */
+.credential-card {
+  max-width: 760px;
+  margin-bottom: 24px;
+  border: 1px solid var(--green);
+  background: var(--mint);
+}
+
+.credential-password {
+  display: inline-block;
+  margin: 6px 0 4px;
+  padding: 8px 14px;
+  border: 1px dashed var(--green);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--green-dark);
+  font-size: 18px;
+  letter-spacing: 0.04em;
+  user-select: all;
+}

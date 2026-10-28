@@ -2,8 +2,9 @@
 import { computed, onMounted, ref } from 'vue'
 import {
   USER_ROLES,
-  createUser,
+  createUserWithApi,
   getUsers,
+  resetUserPassword,
   syncUsersFromApi,
   updateUser,
   type User,
@@ -18,20 +19,36 @@ const department = ref('Fisioterapia y Rehabilitación')
 const roleFilter = ref<'Todos' | UserRole>('Todos')
 const error = ref('')
 const successMsg = ref('')
+const isSubmitting = ref(false)
+// Contraseña temporal que se muestra una sola vez (SCRUM-161)
+const credential = ref<{ email: string; password: string } | null>(null)
+const copied = ref(false)
 
 const filteredUsers = computed(() => {
   if (roleFilter.value === 'Todos') return users.value
   return users.value.filter((u) => u.role === roleFilter.value)
 })
 
-function submitUser() {
+function showCredential(userEmail: string, password: string | null) {
+  copied.value = false
+  credential.value = password ? { email: userEmail, password } : null
+}
+
+async function submitUser() {
   error.value = ''
   successMsg.value = ''
+  isSubmitting.value = true
 
   try {
-    createUser(name.value, email.value, role.value, department.value)
+    const { user, temporaryPassword } = await createUserWithApi(
+      name.value,
+      email.value,
+      role.value,
+      department.value,
+    )
     users.value = getUsers()
-    successMsg.value = `Usuario ${email.value.trim()} creado y sincronizado con rol ${role.value}.`
+    successMsg.value = `Usuario ${user.email} creado con rol ${user.role}.`
+    showCredential(user.email, temporaryPassword)
     name.value = ''
     email.value = ''
     role.value = 'Profesional'
@@ -39,6 +56,38 @@ function submitUser() {
   } catch (cause) {
     error.value =
       cause instanceof Error ? cause.message : 'No se pudo crear el usuario.'
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+async function resetPassword(user: User) {
+  error.value = ''
+  successMsg.value = ''
+  const confirmed = window.confirm(
+    `¿Restablecer la contraseña de ${user.email}? Se cerrarán sus sesiones activas.`,
+  )
+  if (!confirmed) return
+
+  try {
+    const temporaryPassword = await resetUserPassword(user)
+    successMsg.value = `Se restableció la contraseña de ${user.email}.`
+    showCredential(user.email, temporaryPassword)
+  } catch (cause) {
+    error.value =
+      cause instanceof Error
+        ? cause.message
+        : 'No se pudo restablecer la contraseña.'
+  }
+}
+
+async function copyCredential() {
+  if (!credential.value) return
+  try {
+    await navigator.clipboard.writeText(credential.value.password)
+    copied.value = true
+  } catch {
+    copied.value = false
   }
 }
 
@@ -126,9 +175,46 @@ onMounted(async () => {
     </p>
 
     <div class="form-actions">
-      <button class="button button-primary" type="submit">Crear usuario</button>
+      <button
+        class="button button-primary"
+        type="submit"
+        :disabled="isSubmitting"
+      >
+        {{ isSubmitting ? 'Creando usuario...' : 'Crear usuario' }}
+      </button>
     </div>
   </form>
+
+  <section
+    v-if="credential"
+    class="card credential-card"
+    role="status"
+    aria-live="polite"
+  >
+    <h2>Contraseña temporal</h2>
+    <p>
+      Entrega esta contraseña a <strong>{{ credential.email }}</strong> por un
+      canal privado. <strong>Se muestra una sola vez</strong>: al cerrar este
+      aviso ya no se puede volver a consultar.
+    </p>
+    <code class="credential-password">{{ credential.password }}</code>
+    <div class="form-actions">
+      <button
+        class="button button-small button-secondary"
+        type="button"
+        @click="copyCredential"
+      >
+        {{ copied ? 'Copiada' : 'Copiar' }}
+      </button>
+      <button
+        class="button button-small button-primary"
+        type="button"
+        @click="credential = null"
+      >
+        Ya la entregué
+      </button>
+    </div>
+  </section>
 
   <section class="card table-card patient-list">
     <div class="section-title table-heading">
@@ -177,6 +263,14 @@ onMounted(async () => {
           </option>
         </select>
       </label>
+
+      <button
+        class="button button-small button-secondary"
+        type="button"
+        @click="resetPassword(user)"
+      >
+        Restablecer contraseña
+      </button>
 
       <button
         class="button button-small"
