@@ -1,0 +1,14 @@
+# Finales de línea LF en todos los sistemas: los scripts que corren dentro de Docker
+# (Linux) fallan si llegan con CRLF desde Windows.
+* text=auto eol=lf
+
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.pptx binary
+*.docx binary
+*.xlsx binary
+*.zip binary

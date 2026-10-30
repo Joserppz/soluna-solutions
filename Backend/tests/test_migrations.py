@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy import text
 
-from scripts.migrate import MIGRATION_PATTERN, available_migrations
+from scripts.migrate import MIGRATION_PATTERN, available_migrations, migration_engine
 from tests.conftest import requires_db
 
 
@@ -12,6 +12,25 @@ def test_migraciones_numeradas_y_en_orden():
     assert versions, "Debe existir al menos la migración 001"
     assert versions == sorted(versions)
     assert all(MIGRATION_PATTERN.match(path.name) for _, path in migrations)
+
+
+def test_migraciones_usan_migration_database_url(monkeypatch):
+    monkeypatch.setenv(
+        "MIGRATION_DATABASE_URL", "postgresql://migrador:clave@pooler.ejemplo:5432/postgres"
+    )
+    engine = migration_engine()
+
+    assert engine.url.port == 5432
+    assert engine.url.username == "migrador"
+    assert engine.url.drivername == "postgresql+psycopg2"
+
+
+def test_sin_migration_database_url_usa_la_de_la_api(monkeypatch):
+    from app.core.database import engine
+
+    monkeypatch.delenv("MIGRATION_DATABASE_URL", raising=False)
+
+    assert migration_engine() is engine
 
 
 @requires_db

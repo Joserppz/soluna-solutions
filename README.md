@@ -29,7 +29,25 @@ Repositorio oficial de **Soluna Solutions** para el proyecto **ASPAR (Asociació
   - `docs/calidad/`: Informe de verificación, Definición de Hecho (DoD) y estado real del Sprint 1.
   - `docs/git/`: Convención de ramas, commits y Pull Requests, y trazabilidad con Jira.
 
-## Puesta en marcha rápida
+## Puesta en marcha con Docker (recomendado)
+
+Requisito: [Docker Desktop](https://www.docker.com/products/docker-desktop/) (en Windows, con WSL 2). Desde la raíz del repositorio:
+
+```bash
+docker compose up --build
+```
+
+| Servicio | Dirección | Qué es |
+| :--- | :--- | :--- |
+| `web` | <http://localhost:5173> | Frontend Vue con recarga automática |
+| `api` | <http://localhost:8000/docs> | API FastAPI; aplica las migraciones pendientes al arrancar |
+| `db` | `localhost:5433` (usuario `aspar`, clave `aspar_local`) | PostgreSQL 16 con las bases `aspar` y `aspar_test` |
+
+`docker compose down` detiene todo (los datos se conservan) y `docker compose down -v` borra la base local. Los atajos de [`Makefile`](./Makefile) (`make test`, `make lint`, `make migrate`, `make psql`…) envuelven esos comandos; `make help` los lista. En Windows sin `make`, cada objetivo del `Makefile` muestra el comando `docker compose` equivalente.
+
+Opcional: `pip install pre-commit && pre-commit install` revisa Ruff, ESLint y Prettier antes de cada commit ([`.pre-commit-config.yaml`](./.pre-commit-config.yaml)).
+
+## Puesta en marcha sin Docker
 
 | Paso | Backend (`Backend/`) | Frontend (`Frontend/`) |
 | :--- | :--- | :--- |

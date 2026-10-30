@@ -10,7 +10,7 @@ API del Sistema Web y de Gestión de la Asociación de Parkinson "Mario Lagrava"
 | Proyecto Supabase | Plan Free | Base PostgreSQL + Storage |
 | Git | — | — |
 
-No se usa Docker.
+La forma recomendada de trabajar es con Docker desde la raíz del repositorio (`docker compose up --build`, ver el [README principal](../README.md)). El [`Dockerfile`](./Dockerfile) tiene dos etapas: `dev` (la usa `docker-compose.yml`, con recarga automática) y `runtime` (la imagen que se despliega en Google Cloud Run, con usuario sin privilegios y el puerto de `$PORT`). Lo que sigue es la instalación sin Docker.
 
 ## 2. Instalación
 
@@ -32,7 +32,8 @@ cp .env.example .env
 
 | Variable | Obligatoria | Descripción |
 | :--- | :--- | :--- |
-| `DATABASE_URL` | Sí | Supabase → **Connect** → **Session pooler** (IPv4). Reemplaza `[YOUR-PASSWORD]` **sin corchetes**. La conexión directa `db.<ref>.supabase.co` usa IPv6 y suele fallar en redes domésticas. |
+| `DATABASE_URL` | Sí | Supabase → **Connect** → **Transaction pooler** (puerto 6543, IPv4) para la API. Reemplaza `[YOUR-PASSWORD]` **sin corchetes**. La conexión directa `db.<ref>.supabase.co` usa IPv6 y suele fallar en redes domésticas. |
+| `MIGRATION_DATABASE_URL` | No | Supabase → **Session pooler** (puerto 5432) para `scripts.migrate`. Si se omite, las migraciones usan `DATABASE_URL`. |
 | `JWT_SECRET` | Sí | Mínimo 32 caracteres: `python -c "import secrets; print(secrets.token_urlsafe(32))"`. La API no arranca con el valor de ejemplo. |
 | `SESSION_MAX_AGE_SECONDS` | No | Duración máxima de la sesión (por defecto 1800 = 30 min). |
 | `SESSION_IDLE_LIMIT_SECONDS` | No | Inactividad permitida (por defecto 900 = 15 min). |

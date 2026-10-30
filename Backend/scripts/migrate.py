@@ -3,6 +3,10 @@
 Aplica en orden los archivos ``migrations/NNN_nombre.sql`` que aún no figuran en la
 tabla ``schema_migrations``. Cada migración se ejecuta en su propia transacción.
 
+La conexión sale de ``MIGRATION_DATABASE_URL`` (en Supabase, el Session Pooler del puerto
+5432) y, si no está definida, de ``DATABASE_URL``. La API usa el Transaction Pooler (6543),
+que no sirve para migrar: cambia de conexión en cada transacción.
+
 Uso (desde la carpeta Backend, con el entorno virtual activo):
 
     python -m scripts.migrate              # aplica las migraciones pendientes
@@ -13,10 +17,12 @@ Uso (desde la carpeta Backend, con el entorno virtual activo):
 """
 
 import argparse
+import os
 import re
 from pathlib import Path
 
-from sqlalchemy import Engine, text
+from sqlalchemy import Engine, create_engine, text
+from sqlalchemy.pool import NullPool
 
 MIGRATIONS_DIR = Path(__file__).resolve().parent.parent / "migrations"
 MIGRATION_PATTERN = re.compile(r"^(\d{3})_[a-z0-9_]+\.sql$")
@@ -112,13 +118,24 @@ def baseline(engine: Engine, up_to: str) -> list[str]:
     return marked
 
 
+def migration_engine() -> Engine:
+    url = os.getenv("MIGRATION_DATABASE_URL")
+    if not url:
+        from app.core.database import engine
+
+        return engine
+    from app.core.database import sqlalchemy_url
+
+    return create_engine(sqlalchemy_url(url), poolclass=NullPool)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Migraciones SQL versionadas de ASPAR")
     parser.add_argument("--status", action="store_true", help="muestra el estado")
     parser.add_argument("--baseline", metavar="VERSION", help="marca como aplicadas hasta VERSION")
     args = parser.parse_args()
 
-    from app.core.database import engine
+    engine = migration_engine()
 
     if args.status:
         done = applied_versions(engine)

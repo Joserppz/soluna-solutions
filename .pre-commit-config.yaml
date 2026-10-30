@@ -1,0 +1,46 @@
+# Revisiones automáticas antes de cada commit (opcional pero recomendado).
+# Instalación única:  pip install pre-commit  &&  pre-commit install
+# Ejecutar a mano:    pre-commit run --all-files
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: \.(md|pdf|png|jpg|svg)$
+      - id: end-of-file-fixer
+        exclude: \.(pdf|png|jpg|svg)$|^docs/api/openapi\.json$
+      - id: check-yaml
+      - id: check-json
+        exclude: tsconfig.*\.json$  # admiten comentarios (JSONC)
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ["--maxkb=1024"]
+      - id: detect-private-key
+      - id: no-commit-to-branch
+        args: ["--branch", "main"]
+
+  # Backend: misma versión de Ruff que Backend/requirements-dev.txt.
+  # Ruff toma la configuración de Backend/pyproject.toml (la más cercana a cada archivo).
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.2
+    hooks:
+      - id: ruff-check
+        files: ^Backend/
+      - id: ruff-format
+        files: ^Backend/
+
+  # Frontend: usa las dependencias ya instaladas en Frontend/node_modules
+  - repo: local
+    hooks:
+      - id: frontend-eslint
+        name: ESLint (Frontend)
+        entry: npm --prefix Frontend run lint
+        language: system
+        files: ^Frontend/.*\.(ts|vue|js|mjs|cjs)$
+        pass_filenames: false
+      - id: frontend-prettier
+        name: Prettier (Frontend)
+        entry: npm --prefix Frontend run format:check
+        language: system
+        files: ^Frontend/src/
+        pass_filenames: false

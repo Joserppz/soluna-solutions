@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
+    "format:check": "prettier --check src",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage"
