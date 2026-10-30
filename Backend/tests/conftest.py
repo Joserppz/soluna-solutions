@@ -14,6 +14,8 @@ TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
 # Se fija antes de importar la app para que las pruebas nunca usen la base del .env
 os.environ["DATABASE_URL"] = TEST_DATABASE_URL or "postgresql://pruebas:pruebas@localhost:1/pruebas"
 os.environ["JWT_SECRET"] = "secreto-solo-para-pruebas-automatizadas-aspar"
+os.environ["ENV"] = "test"
+os.environ["PROXY_TRUSTED_HOPS"] = "0"
 
 if TEST_DATABASE_URL and "supabase" in TEST_DATABASE_URL:
     pytest.exit("TEST_DATABASE_URL no puede apuntar a Supabase: las pruebas borran el esquema.")
@@ -59,10 +61,15 @@ def db_session(migrated_engine):
 def client(db_session):
     from fastapi.testclient import TestClient
 
-    from app.core.database import get_db
+    from app.core.database import get_db, unit_of_work
     from app.main import app
 
-    app.dependency_overrides[get_db] = lambda: db_session
+    # Misma unidad de trabajo que en producción, pero sobre la transacción de la prueba:
+    # el commit libera un savepoint y todo se revierte al terminar la prueba.
+    def test_db():
+        yield from unit_of_work(db_session)
+
+    app.dependency_overrides[get_db] = test_db
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()

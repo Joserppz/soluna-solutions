@@ -4,16 +4,21 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
 import jwt
-from fastapi import Depends, Header, HTTPException, Request, status
-from sqlalchemy.orm import Session
+from fastapi import Depends, Header, Request
 
-from app.core.config import SESSION_IDLE_LIMIT_SECONDS
-from app.core.database import get_db
+from app.core.config import settings
+from app.core.database import DbSession
+from app.core.errors import Forbidden, Unauthorized
+from app.core.logging import set_current_user_id
+from app.core.network import client_ip
 from app.core.security import decode_access_token
 from app.models import User, UserSession
 from app.repositories import session_repository, user_repository
 
 SESSION_INVALID = "Sesión inválida o expirada. Inicia sesión nuevamente."
+SESSION_IDLE_EXPIRED = "La sesión expiró por inactividad (15 minutos). Inicia sesión nuevamente."
+# La actividad se guarda como mucho una vez por minuto: evita escribir en cada petición
+ACTIVITY_WRITE_INTERVAL = timedelta(seconds=60)
 
 
 @dataclass
@@ -23,21 +28,17 @@ class CurrentUser:
     ip: str | None
 
 
-def client_ip(request: Request) -> str | None:
-    return request.client.host if request.client else None
-
-
 def get_current_user(
     request: Request,
+    db: DbSession,
     authorization: str | None = Header(default=None),
-    db: Session = Depends(get_db),
 ) -> CurrentUser:
     if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Token Bearer requerido")
+        raise Unauthorized("Token Bearer requerido")
     try:
         payload = decode_access_token(authorization.removeprefix("Bearer ").strip())
     except jwt.PyJWTError as exc:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, SESSION_INVALID) from exc
+        raise Unauthorized(SESSION_INVALID) from exc
 
     session = session_repository.get_by_id(db, payload["sid"])
     now = datetime.now(UTC)
@@ -47,22 +48,19 @@ def get_current_user(
         or session.revoked_at is not None
         or session.expires_at <= now
     ):
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, SESSION_INVALID)
-    if session.last_activity_at + timedelta(seconds=SESSION_IDLE_LIMIT_SECONDS) <= now:
+        raise Unauthorized(SESSION_INVALID)
+    if session.last_activity_at + timedelta(seconds=settings.session_idle_limit_seconds) <= now:
         session.revoked_at = now
-        db.commit()
-        raise HTTPException(
-            status.HTTP_401_UNAUTHORIZED,
-            "La sesión expiró por inactividad (15 minutos). Inicia sesión nuevamente.",
-        )
+        raise Unauthorized(SESSION_IDLE_EXPIRED, persist=True)
 
     user = user_repository.get_by_id(db, session.user_id)
     if user is None or not user.active:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, SESSION_INVALID)
+        raise Unauthorized(SESSION_INVALID)
 
     # Cada petición autenticada cuenta como actividad (límite de inactividad RNF-02)
-    session.last_activity_at = now
-    db.commit()
+    if now - session.last_activity_at >= ACTIVITY_WRITE_INTERVAL:
+        session.last_activity_at = now
+    set_current_user_id(user.id)
     return CurrentUser(user=user, session=session, ip=client_ip(request))
 
 
@@ -71,17 +69,16 @@ def require_roles(*roles: str):
 
     def checker(
         request: Request,
+        db: DbSession,
         current: CurrentUser = Depends(get_current_user),
-        db: Session = Depends(get_db),
     ) -> CurrentUser:
         if current.user.role not in roles:
             # Import diferido: audit_service depende de los modelos, no de deps
             from app.services import audit_service
 
-            audit_service.record(
+            audit_service.audit(
                 db,
-                actor=current.user.email,
-                actor_role=current.user.role,
+                current,
                 category="SISTEMA",
                 severity="WARNING",
                 action="Intento de acceso restringido bloqueado",
@@ -89,12 +86,10 @@ def require_roles(*roles: str):
                     f"El rol {current.user.role} intentó {request.method} {request.url.path} "
                     f"(permitido para: {', '.join(roles)})"
                 ),
-                ip_address=current.ip,
             )
-            db.commit()
-            raise HTTPException(
-                status.HTTP_403_FORBIDDEN,
+            raise Forbidden(
                 f"El rol {current.user.role} no tiene permisos para esta operación.",
+                persist=True,
             )
         return current
 

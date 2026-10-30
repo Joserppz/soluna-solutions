@@ -4,19 +4,27 @@ import re
 import uuid
 
 import httpx
-from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.adapters.storage import PrivateStorage
-from app.core.config import SIGNED_URL_SECONDS
+from app.core.config import settings
 from app.core.constants import DOCUMENT_CONTENT_TYPES, DOCUMENT_MAX_BYTES, DOCUMENT_TYPES
+from app.core.database import after_commit, on_rollback
 from app.core.deps import CurrentUser
+from app.core.errors import (
+    ExternalServiceError,
+    NotFound,
+    PayloadTooLarge,
+    UnsupportedMediaType,
+    ValidationError,
+)
 from app.models import PatientDocument
 from app.repositories import document_repository
 from app.services import audit_service
 from app.services.patient_service import get_patient
 
 STORAGE_ERROR = "No se pudo acceder al almacenamiento de documentos. Intenta nuevamente."
+DOCUMENT_NOT_FOUND = "Documento no encontrado."
 
 
 def _safe_file_name(file_name: str) -> str:
@@ -25,15 +33,8 @@ def _safe_file_name(file_name: str) -> str:
 
 
 def _audit(db: Session, current: CurrentUser, severity: str, action: str, detail: str) -> None:
-    audit_service.record(
-        db,
-        actor=current.user.email,
-        actor_role=current.user.role,
-        category="PACIENTES",
-        severity=severity,
-        action=action,
-        detail=detail,
-        ip_address=current.ip,
+    audit_service.audit(
+        db, current, category="PACIENTES", severity=severity, action=action, detail=detail
     )
 
 
@@ -55,28 +56,17 @@ def upload_document(
 ) -> PatientDocument:
     patient = get_patient(db, patient_id)
     if document_type not in DOCUMENT_TYPES:
-        raise HTTPException(
-            status.HTTP_422_UNPROCESSABLE_CONTENT,
-            "Tipo de documento inválido. Usa: " + ", ".join(DOCUMENT_TYPES) + ".",
-        )
+        raise ValidationError("Tipo de documento inválido. Usa: " + ", ".join(DOCUMENT_TYPES) + ".")
     if content_type not in DOCUMENT_CONTENT_TYPES:
-        raise HTTPException(
-            status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "Solo se aceptan archivos PDF, JPG, PNG o WEBP."
-        )
+        raise UnsupportedMediaType("Solo se aceptan archivos PDF, JPG, PNG o WEBP.")
     if not content:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "El archivo está vacío.")
+        raise ValidationError("El archivo está vacío.")
     if len(content) > DOCUMENT_MAX_BYTES:
-        raise HTTPException(
-            status.HTTP_413_CONTENT_TOO_LARGE, "El archivo supera el máximo de 10 MB."
-        )
+        raise PayloadTooLarge("El archivo supera el máximo de 10 MB.")
 
     document_id = str(uuid.uuid4())
     storage_path = f"{patient.id}/{document_id}{DOCUMENT_CONTENT_TYPES[content_type]}"
-    try:
-        storage.upload(storage_path, content, content_type)
-    except httpx.HTTPError as exc:
-        raise HTTPException(status.HTTP_502_BAD_GATEWAY, STORAGE_ERROR) from exc
-
+    # Primero la metadata (valida las restricciones de la base) y después el archivo
     document = document_repository.add(
         db,
         PatientDocument(
@@ -90,6 +80,12 @@ def upload_document(
             uploaded_by=current.user.id,
         ),
     )
+    try:
+        storage.upload(storage_path, content, content_type)
+    except httpx.HTTPError as exc:
+        raise ExternalServiceError(STORAGE_ERROR) from exc
+    # Si la transacción no llega a confirmarse, el archivo subido se borra
+    on_rollback(db, lambda: storage.delete(storage_path))
     _audit(
         db,
         current,
@@ -97,7 +93,6 @@ def upload_document(
         "Carga de documento privado de paciente",
         f"Subió '{document.file_name}' ({document_type}) a la ficha de {patient.name}",
     )
-    db.commit()
     return document
 
 
@@ -106,11 +101,11 @@ def signed_url(
 ) -> tuple[str, int]:
     document = document_repository.get_for_patient(db, patient_id, document_id)
     if document is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Documento no encontrado.")
+        raise NotFound(DOCUMENT_NOT_FOUND)
     try:
-        url = storage.signed_url(document.storage_path, SIGNED_URL_SECONDS)
+        url = storage.signed_url(document.storage_path, settings.signed_url_seconds)
     except httpx.HTTPError as exc:
-        raise HTTPException(status.HTTP_502_BAD_GATEWAY, STORAGE_ERROR) from exc
+        raise ExternalServiceError(STORAGE_ERROR) from exc
     _audit(
         db,
         current,
@@ -118,8 +113,7 @@ def signed_url(
         "Descarga de documento privado de paciente",
         f"Generó enlace temporal de '{document.file_name}' (paciente {patient_id})",
     )
-    db.commit()
-    return url, SIGNED_URL_SECONDS
+    return url, settings.signed_url_seconds
 
 
 def delete_document(
@@ -127,12 +121,12 @@ def delete_document(
 ) -> None:
     document = document_repository.get_for_patient(db, patient_id, document_id)
     if document is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Documento no encontrado.")
-    try:
-        storage.delete(document.storage_path)
-    except httpx.HTTPError as exc:
-        raise HTTPException(status.HTTP_502_BAD_GATEWAY, STORAGE_ERROR) from exc
+        raise NotFound(DOCUMENT_NOT_FOUND)
+    storage_path = document.storage_path
     document_repository.delete(db, document)
+    # El archivo se borra solo si se confirma el borrado de la metadata: si la base falla,
+    # el documento sigue completo. Si falla Storage después, queda en el log para revisarlo.
+    after_commit(db, lambda: storage.delete(storage_path))
     _audit(
         db,
         current,
@@ -140,4 +134,3 @@ def delete_document(
         "Eliminación de documento privado de paciente",
         f"Eliminó '{document.file_name}' de la ficha {patient_id}",
     )
-    db.commit()

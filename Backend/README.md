@@ -34,6 +34,10 @@ cp .env.example .env
 | :--- | :--- | :--- |
 | `DATABASE_URL` | Sí | Supabase → **Connect** → **Transaction pooler** (puerto 6543, IPv4) para la API. Reemplaza `[YOUR-PASSWORD]` **sin corchetes**. La conexión directa `db.<ref>.supabase.co` usa IPv6 y suele fallar en redes domésticas. |
 | `MIGRATION_DATABASE_URL` | No | Supabase → **Session pooler** (puerto 5432) para `scripts.migrate`. Si se omite, las migraciones usan `DATABASE_URL`. |
+| `ENV` | No | `dev` (por defecto), `test` o `prod`. |
+| `LOG_LEVEL` | No | `INFO` por defecto. Los logs salen en JSON, una línea por evento, con el `request_id` de cada petición. |
+| `DB_POOL` | No | `queue` (por defecto, base directa o Docker) o `null` con el Transaction Pooler de Supabase. |
+| `PROXY_TRUSTED_HOPS` | No | `0` en tu PC y en Docker; `1` en Google Cloud Run. Indica cuántas IP del final de `X-Forwarded-For` agregaron nuestros proxies (ver `app/core/network.py`). |
 | `JWT_SECRET` | Sí | Mínimo 32 caracteres: `python -c "import secrets; print(secrets.token_urlsafe(32))"`. La API no arranca con el valor de ejemplo. |
 | `SESSION_MAX_AGE_SECONDS` | No | Duración máxima de la sesión (por defecto 1800 = 30 min). |
 | `SESSION_IDLE_LIMIT_SECONDS` | No | Inactividad permitida (por defecto 900 = 15 min). |
@@ -106,7 +110,7 @@ python -m scripts.rotar_contrasenas_iniciales             # las cambia por contr
 
 | Grupo | Rutas | Roles |
 | :--- | :--- | :--- |
-| Sistema | `GET /health` | Público |
+| Sistema | `GET /health` (prueba de vida, sin base), `GET /health/db` (conexión con PostgreSQL) | Público |
 | Autenticación | `POST /auth/login`, `GET /auth/verify`, `POST /auth/refresh`, `POST /auth/logout` | Login público; resto con sesión |
 | Pacientes | `GET/POST /patients`, `GET/PATCH/DELETE /patients/{id}` | Lectura: todos; edición: Administrador, Coordinador, Profesional, Recepción; borrado: Administrador |
 | Documentos privados | `GET/POST /patients/{id}/documents`, `GET .../{doc}/url`, `DELETE .../{doc}` | Listar/descargar: personal clínico; subir: editores; borrar: Administrador |
@@ -169,6 +173,7 @@ Backend/
 | `No module named 'psycopg'` | Código antiguo: `app/core/database.py` debe convertir la URL a `postgresql+psycopg2://` (ya incluido). |
 | `could not translate host name "db.<ref>.supabase.co"` | Conexión directa IPv6: usa la cadena del **Session pooler**. |
 | `password authentication failed` | La contraseña quedó con corchetes `[ ]` o tiene caracteres especiales sin codificar (`@` → `%40`). |
-| `RuntimeError: JWT_SECRET debe ser...` | Genera un secreto propio de 32+ caracteres en `.env`. |
+| `ValidationError ... JWT_SECRET debe ser...` al arrancar | Genera un secreto propio de 32+ caracteres en `.env`. La configuración (`app/core/config.py`) se valida al iniciar: si falta una variable obligatoria o tiene un formato inválido, la API no arranca y el mensaje dice cuál es. |
+| Un error 500 con «código …» | Busca ese código (`request_id`) en los logs de la API: ahí está el detalle técnico, que nunca se envía al navegador. |
 | `ResolutionImpossible ... protobuf` al instalar | Estás usando el `requirements.txt` antiguo en UTF-16; usa el de esta carpeta. |
 | `401 La sesión expiró por inactividad` | Pasaron 15 minutos sin peticiones; inicia sesión otra vez. |

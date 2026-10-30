@@ -4,7 +4,6 @@ import re
 import uuid
 from datetime import UTC, date, datetime
 
-from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.constants import (
@@ -14,6 +13,7 @@ from app.core.constants import (
     PARKINSON_STAGES,
 )
 from app.core.deps import CurrentUser
+from app.core.errors import Conflict, Forbidden, NotFound, ValidationError
 from app.models import Patient
 from app.repositories import patient_repository
 from app.schemas.patient import ClinicalAnamnesis, PatientIn, PatientUpdate
@@ -39,22 +39,15 @@ def can_view_clinical_record(role: str, patient: Patient) -> bool:
 def _forbid_clinical_fields(db: Session, current: CurrentUser, columns: set[str]) -> None:
     if current.user.role in CLINICAL_ROLES or not columns & set(CLINICAL_ONLY_COLUMNS):
         return
-    audit_service.record(
+    audit_service.audit(
         db,
-        actor=current.user.email,
-        actor_role=current.user.role,
+        current,
         category="PACIENTES",
         severity="WARNING",
         action="Intento de registrar datos clínicos sin permiso",
         detail=f"El rol {current.user.role} intentó editar evaluaciones clínicas",
-        ip_address=current.ip,
     )
-    db.commit()
-    raise HTTPException(status.HTTP_403_FORBIDDEN, CLINICAL_DATA_FORBIDDEN)
-
-
-def _bad_request(message: str) -> HTTPException:
-    return HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, message)
+    raise Forbidden(CLINICAL_DATA_FORBIDDEN, persist=True)
 
 
 def validate_fields(
@@ -69,19 +62,19 @@ def validate_fields(
 ) -> None:
     """Mismas reglas que validatePatientInput() en Frontend/src/services/aspar.ts."""
     if len(name.strip()) < 3:
-        raise _bad_request("El nombre completo debe tener al menos 3 caracteres.")
+        raise ValidationError("El nombre completo debe tener al menos 3 caracteres.")
     if not CI_PATTERN.match(ci.strip()):
-        raise _bad_request("La Cédula de Identidad debe contener entre 5 y 10 dígitos válidos.")
+        raise ValidationError("La Cédula de Identidad debe contener entre 5 y 10 dígitos válidos.")
     if not PHONE_PATTERN.match(phone.strip()):
-        raise _bad_request("El teléfono debe contener entre 7 y 12 dígitos numéricos.")
+        raise ValidationError("El teléfono debe contener entre 7 y 12 dígitos numéricos.")
     if len(emergency_contact.strip()) < 3:
-        raise _bad_request("El contacto de emergencia o cuidador es obligatorio.")
+        raise ValidationError("El contacto de emergencia o cuidador es obligatorio.")
     if access_status not in ACCESS_STATUSES:
-        raise _bad_request("El estado de acceso debe ser Activo, Pendiente o Revocado.")
+        raise ValidationError("El estado de acceso debe ser Activo, Pendiente o Revocado.")
     if stage not in PARKINSON_STAGES:
-        raise _bad_request("El estadio clínico (Hoehn y Yahr) no es válido.")
+        raise ValidationError("El estadio clínico (Hoehn y Yahr) no es válido.")
     if access_status == "Activo" and not consent:
-        raise _bad_request(
+        raise ValidationError(
             "No se puede activar el acceso clínico sin consentimiento informado firmado (RNF-06)."
         )
 
@@ -93,7 +86,7 @@ def list_patients(db: Session, search: str | None, access_status: str | None) ->
 def get_patient(db: Session, patient_id: str) -> Patient:
     patient = patient_repository.get_by_id(db, patient_id)
     if patient is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, NOT_FOUND)
+        raise NotFound(NOT_FOUND)
     return patient
 
 
@@ -102,17 +95,14 @@ def view_patient(db: Session, patient_id: str, current: CurrentUser) -> tuple[Pa
     patient = get_patient(db, patient_id)
     clinical_access = can_view_clinical_record(current.user.role, patient)
     if clinical_access:
-        audit_service.record(
+        audit_service.audit(
             db,
-            actor=current.user.email,
-            actor_role=current.user.role,
+            current,
             category="PACIENTES",
             severity="INFO",
             action="Consulta de ficha clínica",
             detail=f"Consultó la anamnesis de {patient.name} ({patient.id})",
-            ip_address=current.ip,
         )
-        db.commit()
     return patient, clinical_access
 
 
@@ -131,7 +121,7 @@ def create_patient(db: Session, data: PatientIn, current: CurrentUser) -> Patien
         stage=anamnesis.stage,
     )
     if patient_repository.get_by_ci(db, data.ci) is not None:
-        raise HTTPException(status.HTTP_409_CONFLICT, DUPLICATE_CI)
+        raise Conflict(DUPLICATE_CI)
 
     now = datetime.now(UTC)
     patient = Patient(
@@ -151,17 +141,14 @@ def create_patient(db: Session, data: PatientIn, current: CurrentUser) -> Patien
         **anamnesis.model_dump(),
     )
     patient_repository.add(db, patient)
-    audit_service.record(
+    audit_service.audit(
         db,
-        actor=current.user.email,
-        actor_role=current.user.role,
+        current,
         category="PACIENTES",
         severity="INFO",
         action="Registro de ficha y anamnesis de paciente",
         detail=f"Registró a {patient.name} (CI {patient.ci}) con estado {patient.access_status}",
-        ip_address=current.ip,
     )
-    db.commit()
     return patient
 
 
@@ -181,7 +168,7 @@ def update_patient(
         new_ci.lower() != patient.ci.lower()
         and patient_repository.get_by_ci(db, new_ci) is not None
     ):
-        raise HTTPException(status.HTTP_409_CONFLICT, DUPLICATE_CI)
+        raise Conflict(DUPLICATE_CI)
 
     for field, value in changes.items():
         setattr(patient, field, value.strip() if isinstance(value, str) else value)
@@ -215,10 +202,9 @@ def update_patient(
         previous_access,
     )
     revoked = patient.access_status == "Revocado" or not patient.consent
-    audit_service.record(
+    audit_service.audit(
         db,
-        actor=current.user.email,
-        actor_role=current.user.role,
+        current,
         category="CONSENTIMIENTO" if consent_changed else "PACIENTES",
         severity="WARNING" if consent_changed and revoked else "INFO",
         action=(
@@ -230,9 +216,8 @@ def update_patient(
             f"Paciente {patient.name} ({patient.id}): consentimiento={patient.consent}, "
             f"acceso={patient.access_status}"
         ),
-        ip_address=current.ip,
     )
-    db.commit()
+    db.flush()
     db.refresh(patient)
     return patient
 
@@ -240,14 +225,11 @@ def update_patient(
 def delete_patient(db: Session, patient_id: str, current: CurrentUser) -> None:
     patient = get_patient(db, patient_id)
     patient_repository.delete(db, patient)
-    audit_service.record(
+    audit_service.audit(
         db,
-        actor=current.user.email,
-        actor_role=current.user.role,
+        current,
         category="PACIENTES",
         severity="CRITICAL",
         action="Eliminación de ficha de paciente",
         detail=f"Eliminó la ficha de {patient.name} (CI {patient.ci}, {patient.id})",
-        ip_address=current.ip,
     )
-    db.commit()

@@ -4,10 +4,10 @@ import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
-from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.config import SESSION_IDLE_LIMIT_SECONDS, SESSION_MAX_AGE_SECONDS
+from app.core.config import settings
+from app.core.errors import Locked, Unauthorized
 from app.core.security import create_access_token, hash_password, verify_password
 from app.models import User, UserSession
 from app.repositories import session_repository, user_repository
@@ -57,13 +57,13 @@ def login(
             detail=f"La cuenta {email} sigue bloqueada por intentos fallidos",
             ip_address=ip,
         )
-        db.commit()
-        raise HTTPException(status.HTTP_423_LOCKED, ACCOUNT_LOCKED.format(minutes=minutes))
+        raise Locked(ACCOUNT_LOCKED.format(minutes=minutes), persist=True)
 
     password_ok = verify_password(password, user.password_hash if user else _DUMMY_HASH)
     if user is None or not user.active or not password_ok:
         _register_failed_attempt(db, user, email, ip, now)
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, INVALID_CREDENTIALS)
+        # persist=True: el contador de intentos y la bitácora se guardan aunque falle el login
+        raise Unauthorized(INVALID_CREDENTIALS, persist=True)
 
     now = datetime.now(UTC)
     session = session_repository.add(
@@ -71,7 +71,7 @@ def login(
         UserSession(
             id=str(uuid.uuid4()),
             user_id=user.id,
-            expires_at=now + timedelta(seconds=SESSION_MAX_AGE_SECONDS),
+            expires_at=now + timedelta(seconds=settings.session_max_age_seconds),
             last_activity_at=now,
             ip_address=ip,
             user_agent=(user_agent or "")[:300] or None,
@@ -90,11 +90,10 @@ def login(
         detail=f"Autenticación JWT exitosa para {user.email} ({user.role})",
         ip_address=ip,
     )
-    db.commit()
     return LoginResult(
         access_token=issue_token(user, session),
-        expires_in=SESSION_MAX_AGE_SECONDS,
-        idle_timeout=SESSION_IDLE_LIMIT_SECONDS,
+        expires_in=settings.session_max_age_seconds,
+        idle_timeout=settings.session_idle_limit_seconds,
         user=user,
     )
 
@@ -123,7 +122,6 @@ def _register_failed_attempt(
         detail=detail,
         ip_address=ip,
     )
-    db.commit()
 
 
 @dataclass
@@ -134,7 +132,7 @@ class RefreshResult:
 
 def refresh(db: Session, user: User, session: UserSession, ip: str | None) -> RefreshResult:
     now = datetime.now(UTC)
-    session.expires_at = now + timedelta(seconds=SESSION_MAX_AGE_SECONDS)
+    session.expires_at = now + timedelta(seconds=settings.session_max_age_seconds)
     session.refreshed_at = now
     session.refresh_count += 1
     audit_service.record(
@@ -147,9 +145,8 @@ def refresh(db: Session, user: User, session: UserSession, ip: str | None) -> Re
         detail=f"Se renovó el token de sesión activa para {user.email}",
         ip_address=ip,
     )
-    db.commit()
     return RefreshResult(
-        access_token=issue_token(user, session), expires_in=SESSION_MAX_AGE_SECONDS
+        access_token=issue_token(user, session), expires_in=settings.session_max_age_seconds
     )
 
 
@@ -165,4 +162,3 @@ def logout(db: Session, user: User, session: UserSession, ip: str | None) -> Non
         detail=f"Sesión finalizada correctamente por {user.email}",
         ip_address=ip,
     )
-    db.commit()

@@ -2,6 +2,7 @@ import jwt
 import pytest
 
 from app.core import security
+from app.core.config import settings
 
 
 def test_bcrypt_verifica_la_contrasena_correcta():
@@ -29,7 +30,7 @@ def test_token_incluye_sesion_y_expira_en_milisegundos():
 
     assert payload["sub"] == "u-1"
     assert payload["sid"] == "s-1"
-    assert payload["exp"] - payload["iat"] == security.SESSION_MAX_AGE_SECONDS * 1000
+    assert payload["exp"] - payload["iat"] == settings.session_max_age_seconds * 1000
     assert payload["exp"] > security.now_ms()
 
 
@@ -50,7 +51,7 @@ def test_token_alterado_es_rechazado():
 def test_token_expirado_es_rechazado():
     expired = jwt.encode(
         {"sub": "u-1", "sid": "s-1", "exp": security.now_ms() - 1},
-        security.JWT_SECRET,
+        settings.jwt_secret.get_secret_value(),
         algorithm="HS256",
     )
 

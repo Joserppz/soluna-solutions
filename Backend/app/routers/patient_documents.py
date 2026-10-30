@@ -1,9 +1,8 @@
 from fastapi import APIRouter, Depends, File, Form, UploadFile, status
-from sqlalchemy.orm import Session
 
 from app.adapters.storage import PrivateStorage, get_private_storage
 from app.core.constants import CLINICAL_ROLES, DOCUMENT_MAX_BYTES, PATIENT_EDITOR_ROLES
-from app.core.database import get_db
+from app.core.database import DbSession
 from app.core.deps import CurrentUser, require_roles
 from app.models import PatientDocument
 from app.schemas.auth import MessageResponse
@@ -28,8 +27,8 @@ def to_document_out(document: PatientDocument) -> PatientDocumentOut:
 @router.get("", response_model=list[PatientDocumentOut], response_model_by_alias=True)
 def list_documents(
     patient_id: str,
+    db: DbSession,
     current: CurrentUser = Depends(require_roles(*CLINICAL_ROLES)),
-    db: Session = Depends(get_db),
 ):
     return [to_document_out(doc) for doc in document_service.list_documents(db, patient_id)]
 
@@ -42,11 +41,11 @@ def list_documents(
 )
 def upload_document(
     patient_id: str,
+    db: DbSession,
     document_type: str = Form(alias="documentType"),
     file: UploadFile = File(),
     current: CurrentUser = Depends(require_roles(*PATIENT_EDITOR_ROLES)),
     storage: PrivateStorage = Depends(get_private_storage),
-    db: Session = Depends(get_db),
 ):
     content = file.file.read(DOCUMENT_MAX_BYTES + 1)
     document = document_service.upload_document(
@@ -66,9 +65,9 @@ def upload_document(
 def document_url(
     patient_id: str,
     document_id: str,
+    db: DbSession,
     current: CurrentUser = Depends(require_roles(*CLINICAL_ROLES)),
     storage: PrivateStorage = Depends(get_private_storage),
-    db: Session = Depends(get_db),
 ):
     url, expires_in = document_service.signed_url(db, storage, current, patient_id, document_id)
     return SignedUrlOut(url=url, expires_in=expires_in)
@@ -78,9 +77,9 @@ def document_url(
 def delete_document(
     patient_id: str,
     document_id: str,
+    db: DbSession,
     current: CurrentUser = Depends(require_roles("Administrador")),
     storage: PrivateStorage = Depends(get_private_storage),
-    db: Session = Depends(get_db),
 ):
     document_service.delete_document(db, storage, current, patient_id, document_id)
     return MessageResponse(message="Documento eliminado")

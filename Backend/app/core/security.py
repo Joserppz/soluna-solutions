@@ -6,7 +6,7 @@ from typing import Any
 import bcrypt
 import jwt
 
-from app.core.config import JWT_SECRET, SESSION_MAX_AGE_SECONDS
+from app.core.config import settings
 
 JWT_ALGORITHM = "HS256"
 BCRYPT_ROUNDS = 12
@@ -39,15 +39,15 @@ def create_access_token(*, user_id: str, session_id: str, email: str, name: str,
         "name": name,
         "role": role,
         "iat": issued_at,
-        "exp": issued_at + SESSION_MAX_AGE_SECONDS * 1000,
+        "exp": issued_at + settings.session_max_age_seconds * 1000,
     }
-    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    return jwt.encode(payload, settings.jwt_secret.get_secret_value(), algorithm=JWT_ALGORITHM)
 
 
 def decode_access_token(token: str) -> dict[str, Any]:
     payload = jwt.decode(
         token,
-        JWT_SECRET,
+        settings.jwt_secret.get_secret_value(),
         algorithms=[JWT_ALGORITHM],
         options={"verify_exp": False, "verify_iat": False, "require": ["sub", "sid", "exp"]},
     )

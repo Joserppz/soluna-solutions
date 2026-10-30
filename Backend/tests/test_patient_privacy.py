@@ -26,6 +26,8 @@ class FakeStorage:
         return f"https://storage.test/sign/{path}?token=abc&expires={expires_in}"
 
     def delete(self, path):
+        if self.fail:
+            raise httpx.ConnectError("sin conexión")
         self.files.pop(path, None)
 
 
@@ -196,6 +198,18 @@ class TestDocumentosPrivados:
         assert client.delete(url, headers=auth_headers("Profesional")).status_code == 403
         assert client.delete(url, headers=auth_headers()).status_code == 200
         assert storage.files == {}
+
+    def test_storage_caido_al_borrar_no_deja_metadata_huerfana(
+        self, client, auth_headers, storage, db_session
+    ):
+        doc_id = self.upload(client, auth_headers()).json()["id"]
+        storage.fail = True
+
+        response = client.delete(f"/api/v1/patients/p-1/documents/{doc_id}", headers=auth_headers())
+
+        # El borrado en la base se confirma; el archivo pendiente queda en el log para revisarlo
+        assert response.status_code == 200
+        assert db_session.get(PatientDocument, doc_id) is None
 
     def test_sin_configuracion_de_storage_responde_503(self, client, auth_headers):
         response = self.upload(client, auth_headers())

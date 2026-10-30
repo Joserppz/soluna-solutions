@@ -2,12 +2,17 @@
 
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Session
 
 from app.core.constants import AUDIT_CATEGORIES, AUDIT_SEVERITIES
+from app.core.errors import ValidationError
 from app.models import AuditLog
 from app.repositories import audit_repository
+
+if TYPE_CHECKING:
+    from app.core.deps import CurrentUser
 
 
 def record(
@@ -40,6 +45,28 @@ def record(
     )
 
 
+def audit(
+    db: Session,
+    current: "CurrentUser",
+    *,
+    category: str,
+    action: str,
+    detail: str,
+    severity: str = "INFO",
+) -> AuditLog:
+    """Registra una acción hecha por el usuario de la sesión (correo, rol e IP)."""
+    return record(
+        db,
+        actor=current.user.email,
+        actor_role=current.user.role,
+        category=category,
+        severity=severity,
+        action=action,
+        detail=detail,
+        ip_address=current.ip,
+    )
+
+
 def list_entries(
     db: Session,
     *,
@@ -51,9 +78,9 @@ def list_entries(
     limit: int,
 ) -> list[AuditLog]:
     if category and category not in AUDIT_CATEGORIES:
-        raise ValueError("Categoría inválida. Usa: " + ", ".join(AUDIT_CATEGORIES) + ".")
+        raise ValidationError("Categoría inválida. Usa: " + ", ".join(AUDIT_CATEGORIES) + ".")
     if severity and severity not in AUDIT_SEVERITIES:
-        raise ValueError("Severidad inválida. Usa: " + ", ".join(AUDIT_SEVERITIES) + ".")
+        raise ValidationError("Severidad inválida. Usa: " + ", ".join(AUDIT_SEVERITIES) + ".")
     return audit_repository.list_entries(
         db,
         category=category,

@@ -1309,6 +1309,7 @@
     },
     "/api/v1/health": {
       "get": {
+        "description": "Prueba de vida liviana: no consulta la base (la usan Docker y Cloud Run).",
         "operationId": "health_api_v1_health_get",
         "responses": {
           "200": {
@@ -1325,6 +1326,30 @@
           }
         },
         "summary": "Health",
+        "tags": [
+          "Sistema"
+        ]
+      }
+    },
+    "/api/v1/health/db": {
+      "get": {
+        "description": "Verifica la conexión con PostgreSQL; si falla responde 503.",
+        "operationId": "health_db_api_v1_health_db_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Health Db Api V1 Health Db Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health Db",
         "tags": [
           "Sistema"
         ]

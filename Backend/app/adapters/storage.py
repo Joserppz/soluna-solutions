@@ -4,13 +4,9 @@ from typing import Protocol
 from urllib.parse import quote
 
 import httpx
-from fastapi import HTTPException, status
 
-from app.core.config import (
-    PATIENT_DOCUMENTS_BUCKET,
-    SUPABASE_SERVICE_ROLE_KEY,
-    SUPABASE_URL,
-)
+from app.core.config import settings
+from app.core.errors import ServiceUnavailable
 
 
 class PrivateStorage(Protocol):
@@ -61,10 +57,10 @@ class SupabaseStorage:
 
 
 def get_private_storage() -> PrivateStorage:
-    if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
-        raise HTTPException(
-            status.HTTP_503_SERVICE_UNAVAILABLE,
+    service_key = settings.supabase_service_role_key.get_secret_value()
+    if not settings.supabase_url or not service_key:
+        raise ServiceUnavailable(
             "El almacenamiento de documentos no está configurado "
-            "(SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY).",
+            "(SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY)."
         )
-    return SupabaseStorage(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, PATIENT_DOCUMENTS_BUCKET)
+    return SupabaseStorage(settings.supabase_url, service_key, settings.patient_documents_bucket)

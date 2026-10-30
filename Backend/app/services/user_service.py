@@ -5,11 +5,11 @@ import secrets
 import uuid
 from datetime import UTC, datetime
 
-from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.constants import ROLES
 from app.core.deps import CurrentUser
+from app.core.errors import Conflict, NotFound, ValidationError
 from app.core.security import hash_password
 from app.models import User
 from app.repositories import session_repository, user_repository
@@ -20,17 +20,13 @@ from app.services import audit_service
 NOT_FOUND = "Usuario no encontrado."
 
 
-def _unprocessable(message: str) -> HTTPException:
-    return HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, message)
-
-
 def validate_password(password: str) -> None:
     if len(password) < 8:
-        raise _unprocessable("La contraseña debe tener al menos 8 caracteres.")
+        raise ValidationError("La contraseña debe tener al menos 8 caracteres.")
     if len(password.encode()) > 72:
-        raise _unprocessable("La contraseña no puede superar 72 bytes.")
+        raise ValidationError("La contraseña no puede superar 72 bytes.")
     if not re.search(r"[A-Za-z]", password) or not re.search(r"\d", password):
-        raise _unprocessable("La contraseña debe combinar letras y números.")
+        raise ValidationError("La contraseña debe combinar letras y números.")
 
 
 def temporary_password() -> str:
@@ -39,21 +35,14 @@ def temporary_password() -> str:
 
 def _validate_profile(name: str, role: str) -> None:
     if len(name.strip()) < 3:
-        raise _unprocessable("El nombre del usuario debe tener al menos 3 caracteres.")
+        raise ValidationError("El nombre del usuario debe tener al menos 3 caracteres.")
     if role not in ROLES:
-        raise _unprocessable("Rol inválido. Usa: " + ", ".join(ROLES) + ".")
+        raise ValidationError("Rol inválido. Usa: " + ", ".join(ROLES) + ".")
 
 
 def _audit(db: Session, current: CurrentUser, severity: str, action: str, detail: str) -> None:
-    audit_service.record(
-        db,
-        actor=current.user.email,
-        actor_role=current.user.role,
-        category="USUARIOS_ROLES",
-        severity=severity,
-        action=action,
-        detail=detail,
-        ip_address=current.ip,
+    audit_service.audit(
+        db, current, category="USUARIOS_ROLES", severity=severity, action=action, detail=detail
     )
 
 
@@ -64,7 +53,7 @@ def list_users(db: Session) -> list[User]:
 def get_user(db: Session, user_id: str) -> User:
     user = user_repository.get_by_id(db, user_id)
     if user is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, NOT_FOUND)
+        raise NotFound(NOT_FOUND)
     return user
 
 
@@ -72,9 +61,9 @@ def create_user(db: Session, data: UserCreate, current: CurrentUser) -> tuple[Us
     email = data.email.strip().lower()
     _validate_profile(data.name, data.role)
     if not EMAIL_PATTERN.match(email):
-        raise _unprocessable("Ingresa un correo electrónico institucional válido.")
+        raise ValidationError("Ingresa un correo electrónico institucional válido.")
     if user_repository.get_by_email(db, email) is not None:
-        raise HTTPException(status.HTTP_409_CONFLICT, "Ya existe un usuario con ese correo.")
+        raise Conflict("Ya existe un usuario con ese correo.")
 
     generated = None if data.password else temporary_password()
     password = data.password or generated
@@ -103,7 +92,6 @@ def create_user(db: Session, data: UserCreate, current: CurrentUser) -> tuple[Us
         "Creación de usuario",
         f"Creó {user.email} con rol {user.role} ({user.department})",
     )
-    db.commit()
     return user, generated
 
 
@@ -120,14 +108,9 @@ def update_user(db: Session, user_id: str, data: UserUpdate, current: CurrentUse
         and (new_role != "Administrador" or not new_active)
     )
     if removes_admin and user.id == current.user.id:
-        raise HTTPException(
-            status.HTTP_409_CONFLICT,
-            "No puedes quitarte el rol de Administrador ni desactivar tu propia cuenta.",
-        )
+        raise Conflict("No puedes quitarte el rol de Administrador ni desactivar tu propia cuenta.")
     if removes_admin and user_repository.count_active_admins(db) <= 1:
-        raise HTTPException(
-            status.HTTP_409_CONFLICT, "Debe quedar al menos un Administrador activo."
-        )
+        raise Conflict("Debe quedar al menos un Administrador activo.")
 
     access_reduced = new_role != user.role or (user.active and not new_active)
     for field, value in changes.items():
@@ -145,7 +128,7 @@ def update_user(db: Session, user_id: str, data: UserUpdate, current: CurrentUse
         f"Usuario {user.email}: rol={user.role}, activo={user.active}, "
         f"departamento={user.department}",
     )
-    db.commit()
+    db.flush()
     db.refresh(user)
     return user
 
@@ -170,5 +153,4 @@ def reset_password(
         "Restablecimiento de contraseña",
         f"Restableció la contraseña de {user.email} y cerró sus sesiones activas",
     )
-    db.commit()
     return generated
