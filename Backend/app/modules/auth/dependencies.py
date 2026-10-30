@@ -6,6 +6,8 @@ from datetime import UTC, datetime, timedelta
 
 import jwt
 from fastapi import Depends, Request
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import DbSession
@@ -19,7 +21,7 @@ from app.modules.auth import repository as session_repository
 from app.modules.auth.cookies import CSRF_HEADER, SESSION_COOKIE
 from app.modules.auth.models import UserSession
 from app.modules.users import repository as user_repository
-from app.modules.users.models import User
+from app.modules.users.models import Permission, User
 
 SESSION_INVALID = "Sesión inválida o expirada. Inicia sesión nuevamente."
 SESSION_IDLE_EXPIRED = "La sesión expiró por inactividad (15 minutos). Inicia sesión nuevamente."
@@ -34,6 +36,20 @@ class CurrentUser:
     user: User
     session: UserSession
     ip: str | None
+    # Permisos del rol, leídos de la base una vez por petición
+    permissions: frozenset[str]
+
+    def can(self, permission: str) -> bool:
+        return permission in self.permissions
+
+
+def load_permissions(db: Session, user: User) -> frozenset[str]:
+    """Permisos efectivos: el rol del sistema (admin) siempre tiene todos."""
+    if user.role is None:
+        return frozenset()
+    if user.role.is_system:
+        return frozenset(db.scalars(select(Permission.key)))
+    return frozenset(permission.key for permission in user.role.permissions)
 
 
 def get_current_user(request: Request, db: DbSession) -> CurrentUser:
@@ -76,11 +92,20 @@ def get_current_user(request: Request, db: DbSession) -> CurrentUser:
     if now - session.last_activity_at >= ACTIVITY_WRITE_INTERVAL:
         session.last_activity_at = now
     set_current_user_id(str(user.id))
-    return CurrentUser(user=user, session=session, ip=client_ip(request))
+    return CurrentUser(
+        user=user,
+        session=session,
+        ip=client_ip(request),
+        permissions=load_permissions(db, user),
+    )
 
 
-def require_roles(*roles: str):
-    """Permite el acceso solo a los roles indicados; los rechazos quedan en la bitácora."""
+def require_permission(*permissions: str):
+    """Permite el acceso solo si el rol tiene TODOS los permisos indicados (tabla role_permissions).
+
+    Los rechazos quedan en la bitácora. Una cuenta sin rol o con contraseña temporal
+    pendiente de cambio no pasa ninguna verificación.
+    """
 
     def checker(
         request: Request,
@@ -89,7 +114,8 @@ def require_roles(*roles: str):
     ) -> CurrentUser:
         if current.user.must_change_password:
             raise Forbidden(MUST_CHANGE_PASSWORD)
-        if current.user.role_key not in roles:
+        missing = [permission for permission in permissions if not current.can(permission)]
+        if missing:
             audit_service.audit(
                 db,
                 current,
@@ -98,11 +124,11 @@ def require_roles(*roles: str):
                 action="Intento de acceso restringido bloqueado",
                 detail=(
                     f"El rol {current.user.role_name} intentó {request.method} "
-                    f"{request.url.path} (permitido para: {', '.join(roles)})"
+                    f"{request.url.path} sin el permiso {', '.join(missing)}"
                 ),
             )
             raise Forbidden(
-                f"El rol {current.user.role_name} no tiene permisos para esta operación.",
+                f"Tu rol ({current.user.role_name}) no tiene permiso para esta operación.",
                 persist=True,
             )
         return current

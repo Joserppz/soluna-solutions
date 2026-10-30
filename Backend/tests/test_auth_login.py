@@ -11,7 +11,7 @@ def test_login_correcto_crea_la_sesion_en_cookies(client, db_session):
 
     assert response.status_code == 200
     body = response.json()
-    assert set(body) == {"user", "expiresIn", "idleTimeout", "csrfToken"}
+    assert set(body) == {"user", "permissions", "expiresIn", "idleTimeout", "csrfToken"}
     assert "accessToken" not in body and "access_token" not in body
     assert 1795 <= body["expiresIn"] <= 1800
     assert body["idleTimeout"] == 900

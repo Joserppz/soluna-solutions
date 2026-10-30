@@ -114,7 +114,7 @@ class TestAnamnesis:
         )
 
         assert response.status_code == 403
-        assert "personal clínico" in response.json()["detail"]
+        assert "datos clínicos" in response.json()["detail"]
         assert db_session.scalar(
             select(AuditLog).where(
                 AuditLog.action == "Intento de registrar datos clínicos sin permiso"

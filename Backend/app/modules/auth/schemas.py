@@ -54,6 +54,9 @@ class SessionOut(CamelModel):
     """Estado de la sesión. El token viaja solo en la cookie HttpOnly aspar_session."""
 
     user: SessionUserOut
+    # Permisos del rol (vacío si la cuenta está pendiente de aprobación): el frontend
+    # decide qué menús mostrar; la API vuelve a verificarlos en cada petición
+    permissions: list[str]
     # Segundos hasta que vence el token (renovar con POST /auth/refresh antes de ese plazo)
     expires_in: int
     # Segundos de inactividad que cierran la sesión

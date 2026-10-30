@@ -10,7 +10,7 @@ from app.core.schemas import MessageResponse
 from app.core.security import csrf_token_for
 from app.modules.auth import service as auth_service
 from app.modules.auth.cookies import clear_session_cookies, set_session_cookies
-from app.modules.auth.dependencies import CurrentUser, get_current_user
+from app.modules.auth.dependencies import CurrentUser, get_current_user, load_permissions
 from app.modules.auth.models import UserSession
 from app.modules.auth.schemas import (
     ChangePasswordRequest,
@@ -44,9 +44,12 @@ def session_user_out(user: User) -> SessionUserOut:
     )
 
 
-def session_out(user: User, session: UserSession, csrf_token: str) -> SessionOut:
+def session_out(
+    user: User, session: UserSession, csrf_token: str, permissions: frozenset[str]
+) -> SessionOut:
     return SessionOut(
         user=session_user_out(user),
+        permissions=sorted(permissions),
         expires_in=auth_service.seconds_left(session),
         idle_timeout=settings.session_idle_limit_seconds,
         csrf_token=csrf_token,
@@ -58,20 +61,25 @@ def login(payload: LoginRequest, request: Request, response: Response, db: DbSes
     result = auth_service.login(
         db, payload.email, payload.password, client_ip(request), request.headers.get("user-agent")
     )
-    return _start(response, result)
+    return _start(response, db, result)
 
 
 @router.get("/me", response_model=SessionOut, response_model_by_alias=True)
 def me(current: CurrentUser = Depends(get_current_user)):
     """Usuario de la sesión actual (el frontend lo consulta al cargar la página)."""
-    return session_out(current.user, current.session, csrf_token_for(str(current.session.id)))
+    return session_out(
+        current.user,
+        current.session,
+        csrf_token_for(str(current.session.id)),
+        current.permissions,
+    )
 
 
 @router.post("/refresh", response_model=SessionOut, response_model_by_alias=True)
 def refresh(response: Response, db: DbSession, current: CurrentUser = Depends(get_current_user)):
     session = auth_service.refresh(db, current.user, current.session, current.ip)
     csrf = set_session_cookies(response, session, auth_service.seconds_left(session))
-    return session_out(current.user, session, csrf)
+    return session_out(current.user, session, csrf, current.permissions)
 
 
 @router.post("/logout", response_model=MessageResponse)
@@ -81,9 +89,9 @@ def logout(response: Response, db: DbSession, current: CurrentUser = Depends(get
     return MessageResponse(message="Sesión cerrada correctamente")
 
 
-def _start(response: Response, result: auth_service.LoginResult) -> SessionOut:
+def _start(response: Response, db: DbSession, result: auth_service.LoginResult) -> SessionOut:
     csrf = set_session_cookies(response, result.session, auth_service.seconds_left(result.session))
-    return session_out(result.user, result.session, csrf)
+    return session_out(result.user, result.session, csrf, load_permissions(db, result.user))
 
 
 @router.post("/google", response_model=SessionOut, response_model_by_alias=True)
@@ -99,7 +107,7 @@ def login_with_google(
     result = auth_service.login_with_google(
         db, claims, client_ip(request), request.headers.get("user-agent")
     )
-    return _start(response, result)
+    return _start(response, db, result)
 
 
 @router.post("/register", response_model=MessageResponse, status_code=status.HTTP_202_ACCEPTED)
@@ -177,4 +185,9 @@ def change_password(
         payload.new_password,
         current.ip,
     )
-    return session_out(current.user, current.session, csrf_token_for(str(current.session.id)))
+    return session_out(
+        current.user,
+        current.session,
+        csrf_token_for(str(current.session.id)),
+        current.permissions,
+    )

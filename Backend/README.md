@@ -122,18 +122,29 @@ Las respuestas de registro y recuperación son iguales exista o no el correo. Lo
 
 Los roles se identifican por su **clave fija** (`admin`, `coordination`, `professional`, `reception`, `volunteer`) y se muestran con su nombre (`Administración`, `Coordinación`...). Una cuenta sin rol está **Pendiente de aprobación**: puede iniciar sesión, pero no accede a ningún dato del panel. Las fichas no se borran: se dan de baja con un motivo y se pueden reactivar.
 
-**Matriz de permisos por rol:**
+**Permisos dinámicos.** Cada endpoint exige uno o más permisos (`require_permission("patients:write")`), y cada rol los tiene asignados en la tabla `role_permissions`: Administración podrá cambiarlos desde el panel (Bloque 4) sin tocar código. El rol del sistema `admin` siempre tiene todos los permisos y la base impide quitárselos o cambiar su clave. La anamnesis y los documentos exigen además, siempre, **consentimiento firmado y acceso Activo** (RNF-06), aunque un rol tenga el permiso clínico. `GET /auth/me` devuelve la lista `permissions` para que el frontend muestre solo los menús que corresponden.
 
-| Acción | admin | coordination | professional | reception | volunteer |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| Ver lista y filiación de afiliados | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Ver anamnesis (con consentimiento y acceso Activo) | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Registrar/editar filiación y consentimiento | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Registrar síntomas y medicación | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Subir documentos | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Ver/descargar documentos | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Dar de baja fichas o eliminar documentos | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Usuarios, roles y bitácora | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Permiso | Para qué | admin | coordination | professional | reception | volunteer |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: |
+| `patients:read` | Ver afiliados y su contacto | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `patients:write` | Registrar y editar fichas y consentimiento | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `patients:read_clinical` ⚠️ | Ver anamnesis, evaluaciones y documentos | ✅ | ✅ | ✅ | ❌ | ❌ |
+| `patients:write_clinical` ⚠️ | Registrar síntomas, medicación y evaluaciones | ✅ | ✅ | ✅ | ❌ | ❌ |
+| `patients:deactivate` ⚠️ | Dar de baja o reactivar fichas | ✅ | ❌ | ❌ | ❌ | ❌ |
+| `documents:upload` | Subir documentos privados | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `documents:delete` ⚠️ | Eliminar documentos privados | ✅ | ❌ | ❌ | ❌ | ❌ |
+| `attendance:write` | Tomar asistencia | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `schedules:manage` | Actividades | ✅ | ✅ | ❌ | ❌ | ❌ |
+| `inventory:manage` | Inventario | ✅ | ✅ | ❌ | ❌ | ❌ |
+| `donations:manage` | Donaciones y meta | ✅ | ✅ | ❌ | ✅ | ❌ |
+| `inquiries:manage` | Solicitudes | ✅ | ✅ | ❌ | ✅ | ❌ |
+| `media:manage` | Galería | ✅ | ✅ | ❌ | ❌ | ❌ |
+| `content:manage` | Contenido del sitio | ✅ | ✅ | ❌ | ❌ | ❌ |
+| `users:manage` ⚠️ | Equipo, aprobación de cuentas y roles | ✅ | ❌ | ❌ | ❌ | ❌ |
+| `roles:manage` ⚠️ | Cambiar los permisos de los roles | ✅ | ❌ | ❌ | ❌ | ❌ |
+| `audit:read` ⚠️ | Registro de actividad | ✅ | ❌ | ❌ | ❌ | ❌ |
+
+⚠️ = permiso sensible (`permissions.is_sensitive`): el panel advierte antes de dárselo a otro rol. Valores iniciales tomados de la tabla «Qué puede ver cada rol» del diseño.
 
 ## 7. Calidad: Ruff y pytest
 

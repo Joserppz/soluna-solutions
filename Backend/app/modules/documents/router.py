@@ -5,11 +5,15 @@ from fastapi import APIRouter, Depends, File, Form, UploadFile, status
 from app.adapters.storage import PrivateStorage, get_private_storage
 from app.core.database import DbSession
 from app.core.schemas import MessageResponse
-from app.modules.auth.dependencies import CurrentUser, require_roles
+from app.modules.auth.dependencies import CurrentUser, require_permission
 from app.modules.documents import service as document_service
 from app.modules.documents.models import DOCUMENT_MAX_BYTES, PatientDocument
 from app.modules.documents.schemas import PatientDocumentOut, SignedUrlOut
-from app.modules.users.models import ADMIN, CLINICAL_ROLES, PATIENT_EDITOR_ROLES
+from app.modules.users.models import (
+    DOCUMENTS_DELETE,
+    DOCUMENTS_UPLOAD,
+    PATIENTS_READ_CLINICAL,
+)
 
 router = APIRouter(prefix="/api/v1/patients/{patient_id}/documents", tags=["Documentos privados"])
 
@@ -30,7 +34,7 @@ def to_document_out(document: PatientDocument) -> PatientDocumentOut:
 def list_documents(
     patient_id: uuid.UUID,
     db: DbSession,
-    current: CurrentUser = Depends(require_roles(*CLINICAL_ROLES)),
+    current: CurrentUser = Depends(require_permission(PATIENTS_READ_CLINICAL)),
 ):
     return [to_document_out(doc) for doc in document_service.list_documents(db, patient_id)]
 
@@ -46,7 +50,7 @@ def upload_document(
     db: DbSession,
     document_type: str = Form(alias="documentType"),
     file: UploadFile = File(),
-    current: CurrentUser = Depends(require_roles(*PATIENT_EDITOR_ROLES)),
+    current: CurrentUser = Depends(require_permission(DOCUMENTS_UPLOAD)),
     storage: PrivateStorage = Depends(get_private_storage),
 ):
     content = file.file.read(DOCUMENT_MAX_BYTES + 1)
@@ -68,7 +72,7 @@ def document_url(
     patient_id: uuid.UUID,
     document_id: uuid.UUID,
     db: DbSession,
-    current: CurrentUser = Depends(require_roles(*CLINICAL_ROLES)),
+    current: CurrentUser = Depends(require_permission(PATIENTS_READ_CLINICAL)),
     storage: PrivateStorage = Depends(get_private_storage),
 ):
     url, expires_in = document_service.signed_url(db, storage, current, patient_id, document_id)
@@ -80,7 +84,7 @@ def delete_document(
     patient_id: uuid.UUID,
     document_id: uuid.UUID,
     db: DbSession,
-    current: CurrentUser = Depends(require_roles(ADMIN)),
+    current: CurrentUser = Depends(require_permission(DOCUMENTS_DELETE)),
     storage: PrivateStorage = Depends(get_private_storage),
 ):
     document_service.delete_document(db, storage, current, patient_id, document_id)

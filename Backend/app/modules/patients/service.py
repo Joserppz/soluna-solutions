@@ -23,25 +23,32 @@ from app.modules.patients.schemas import (
     PatientIn,
     PatientUpdate,
 )
-from app.modules.users.models import CLINICAL_ROLES
+from app.modules.users.models import PATIENTS_READ_CLINICAL, PATIENTS_WRITE_CLINICAL
 
 CI_PATTERN = re.compile(r"^\d{5,10}(-[0-9A-Za-z]{1,3})?$")
 PHONE_PATTERN = re.compile(r"^\d{7,12}$")
 DUPLICATE_CI = "Ya existe un afiliado registrado con esa Cédula de Identidad."
 NOT_FOUND = "Afiliado no encontrado."
 CLINICAL_DATA_FORBIDDEN = (
-    "Solo el personal clínico (Administración, Coordinación, Profesional) puede registrar "
-    "síntomas y medicación (RNF-06)."
+    "Tu rol no tiene permiso para registrar síntomas y medicación (datos clínicos, RNF-06)."
 )
 
 
-def can_view_clinical_record(role_key: str | None, patient: Patient) -> bool:
-    """RNF-06: rol clínico, consentimiento firmado y acceso Activo."""
-    return role_key in CLINICAL_ROLES and patient.consent and patient.access_status == "Activo"
+def can_view_clinical_record(current: CurrentUser, patient: Patient) -> bool:
+    """RNF-06: permiso clínico Y consentimiento firmado Y acceso Activo.
+
+    La regla del consentimiento no depende de los permisos: aunque Administración dé el
+    permiso clínico a otro rol, sin consentimiento y acceso Activo nadie ve la anamnesis.
+    """
+    return (
+        current.can(PATIENTS_READ_CLINICAL)
+        and patient.consent
+        and patient.access_status == "Activo"
+    )
 
 
 def _forbid_clinical_fields(db: Session, current: CurrentUser, columns: set[str]) -> None:
-    if current.user.role_key in CLINICAL_ROLES or not columns & set(CLINICAL_ONLY_COLUMNS):
+    if current.can(PATIENTS_WRITE_CLINICAL) or not columns & set(CLINICAL_ONLY_COLUMNS):
         return
     audit_service.audit(
         db,
@@ -119,7 +126,7 @@ def get_patient(db: Session, patient_id: uuid.UUID) -> Patient:
 def view_patient(db: Session, patient_id: uuid.UUID, current: CurrentUser) -> tuple[Patient, bool]:
     """Consulta de una ficha; si se muestra la anamnesis, queda en la bitácora."""
     patient = get_patient(db, patient_id)
-    clinical_access = can_view_clinical_record(current.user.role_key, patient)
+    clinical_access = can_view_clinical_record(current, patient)
     if clinical_access:
         audit_service.audit(
             db,

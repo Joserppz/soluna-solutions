@@ -5,8 +5,8 @@ from fastapi import APIRouter, Depends, Query
 from app.core.database import DbSession
 from app.modules.audit import service as audit_service
 from app.modules.audit.schemas import AuditEventOut, to_audit_out
-from app.modules.auth.dependencies import CurrentUser, require_roles
-from app.modules.users.models import ADMIN
+from app.modules.auth.dependencies import CurrentUser, require_permission
+from app.modules.users.models import AUDIT_READ
 
 router = APIRouter(prefix="/api/v1/audit", tags=["Bitácora de auditoría"])
 
@@ -20,7 +20,7 @@ def list_audit_events(
     date_from: datetime | None = Query(default=None, alias="from"),
     date_to: datetime | None = Query(default=None, alias="to"),
     limit: int = Query(default=200, ge=1, le=1000),
-    current: CurrentUser = Depends(require_roles(ADMIN)),
+    current: CurrentUser = Depends(require_permission(AUDIT_READ)),
 ):
     entries = audit_service.list_entries(
         db,

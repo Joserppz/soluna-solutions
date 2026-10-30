@@ -897,12 +897,20 @@
             "title": "Idletimeout",
             "type": "integer"
           },
+          "permissions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Permissions",
+            "type": "array"
+          },
           "user": {
             "$ref": "#/components/schemas/SessionUserOut"
           }
         },
         "required": [
           "user",
+          "permissions",
           "expiresIn",
           "idleTimeout",
           "csrfToken"

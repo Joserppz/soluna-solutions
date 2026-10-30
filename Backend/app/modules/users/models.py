@@ -23,11 +23,25 @@ PROFESSIONAL = "professional"
 RECEPTION = "reception"
 VOLUNTEER = "volunteer"
 ROLE_KEYS = (ADMIN, COORDINATION, PROFESSIONAL, RECEPTION, VOLUNTEER)
-STAFF_ROLES = ROLE_KEYS
-# Roles que registran y editan fichas de afiliados
-PATIENT_EDITOR_ROLES = (ADMIN, COORDINATION, PROFESSIONAL, RECEPTION)
-# RNF-06: roles que ven la anamnesis (además se exige consentimiento y acceso Activo)
-CLINICAL_ROLES = (ADMIN, COORDINATION, PROFESSIONAL)
+
+# Claves de permisos (catálogo en la tabla permissions; se asignan a roles en role_permissions)
+PATIENTS_READ = "patients:read"
+PATIENTS_WRITE = "patients:write"
+PATIENTS_READ_CLINICAL = "patients:read_clinical"
+PATIENTS_WRITE_CLINICAL = "patients:write_clinical"
+PATIENTS_DEACTIVATE = "patients:deactivate"
+DOCUMENTS_UPLOAD = "documents:upload"
+DOCUMENTS_DELETE = "documents:delete"
+ATTENDANCE_WRITE = "attendance:write"
+SCHEDULES_MANAGE = "schedules:manage"
+INVENTORY_MANAGE = "inventory:manage"
+DONATIONS_MANAGE = "donations:manage"
+INQUIRIES_MANAGE = "inquiries:manage"
+MEDIA_MANAGE = "media:manage"
+CONTENT_MANAGE = "content:manage"
+USERS_MANAGE = "users:manage"
+ROLES_MANAGE = "roles:manage"
+AUDIT_READ = "audit:read"
 
 # Cuenta registrada que todavía no tiene rol: puede iniciar sesión, pero no ve el panel
 PENDING_ROLE_NAME = "Pendiente de aprobación"

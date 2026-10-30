@@ -3,7 +3,7 @@ import uuid
 from fastapi import APIRouter, Depends, Query, status
 
 from app.core.database import DbSession
-from app.modules.auth.dependencies import CurrentUser, require_roles
+from app.modules.auth.dependencies import CurrentUser, require_permission
 from app.modules.patients import service as patient_service
 from app.modules.patients.schemas import (
     PatientDeactivate,
@@ -12,19 +12,17 @@ from app.modules.patients.schemas import (
     PatientUpdate,
     to_patient_out,
 )
-from app.modules.users.models import ADMIN, PATIENT_EDITOR_ROLES, STAFF_ROLES
+from app.modules.users.models import PATIENTS_DEACTIVATE, PATIENTS_READ, PATIENTS_WRITE
 
 router = APIRouter(prefix="/api/v1/patients", tags=["Afiliados"])
 
-staff = require_roles(*STAFF_ROLES)
-editors = require_roles(*PATIENT_EDITOR_ROLES)
-admin_only = require_roles(ADMIN)
+staff = require_permission(PATIENTS_READ)
+editors = require_permission(PATIENTS_WRITE)
+admin_only = require_permission(PATIENTS_DEACTIVATE)
 
 
 def _out(patient, current: CurrentUser) -> PatientOut:
-    return to_patient_out(
-        patient, patient_service.can_view_clinical_record(current.user.role_key, patient)
-    )
+    return to_patient_out(patient, patient_service.can_view_clinical_record(current, patient))
 
 
 @router.get("", response_model=list[PatientOut], response_model_by_alias=True)

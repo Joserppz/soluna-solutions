@@ -3,9 +3,9 @@ import uuid
 from fastapi import APIRouter, Depends, status
 
 from app.core.database import DbSession
-from app.modules.auth.dependencies import CurrentUser, require_roles
+from app.modules.auth.dependencies import CurrentUser, require_permission
 from app.modules.users import service as user_service
-from app.modules.users.models import ADMIN
+from app.modules.users.models import USERS_MANAGE
 from app.modules.users.schemas import (
     PasswordResetOut,
     UserCreate,
@@ -17,7 +17,7 @@ from app.modules.users.schemas import (
 
 router = APIRouter(prefix="/api/v1/users", tags=["Usuarios y roles"])
 
-admin_only = require_roles(ADMIN)
+admin_only = require_permission(USERS_MANAGE)
 
 
 @router.get("", response_model=list[UserOut], response_model_by_alias=True)
