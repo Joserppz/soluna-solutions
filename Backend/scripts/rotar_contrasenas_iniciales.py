@@ -20,9 +20,10 @@ from datetime import UTC, datetime
 from sqlalchemy.orm import Session
 
 from app.core.security import hash_password, verify_password
-from app.repositories import session_repository, user_repository
-from app.services import audit_service
-from app.services.user_service import temporary_password
+from app.modules.audit import service as audit_service
+from app.modules.auth import repository as session_repository
+from app.modules.users import repository as user_repository
+from app.modules.users.service import temporary_password
 
 # Contraseñas que la migración 001 deja en el repositorio (no son secretas)
 SEED_PASSWORDS = {

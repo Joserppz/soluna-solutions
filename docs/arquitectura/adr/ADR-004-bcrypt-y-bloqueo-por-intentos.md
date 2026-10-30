@@ -26,4 +26,4 @@ La primera versión guardaba SHA-256 con una sal fija, lo que no cumple el SRS y
 
 ## Evidencia
 
-`Backend/app/services/auth_service.py`, `Backend/tests/test_auth_credentials.py`, `Backend/tests/test_security.py`.
+`Backend/app/modules/auth/service.py`, `Backend/tests/test_auth_credentials.py`, `Backend/tests/test_security.py`.

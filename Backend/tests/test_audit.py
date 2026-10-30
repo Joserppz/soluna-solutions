@@ -5,7 +5,7 @@ from sqlalchemy import select, text
 from sqlalchemy.exc import InternalError
 
 from app.models import AuditLog
-from app.services import audit_service
+from app.modules.audit import service as audit_service
 from tests.conftest import requires_db
 
 pytestmark = requires_db

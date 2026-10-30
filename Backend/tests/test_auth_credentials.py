@@ -3,7 +3,7 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import select
 
 from app.models import AuditLog, User
-from app.schemas.auth import LoginRequest
+from app.modules.auth.schemas import LoginRequest
 from tests.conftest import requires_db
 
 

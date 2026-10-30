@@ -65,25 +65,25 @@ flowchart TB
 
     subgraph api["API Backend (FastAPI)"]
         direction TB
-        subgraph routers["Routers · app/routers/"]
+        subgraph routers["Routers · modules/*/router.py"]
             r_auth["auth<br/>/auth/login · verify · refresh · logout"]
             r_pat["patients<br/>/patients CRUD"]
-            r_doc["patient_documents<br/>/patients/{id}/documents"]
+            r_doc["documents<br/>/patients/{id}/documents"]
             r_usr["users<br/>/users · reset-password"]
             r_aud["audit<br/>GET /audit"]
         end
 
-        deps["Middleware JWT y roles<br/>core/deps.py<br/>get_current_user · require_roles"]
+        deps["Middleware JWT y roles<br/>modules/auth/dependencies.py<br/>get_current_user · require_roles"]
 
-        subgraph services["Services · app/services/"]
-            s_auth["auth_service<br/>bcrypt · bloqueo 5 intentos"]
-            s_pat["patient_service<br/>reglas RNF-06"]
-            s_doc["document_service"]
-            s_usr["user_service"]
-            s_aud["audit_service<br/>único escritor de la bitácora"]
+        subgraph services["Services · modules/*/service.py"]
+            s_auth["auth<br/>bcrypt · bloqueo 5 intentos"]
+            s_pat["patients<br/>reglas RNF-06"]
+            s_doc["documents"]
+            s_usr["users"]
+            s_aud["audit<br/>único escritor de la bitácora"]
         end
 
-        subgraph repos["Repositories · app/repositories/"]
+        subgraph repos["Repositories · modules/*/repository.py"]
             rp["user · session · patient<br/>document · audit"]
         end
 

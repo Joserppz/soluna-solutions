@@ -1,6 +1,8 @@
 """API REST del sistema ASPAR (Soluna Solutions) sobre PostgreSQL (Supabase).
 
-Arquitectura en capas (diagrama C3): routers -> services -> repositories -> PostgreSQL.
+Arquitectura modular: cada dominio vive en app/modules/<dominio>/ con su router (HTTP),
+service (reglas de negocio), repository (consultas), schemas (DTOs) y models (tablas).
+Lo compartido (configuración, base de datos, errores, logs, seguridad) está en app/core/.
 """
 
 from fastapi import FastAPI
@@ -11,7 +13,11 @@ from app.core.config import settings
 from app.core.database import DbSession
 from app.core.errors import register_error_handlers
 from app.core.logging import RequestContextMiddleware, configure_logging
-from app.routers import audit, auth, patient_documents, patients, users
+from app.modules.audit import router as audit
+from app.modules.auth import router as auth
+from app.modules.documents import router as documents
+from app.modules.patients import router as patients
+from app.modules.users import router as users
 
 configure_logging(settings.log_level)
 
@@ -38,7 +44,7 @@ app.add_middleware(RequestContextMiddleware)
 register_error_handlers(app)
 app.include_router(auth.router)
 app.include_router(patients.router)
-app.include_router(patient_documents.router)
+app.include_router(documents.router)
 app.include_router(users.router)
 app.include_router(audit.router)
 

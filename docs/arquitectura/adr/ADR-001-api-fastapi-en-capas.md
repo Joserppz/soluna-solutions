@@ -1,6 +1,6 @@
 # ADR-001: API FastAPI organizada en capas
 
-- **Estado:** Aceptada
+- **Estado:** Reemplazada por [ADR-011](./ADR-011-backend-por-modulos-de-dominio.md) (Sprint 2: misma separación en capas, pero dentro de cada módulo de dominio)
 - **Fecha:** 2026-10-26
 - **Requisitos:** RNF-11 (estándares de código), diagrama C3
 

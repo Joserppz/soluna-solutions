@@ -28,4 +28,4 @@ En la primera versión, la anamnesis solo se ocultaba en la pantalla (`canViewCl
 
 ## Evidencia
 
-`Backend/app/services/patient_service.py`, `Backend/app/core/constants.py`, `Backend/tests/test_patient_privacy.py`.
+`Backend/app/modules/patients/service.py`, `Backend/app/modules/users/models.py` (roles clínicos), `Backend/tests/test_patient_privacy.py`.

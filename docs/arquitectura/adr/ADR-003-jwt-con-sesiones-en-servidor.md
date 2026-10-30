@@ -28,4 +28,4 @@ Un JWT por sí solo no se puede invalidar antes de su vencimiento: un cierre de 
 
 ## Evidencia
 
-`Backend/app/core/security.py`, `Backend/app/core/deps.py`, `Backend/tests/test_sessions.py`, `docs/evidencias/RECORRIDO_INTEGRADO_LOGIN_PACIENTES.md`.
+`Backend/app/core/security.py`, `Backend/app/modules/auth/dependencies.py`, `Backend/tests/test_sessions.py`, `docs/evidencias/RECORRIDO_INTEGRADO_LOGIN_PACIENTES.md`.

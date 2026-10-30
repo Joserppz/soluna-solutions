@@ -3,10 +3,10 @@ from datetime import UTC, date, datetime
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from app.core.constants import ACCESS_STATUSES, PARKINSON_STAGES
 from app.models import Patient
-from app.repositories import patient_repository
-from app.schemas.patient import PatientIn, to_patient_out
+from app.modules.patients import repository as patient_repository
+from app.modules.patients.models import ACCESS_STATUSES, PARKINSON_STAGES
+from app.modules.patients.schemas import PatientIn, to_patient_out
 from tests.conftest import requires_db
 
 

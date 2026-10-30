@@ -264,7 +264,7 @@
             "type": "string"
           },
           "user": {
-            "$ref": "#/components/schemas/app__schemas__auth__UserOut"
+            "$ref": "#/components/schemas/SessionUserOut"
           }
         },
         "required": [
@@ -277,6 +277,7 @@
         "type": "object"
       },
       "MessageResponse": {
+        "description": "Respuesta simple con un mensaje para el usuario.",
         "properties": {
           "message": {
             "title": "Message",
@@ -661,6 +662,45 @@
         "title": "RefreshResponse",
         "type": "object"
       },
+      "SessionUserOut": {
+        "description": "Datos del usuario que inició sesión (respuesta de /auth/login).",
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          },
+          "department": {
+            "title": "Department",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "role",
+          "department",
+          "active"
+        ],
+        "title": "SessionUserOut",
+        "type": "object"
+      },
       "SignedUrlOut": {
         "properties": {
           "expiresIn": {
@@ -772,6 +812,49 @@
         "title": "UserCreated",
         "type": "object"
       },
+      "UserOut": {
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          },
+          "createdAt": {
+            "title": "Createdat",
+            "type": "string"
+          },
+          "department": {
+            "title": "Department",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "role",
+          "active",
+          "department",
+          "createdAt"
+        ],
+        "title": "UserOut",
+        "type": "object"
+      },
       "UserUpdate": {
         "properties": {
           "active": {
@@ -879,87 +962,6 @@
           "user"
         ],
         "title": "VerifyResponse",
-        "type": "object"
-      },
-      "app__schemas__auth__UserOut": {
-        "properties": {
-          "active": {
-            "title": "Active",
-            "type": "boolean"
-          },
-          "department": {
-            "title": "Department",
-            "type": "string"
-          },
-          "email": {
-            "title": "Email",
-            "type": "string"
-          },
-          "id": {
-            "title": "Id",
-            "type": "string"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "role": {
-            "title": "Role",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "name",
-          "email",
-          "role",
-          "department",
-          "active"
-        ],
-        "title": "UserOut",
-        "type": "object"
-      },
-      "app__schemas__user__UserOut": {
-        "properties": {
-          "active": {
-            "title": "Active",
-            "type": "boolean"
-          },
-          "createdAt": {
-            "title": "Createdat",
-            "type": "string"
-          },
-          "department": {
-            "title": "Department",
-            "type": "string"
-          },
-          "email": {
-            "title": "Email",
-            "type": "string"
-          },
-          "id": {
-            "title": "Id",
-            "type": "string"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "role": {
-            "title": "Role",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "name",
-          "email",
-          "role",
-          "active",
-          "department",
-          "createdAt"
-        ],
-        "title": "UserOut",
         "type": "object"
       }
     }
@@ -1967,7 +1969,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/app__schemas__user__UserOut"
+                    "$ref": "#/components/schemas/UserOut"
                   },
                   "title": "Response List Users Api V1 Users Get",
                   "type": "array"
@@ -2095,7 +2097,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__user__UserOut"
+                  "$ref": "#/components/schemas/UserOut"
                 }
               }
             },

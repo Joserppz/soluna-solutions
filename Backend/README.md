@@ -1,6 +1,6 @@
 # Backend ASPAR — API REST FastAPI + Supabase PostgreSQL
 
-API del Sistema Web y de Gestión de la Asociación de Parkinson "Mario Lagrava" (ASPAR). Sigue el diagrama C3 del proyecto: **routers → services → repositories → PostgreSQL (Supabase)**, con JWT, bitácora de auditoría y adaptador de Supabase Storage.
+API del Sistema Web y de Gestión de la Asociación de Parkinson "Mario Lagrava" (ASPAR). Cada dominio es un módulo con las capas del diagrama C3 (**router → service → repository → PostgreSQL**), con JWT, bitácora de auditoría y adaptador de Supabase Storage ([ADR-011](../docs/arquitectura/adr/ADR-011-backend-por-modulos-de-dominio.md)).
 
 ## 1. Requisitos
 
@@ -149,22 +149,33 @@ pytest --cov=app --cov-report=term-missing   # cobertura (mínimo 70%, RNF-05)
 ```
 Backend/
 ├── app/
-│   ├── main.py            # App FastAPI, CORS, manejadores de error y routers
-│   ├── core/              # config (.env), database, security (bcrypt/JWT), deps (sesión y roles),
-│   │                      # constants (roles, estados) y errors (422 en texto)
-│   ├── models/            # SQLAlchemy: User, UserSession, Patient, PatientDocument, AuditLog
-│   ├── schemas/           # DTOs Pydantic alineados con Frontend/src/types/aspar.ts
-│   ├── repositories/      # Consultas a PostgreSQL
-│   ├── services/          # Reglas de negocio y auditoría
-│   ├── routers/           # Endpoints /api/v1/*
-│   └── adapters/          # Supabase Storage (archivos privados)
-├── migrations/            # SQL versionado (NNN_nombre.sql)
-├── scripts/migrate.py     # Aplicador de migraciones
-├── tests/                 # pytest
-├── pyproject.toml         # Configuración de Ruff y pytest
-├── requirements.txt       # Dependencias de ejecución
-└── requirements-dev.txt   # + pytest y ruff
+│   ├── main.py              # App FastAPI: middlewares (request_id, CORS), errores y routers
+│   ├── models.py            # Registro de todos los modelos ORM
+│   ├── core/                # Compartido por todos los módulos
+│   │   ├── config.py        #   configuración tipada (pydantic-settings)
+│   │   ├── database.py      #   motor, unidad de trabajo por petición (DbSession)
+│   │   ├── errors.py        #   errores de dominio y respuestas {"detail": ...}
+│   │   ├── logging.py       #   logs JSON con request_id
+│   │   ├── network.py       #   IP real detrás de Cloud Run
+│   │   ├── security.py      #   bcrypt y JWT
+│   │   └── schemas.py       #   CamelModel y MessageResponse
+│   ├── adapters/storage.py  # Supabase Storage (archivos privados)
+│   └── modules/             # Un módulo por dominio, siempre con la misma plantilla:
+│       ├── auth/            #   router.py   endpoints HTTP y permisos
+│       ├── users/           #   service.py  reglas de negocio y bitácora
+│       ├── patients/        #   repository.py consultas
+│       ├── documents/       #   schemas.py  DTOs de entrada y salida
+│       └── audit/           #   models.py   tabla ORM y valores de dominio
+├── migrations/              # SQL versionado (NNN_nombre.sql)
+├── scripts/                 # migrate, export_openapi, rotar_contrasenas_iniciales
+├── tests/                   # pytest
+├── Dockerfile               # Etapas dev (docker compose) y runtime (Cloud Run)
+├── pyproject.toml           # Configuración de Ruff y pytest
+├── requirements.txt         # Dependencias de ejecución
+└── requirements-dev.txt     # + pytest y ruff
 ```
+
+`auth/` tiene además `dependencies.py` (`get_current_user`, `require_roles`). Para agregar un dominio nuevo, crea `app/modules/<dominio>/` con los cinco archivos y registra su router en `main.py`.
 
 ## 9. Problemas frecuentes
 

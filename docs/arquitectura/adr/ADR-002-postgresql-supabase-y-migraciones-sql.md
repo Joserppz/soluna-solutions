@@ -24,7 +24,7 @@ El C2 define PostgreSQL como base de datos, pero la primera versión usaba un ar
 
 - ✅ El mismo SQL corre en Supabase, en el CI (PostgreSQL 16) y en local.
 - ✅ Una migración ya aplicada nunca se edita; los cambios van en un archivo nuevo.
-- ⚠️ Los modelos ORM (`app/models/`) deben mantenerse a mano en sincronía con el SQL. `test_migrations.py` verifica el esquema resultante.
+- ⚠️ Los modelos ORM (`app/modules/*/models.py`) deben mantenerse a mano en sincronía con el SQL. `test_migrations.py` verifica el esquema resultante.
 - ⚠️ La migración 001 siembra cuentas de administrador con contraseña conocida (`Admin123`). **Deben cambiarse en Supabase de producción.**
 
 ## Evidencia
