@@ -1,6 +1,7 @@
 """DTOs de autenticación: LoginRequestDto / LoginResponseDto de Frontend/src/types/aspar.ts."""
 
 import re
+import uuid
 
 from pydantic import BaseModel, field_validator
 
@@ -32,10 +33,12 @@ class LoginRequest(BaseModel):
 class SessionUserOut(BaseModel):
     """Datos del usuario que inició sesión (respuesta de /auth/login)."""
 
-    id: str
+    id: uuid.UUID
     name: str
     email: str
-    role: str
+    # Clave del rol o null si la cuenta está pendiente de aprobación
+    role: str | None
+    role_name: str
     department: str
     active: bool
 

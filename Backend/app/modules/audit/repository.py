@@ -9,6 +9,7 @@ from app.modules.audit.models import AuditLog
 def add(db: Session, entry: AuditLog) -> AuditLog:
     db.add(entry)
     db.flush()
+    db.refresh(entry)
     return entry
 
 

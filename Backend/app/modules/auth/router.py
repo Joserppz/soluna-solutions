@@ -25,7 +25,19 @@ def login(payload: LoginRequest, request: Request, db: DbSession):
         access_token=result.access_token,
         expires_in=result.expires_in,
         idle_timeout=result.idle_timeout,
-        user=SessionUserOut.model_validate(result.user, from_attributes=True),
+        user=session_user_out(result.user),
+    )
+
+
+def session_user_out(user) -> SessionUserOut:
+    return SessionUserOut(
+        id=user.id,
+        name=user.name,
+        email=user.email,
+        role=user.role_key,
+        role_name=user.role_name,
+        department=user.department,
+        active=user.active,
     )
 
 
@@ -34,7 +46,7 @@ def verify(current: CurrentUser = Depends(get_current_user)):
     user = current.user
     return VerifyResponse(
         valid=True,
-        user={"sub": user.id, "email": user.email, "name": user.name, "role": user.role},
+        user={"sub": str(user.id), "email": user.email, "name": user.name, "role": user.role_key},
     )
 
 

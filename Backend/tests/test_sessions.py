@@ -1,3 +1,4 @@
+import uuid
 from datetime import UTC, datetime, timedelta
 
 import jwt
@@ -15,10 +16,10 @@ def auth_header(token):
 
 def login(client):
     response = client.post(
-        "/api/v1/auth/login", json={"email": "dayana.rojas@ucb.edu.bo", "password": "Admin123"}
+        "/api/v1/auth/login", json={"email": "admin@aspar.org", "password": "Admin2026!"}
     )
     token = response.json()["access_token"]
-    return token, jwt.decode(token, options={"verify_signature": False})["sid"]
+    return token, uuid.UUID(jwt.decode(token, options={"verify_signature": False})["sid"])
 
 
 def test_peticion_autenticada_actualiza_la_ultima_actividad(client, db_session):
@@ -69,7 +70,7 @@ def test_refresh_extiende_la_sesion_y_entrega_token_nuevo(client, db_session):
     assert session.refresh_count == 1
     assert session.expires_at > datetime.now(UTC) + timedelta(minutes=29)
     new_payload = security.decode_access_token(body["access_token"])
-    assert new_payload["sid"] == sid
+    assert new_payload["sid"] == str(sid)
 
 
 def test_logout_revoca_la_sesion(client, db_session):
@@ -86,10 +87,37 @@ def test_logout_revoca_la_sesion(client, db_session):
 def test_token_con_sesion_de_otro_usuario_es_rechazado(client):
     _, sid = login(client)
     forged = security.create_access_token(
-        user_id="u-vol", session_id=sid, email="voluntario@aspar.org", name="X", role="Voluntario"
+        user_id=str(uuid.uuid4()),
+        session_id=str(sid),
+        email="voluntario@aspar.org",
+        name="X",
+        role="volunteer",
     )
 
     assert client.get("/api/v1/auth/verify", headers=auth_header(forged)).status_code == 401
+
+
+def test_refresh_nunca_supera_el_tope_absoluto_de_8_horas(client, db_session):
+    token, sid = login(client)
+    session = db_session.get(UserSession, sid)
+    session.expires_at = datetime.now(UTC) + timedelta(minutes=1)
+    session.absolute_expires_at = datetime.now(UTC) + timedelta(minutes=5)
+    db_session.commit()
+
+    body = client.post("/api/v1/auth/refresh", headers=auth_header(token)).json()
+
+    db_session.refresh(session)
+    assert session.expires_at == session.absolute_expires_at
+    assert body["expires_in"] <= 300
+
+
+def test_sesion_pasado_el_tope_absoluto_es_rechazada(client, db_session):
+    token, sid = login(client)
+    session = db_session.get(UserSession, sid)
+    session.absolute_expires_at = session.expires_at = datetime.now(UTC) - timedelta(seconds=1)
+    db_session.commit()
+
+    assert client.get("/api/v1/auth/verify", headers=auth_header(token)).status_code == 401
 
 
 def test_token_mal_formado_es_rechazado(client):

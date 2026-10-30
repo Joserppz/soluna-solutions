@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy import select, text
 from sqlalchemy.exc import InternalError
 
-from app.models import AuditLog
+from app.models import AuditLog, User
 from app.modules.audit import service as audit_service
 from tests.conftest import requires_db
 
@@ -30,6 +30,8 @@ def test_consultar_bitacora_con_formato_del_frontend(client, auth_headers):
         "action",
         "detail",
         "ipAddress",
+        "occurrences",
+        "lastOccurredAt",
     }
     assert event["action"] == "Inicio de sesión administrativo"
 
@@ -55,7 +57,7 @@ def test_filtro_invalido_es_422(client, auth_headers):
 def test_solo_administrador_consulta_y_el_intento_queda_registrado(
     client, auth_headers, db_session
 ):
-    response = client.get("/api/v1/audit", headers=auth_headers("Coordinador"))
+    response = client.get("/api/v1/audit", headers=auth_headers("coordination"))
 
     assert response.status_code == 403
     blocked = db_session.scalar(
@@ -65,18 +67,20 @@ def test_solo_administrador_consulta_y_el_intento_queda_registrado(
     assert "/api/v1/audit" in blocked.detail
 
 
-def test_operaciones_sensibles_quedan_en_la_bitacora(client, auth_headers, db_session):
+def test_operaciones_sensibles_quedan_en_la_bitacora(client, auth_headers, db_session, patient_ids):
     headers = auth_headers()
-    client.patch("/api/v1/patients/p-1", json={"phone": "70000011"}, headers=headers)
-    client.patch("/api/v1/patients/p-1", json={"consent": False}, headers=headers)
-    client.patch("/api/v1/users/u-vol", json={"department": "Apoyo"}, headers=headers)
+    patient = patient_ids["consent"]
+    volunteer = db_session.scalar(select(User.id).where(User.email == "voluntario@aspar.org"))
+    client.patch(f"/api/v1/patients/{patient}", json={"phone": "70000011"}, headers=headers)
+    client.patch(f"/api/v1/patients/{patient}", json={"consent": False}, headers=headers)
+    client.patch(f"/api/v1/users/{volunteer}", json={"department": "Apoyo"}, headers=headers)
     client.post("/api/v1/auth/logout", headers=headers)
 
     registered = actions(db_session)
     for expected in (
         "Inicio de sesión administrativo",
-        "Actualización de ficha de paciente",
-        "Actualización de consentimiento / acceso de paciente",
+        "Actualización de ficha de afiliado",
+        "Actualización de consentimiento / acceso de afiliado",
         "Actualización de usuario y rol",
         "Cierre de sesión",
     ):
@@ -101,6 +105,42 @@ def test_la_bitacora_no_se_puede_modificar_ni_borrar(db_session):
         )
     with pytest.raises(InternalError, match="no se puede modificar"), db_session.begin_nested():
         db_session.execute(text("delete from audit_logs where id = :i"), {"i": entry.id})
+
+
+def test_evento_agrupado_solo_admite_sumar_repeticiones(db_session):
+    entry = audit_service.record(
+        db_session,
+        actor="x@y.co",
+        actor_role="Sistema",
+        category="AUTENTICACION",
+        severity="WARNING",
+        action="Intento fallido de inicio de sesión",
+        detail="Prueba de agrupación",
+    )
+    grouped = AuditLog(
+        actor="x@y.co",
+        actor_role="Sistema",
+        category="AUTENTICACION",
+        severity="WARNING",
+        action="Intento fallido de inicio de sesión",
+        detail="Agrupado",
+        group_key="login:x@y.co",
+    )
+    db_session.add(grouped)
+    db_session.commit()
+
+    db_session.execute(
+        text("update audit_logs set occurrences = occurrences + 1 where id = :i"),
+        {"i": grouped.id},
+    )
+    with pytest.raises(InternalError, match="no se puede modificar"), db_session.begin_nested():
+        db_session.execute(
+            text("update audit_logs set detail = 'x' where id = :i"), {"i": grouped.id}
+        )
+    with pytest.raises(InternalError, match="no se puede modificar"), db_session.begin_nested():
+        db_session.execute(
+            text("update audit_logs set occurrences = 2 where id = :i"), {"i": entry.id}
+        )
 
 
 def test_categoria_desconocida_es_rechazada_en_el_servicio(db_session):

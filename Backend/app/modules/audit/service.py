@@ -1,6 +1,5 @@
 """Registro de auditoría de operaciones sensibles desde la capa de servicios (RF-17)."""
 
-import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
@@ -32,14 +31,13 @@ def record(
     return audit_repository.add(
         db,
         AuditLog(
-            id=str(uuid.uuid4()),
             actor=actor or "desconocido",
             actor_role=actor_role,
             category=category,
             severity=severity,
             action=action,
             detail=detail,
-            ip_address=ip_address or "127.0.0.1",
+            ip_address=ip_address,
         ),
     )
 
@@ -57,7 +55,7 @@ def audit(
     return record(
         db,
         actor=current.user.email,
-        actor_role=current.user.role,
+        actor_role=current.user.role_name,
         category=category,
         severity=severity,
         action=action,

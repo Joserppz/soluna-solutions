@@ -1,91 +1,115 @@
-"""DTOs de pacientes: Patient / ClinicalAnamnesis de Frontend/src/types/aspar.ts (camelCase)."""
+"""DTOs de afiliados (pacientes), sus contactos y su anamnesis base (camelCase)."""
 
-from datetime import date
+import uuid
+from datetime import date, datetime
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 
 from app.core.schemas import CamelModel
-from app.modules.patients.models import Patient
+from app.modules.patients.models import ANAMNESIS_COLUMNS, Patient, PatientContact
 
 
 class ClinicalAnamnesis(CamelModel):
-    diagnosis: str = "Enfermedad de Parkinson"
-    stage: str = "Estadio I (Leve unilateral)"
+    diagnosis: str = Field(default="Enfermedad de Parkinson", max_length=200)
+    stage: str = Field(default="Estadio I (Leve unilateral)", max_length=80)
     neurologist_certificate: bool = False
-    symptom_notes: str = ""
-    physical_evaluation: str = ""
-    speech_evaluation: str = ""
-    psychological_evaluation: str = ""
-    medications: str = ""
-
-
-class PatientOut(CamelModel):
-    id: str
-    name: str
-    ci: str
-    phone: str
-    address: str
-    emergency_contact: str
-    caregiver_relation: str
-    consent: bool
-    consent_date: str
-    access_status: str
-    anamnesis: ClinicalAnamnesis
-    clinical_access: bool
-    created_at: str
-    updated_at: str
-
-
-class PatientIn(CamelModel):
-    """Campos comunes de entrada; las reglas de negocio se validan en el servicio."""
-
-    name: str
-    ci: str
-    phone: str
-    address: str = "La Paz, Bolivia"
-    emergency_contact: str
-    caregiver_relation: str = "Familiar / Cuidador"
-    consent: bool = False
-    consent_date: date | None = None
-    access_status: str = "Pendiente"
-    anamnesis: ClinicalAnamnesis | None = None
-
-    @field_validator("consent_date", mode="before")
-    @classmethod
-    def empty_date_is_none(cls, value):
-        # El frontend envía consentDate: "" cuando no hay consentimiento
-        return value or None
+    symptom_notes: str = Field(default="", max_length=4000)
+    medications: str = Field(default="", max_length=2000)
 
 
 class ClinicalAnamnesisUpdate(CamelModel):
-    diagnosis: str | None = None
-    stage: str | None = None
+    diagnosis: str | None = Field(default=None, max_length=200)
+    stage: str | None = Field(default=None, max_length=80)
     neurologist_certificate: bool | None = None
-    symptom_notes: str | None = None
-    physical_evaluation: str | None = None
-    speech_evaluation: str | None = None
-    psychological_evaluation: str | None = None
-    medications: str | None = None
+    symptom_notes: str | None = Field(default=None, max_length=4000)
+    medications: str | None = Field(default=None, max_length=2000)
+
+
+class ContactIn(CamelModel):
+    name: str = Field(max_length=120)
+    relation: str = Field(max_length=60)
+    phone: str = Field(max_length=12)
+    alt_phone: str | None = Field(default=None, max_length=12)
+    is_primary: bool = False
+
+
+class ContactOut(CamelModel):
+    id: uuid.UUID
+    name: str
+    relation: str
+    phone: str
+    alt_phone: str | None
+    is_primary: bool
+
+
+class PatientIn(CamelModel):
+    """Alta de una ficha; las reglas de negocio se validan en el servicio."""
+
+    name: str = Field(max_length=120)
+    ci: str = Field(max_length=14)
+    birth_date: date | None = None
+    phone: str = Field(max_length=12)
+    address: str = Field(default="", max_length=200)
+    zone: str = Field(default="", max_length=80)
+    consent: bool = False
+    consent_date: date | None = None
+    image_consent: bool = False
+    access_status: str = Field(default="Pendiente", max_length=20)
+    anamnesis: ClinicalAnamnesis | None = None
+    # Toda ficha necesita al menos un familiar o persona cuidadora
+    contacts: list[ContactIn] = Field(min_length=1, max_length=5)
+
+    @field_validator("consent_date", "birth_date", mode="before")
+    @classmethod
+    def empty_date_is_none(cls, value):
+        return value or None
 
 
 class PatientUpdate(CamelModel):
     """PATCH parcial: solo se modifican los campos enviados."""
 
-    name: str | None = None
-    ci: str | None = None
-    phone: str | None = None
-    address: str | None = None
-    emergency_contact: str | None = None
-    caregiver_relation: str | None = None
+    name: str | None = Field(default=None, max_length=120)
+    ci: str | None = Field(default=None, max_length=14)
+    birth_date: date | None = None
+    phone: str | None = Field(default=None, max_length=12)
+    address: str | None = Field(default=None, max_length=200)
+    zone: str | None = Field(default=None, max_length=80)
     consent: bool | None = None
     consent_date: date | None = None
-    access_status: str | None = None
+    image_consent: bool | None = None
+    access_status: str | None = Field(default=None, max_length=20)
     anamnesis: ClinicalAnamnesisUpdate | None = None
 
-    @field_validator("consent_date", mode="before")
+    @field_validator("consent_date", "birth_date", mode="before")
     @classmethod
     def empty_date_is_none(cls, value):
         return value or None
+
+
+class PatientDeactivate(CamelModel):
+    reason: str = Field(min_length=3, max_length=300)
+
+
+class PatientOut(CamelModel):
+    id: uuid.UUID
+    name: str
+    ci: str
+    birth_date: date | None
+    phone: str
+    address: str
+    zone: str
+    consent: bool
+    consent_date: date | None
+    image_consent: bool
+    access_status: str
+    # Sin acceso clínico (RNF-06) la anamnesis llega vacía y clinicalAccess es false
+    anamnesis: ClinicalAnamnesis
+    clinical_access: bool
+    contacts: list[ContactOut]
+    active: bool
+    deactivation_reason: str | None
+    created_at: datetime
+    updated_at: datetime
 
 
 RESTRICTED_ANAMNESIS = ClinicalAnamnesis(
@@ -93,34 +117,43 @@ RESTRICTED_ANAMNESIS = ClinicalAnamnesis(
     stage="",
     neurologist_certificate=False,
     symptom_notes="",
-    physical_evaluation="",
-    speech_evaluation="",
-    psychological_evaluation="",
     medications="",
 )
 
 
+def to_contact_out(contact: PatientContact) -> ContactOut:
+    return ContactOut(
+        id=contact.id,
+        name=contact.name,
+        relation=contact.relation,
+        phone=contact.phone,
+        alt_phone=contact.alt_phone,
+        is_primary=contact.is_primary,
+    )
+
+
 def to_patient_out(patient: Patient, clinical_access: bool) -> PatientOut:
-    """Convierte a DTO; sin acceso clínico (RNF-06) la anamnesis sale vacía."""
     return PatientOut(
         id=patient.id,
         name=patient.name,
         ci=patient.ci,
+        birth_date=patient.birth_date,
         phone=patient.phone,
         address=patient.address,
-        emergency_contact=patient.emergency_contact,
-        caregiver_relation=patient.caregiver_relation,
+        zone=patient.zone,
         consent=patient.consent,
-        consent_date=patient.consent_date.isoformat() if patient.consent_date else "",
+        consent_date=patient.consent_date,
+        image_consent=patient.image_consent,
         access_status=patient.access_status,
         anamnesis=(
-            ClinicalAnamnesis(
-                **{column: getattr(patient, column) for column in Patient.ANAMNESIS_COLUMNS}
-            )
+            ClinicalAnamnesis(**{column: getattr(patient, column) for column in ANAMNESIS_COLUMNS})
             if clinical_access
             else RESTRICTED_ANAMNESIS
         ),
         clinical_access=clinical_access,
-        created_at=patient.created_at.isoformat(),
-        updated_at=patient.updated_at.isoformat(),
+        contacts=[to_contact_out(contact) for contact in patient.active_contacts],
+        active=patient.active,
+        deactivation_reason=patient.deactivation_reason,
+        created_at=patient.created_at,
+        updated_at=patient.updated_at,
     )

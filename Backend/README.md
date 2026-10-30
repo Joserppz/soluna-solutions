@@ -41,6 +41,7 @@ cp .env.example .env
 | `JWT_SECRET` | Sí | Mínimo 32 caracteres: `python -c "import secrets; print(secrets.token_urlsafe(32))"`. La API no arranca con el valor de ejemplo. |
 | `SESSION_MAX_AGE_SECONDS` | No | Duración máxima de la sesión (por defecto 1800 = 30 min). |
 | `SESSION_IDLE_LIMIT_SECONDS` | No | Inactividad permitida (por defecto 900 = 15 min). |
+| `SESSION_ABSOLUTE_MAX_SECONDS` | No | Tope absoluto de una sesión aunque se renueve (por defecto 28800 = 8 h). |
 | `CORS_ORIGINS` | No | Orígenes del frontend separados por coma (por defecto `http://localhost:5173`). |
 | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Solo para documentos | Supabase → Project Settings → API Keys. La `service_role` es secreta: **solo** en este `.env`, nunca en el frontend. Sin ellas, `/patients/{id}/documents` responde 503. |
 
@@ -48,29 +49,20 @@ cp .env.example .env
 
 ## 4. Base de datos y migraciones versionadas
 
-Las migraciones son archivos `migrations/NNN_nombre.sql` que se aplican en orden y se registran en la tabla `schema_migrations`.
+Las migraciones son archivos `migrations/NNN_nombre.sql` que se aplican en orden. `scripts.migrate` guarda en la tabla `schema_migrations` la versión y el **SHA-256** de cada archivo, y toma un bloqueo (`pg_advisory_lock`) para que dos despliegues no migren a la vez.
 
 | Migración | Contenido |
 | :--- | :--- |
-| `001_initial_schema.sql` | 10 tablas, RLS, triggers, usuarios iniciales y datos de demostración |
-| `002_patient_documents.sql` | Documentos privados de pacientes y bucket privado `documentos-pacientes` |
-
-**Base nueva (vacía):**
+| `001_base.sql` | Esquema completo del Sprint 2 (25 tablas con UUID, límites de largo, baja lógica, RLS) y catálogos: roles, permisos y secciones del contenido. **No crea usuarios.** |
 
 ```bash
-python -m scripts.migrate
+python -m scripts.migrate            # aplica las pendientes
+python -m scripts.migrate --status   # aplicada / PENDIENTE / MODIFICADA
 ```
 
-**Base donde ya se ejecutó la 001 a mano en el SQL Editor** (caso del proyecto Supabase actual):
-
-```bash
-python -m scripts.migrate --baseline 001
-python -m scripts.migrate
-```
-
-El primer comando registra la 001 como aplicada sin ejecutarla; el segundo aplica la 002. Para ver el estado: `python -m scripts.migrate --status`.
-
-**Regla:** nunca edites una migración ya aplicada; crea la siguiente (`003_...sql`).
+- Con Docker se aplican solas al arrancar la API. En Supabase usa `MIGRATION_DATABASE_URL` (Session Pooler, puerto 5432).
+- **Nunca edites una migración aplicada en una base compartida**: crea la siguiente (`002_...sql`). Si el checksum no coincide, `scripts.migrate` se detiene y explica qué pasó.
+- **Base local del Sprint 1:** la `001_base.sql` reemplazó a las migraciones anteriores. Si `scripts.migrate` avisa que la base tiene `001_initial_schema.sql`, reinicia la base de Docker con `docker compose down -v` y `docker compose up --build`.
 
 ## 5. Ejecutar la API
 
@@ -78,33 +70,29 @@ El primer comando registra la 001 como aplicada sin ejecutarla; el segundo aplic
 uvicorn app.main:app --reload
 ```
 
-- Salud: <http://localhost:8000/api/v1/health>
+- Salud: <http://localhost:8000/api/v1/health> y <http://localhost:8000/api/v1/health/db>
 - Documentación interactiva (Swagger): <http://localhost:8000/docs>
 - Especificación publicada en el repositorio: [`docs/api/openapi.json`](../docs/api/openapi.json). Si cambias un endpoint o un esquema, regénerala con `python -m scripts.export_openapi` (no necesita base de datos); `tests/test_openapi.py` falla si quedó desactualizada.
 
-**Usuarios iniciales** (migración 001; rota sus contraseñas antes de producción, ver 5.1):
+### 5.1 Cuentas: ninguna vive en el código
 
-| Correo | Rol |
-| :--- | :--- |
-| `dayana.rojas@ucb.edu.bo`, `jose.rodriguez.p@ucb.edu.bo` | Administrador |
-| `admin@aspar.org` | Administrador |
-| `coordinacion@aspar.org` | Coordinador |
-| `demo@aspar.org` | Profesional |
-| `recepcion@aspar.org` | Recepción |
-| `voluntario@aspar.org` | Voluntario |
+| Para qué | Comando | Dónde |
+| :--- | :--- | :--- |
+| Primera cuenta de **Administración** (correo oficial de ASPAR) | `python -m scripts.create_admin` | Cualquier base, una sola vez. Pide nombre, correo y contraseña (dos veces, sin mostrarla). `--promote --email x` da el rol a una cuenta que ya existe. |
+| Datos de **demostración** | `python -m scripts.seed_demo` | Solo desarrollo y pruebas: **bloqueado con `ENV=prod`**. |
 
-### 5.1 Antes de usar datos reales: rotar las contraseñas iniciales
+Cuentas que crea `seed_demo` (contraseñas públicas, solo para tu PC):
 
-Las contraseñas de estas cuentas están escritas en la migración 001, así que **cualquiera que lea el repositorio puede entrar**. En la base de producción (Supabase), ejecuta una vez:
+| Correo | Contraseña | Rol |
+| :--- | :--- | :--- |
+| `admin@aspar.org` | `Admin2026!` | Administración |
+| `coordinacion@aspar.org` | `Coord2026!` | Coordinación |
+| `profesional@aspar.org` | `Profesional2026!` | Profesional |
+| `recepcion@aspar.org` | `Recep2026!` | Recepción |
+| `voluntario@aspar.org` | `Voluntario2026!` | Voluntariado |
+| `pendiente@aspar.org` | `Pendiente2026!` | Pendiente de aprobación (sin rol) |
 
-```bash
-python -m scripts.rotar_contrasenas_iniciales --dry-run   # lista las cuentas que siguen con la contraseña inicial
-python -m scripts.rotar_contrasenas_iniciales             # las cambia por contraseñas aleatorias
-```
-
-- Las contraseñas nuevas se muestran **una sola vez**: entrégalas a cada persona por un canal privado.
-- Se cierran las sesiones de esas cuentas y cada cambio queda en la bitácora (`Rotación de contraseña inicial`).
-- Volver a ejecutarlo no modifica cuentas que ya se rotaron. Una cuenta de demostración que no se vaya a usar se puede **desactivar** desde `/usuarios`.
+Con Docker: `docker compose exec api python -m scripts.seed_demo` (o `make seed`) y `docker compose exec api python -m scripts.create_admin` (o `make create-admin`).
 
 ## 6. Endpoints (`/api/v1`)
 
@@ -112,24 +100,24 @@ python -m scripts.rotar_contrasenas_iniciales             # las cambia por contr
 | :--- | :--- | :--- |
 | Sistema | `GET /health` (prueba de vida, sin base), `GET /health/db` (conexión con PostgreSQL) | Público |
 | Autenticación | `POST /auth/login`, `GET /auth/verify`, `POST /auth/refresh`, `POST /auth/logout` | Login público; resto con sesión |
-| Pacientes | `GET/POST /patients`, `GET/PATCH/DELETE /patients/{id}` | Lectura: todos; edición: Administrador, Coordinador, Profesional, Recepción; borrado: Administrador |
-| Documentos privados | `GET/POST /patients/{id}/documents`, `GET .../{doc}/url`, `DELETE .../{doc}` | Listar/descargar: personal clínico; subir: editores; borrar: Administrador |
-| Usuarios y roles | `GET/POST /users`, `PATCH /users/{id}`, `POST /users/{id}/reset-password` | Administrador |
-| Bitácora | `GET /audit?category=&severity=&actor=&from=&to=&limit=` | Administrador |
+| Afiliados | `GET/POST /patients`, `GET/PATCH /patients/{id}`, `POST /patients/{id}/deactivate`, `POST /patients/{id}/reactivate` | Lectura: personal con rol; edición: admin, coordination, professional, reception; baja y reactivación: admin |
+| Documentos privados | `GET/POST /patients/{id}/documents`, `GET .../{doc}/url`, `DELETE .../{doc}` | Listar/descargar: personal clínico; subir: editores; borrar: admin |
+| Usuarios y roles | `GET/POST /users`, `PATCH /users/{id}`, `POST /users/{id}/reset-password` | admin |
+| Bitácora | `GET /audit?category=&severity=&actor=&from=&to=&limit=` | admin |
 
-El contrato detallado con el frontend está en [`docs/api/CONTRATO_API_LOGIN_PACIENTES.md`](../docs/api/CONTRATO_API_LOGIN_PACIENTES.md).
+Los roles se identifican por su **clave fija** (`admin`, `coordination`, `professional`, `reception`, `volunteer`) y se muestran con su nombre (`Administración`, `Coordinación`...). Una cuenta sin rol está **Pendiente de aprobación**: puede iniciar sesión, pero no accede a ningún dato del panel. Las fichas no se borran: se dan de baja con un motivo y se pueden reactivar.
 
 **Matriz de permisos por rol:**
 
-| Acción | Administrador | Coordinador | Profesional | Recepción | Voluntario |
+| Acción | admin | coordination | professional | reception | volunteer |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| Ver lista y filiación de pacientes | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Ver lista y filiación de afiliados | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Ver anamnesis (con consentimiento y acceso Activo) | ✅ | ✅ | ✅ | ❌ | ❌ |
 | Registrar/editar filiación y consentimiento | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Registrar síntomas, evaluaciones y medicación | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Subir documentos de pacientes | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Ver/descargar documentos de pacientes | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Eliminar pacientes o documentos | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Registrar síntomas y medicación | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Subir documentos | ✅ | ✅ | ✅ | ✅ | ❌ |
+| Ver/descargar documentos | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Dar de baja fichas o eliminar documentos | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Usuarios, roles y bitácora | ✅ | ❌ | ❌ | ❌ | ❌ |
 
 ## 7. Calidad: Ruff y pytest
@@ -167,7 +155,7 @@ Backend/
 │       ├── documents/       #   schemas.py  DTOs de entrada y salida
 │       └── audit/           #   models.py   tabla ORM y valores de dominio
 ├── migrations/              # SQL versionado (NNN_nombre.sql)
-├── scripts/                 # migrate, export_openapi, rotar_contrasenas_iniciales
+├── scripts/                 # migrate, export_openapi, create_admin, seed_demo
 ├── tests/                   # pytest
 ├── Dockerfile               # Etapas dev (docker compose) y runtime (Cloud Run)
 ├── pyproject.toml           # Configuración de Ruff y pytest

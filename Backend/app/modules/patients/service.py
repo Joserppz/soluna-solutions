@@ -1,4 +1,4 @@
-"""Fichas de pacientes y anamnesis digital (RF-02) con reglas de consentimiento (RNF-06)."""
+"""Fichas de afiliados y anamnesis base (RF-02) con reglas de consentimiento (RNF-06)."""
 
 import re
 import uuid
@@ -15,29 +15,33 @@ from app.modules.patients.models import (
     CLINICAL_ONLY_COLUMNS,
     PARKINSON_STAGES,
     Patient,
+    PatientContact,
 )
-from app.modules.patients.schemas import ClinicalAnamnesis, PatientIn, PatientUpdate
+from app.modules.patients.schemas import (
+    ClinicalAnamnesis,
+    ContactIn,
+    PatientIn,
+    PatientUpdate,
+)
 from app.modules.users.models import CLINICAL_ROLES
 
 CI_PATTERN = re.compile(r"^\d{5,10}(-[0-9A-Za-z]{1,3})?$")
 PHONE_PATTERN = re.compile(r"^\d{7,12}$")
-DUPLICATE_CI = "Ya existe un paciente registrado con esa Cédula de Identidad."
-NOT_FOUND = "Paciente no encontrado."
-
-
+DUPLICATE_CI = "Ya existe un afiliado registrado con esa Cédula de Identidad."
+NOT_FOUND = "Afiliado no encontrado."
 CLINICAL_DATA_FORBIDDEN = (
-    "Solo el personal clínico (Administrador, Coordinador, Profesional) puede registrar "
-    "síntomas, evaluaciones y medicación (RNF-06)."
+    "Solo el personal clínico (Administración, Coordinación, Profesional) puede registrar "
+    "síntomas y medicación (RNF-06)."
 )
 
 
-def can_view_clinical_record(role: str, patient: Patient) -> bool:
-    """Misma regla que canViewClinicalRecord() del frontend, aplicada en el servidor."""
-    return role in CLINICAL_ROLES and patient.consent and patient.access_status == "Activo"
+def can_view_clinical_record(role_key: str | None, patient: Patient) -> bool:
+    """RNF-06: rol clínico, consentimiento firmado y acceso Activo."""
+    return role_key in CLINICAL_ROLES and patient.consent and patient.access_status == "Activo"
 
 
 def _forbid_clinical_fields(db: Session, current: CurrentUser, columns: set[str]) -> None:
-    if current.user.role in CLINICAL_ROLES or not columns & set(CLINICAL_ONLY_COLUMNS):
+    if current.user.role_key in CLINICAL_ROLES or not columns & set(CLINICAL_ONLY_COLUMNS):
         return
     audit_service.audit(
         db,
@@ -45,30 +49,20 @@ def _forbid_clinical_fields(db: Session, current: CurrentUser, columns: set[str]
         category="PACIENTES",
         severity="WARNING",
         action="Intento de registrar datos clínicos sin permiso",
-        detail=f"El rol {current.user.role} intentó editar evaluaciones clínicas",
+        detail=f"El rol {current.user.role_name} intentó registrar síntomas o medicación",
     )
     raise Forbidden(CLINICAL_DATA_FORBIDDEN, persist=True)
 
 
 def validate_fields(
-    *,
-    name: str,
-    ci: str,
-    phone: str,
-    emergency_contact: str,
-    consent: bool,
-    access_status: str,
-    stage: str,
+    *, name: str, ci: str, phone: str, consent: bool, access_status: str, stage: str
 ) -> None:
-    """Mismas reglas que validatePatientInput() en Frontend/src/services/aspar.ts."""
     if len(name.strip()) < 3:
         raise ValidationError("El nombre completo debe tener al menos 3 caracteres.")
     if not CI_PATTERN.match(ci.strip()):
         raise ValidationError("La Cédula de Identidad debe contener entre 5 y 10 dígitos válidos.")
     if not PHONE_PATTERN.match(phone.strip()):
         raise ValidationError("El teléfono debe contener entre 7 y 12 dígitos numéricos.")
-    if len(emergency_contact.strip()) < 3:
-        raise ValidationError("El contacto de emergencia o cuidador es obligatorio.")
     if access_status not in ACCESS_STATUSES:
         raise ValidationError("El estado de acceso debe ser Activo, Pendiente o Revocado.")
     if stage not in PARKINSON_STAGES:
@@ -79,27 +73,58 @@ def validate_fields(
         )
 
 
-def list_patients(db: Session, search: str | None, access_status: str | None) -> list[Patient]:
-    return patient_repository.list_patients(db, search, access_status)
+def validate_contact(contact: ContactIn) -> None:
+    if len(contact.name.strip()) < 3:
+        raise ValidationError("El nombre del familiar o cuidador debe tener al menos 3 caracteres.")
+    if len(contact.relation.strip()) < 2:
+        raise ValidationError("Indica la relación del familiar o cuidador con el afiliado.")
+    for phone in (contact.phone, contact.alt_phone):
+        if phone is not None and not PHONE_PATTERN.match(phone.strip()):
+            raise ValidationError(
+                "El teléfono del familiar debe contener entre 7 y 12 dígitos numéricos."
+            )
 
 
-def get_patient(db: Session, patient_id: str) -> Patient:
+def new_contacts(contacts: list[ContactIn]) -> list[PatientContact]:
+    for contact in contacts:
+        validate_contact(contact)
+    primary_index = next((i for i, c in enumerate(contacts) if c.is_primary), 0)
+    return [
+        PatientContact(
+            name=contact.name.strip(),
+            relation=contact.relation.strip(),
+            phone=contact.phone.strip(),
+            alt_phone=contact.alt_phone.strip() if contact.alt_phone else None,
+            # Exactamente un contacto principal
+            is_primary=index == primary_index,
+            active=True,
+        )
+        for index, contact in enumerate(contacts)
+    ]
+
+
+def list_patients(
+    db: Session, search: str | None, access_status: str | None, include_inactive: bool = False
+) -> list[Patient]:
+    return patient_repository.list_patients(db, search, access_status, include_inactive)
+
+
+def get_patient(db: Session, patient_id: uuid.UUID) -> Patient:
     patient = patient_repository.get_by_id(db, patient_id)
     if patient is None:
         raise NotFound(NOT_FOUND)
     return patient
 
 
-def view_patient(db: Session, patient_id: str, current: CurrentUser) -> tuple[Patient, bool]:
+def view_patient(db: Session, patient_id: uuid.UUID, current: CurrentUser) -> tuple[Patient, bool]:
     """Consulta de una ficha; si se muestra la anamnesis, queda en la bitácora."""
     patient = get_patient(db, patient_id)
-    clinical_access = can_view_clinical_record(current.user.role, patient)
+    clinical_access = can_view_clinical_record(current.user.role_key, patient)
     if clinical_access:
         audit_service.audit(
             db,
             current,
             category="PACIENTES",
-            severity="INFO",
             action="Consulta de ficha clínica",
             detail=f"Consultó la anamnesis de {patient.name} ({patient.id})",
         )
@@ -115,45 +140,44 @@ def create_patient(db: Session, data: PatientIn, current: CurrentUser) -> Patien
         name=data.name,
         ci=data.ci,
         phone=data.phone,
-        emergency_contact=data.emergency_contact,
         consent=data.consent,
         access_status=data.access_status,
         stage=anamnesis.stage,
     )
+    contacts = new_contacts(data.contacts)
     if patient_repository.get_by_ci(db, data.ci) is not None:
         raise Conflict(DUPLICATE_CI)
 
-    now = datetime.now(UTC)
-    patient = Patient(
-        id=f"p-{uuid.uuid4().hex[:8]}",
-        name=data.name.strip(),
-        ci=data.ci.strip(),
-        phone=data.phone.strip(),
-        address=data.address.strip() or "La Paz, Bolivia",
-        emergency_contact=data.emergency_contact.strip(),
-        caregiver_relation=data.caregiver_relation.strip() or "Familiar / Cuidador",
-        consent=data.consent,
-        consent_date=(data.consent_date or date.today()) if data.consent else None,
-        access_status=data.access_status,
-        created_by=current.user.id,
-        created_at=now,
-        updated_at=now,
-        **anamnesis.model_dump(),
+    patient = patient_repository.add(
+        db,
+        Patient(
+            name=data.name.strip(),
+            ci=data.ci.strip(),
+            birth_date=data.birth_date,
+            phone=data.phone.strip(),
+            address=data.address.strip(),
+            zone=data.zone.strip(),
+            consent=data.consent,
+            consent_date=(data.consent_date or date.today()) if data.consent else None,
+            image_consent=data.image_consent,
+            access_status=data.access_status,
+            created_by=current.user.id,
+            contacts=contacts,
+            **anamnesis.model_dump(),
+        ),
     )
-    patient_repository.add(db, patient)
     audit_service.audit(
         db,
         current,
         category="PACIENTES",
-        severity="INFO",
-        action="Registro de ficha y anamnesis de paciente",
+        action="Registro de ficha y anamnesis de afiliado",
         detail=f"Registró a {patient.name} (CI {patient.ci}) con estado {patient.access_status}",
     )
     return patient
 
 
 def update_patient(
-    db: Session, patient_id: str, data: PatientUpdate, current: CurrentUser
+    db: Session, patient_id: uuid.UUID, data: PatientUpdate, current: CurrentUser
 ) -> Patient:
     patient = get_patient(db, patient_id)
     anamnesis_changes = (
@@ -170,13 +194,8 @@ def update_patient(
     ):
         raise Conflict(DUPLICATE_CI)
 
-    for field, value in changes.items():
+    for field, value in (changes | anamnesis_changes).items():
         setattr(patient, field, value.strip() if isinstance(value, str) else value)
-    if data.anamnesis is not None:
-        for field, value in data.anamnesis.model_dump(
-            exclude_unset=True, exclude_none=True
-        ).items():
-            setattr(patient, field, value)
 
     # RNF-06: sin consentimiento vigente el acceso no puede quedar Activo
     if not patient.consent:
@@ -190,12 +209,10 @@ def update_patient(
         name=patient.name,
         ci=patient.ci,
         phone=patient.phone,
-        emergency_contact=patient.emergency_contact,
         consent=patient.consent,
         access_status=patient.access_status,
         stage=patient.stage,
     )
-    patient.updated_at = datetime.now(UTC)
 
     consent_changed = (patient.consent, patient.access_status) != (
         previous_consent,
@@ -208,12 +225,12 @@ def update_patient(
         category="CONSENTIMIENTO" if consent_changed else "PACIENTES",
         severity="WARNING" if consent_changed and revoked else "INFO",
         action=(
-            "Actualización de consentimiento / acceso de paciente"
+            "Actualización de consentimiento / acceso de afiliado"
             if consent_changed
-            else "Actualización de ficha de paciente"
+            else "Actualización de ficha de afiliado"
         ),
         detail=(
-            f"Paciente {patient.name} ({patient.id}): consentimiento={patient.consent}, "
+            f"Afiliado {patient.name} ({patient.id}): consentimiento={patient.consent}, "
             f"acceso={patient.access_status}"
         ),
     )
@@ -222,14 +239,45 @@ def update_patient(
     return patient
 
 
-def delete_patient(db: Session, patient_id: str, current: CurrentUser) -> None:
+def deactivate_patient(
+    db: Session, patient_id: uuid.UUID, reason: str, current: CurrentUser
+) -> Patient:
+    """Baja lógica: la ficha, sus evaluaciones y documentos se conservan."""
     patient = get_patient(db, patient_id)
-    patient_repository.delete(db, patient)
+    if not patient.active:
+        raise Conflict("La ficha ya está dada de baja.")
+    patient.deleted_at = datetime.now(UTC)
+    patient.deactivation_reason = reason.strip()
+    patient.deactivated_by = current.user.id
     audit_service.audit(
         db,
         current,
         category="PACIENTES",
-        severity="CRITICAL",
-        action="Eliminación de ficha de paciente",
-        detail=f"Eliminó la ficha de {patient.name} (CI {patient.ci}, {patient.id})",
+        severity="WARNING",
+        action="Baja de ficha de afiliado",
+        detail=(
+            f"Dio de baja a {patient.name} ({patient.id}). Motivo: {patient.deactivation_reason}"
+        ),
     )
+    db.flush()
+    db.refresh(patient)
+    return patient
+
+
+def reactivate_patient(db: Session, patient_id: uuid.UUID, current: CurrentUser) -> Patient:
+    patient = get_patient(db, patient_id)
+    if patient.active:
+        raise Conflict("La ficha ya está activa.")
+    patient.deleted_at = None
+    patient.deactivation_reason = None
+    patient.deactivated_by = None
+    audit_service.audit(
+        db,
+        current,
+        category="PACIENTES",
+        action="Reactivación de ficha de afiliado",
+        detail=f"Reactivó la ficha de {patient.name} ({patient.id})",
+    )
+    db.flush()
+    db.refresh(patient)
+    return patient

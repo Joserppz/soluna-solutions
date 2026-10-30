@@ -1,10 +1,12 @@
+import uuid
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.modules.documents.models import PatientDocument
 
 
-def list_for_patient(db: Session, patient_id: str) -> list[PatientDocument]:
+def list_for_patient(db: Session, patient_id: uuid.UUID) -> list[PatientDocument]:
     query = (
         select(PatientDocument)
         .where(PatientDocument.patient_id == patient_id)
@@ -13,7 +15,9 @@ def list_for_patient(db: Session, patient_id: str) -> list[PatientDocument]:
     return list(db.scalars(query))
 
 
-def get_for_patient(db: Session, patient_id: str, document_id: str) -> PatientDocument | None:
+def get_for_patient(
+    db: Session, patient_id: uuid.UUID, document_id: uuid.UUID
+) -> PatientDocument | None:
     document = db.get(PatientDocument, document_id)
     return document if document is not None and document.patient_id == patient_id else None
 

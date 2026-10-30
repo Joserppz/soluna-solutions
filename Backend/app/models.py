@@ -7,7 +7,16 @@ relacionan entre módulos por clave foránea (por ejemplo, patients.created_by -
 from app.modules.audit.models import AuditLog
 from app.modules.auth.models import UserSession
 from app.modules.documents.models import PatientDocument
-from app.modules.patients.models import Patient
-from app.modules.users.models import User
+from app.modules.patients.models import Patient, PatientContact
+from app.modules.users.models import Permission, Role, User
 
-__all__ = ["AuditLog", "Patient", "PatientDocument", "User", "UserSession"]
+__all__ = [
+    "AuditLog",
+    "Patient",
+    "PatientContact",
+    "PatientDocument",
+    "Permission",
+    "Role",
+    "User",
+    "UserSession",
+]

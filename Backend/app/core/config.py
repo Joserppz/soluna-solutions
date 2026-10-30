@@ -35,6 +35,8 @@ class Settings(BaseSettings):
     jwt_secret: SecretStr
     session_max_age_seconds: int = Field(default=1800, ge=60)
     session_idle_limit_seconds: int = Field(default=900, ge=60)
+    # Tope absoluto de una sesión aunque se renueve (8 horas)
+    session_absolute_max_seconds: int = Field(default=28800, ge=300)
     cors_origins: Annotated[list[str], NoDecode] = ["http://localhost:5173"]
 
     # Proxies de confianza que agregan una IP al final de X-Forwarded-For (Cloud Run: 1)

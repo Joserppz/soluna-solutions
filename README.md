@@ -54,7 +54,7 @@ Opcional: `pip install pre-commit && pre-commit install` revisa Ruff, ESLint y P
 | 1. Requisitos | Python 3.12+ y un proyecto Supabase | Node.js 22 LTS |
 | 2. Dependencias | `python3.12 -m venv .venv`, `source .venv/bin/activate`, `pip install -r requirements-dev.txt` | `npm install` |
 | 3. Entorno | `cp .env.example .env` y completar `DATABASE_URL` y `JWT_SECRET` | `cp .env.example .env` |
-| 4. Base de datos | `python -m scripts.migrate` (o `--baseline 001` si la 001 ya se ejecutó en el SQL Editor) | — |
+| 4. Base de datos | `python -m scripts.migrate` y, solo en desarrollo, `python -m scripts.seed_demo` (cuentas de prueba) | — |
 | 5. Ejecutar | `uvicorn app.main:app --reload` → <http://localhost:8000/docs> | `npm run dev` → <http://localhost:5173> |
 
 La guía completa del Backend (variables, migraciones, permisos por rol, pruebas y problemas frecuentes) está en [`Backend/README.md`](./Backend/README.md).

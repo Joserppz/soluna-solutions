@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import APIRouter, Depends, File, Form, UploadFile, status
 
 from app.adapters.storage import PrivateStorage, get_private_storage
@@ -7,7 +9,7 @@ from app.modules.auth.dependencies import CurrentUser, require_roles
 from app.modules.documents import service as document_service
 from app.modules.documents.models import DOCUMENT_MAX_BYTES, PatientDocument
 from app.modules.documents.schemas import PatientDocumentOut, SignedUrlOut
-from app.modules.users.models import CLINICAL_ROLES, PATIENT_EDITOR_ROLES
+from app.modules.users.models import ADMIN, CLINICAL_ROLES, PATIENT_EDITOR_ROLES
 
 router = APIRouter(prefix="/api/v1/patients/{patient_id}/documents", tags=["Documentos privados"])
 
@@ -20,13 +22,13 @@ def to_document_out(document: PatientDocument) -> PatientDocumentOut:
         file_name=document.file_name,
         content_type=document.content_type,
         size_bytes=document.size_bytes,
-        uploaded_at=document.uploaded_at.isoformat(),
+        uploaded_at=document.uploaded_at,
     )
 
 
 @router.get("", response_model=list[PatientDocumentOut], response_model_by_alias=True)
 def list_documents(
-    patient_id: str,
+    patient_id: uuid.UUID,
     db: DbSession,
     current: CurrentUser = Depends(require_roles(*CLINICAL_ROLES)),
 ):
@@ -40,7 +42,7 @@ def list_documents(
     status_code=status.HTTP_201_CREATED,
 )
 def upload_document(
-    patient_id: str,
+    patient_id: uuid.UUID,
     db: DbSession,
     document_type: str = Form(alias="documentType"),
     file: UploadFile = File(),
@@ -63,8 +65,8 @@ def upload_document(
 
 @router.get("/{document_id}/url", response_model=SignedUrlOut, response_model_by_alias=True)
 def document_url(
-    patient_id: str,
-    document_id: str,
+    patient_id: uuid.UUID,
+    document_id: uuid.UUID,
     db: DbSession,
     current: CurrentUser = Depends(require_roles(*CLINICAL_ROLES)),
     storage: PrivateStorage = Depends(get_private_storage),
@@ -75,10 +77,10 @@ def document_url(
 
 @router.delete("/{document_id}", response_model=MessageResponse)
 def delete_document(
-    patient_id: str,
-    document_id: str,
+    patient_id: uuid.UUID,
+    document_id: uuid.UUID,
     db: DbSession,
-    current: CurrentUser = Depends(require_roles("Administrador")),
+    current: CurrentUser = Depends(require_roles(ADMIN)),
     storage: PrivateStorage = Depends(get_private_storage),
 ):
     document_service.delete_document(db, storage, current, patient_id, document_id)

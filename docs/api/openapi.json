@@ -20,6 +20,7 @@
             "type": "string"
           },
           "date": {
+            "format": "date-time",
             "title": "Date",
             "type": "string"
           },
@@ -28,12 +29,29 @@
             "type": "string"
           },
           "id": {
+            "format": "uuid",
             "title": "Id",
             "type": "string"
           },
           "ipAddress": {
-            "title": "Ipaddress",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ipaddress"
+          },
+          "lastOccurredAt": {
+            "format": "date-time",
+            "title": "Lastoccurredat",
             "type": "string"
+          },
+          "occurrences": {
+            "title": "Occurrences",
+            "type": "integer"
           },
           "severity": {
             "title": "Severity",
@@ -49,7 +67,9 @@
           "severity",
           "action",
           "detail",
-          "ipAddress"
+          "ipAddress",
+          "occurrences",
+          "lastOccurredAt"
         ],
         "title": "AuditEventOut",
         "type": "object"
@@ -77,11 +97,13 @@
         "properties": {
           "diagnosis": {
             "default": "Enfermedad de Parkinson",
+            "maxLength": 200,
             "title": "Diagnosis",
             "type": "string"
           },
           "medications": {
             "default": "",
+            "maxLength": 2000,
             "title": "Medications",
             "type": "string"
           },
@@ -90,28 +112,15 @@
             "title": "Neurologistcertificate",
             "type": "boolean"
           },
-          "physicalEvaluation": {
-            "default": "",
-            "title": "Physicalevaluation",
-            "type": "string"
-          },
-          "psychologicalEvaluation": {
-            "default": "",
-            "title": "Psychologicalevaluation",
-            "type": "string"
-          },
-          "speechEvaluation": {
-            "default": "",
-            "title": "Speechevaluation",
-            "type": "string"
-          },
           "stage": {
             "default": "Estadio I (Leve unilateral)",
+            "maxLength": 80,
             "title": "Stage",
             "type": "string"
           },
           "symptomNotes": {
             "default": "",
+            "maxLength": 4000,
             "title": "Symptomnotes",
             "type": "string"
           }
@@ -124,6 +133,7 @@
           "diagnosis": {
             "anyOf": [
               {
+                "maxLength": 200,
                 "type": "string"
               },
               {
@@ -135,6 +145,7 @@
           "medications": {
             "anyOf": [
               {
+                "maxLength": 2000,
                 "type": "string"
               },
               {
@@ -154,42 +165,10 @@
             ],
             "title": "Neurologistcertificate"
           },
-          "physicalEvaluation": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Physicalevaluation"
-          },
-          "psychologicalEvaluation": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Psychologicalevaluation"
-          },
-          "speechEvaluation": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Speechevaluation"
-          },
           "stage": {
             "anyOf": [
               {
+                "maxLength": 80,
                 "type": "string"
               },
               {
@@ -201,6 +180,7 @@
           "symptomNotes": {
             "anyOf": [
               {
+                "maxLength": 4000,
                 "type": "string"
               },
               {
@@ -211,6 +191,95 @@
           }
         },
         "title": "ClinicalAnamnesisUpdate",
+        "type": "object"
+      },
+      "ContactIn": {
+        "properties": {
+          "altPhone": {
+            "anyOf": [
+              {
+                "maxLength": 12,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Altphone"
+          },
+          "isPrimary": {
+            "default": false,
+            "title": "Isprimary",
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 120,
+            "title": "Name",
+            "type": "string"
+          },
+          "phone": {
+            "maxLength": 12,
+            "title": "Phone",
+            "type": "string"
+          },
+          "relation": {
+            "maxLength": 60,
+            "title": "Relation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "relation",
+          "phone"
+        ],
+        "title": "ContactIn",
+        "type": "object"
+      },
+      "ContactOut": {
+        "properties": {
+          "altPhone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Altphone"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "isPrimary": {
+            "title": "Isprimary",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "phone": {
+            "title": "Phone",
+            "type": "string"
+          },
+          "relation": {
+            "title": "Relation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "relation",
+          "phone",
+          "altPhone",
+          "isPrimary"
+        ],
+        "title": "ContactOut",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -295,6 +364,7 @@
           "password": {
             "anyOf": [
               {
+                "maxLength": 72,
                 "type": "string"
               },
               {
@@ -331,6 +401,21 @@
         "title": "PasswordResetOut",
         "type": "object"
       },
+      "PatientDeactivate": {
+        "properties": {
+          "reason": {
+            "maxLength": 300,
+            "minLength": 3,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "PatientDeactivate",
+        "type": "object"
+      },
       "PatientDocumentOut": {
         "properties": {
           "contentType": {
@@ -346,10 +431,12 @@
             "type": "string"
           },
           "id": {
+            "format": "uuid",
             "title": "Id",
             "type": "string"
           },
           "patientId": {
+            "format": "uuid",
             "title": "Patientid",
             "type": "string"
           },
@@ -358,6 +445,7 @@
             "type": "integer"
           },
           "uploadedAt": {
+            "format": "date-time",
             "title": "Uploadedat",
             "type": "string"
           }
@@ -375,15 +463,17 @@
         "type": "object"
       },
       "PatientIn": {
-        "description": "Campos comunes de entrada; las reglas de negocio se validan en el servicio.",
+        "description": "Alta de una ficha; las reglas de negocio se validan en el servicio.",
         "properties": {
           "accessStatus": {
             "default": "Pendiente",
+            "maxLength": 20,
             "title": "Accessstatus",
             "type": "string"
           },
           "address": {
-            "default": "La Paz, Bolivia",
+            "default": "",
+            "maxLength": 200,
             "title": "Address",
             "type": "string"
           },
@@ -397,12 +487,20 @@
               }
             ]
           },
-          "caregiverRelation": {
-            "default": "Familiar / Cuidador",
-            "title": "Caregiverrelation",
-            "type": "string"
+          "birthDate": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Birthdate"
           },
           "ci": {
+            "maxLength": 14,
             "title": "Ci",
             "type": "string"
           },
@@ -423,16 +521,34 @@
             ],
             "title": "Consentdate"
           },
-          "emergencyContact": {
-            "title": "Emergencycontact",
-            "type": "string"
+          "contacts": {
+            "items": {
+              "$ref": "#/components/schemas/ContactIn"
+            },
+            "maxItems": 5,
+            "minItems": 1,
+            "title": "Contacts",
+            "type": "array"
+          },
+          "imageConsent": {
+            "default": false,
+            "title": "Imageconsent",
+            "type": "boolean"
           },
           "name": {
+            "maxLength": 120,
             "title": "Name",
             "type": "string"
           },
           "phone": {
+            "maxLength": 12,
             "title": "Phone",
+            "type": "string"
+          },
+          "zone": {
+            "default": "",
+            "maxLength": 80,
+            "title": "Zone",
             "type": "string"
           }
         },
@@ -440,7 +556,7 @@
           "name",
           "ci",
           "phone",
-          "emergencyContact"
+          "contacts"
         ],
         "title": "PatientIn",
         "type": "object"
@@ -451,6 +567,10 @@
             "title": "Accessstatus",
             "type": "string"
           },
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          },
           "address": {
             "title": "Address",
             "type": "string"
@@ -458,9 +578,17 @@
           "anamnesis": {
             "$ref": "#/components/schemas/ClinicalAnamnesis"
           },
-          "caregiverRelation": {
-            "title": "Caregiverrelation",
-            "type": "string"
+          "birthDate": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Birthdate"
           },
           "ci": {
             "title": "Ci",
@@ -475,20 +603,48 @@
             "type": "boolean"
           },
           "consentDate": {
-            "title": "Consentdate",
-            "type": "string"
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consentdate"
+          },
+          "contacts": {
+            "items": {
+              "$ref": "#/components/schemas/ContactOut"
+            },
+            "title": "Contacts",
+            "type": "array"
           },
           "createdAt": {
+            "format": "date-time",
             "title": "Createdat",
             "type": "string"
           },
-          "emergencyContact": {
-            "title": "Emergencycontact",
-            "type": "string"
+          "deactivationReason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deactivationreason"
           },
           "id": {
+            "format": "uuid",
             "title": "Id",
             "type": "string"
+          },
+          "imageConsent": {
+            "title": "Imageconsent",
+            "type": "boolean"
           },
           "name": {
             "title": "Name",
@@ -499,7 +655,12 @@
             "type": "string"
           },
           "updatedAt": {
+            "format": "date-time",
             "title": "Updatedat",
+            "type": "string"
+          },
+          "zone": {
+            "title": "Zone",
             "type": "string"
           }
         },
@@ -507,15 +668,19 @@
           "id",
           "name",
           "ci",
+          "birthDate",
           "phone",
           "address",
-          "emergencyContact",
-          "caregiverRelation",
+          "zone",
           "consent",
           "consentDate",
+          "imageConsent",
           "accessStatus",
           "anamnesis",
           "clinicalAccess",
+          "contacts",
+          "active",
+          "deactivationReason",
           "createdAt",
           "updatedAt"
         ],
@@ -528,6 +693,7 @@
           "accessStatus": {
             "anyOf": [
               {
+                "maxLength": 20,
                 "type": "string"
               },
               {
@@ -539,6 +705,7 @@
           "address": {
             "anyOf": [
               {
+                "maxLength": 200,
                 "type": "string"
               },
               {
@@ -557,20 +724,22 @@
               }
             ]
           },
-          "caregiverRelation": {
+          "birthDate": {
             "anyOf": [
               {
+                "format": "date",
                 "type": "string"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Caregiverrelation"
+            "title": "Birthdate"
           },
           "ci": {
             "anyOf": [
               {
+                "maxLength": 14,
                 "type": "string"
               },
               {
@@ -602,20 +771,21 @@
             ],
             "title": "Consentdate"
           },
-          "emergencyContact": {
+          "imageConsent": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "boolean"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Emergencycontact"
+            "title": "Imageconsent"
           },
           "name": {
             "anyOf": [
               {
+                "maxLength": 120,
                 "type": "string"
               },
               {
@@ -627,6 +797,7 @@
           "phone": {
             "anyOf": [
               {
+                "maxLength": 12,
                 "type": "string"
               },
               {
@@ -634,6 +805,18 @@
               }
             ],
             "title": "Phone"
+          },
+          "zone": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Zone"
           }
         },
         "title": "PatientUpdate",
@@ -678,6 +861,7 @@
             "type": "string"
           },
           "id": {
+            "format": "uuid",
             "title": "Id",
             "type": "string"
           },
@@ -686,7 +870,18 @@
             "type": "string"
           },
           "role": {
-            "title": "Role",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "role_name": {
+            "title": "Role Name",
             "type": "string"
           }
         },
@@ -695,6 +890,7 @@
           "name",
           "email",
           "role",
+          "role_name",
           "department",
           "active"
         ],
@@ -723,20 +919,24 @@
         "properties": {
           "department": {
             "default": "General",
+            "maxLength": 80,
             "title": "Department",
             "type": "string"
           },
           "email": {
+            "maxLength": 150,
             "title": "Email",
             "type": "string"
           },
           "name": {
+            "maxLength": 120,
             "title": "Name",
             "type": "string"
           },
           "password": {
             "anyOf": [
               {
+                "maxLength": 72,
                 "type": "string"
               },
               {
@@ -746,6 +946,7 @@
             "title": "Password"
           },
           "role": {
+            "maxLength": 30,
             "title": "Role",
             "type": "string"
           }
@@ -765,6 +966,7 @@
             "type": "boolean"
           },
           "createdAt": {
+            "format": "date-time",
             "title": "Createdat",
             "type": "string"
           },
@@ -776,16 +978,48 @@
             "title": "Email",
             "type": "string"
           },
+          "emailVerified": {
+            "title": "Emailverified",
+            "type": "boolean"
+          },
           "id": {
+            "format": "uuid",
             "title": "Id",
             "type": "string"
+          },
+          "lastLoginAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lastloginat"
+          },
+          "mustChangePassword": {
+            "title": "Mustchangepassword",
+            "type": "boolean"
           },
           "name": {
             "title": "Name",
             "type": "string"
           },
           "role": {
-            "title": "Role",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "roleName": {
+            "title": "Rolename",
             "type": "string"
           },
           "temporaryPassword": {
@@ -805,8 +1039,12 @@
           "name",
           "email",
           "role",
-          "active",
+          "roleName",
           "department",
+          "active",
+          "emailVerified",
+          "mustChangePassword",
+          "lastLoginAt",
           "createdAt"
         ],
         "title": "UserCreated",
@@ -819,6 +1057,7 @@
             "type": "boolean"
           },
           "createdAt": {
+            "format": "date-time",
             "title": "Createdat",
             "type": "string"
           },
@@ -830,16 +1069,48 @@
             "title": "Email",
             "type": "string"
           },
+          "emailVerified": {
+            "title": "Emailverified",
+            "type": "boolean"
+          },
           "id": {
+            "format": "uuid",
             "title": "Id",
             "type": "string"
+          },
+          "lastLoginAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lastloginat"
+          },
+          "mustChangePassword": {
+            "title": "Mustchangepassword",
+            "type": "boolean"
           },
           "name": {
             "title": "Name",
             "type": "string"
           },
           "role": {
-            "title": "Role",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "roleName": {
+            "title": "Rolename",
             "type": "string"
           }
         },
@@ -848,8 +1119,12 @@
           "name",
           "email",
           "role",
-          "active",
+          "roleName",
           "department",
+          "active",
+          "emailVerified",
+          "mustChangePassword",
+          "lastLoginAt",
           "createdAt"
         ],
         "title": "UserOut",
@@ -871,6 +1146,7 @@
           "department": {
             "anyOf": [
               {
+                "maxLength": 80,
                 "type": "string"
               },
               {
@@ -882,6 +1158,7 @@
           "name": {
             "anyOf": [
               {
+                "maxLength": 120,
                 "type": "string"
               },
               {
@@ -893,6 +1170,7 @@
           "role": {
             "anyOf": [
               {
+                "maxLength": 30,
                 "type": "string"
               },
               {
@@ -1385,6 +1663,7 @@
             "schema": {
               "anyOf": [
                 {
+                  "maxLength": 20,
                   "type": "string"
                 },
                 {
@@ -1392,6 +1671,16 @@
                 }
               ],
               "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "includeInactive",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Includeinactive",
+              "type": "boolean"
             }
           },
           {
@@ -1439,7 +1728,7 @@
         },
         "summary": "List Patients",
         "tags": [
-          "Pacientes"
+          "Afiliados"
         ]
       },
       "post": {
@@ -1496,67 +1785,11 @@
         },
         "summary": "Create Patient",
         "tags": [
-          "Pacientes"
+          "Afiliados"
         ]
       }
     },
     "/api/v1/patients/{patient_id}": {
-      "delete": {
-        "operationId": "delete_patient_api_v1_patients__patient_id__delete",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "patient_id",
-            "required": true,
-            "schema": {
-              "title": "Patient Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "header",
-            "name": "authorization",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MessageResponse"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Delete Patient",
-        "tags": [
-          "Pacientes"
-        ]
-      },
       "get": {
         "operationId": "get_patient_api_v1_patients__patient_id__get",
         "parameters": [
@@ -1565,6 +1798,7 @@
             "name": "patient_id",
             "required": true,
             "schema": {
+              "format": "uuid",
               "title": "Patient Id",
               "type": "string"
             }
@@ -1610,7 +1844,7 @@
         },
         "summary": "Get Patient",
         "tags": [
-          "Pacientes"
+          "Afiliados"
         ]
       },
       "patch": {
@@ -1621,6 +1855,7 @@
             "name": "patient_id",
             "required": true,
             "schema": {
+              "format": "uuid",
               "title": "Patient Id",
               "type": "string"
             }
@@ -1676,7 +1911,77 @@
         },
         "summary": "Update Patient",
         "tags": [
-          "Pacientes"
+          "Afiliados"
+        ]
+      }
+    },
+    "/api/v1/patients/{patient_id}/deactivate": {
+      "post": {
+        "description": "Baja lógica con motivo: nada se elimina (reemplaza a DELETE /patients/{id}).",
+        "operationId": "deactivate_patient_api_v1_patients__patient_id__deactivate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "patient_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Patient Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatientDeactivate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Deactivate Patient",
+        "tags": [
+          "Afiliados"
         ]
       }
     },
@@ -1689,6 +1994,7 @@
             "name": "patient_id",
             "required": true,
             "schema": {
+              "format": "uuid",
               "title": "Patient Id",
               "type": "string"
             }
@@ -1749,6 +2055,7 @@
             "name": "patient_id",
             "required": true,
             "schema": {
+              "format": "uuid",
               "title": "Patient Id",
               "type": "string"
             }
@@ -1817,6 +2124,7 @@
             "name": "patient_id",
             "required": true,
             "schema": {
+              "format": "uuid",
               "title": "Patient Id",
               "type": "string"
             }
@@ -1826,6 +2134,7 @@
             "name": "document_id",
             "required": true,
             "schema": {
+              "format": "uuid",
               "title": "Document Id",
               "type": "string"
             }
@@ -1884,6 +2193,7 @@
             "name": "patient_id",
             "required": true,
             "schema": {
+              "format": "uuid",
               "title": "Patient Id",
               "type": "string"
             }
@@ -1893,6 +2203,7 @@
             "name": "document_id",
             "required": true,
             "schema": {
+              "format": "uuid",
               "title": "Document Id",
               "type": "string"
             }
@@ -1939,6 +2250,65 @@
         "summary": "Document Url",
         "tags": [
           "Documentos privados"
+        ]
+      }
+    },
+    "/api/v1/patients/{patient_id}/reactivate": {
+      "post": {
+        "operationId": "reactivate_patient_api_v1_patients__patient_id__reactivate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "patient_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Patient Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reactivate Patient",
+        "tags": [
+          "Afiliados"
         ]
       }
     },
@@ -2061,6 +2431,7 @@
             "name": "user_id",
             "required": true,
             "schema": {
+              "format": "uuid",
               "title": "User Id",
               "type": "string"
             }
@@ -2129,6 +2500,7 @@
             "name": "user_id",
             "required": true,
             "schema": {
+              "format": "uuid",
               "title": "User Id",
               "type": "string"
             }

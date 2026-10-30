@@ -1,6 +1,5 @@
 """Inicio de sesión administrativo con JWT (RF-01)."""
 
-import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
@@ -36,7 +35,11 @@ class LoginResult:
 
 def issue_token(user: User, session: UserSession) -> str:
     return create_access_token(
-        user_id=user.id, session_id=session.id, email=user.email, name=user.name, role=user.role
+        user_id=str(user.id),
+        session_id=str(session.id),
+        email=user.email,
+        name=user.name,
+        role=user.role_key or "",
     )
 
 
@@ -61,7 +64,9 @@ def login(
         )
         raise Locked(ACCOUNT_LOCKED.format(minutes=minutes), persist=True)
 
-    password_ok = verify_password(password, user.password_hash if user else _DUMMY_HASH)
+    stored_hash = user.password_hash if user is not None else None
+    # Sin contraseña (cuenta solo de Google) se gasta el mismo tiempo y se rechaza
+    password_ok = verify_password(password, stored_hash or _DUMMY_HASH) and bool(stored_hash)
     if user is None or not user.active or not password_ok:
         _register_failed_attempt(db, user, email, ip, now)
         # persist=True: el contador de intentos y la bitácora se guardan aunque falle el login
@@ -71,9 +76,9 @@ def login(
     session = session_repository.add(
         db,
         UserSession(
-            id=str(uuid.uuid4()),
             user_id=user.id,
             expires_at=now + timedelta(seconds=settings.session_max_age_seconds),
+            absolute_expires_at=now + timedelta(seconds=settings.session_absolute_max_seconds),
             last_activity_at=now,
             ip_address=ip,
             user_agent=(user_agent or "")[:300] or None,
@@ -85,11 +90,11 @@ def login(
     audit_service.record(
         db,
         actor=user.email,
-        actor_role=user.role,
+        actor_role=user.role_name,
         category="AUTENTICACION",
         severity="INFO",
         action="Inicio de sesión administrativo",
-        detail=f"Autenticación JWT exitosa para {user.email} ({user.role})",
+        detail=f"Autenticación JWT exitosa para {user.email} ({user.role_name})",
         ip_address=ip,
     )
     return LoginResult(
@@ -134,13 +139,16 @@ class RefreshResult:
 
 def refresh(db: Session, user: User, session: UserSession, ip: str | None) -> RefreshResult:
     now = datetime.now(UTC)
-    session.expires_at = now + timedelta(seconds=settings.session_max_age_seconds)
+    # La renovación nunca pasa del tope absoluto de la sesión
+    session.expires_at = min(
+        now + timedelta(seconds=settings.session_max_age_seconds), session.absolute_expires_at
+    )
     session.refreshed_at = now
     session.refresh_count += 1
     audit_service.record(
         db,
         actor=user.email,
-        actor_role=user.role,
+        actor_role=user.role_name,
         category="AUTENTICACION",
         severity="INFO",
         action="Renovación de token JWT",
@@ -148,7 +156,8 @@ def refresh(db: Session, user: User, session: UserSession, ip: str | None) -> Re
         ip_address=ip,
     )
     return RefreshResult(
-        access_token=issue_token(user, session), expires_in=settings.session_max_age_seconds
+        access_token=issue_token(user, session),
+        expires_in=int((session.expires_at - now).total_seconds()),
     )
 
 
@@ -157,7 +166,7 @@ def logout(db: Session, user: User, session: UserSession, ip: str | None) -> Non
     audit_service.record(
         db,
         actor=user.email,
-        actor_role=user.role,
+        actor_role=user.role_name,
         category="AUTENTICACION",
         severity="INFO",
         action="Cierre de sesión",

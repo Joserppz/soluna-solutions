@@ -6,7 +6,7 @@ COMPOSE := docker compose
 API := $(COMPOSE) exec api
 WEB := $(COMPOSE) exec web
 
-.PHONY: help up down reset-db logs ps migrate migrate-status test test-api test-web \
+.PHONY: help up down reset-db logs ps migrate migrate-status seed create-admin test test-api test-web \
 	lint lint-api lint-web format openapi psql shell-api
 
 help: ## Muestra esta ayuda
@@ -32,6 +32,12 @@ migrate: ## Aplica las migraciones pendientes en la base local
 
 migrate-status: ## Lista migraciones aplicadas y pendientes
 	$(API) python -m scripts.migrate --status
+
+seed: ## Carga los datos de demostración (cuentas de prueba y afiliados)
+	$(API) python -m scripts.seed_demo
+
+create-admin: ## Crea la cuenta de Administración (pide correo y contraseña)
+	$(API) python -m scripts.create_admin
 
 test: test-api test-web ## Corre todas las pruebas
 

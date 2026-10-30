@@ -1,8 +1,11 @@
+import uuid
+
 from fastapi import APIRouter, Depends, status
 
 from app.core.database import DbSession
 from app.modules.auth.dependencies import CurrentUser, require_roles
 from app.modules.users import service as user_service
+from app.modules.users.models import ADMIN
 from app.modules.users.schemas import (
     PasswordReset,
     PasswordResetOut,
@@ -15,7 +18,7 @@ from app.modules.users.schemas import (
 
 router = APIRouter(prefix="/api/v1/users", tags=["Usuarios y roles"])
 
-admin_only = require_roles("Administrador")
+admin_only = require_roles(ADMIN)
 
 
 @router.get("", response_model=list[UserOut], response_model_by_alias=True)
@@ -36,7 +39,7 @@ def create_user(db: DbSession, payload: UserCreate, current: CurrentUser = Depen
 
 @router.patch("/{user_id}", response_model=UserOut, response_model_by_alias=True)
 def update_user(
-    user_id: str,
+    user_id: uuid.UUID,
     payload: UserUpdate,
     db: DbSession,
     current: CurrentUser = Depends(admin_only),
@@ -48,7 +51,7 @@ def update_user(
     "/{user_id}/reset-password", response_model=PasswordResetOut, response_model_by_alias=True
 )
 def reset_password(
-    user_id: str,
+    user_id: uuid.UUID,
     payload: PasswordReset,
     db: DbSession,
     current: CurrentUser = Depends(admin_only),

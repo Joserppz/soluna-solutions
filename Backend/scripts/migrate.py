@@ -1,39 +1,44 @@
 """Migraciones SQL versionadas (SCRUM-128 / SCRUM-152).
 
 Aplica en orden los archivos ``migrations/NNN_nombre.sql`` que aún no figuran en la
-tabla ``schema_migrations``. Cada migración se ejecuta en su propia transacción.
+tabla ``schema_migrations`` y guarda el SHA-256 de cada uno. Antes de aplicar nada:
+
+- verifica que las migraciones ya aplicadas no hayan cambiado (checksum), y
+- toma un bloqueo (``pg_advisory_lock``) para que dos despliegues no migren a la vez.
 
 La conexión sale de ``MIGRATION_DATABASE_URL`` (en Supabase, el Session Pooler del puerto
 5432) y, si no está definida, de ``DATABASE_URL``. La API usa el Transaction Pooler (6543),
-que no sirve para migrar: cambia de conexión en cada transacción.
+que no sirve para migrar: cambia de conexión en cada transacción y pierde el bloqueo.
 
-Uso (desde la carpeta Backend, con el entorno virtual activo):
-
+Uso (desde la carpeta Backend):
     python -m scripts.migrate              # aplica las migraciones pendientes
     python -m scripts.migrate --status     # muestra aplicadas y pendientes
-    python -m scripts.migrate --baseline 001
-        # marca como aplicadas hasta la 001 sin ejecutarlas
-        # (para una base donde el SQL ya se ejecutó a mano en el SQL Editor)
 """
 
 import argparse
+import hashlib
 import os
 import re
+import time
 from pathlib import Path
 
-from sqlalchemy import Engine, create_engine, text
+from sqlalchemy import Connection, Engine, create_engine, text
 from sqlalchemy.pool import NullPool
 
 MIGRATIONS_DIR = Path(__file__).resolve().parent.parent / "migrations"
 MIGRATION_PATTERN = re.compile(r"^(\d{3})_[a-z0-9_]+\.sql$")
+# Número fijo para pg_advisory_lock: identifica "migraciones de ASPAR" en esta base
+LOCK_ID = 20261030
+LOCK_TIMEOUT_SECONDS = 120
 
 CREATE_TRACKING_TABLE = """
-create schema if not exists extensions;
 create table if not exists public.schema_migrations (
   version     text primary key,
   name        text not null,
+  checksum    text,
   applied_at  timestamptz not null default now()
 );
+alter table public.schema_migrations add column if not exists checksum text;
 alter table public.schema_migrations enable row level security;
 do $$
 begin
@@ -44,8 +49,24 @@ end;
 $$;
 """
 
+OLD_DATABASE_HELP = (
+    "Si es tu base local de Docker, reiníciala con: docker compose down -v && "
+    "docker compose up --build. En Supabase, usa un proyecto nuevo (las migraciones del "
+    "Sprint 1 se reemplazaron por 001_base.sql)."
+)
 
-def run_sql_script(conn, sql: str) -> None:
+
+class MigrationError(RuntimeError):
+    pass
+
+
+def checksum(path: Path) -> str:
+    # Se normalizan los finales de línea: el mismo archivo da el mismo checksum en Windows
+    content = path.read_bytes().replace(b"\r\n", b"\n")
+    return hashlib.sha256(content).hexdigest()
+
+
+def run_sql_script(conn: Connection, sql: str) -> None:
     # Cursor DBAPI sin parámetros: psycopg2 no interpreta los "%" del script (p. ej. format('%I'))
     with conn.connection.cursor() as cursor:
         cursor.execute(sql)
@@ -64,58 +85,87 @@ def available_migrations() -> list[tuple[str, Path]]:
     return migrations
 
 
-def applied_versions(engine: Engine) -> set[str]:
-    with engine.begin() as conn:
-        run_sql_script(conn, CREATE_TRACKING_TABLE)
-        return set(conn.execute(text("select version from public.schema_migrations")).scalars())
+def _applied(conn: Connection) -> dict[str, tuple[str, str | None]]:
+    rows = conn.execute(text("select version, name, checksum from public.schema_migrations"))
+    return {version: (name, digest) for version, name, digest in rows}
 
 
-class MigrationError(RuntimeError):
-    pass
+def verify_applied(applied: dict[str, tuple[str, str | None]]) -> None:
+    """Las migraciones ya aplicadas deben seguir existiendo y no haber cambiado."""
+    files = {version: path for version, path in available_migrations()}
+    for version, (name, digest) in sorted(applied.items()):
+        path = files.get(version)
+        if path is None or path.name != name:
+            raise MigrationError(
+                f"La base tiene aplicada {name}, que ya no existe en migrations/. "
+                + OLD_DATABASE_HELP
+            )
+        if digest is None:
+            raise MigrationError(
+                f"{name} se aplicó sin checksum (versión antigua del aplicador). "
+                + OLD_DATABASE_HELP
+            )
+        if digest != checksum(path):
+            raise MigrationError(
+                f"{name} cambió después de aplicarse. Nunca edites una migración aplicada: "
+                "deshaz el cambio y crea la siguiente (NNN_nombre.sql)."
+            )
 
 
-def _schema_created_by_hand(engine: Engine, done: set[str]) -> bool:
-    if done:
-        return False
-    with engine.connect() as conn:
-        return conn.execute(text("select to_regclass('public.users') is not null")).scalar_one()
+def _acquire_lock(conn: Connection) -> None:
+    deadline = time.monotonic() + LOCK_TIMEOUT_SECONDS
+    while not conn.execute(text("select pg_try_advisory_lock(:id)"), {"id": LOCK_ID}).scalar_one():
+        if time.monotonic() > deadline:
+            raise MigrationError(
+                "Otro proceso está aplicando migraciones en esta base. Espera a que termine."
+            )
+        time.sleep(1)
 
 
 def apply_migrations(engine: Engine) -> list[str]:
-    done = applied_versions(engine)
-    if _schema_created_by_hand(engine, done):
-        raise MigrationError(
-            "La base ya tiene las tablas de la migración 001 pero no figura en "
-            "schema_migrations (se ejecutó a mano en el SQL Editor). Ejecuta primero: "
-            "python -m scripts.migrate --baseline 001"
-        )
-    applied = []
-    for version, path in available_migrations():
-        if version in done:
-            continue
-        with engine.begin() as conn:
-            run_sql_script(conn, path.read_text(encoding="utf-8"))
-            conn.execute(
-                text("insert into public.schema_migrations (version, name) values (:v, :n)"),
-                {"v": version, "n": path.name},
-            )
-        applied.append(path.name)
-    return applied
+    applied_now: list[str] = []
+    # Una sola conexión: el bloqueo de sesión dura mientras se aplican todas
+    with engine.connect() as conn:
+        _acquire_lock(conn)
+        conn.commit()  # el bloqueo es de sesión: sigue vigente después del commit
+        try:
+            with conn.begin():
+                run_sql_script(conn, CREATE_TRACKING_TABLE)
+            with conn.begin():
+                applied = _applied(conn)
+            verify_applied(applied)
+            for version, path in available_migrations():
+                if version in applied:
+                    continue
+                with conn.begin():
+                    run_sql_script(conn, path.read_text(encoding="utf-8"))
+                    conn.execute(
+                        text(
+                            "insert into public.schema_migrations (version, name, checksum) "
+                            "values (:v, :n, :c)"
+                        ),
+                        {"v": version, "n": path.name, "c": checksum(path)},
+                    )
+                applied_now.append(path.name)
+        finally:
+            conn.execute(text("select pg_advisory_unlock(:id)"), {"id": LOCK_ID})
+            conn.commit()
+    return applied_now
 
 
-def baseline(engine: Engine, up_to: str) -> list[str]:
-    done = applied_versions(engine)
-    marked = []
+def status(engine: Engine) -> list[tuple[str, str]]:
     with engine.begin() as conn:
-        for version, path in available_migrations():
-            if version > up_to or version in done:
-                continue
-            conn.execute(
-                text("insert into public.schema_migrations (version, name) values (:v, :n)"),
-                {"v": version, "n": path.name},
-            )
-            marked.append(path.name)
-    return marked
+        run_sql_script(conn, CREATE_TRACKING_TABLE)
+        applied = _applied(conn)
+    result = []
+    for version, path in available_migrations():
+        if version not in applied:
+            result.append(("PENDIENTE", path.name))
+        elif applied[version][1] != checksum(path):
+            result.append(("MODIFICADA", path.name))
+        else:
+            result.append(("aplicada", path.name))
+    return result
 
 
 def migration_engine() -> Engine:
@@ -132,20 +182,12 @@ def migration_engine() -> Engine:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Migraciones SQL versionadas de ASPAR")
     parser.add_argument("--status", action="store_true", help="muestra el estado")
-    parser.add_argument("--baseline", metavar="VERSION", help="marca como aplicadas hasta VERSION")
     args = parser.parse_args()
 
     engine = migration_engine()
-
     if args.status:
-        done = applied_versions(engine)
-        for version, path in available_migrations():
-            estado = "aplicada " if version in done else "PENDIENTE"
-            print(f"[{estado}] {path.name}")
-        return
-    if args.baseline:
-        marked = baseline(engine, args.baseline)
-        print("Marcadas como aplicadas:", ", ".join(marked) if marked else "ninguna")
+        for state, name in status(engine):
+            print(f"[{state:10}] {name}")
         return
     try:
         applied = apply_migrations(engine)

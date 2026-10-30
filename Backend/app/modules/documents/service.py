@@ -42,7 +42,7 @@ def _audit(db: Session, current: CurrentUser, severity: str, action: str, detail
     )
 
 
-def list_documents(db: Session, patient_id: str) -> list[PatientDocument]:
+def list_documents(db: Session, patient_id: uuid.UUID) -> list[PatientDocument]:
     get_patient(db, patient_id)
     return document_repository.list_for_patient(db, patient_id)
 
@@ -52,7 +52,7 @@ def upload_document(
     storage: PrivateStorage,
     current: CurrentUser,
     *,
-    patient_id: str,
+    patient_id: uuid.UUID,
     document_type: str,
     file_name: str,
     content_type: str,
@@ -68,7 +68,7 @@ def upload_document(
     if len(content) > DOCUMENT_MAX_BYTES:
         raise PayloadTooLarge("El archivo supera el máximo de 10 MB.")
 
-    document_id = str(uuid.uuid4())
+    document_id = uuid.uuid4()
     storage_path = f"{patient.id}/{document_id}{DOCUMENT_CONTENT_TYPES[content_type]}"
     # Primero la metadata (valida las restricciones de la base) y después el archivo
     document = document_repository.add(
@@ -101,7 +101,11 @@ def upload_document(
 
 
 def signed_url(
-    db: Session, storage: PrivateStorage, current: CurrentUser, patient_id: str, document_id: str
+    db: Session,
+    storage: PrivateStorage,
+    current: CurrentUser,
+    patient_id: uuid.UUID,
+    document_id: uuid.UUID,
 ) -> tuple[str, int]:
     document = document_repository.get_for_patient(db, patient_id, document_id)
     if document is None:
@@ -121,7 +125,11 @@ def signed_url(
 
 
 def delete_document(
-    db: Session, storage: PrivateStorage, current: CurrentUser, patient_id: str, document_id: str
+    db: Session,
+    storage: PrivateStorage,
+    current: CurrentUser,
+    patient_id: uuid.UUID,
+    document_id: uuid.UUID,
 ) -> None:
     document = document_repository.get_for_patient(db, patient_id, document_id)
     if document is None:

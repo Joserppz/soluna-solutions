@@ -6,35 +6,41 @@ from app.models import AuditLog, User
 from app.modules.auth.schemas import LoginRequest
 from tests.conftest import requires_db
 
+EMAIL, PASSWORD = "coordinacion@aspar.org", "Coord2026!"
+
 
 def test_login_request_normaliza_el_correo():
-    assert LoginRequest(email="  Dayana.Rojas@UCB.edu.bo ", password="x").email == (
-        "dayana.rojas@ucb.edu.bo"
+    assert LoginRequest(email="  Coordinacion@ASPAR.org ", password="x").email == (
+        "coordinacion@aspar.org"
     )
+
+
+def user(db_session) -> User:
+    return db_session.scalar(select(User).where(User.email == EMAIL))
 
 
 @requires_db
 class TestValidacionDeCredenciales:
-    def login(self, client, email="jose.rodriguez.p@ucb.edu.bo", password="Admin123"):
+    def login(self, client, email=EMAIL, password=PASSWORD):
         return client.post("/api/v1/auth/login", json={"email": email, "password": password})
 
     def test_correo_en_mayusculas_inicia_sesion(self, client):
-        assert self.login(client, email="JOSE.RODRIGUEZ.P@UCB.EDU.BO").status_code == 200
+        assert self.login(client, email="COORDINACION@ASPAR.ORG").status_code == 200
 
     def test_contrasena_incorrecta_es_401_con_mensaje_generico(self, client):
-        response = self.login(client, password="Admin1234")
+        response = self.login(client, password="Coord2027!")
 
         assert response.status_code == 401
         assert response.json() == {"detail": "Correo o contraseña incorrectos, o usuario inactivo."}
 
     def test_correo_inexistente_responde_igual_que_contrasena_incorrecta(self, client):
-        response = self.login(client, email="nadie@ucb.edu.bo")
+        response = self.login(client, email="nadie@aspar.org")
 
         assert response.status_code == 401
         assert response.json()["detail"] == self.login(client, password="mala").json()["detail"]
 
     def test_usuario_inactivo_no_puede_iniciar_sesion(self, client, db_session):
-        db_session.get(User, "u-jose").active = False
+        user(db_session).active = False
         db_session.commit()
 
         assert self.login(client).status_code == 401
@@ -61,19 +67,25 @@ class TestValidacionDeCredenciales:
         assert response.status_code == 423
         assert "bloqueada" in response.json()["detail"]
         critical = db_session.scalar(
-            select(AuditLog).where(
-                AuditLog.actor == "jose.rodriguez.p@ucb.edu.bo", AuditLog.severity == "CRITICAL"
-            )
+            select(AuditLog).where(AuditLog.actor == EMAIL, AuditLog.severity == "CRITICAL")
         )
         assert critical is not None
 
     def test_bloqueo_vencido_permite_iniciar_sesion_y_reinicia_contador(self, client, db_session):
-        user = db_session.get(User, "u-jose")
-        user.locked_until = datetime.now(UTC) - timedelta(seconds=1)
-        user.failed_login_attempts = 3
+        account = user(db_session)
+        account.locked_until = datetime.now(UTC) - timedelta(seconds=1)
+        account.failed_login_attempts = 3
         db_session.commit()
 
         assert self.login(client).status_code == 200
-        db_session.refresh(user)
-        assert user.failed_login_attempts == 0
-        assert user.locked_until is None
+        db_session.refresh(account)
+        assert account.failed_login_attempts == 0
+        assert account.locked_until is None
+
+    def test_cuenta_solo_de_google_no_inicia_sesion_con_contrasena(self, client, db_session):
+        account = user(db_session)
+        account.google_sub = "google-123"
+        account.password_hash = None
+        db_session.commit()
+
+        assert self.login(client).status_code == 401

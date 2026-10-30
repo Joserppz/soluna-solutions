@@ -1,5 +1,6 @@
 """Dependencias de FastAPI: usuario autenticado a partir del token Bearer."""
 
+import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
@@ -43,13 +44,18 @@ def get_current_user(
     except jwt.PyJWTError as exc:
         raise Unauthorized(SESSION_INVALID) from exc
 
-    session = session_repository.get_by_id(db, payload["sid"])
+    try:
+        session_id, user_id = uuid.UUID(payload["sid"]), uuid.UUID(payload["sub"])
+    except ValueError as exc:
+        raise Unauthorized(SESSION_INVALID) from exc
+    session = session_repository.get_by_id(db, session_id)
     now = datetime.now(UTC)
     if (
         session is None
-        or session.user_id != payload["sub"]
+        or session.user_id != user_id
         or session.revoked_at is not None
         or session.expires_at <= now
+        or session.absolute_expires_at <= now
     ):
         raise Unauthorized(SESSION_INVALID)
     if session.last_activity_at + timedelta(seconds=settings.session_idle_limit_seconds) <= now:
@@ -63,7 +69,7 @@ def get_current_user(
     # Cada petición autenticada cuenta como actividad (límite de inactividad RNF-02)
     if now - session.last_activity_at >= ACTIVITY_WRITE_INTERVAL:
         session.last_activity_at = now
-    set_current_user_id(user.id)
+    set_current_user_id(str(user.id))
     return CurrentUser(user=user, session=session, ip=client_ip(request))
 
 
@@ -75,7 +81,7 @@ def require_roles(*roles: str):
         db: DbSession,
         current: CurrentUser = Depends(get_current_user),
     ) -> CurrentUser:
-        if current.user.role not in roles:
+        if current.user.role_key not in roles:
             audit_service.audit(
                 db,
                 current,
@@ -83,12 +89,12 @@ def require_roles(*roles: str):
                 severity="WARNING",
                 action="Intento de acceso restringido bloqueado",
                 detail=(
-                    f"El rol {current.user.role} intentó {request.method} {request.url.path} "
-                    f"(permitido para: {', '.join(roles)})"
+                    f"El rol {current.user.role_name} intentó {request.method} "
+                    f"{request.url.path} (permitido para: {', '.join(roles)})"
                 ),
             )
             raise Forbidden(
-                f"El rol {current.user.role} no tiene permisos para esta operación.",
+                f"El rol {current.user.role_name} no tiene permisos para esta operación.",
                 persist=True,
             )
         return current

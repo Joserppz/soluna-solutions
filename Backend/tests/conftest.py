@@ -6,6 +6,7 @@ Sin esa variable, solo se ejecutan las pruebas unitarias.
 """
 
 import os
+import uuid  # noqa: F401 - usado en anotaciones
 
 import pytest
 
@@ -27,17 +28,23 @@ requires_db = pytest.mark.skipif(
 
 @pytest.fixture(scope="session")
 def migrated_engine():
+    """Base de pruebas desde cero: migraciones + datos de demostración (scripts.seed_demo)."""
     if not TEST_DATABASE_URL:
         pytest.skip("Requiere TEST_DATABASE_URL (PostgreSQL de pruebas)")
     from sqlalchemy import text
+    from sqlalchemy.orm import Session
 
     from app.core.database import engine
     from scripts.migrate import apply_migrations
+    from scripts.seed_demo import seed
 
     with engine.begin() as conn:
         conn.execute(text("drop schema if exists public cascade"))
         conn.execute(text("create schema public"))
     apply_migrations(engine)
+    with Session(engine) as session:
+        seed(session)
+        session.commit()
     return engine
 
 
@@ -75,24 +82,41 @@ def client(db_session):
     app.dependency_overrides.clear()
 
 
-# Usuarios sembrados por la migración 001: rol -> (correo, contraseña)
-SEED_USERS = {
-    "Administrador": ("dayana.rojas@ucb.edu.bo", "Admin123"),
-    "Coordinador": ("coordinacion@aspar.org", "Coord2026!"),
-    "Profesional": ("demo@aspar.org", "Aspar2026!"),
-    "Recepción": ("recepcion@aspar.org", "Recep2026!"),
-    "Voluntario": ("voluntario@aspar.org", "Voluntario2026!"),
-}
+def demo_credentials(role: str | None) -> tuple[str, str]:
+    """Correo y contraseña de la cuenta de demostración de un rol (None = pendiente)."""
+    from scripts.seed_demo import DEMO_USERS
+
+    _, email, password = DEMO_USERS[role]
+    return email, password
+
+
+@pytest.fixture
+def patient_ids(db_session) -> dict[str, "uuid.UUID"]:
+    """IDs de los afiliados de demostración: con consentimiento, sin él y revocado."""
+    from sqlalchemy import select
+
+    from app.models import Patient
+    from scripts import seed_demo
+
+    by_ci = {
+        "consent": seed_demo.CI_WITH_CONSENT,
+        "no_consent": seed_demo.CI_WITHOUT_CONSENT,
+        "revoked": seed_demo.CI_REVOKED,
+    }
+    return {
+        name: db_session.scalar(select(Patient.id).where(Patient.ci == ci))
+        for name, ci in by_ci.items()
+    }
 
 
 @pytest.fixture
 def auth_headers(client):
-    """Devuelve una función rol -> cabecera Authorization con un token válido."""
-    cache: dict[str, dict[str, str]] = {}
+    """Devuelve una función clave de rol -> cabecera Authorization con un token válido."""
+    cache: dict[str | None, dict[str, str]] = {}
 
-    def headers_for(role: str = "Administrador") -> dict[str, str]:
+    def headers_for(role: str | None = "admin") -> dict[str, str]:
         if role not in cache:
-            email, password = SEED_USERS[role]
+            email, password = demo_credentials(role)
             response = client.post(
                 "/api/v1/auth/login", json={"email": email, "password": password}
             )
