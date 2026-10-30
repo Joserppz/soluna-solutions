@@ -31,12 +31,18 @@ def list_roles(db: Session) -> list[Role]:
 
 
 def count_active_admins(db: Session) -> int:
-    return db.scalar(
-        select(func.count())
-        .select_from(User)
+    """Cuenta las cuentas de Administración activas y BLOQUEA sus filas hasta el commit.
+
+    Si dos administradores se quitan el rol al mismo tiempo, el segundo espera al primero
+    y ve el conteo real: nunca quedan los dos sin rol.
+    """
+    admins = db.scalars(
+        select(User.id)
         .join(Role, User.role_id == Role.id)
         .where(Role.key == ADMIN, User.active.is_(True))
+        .with_for_update(of=User)
     )
+    return len(admins.all())
 
 
 def add(db: Session, user: User) -> User:

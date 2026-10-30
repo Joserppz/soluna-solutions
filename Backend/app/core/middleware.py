@@ -27,3 +27,50 @@ class OriginCheckMiddleware:
                 await response(scope, receive, send)
                 return
         await self.app(scope, receive, send)
+
+
+DOCS_PATHS = ("/docs", "/redoc", "/openapi.json")
+
+
+class SecurityHeadersMiddleware:
+    """Cabeceras de seguridad en todas las respuestas de la API.
+
+    - La API solo devuelve JSON: CSP sin permisos y sin poder mostrarse en un iframe.
+    - Las respuestas con datos personales no se guardan en cachés (Cache-Control).
+    - HSTS solo en producción (HTTPS obligatorio para el dominio y sus subdominios).
+    """
+
+    def __init__(self, app: ASGIApp, *, hsts: bool) -> None:
+        self.app = app
+        self.hsts = hsts
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+        is_docs = scope["path"].startswith(DOCS_PATHS)
+
+        async def send_with_headers(message) -> None:
+            if message["type"] == "http.response.start":
+                headers = list(message.get("headers", []))
+                extra = {
+                    b"x-content-type-options": b"nosniff",
+                    b"x-frame-options": b"DENY",
+                    b"referrer-policy": b"no-referrer",
+                    b"permissions-policy": b"camera=(), microphone=(), geolocation=()",
+                    b"cross-origin-opener-policy": b"same-origin",
+                }
+                if not is_docs:
+                    # /docs (solo en desarrollo) necesita cargar el Swagger UI
+                    extra[b"content-security-policy"] = (
+                        b"default-src 'none'; frame-ancestors 'none'"
+                    )
+                    extra[b"cache-control"] = b"no-store"
+                if self.hsts:
+                    extra[b"strict-transport-security"] = b"max-age=31536000; includeSubDomains"
+                present = {name.lower() for name, _ in headers}
+                headers += [(name, value) for name, value in extra.items() if name not in present]
+                message["headers"] = headers
+            await send(message)
+
+        await self.app(scope, receive, send_with_headers)

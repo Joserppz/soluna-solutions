@@ -128,12 +128,14 @@ def test_google_rechaza_tokens_firmados_por_otra_clave(google_keys):
 def test_produccion_no_arranca_con_configuracion_de_desarrollo():
     base = {"database_url": "postgresql://a:b@h/c", "jwt_secret": "x" * 40, "env": "prod"}
 
-    with pytest.raises(ValueError, match="EMAIL_PROVIDER.*TURNSTILE"):
-        Settings(_env_file=None, **base)
+    with pytest.raises(ValueError, match="EMAIL_PROVIDER.*TURNSTILE.*RATE_LIMITS.*https"):
+        Settings(_env_file=None, **base, rate_limits_enabled=False)
     ok = Settings(
         _env_file=None,
         **base,
         email_provider="resend",
         turnstile_secret_key="0x4AAA-clave-real",
+        rate_limits_enabled=True,
+        cors_origins="https://aspar.com,https://staging.aspar.com",
     )
     assert ok.is_prod

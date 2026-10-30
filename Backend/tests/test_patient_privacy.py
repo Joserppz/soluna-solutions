@@ -67,10 +67,18 @@ class TestAnamnesis:
         assert body["clinicalAccess"] is False
         assert body["anamnesis"]["symptomNotes"] == ""
 
-    def test_listado_tambien_oculta_la_anamnesis(self, client, auth_headers, patient_ids):
-        listing = client.get("/api/v1/patients", headers=auth_headers("reception")).json()
+    def test_el_listado_nunca_trae_anamnesis(self, client, auth_headers, db_session):
+        # S5: ni siquiera para Administración; la anamnesis solo sale en la ficha (auditada)
+        listing = client.get("/api/v1/patients", headers=auth_headers()).json()
 
-        assert all(p["anamnesis"]["medications"] == "" for p in listing)
+        assert listing and all("anamnesis" not in p for p in listing)
+        assert listing[0]["primaryContact"]["isPrimary"] is True
+        assert (
+            db_session.scalar(
+                select(AuditLog).where(AuditLog.action == "Consulta de ficha clínica")
+            )
+            is None
+        )
 
     def test_consulta_de_ficha_clinica_queda_auditada(
         self, client, auth_headers, db_session, patient_ids
@@ -206,13 +214,48 @@ class TestDocumentosPrivados:
         self, client, auth_headers, storage, patient_ids
     ):
         doc_id = self.upload(client, auth_headers(), patient_ids["consent"]).json()["id"]
-
-        response = client.get(
-            f"/api/v1/patients/{patient_ids['no_consent']}/documents/{doc_id}/url",
+        other = patient_ids["no_consent"]
+        client.patch(
+            f"/api/v1/patients/{other}",
+            json={"consent": True, "accessStatus": "Activo"},
             headers=auth_headers(),
         )
 
+        response = client.get(
+            f"/api/v1/patients/{other}/documents/{doc_id}/url", headers=auth_headers()
+        )
+
         assert response.status_code == 404
+
+    def test_sin_consentimiento_activo_nadie_lista_ni_descarga_documentos(
+        self, client, auth_headers, storage, patient_ids
+    ):
+        # S4: Recepción puede subir el consentimiento antes de que la ficha esté Activa...
+        pending = patient_ids["no_consent"]
+        uploaded = self.upload(client, auth_headers("reception"), pending)
+        base = f"/api/v1/patients/{pending}/documents"
+
+        listing = client.get(base, headers=auth_headers())
+        link = client.get(f"{base}/{uploaded.json()['id']}/url", headers=auth_headers())
+
+        # ...pero ni Administración lo ve hasta que haya consentimiento y acceso Activo
+        assert uploaded.status_code == 201
+        assert listing.status_code == 403
+        assert "consentimiento" in listing.json()["detail"]
+        assert link.status_code == 403
+
+    def test_archivo_que_no_es_lo_que_dice_es_415(self, client, auth_headers, storage, patient_ids):
+        png = b"\x89PNG\r\n\x1a\n" + b"0" * 20
+
+        disguised = self.upload(
+            client, auth_headers(), patient_ids["consent"], b"MZ ejecutable", "application/pdf"
+        )
+        real_png = self.upload(client, auth_headers(), patient_ids["consent"], png, "image/png")
+
+        assert disguised.status_code == 415
+        assert "no corresponde" in disguised.json()["detail"]
+        assert real_png.status_code == 201
+        assert storage.files and all(not c.startswith(b"MZ") for c in storage.files.values())
 
     def test_falla_del_almacenamiento_no_guarda_metadata(
         self, client, auth_headers, storage, db_session, patient_ids

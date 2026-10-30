@@ -66,6 +66,15 @@ class Locked(DomainError):
     status_code = status.HTTP_423_LOCKED
 
 
+class TooManyRequests(DomainError):
+    status_code = status.HTTP_429_TOO_MANY_REQUESTS
+
+    def __init__(self, message: str, *, retry_after: int) -> None:
+        # persist=True: el intento rechazado también queda en la bitácora si se registró
+        super().__init__(message, persist=True)
+        self.retry_after = retry_after
+
+
 class ExternalServiceError(DomainError):
     """Falla de un servicio externo (por ejemplo, Supabase Storage)."""
 
@@ -110,7 +119,10 @@ def _error(status_code: int, detail: str) -> JSONResponse:
 def register_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(DomainError)
     async def handle_domain_error(_: Request, exc: DomainError) -> JSONResponse:
-        return _error(exc.status_code, exc.message)
+        response = _error(exc.status_code, exc.message)
+        if isinstance(exc, TooManyRequests):
+            response.headers["Retry-After"] = str(exc.retry_after)
+        return response
 
     @app.exception_handler(RequestValidationError)
     async def handle_validation_error(_: Request, exc: RequestValidationError) -> JSONResponse:

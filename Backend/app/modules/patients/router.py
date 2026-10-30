@@ -9,8 +9,10 @@ from app.modules.patients.schemas import (
     PatientDeactivate,
     PatientIn,
     PatientOut,
+    PatientSummaryOut,
     PatientUpdate,
     to_patient_out,
+    to_patient_summary,
 )
 from app.modules.users.models import PATIENTS_DEACTIVATE, PATIENTS_READ, PATIENTS_WRITE
 
@@ -25,7 +27,7 @@ def _out(patient, current: CurrentUser) -> PatientOut:
     return to_patient_out(patient, patient_service.can_view_clinical_record(current, patient))
 
 
-@router.get("", response_model=list[PatientOut], response_model_by_alias=True)
+@router.get("", response_model=list[PatientSummaryOut], response_model_by_alias=True)
 def list_patients(
     db: DbSession,
     search: str | None = Query(default=None, max_length=120),
@@ -34,7 +36,7 @@ def list_patients(
     current: CurrentUser = Depends(staff),
 ):
     patients = patient_service.list_patients(db, search, access_status, include_inactive)
-    return [_out(patient, current) for patient in patients]
+    return [to_patient_summary(patient) for patient in patients]
 
 
 @router.get("/{patient_id}", response_model=PatientOut, response_model_by_alias=True)

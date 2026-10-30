@@ -120,3 +120,8 @@ def get_db() -> Iterator[Session]:
 # scope="function": el commit ocurre ANTES de enviar la respuesta. Si falla, el cliente
 # recibe el error (409, 503...) y no un 200 con datos que no se guardaron.
 DbSession = Annotated[Session, Depends(get_db, scope="function")]
+
+
+def escape_like(term: str) -> str:
+    """Escapa los comodines de LIKE: buscar "%" o "_" encuentra ese carácter, no todo."""
+    return term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")

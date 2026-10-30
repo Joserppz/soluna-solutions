@@ -47,6 +47,9 @@ class Settings(BaseSettings):
     cookie_secure: bool = True
     cookie_samesite: Literal["lax", "strict"] = "lax"
 
+    # Límite de peticiones (tabla rate_limits). Solo se apaga en las pruebas automáticas
+    rate_limits_enabled: bool = True
+
     # Proxies de confianza que agregan una IP al final de X-Forwarded-For (Cloud Run: 1)
     proxy_trusted_hops: int = Field(default=0, ge=0, le=5)
 
@@ -118,6 +121,10 @@ class Settings(BaseSettings):
             problems.append("TURNSTILE_SECRET_KEY es la clave de prueba de Cloudflare")
         if not self.cookie_secure:
             problems.append("COOKIE_SECURE debe ser true")
+        if not self.rate_limits_enabled:
+            problems.append("RATE_LIMITS_ENABLED debe ser true")
+        if any(not origin.startswith("https://") for origin in self.cors_origins):
+            problems.append("CORS_ORIGINS solo admite orígenes https://")
         if problems:
             raise ValueError("Configuración insegura para producción: " + "; ".join(problems))
         return self

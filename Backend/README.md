@@ -47,6 +47,7 @@ cp .env.example .env
 | `TURNSTILE_SECRET_KEY` | No (sí en prod) | CAPTCHA de Cloudflare para registro y recuperación. Vacío = clave de prueba que siempre aprueba. |
 | `GOOGLE_CLIENT_ID` | No | Activa «Continuar con Google». |
 | `COOKIE_DOMAIN`, `COOKIE_SECURE`, `COOKIE_SAMESITE` | No | Cookies de sesión. Producción: `COOKIE_DOMAIN=.aspar.com`, `COOKIE_SECURE=true`. En Docker local `COOKIE_SECURE=false` (http). |
+| `RATE_LIMITS_ENABLED` | No | `true` por defecto: limita login, registro y correos por IP y por cuenta (tabla `rate_limits`). Solo los tests lo apagan; en prod es obligatorio. |
 | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Solo para documentos | Supabase → Project Settings → API Keys. La `service_role` es secreta: **solo** en este `.env`, nunca en el frontend. Sin ellas, `/patients/{id}/documents` responde 503. |
 
 `.env` está en `.gitignore`; nunca lo subas al repositorio.
@@ -75,7 +76,7 @@ uvicorn app.main:app --reload
 ```
 
 - Salud: <http://localhost:8000/api/v1/health> y <http://localhost:8000/api/v1/health/db>
-- Documentación interactiva (Swagger): <http://localhost:8000/docs>
+- Documentación interactiva (Swagger): <http://localhost:8000/docs> (solo en `dev` y `test`: con `ENV=prod` no se publican `/docs`, `/redoc` ni `/openapi.json`)
 - Especificación publicada en el repositorio: [`docs/api/openapi.json`](../docs/api/openapi.json). Si cambias un endpoint o un esquema, regénerala con `python -m scripts.export_openapi` (no necesita base de datos); `tests/test_openapi.py` falla si quedó desactualizada.
 
 ### 5.1 Cuentas: ninguna vive en el código
@@ -146,6 +147,16 @@ Los roles se identifican por su **clave fija** (`admin`, `coordination`, `profes
 
 ⚠️ = permiso sensible (`permissions.is_sensitive`): el panel advierte antes de dárselo a otro rol. Valores iniciales tomados de la tabla «Qué puede ver cada rol» del diseño.
 
+**Endurecimiento.**
+
+- **Límites de peticiones** (respuesta `429` con `Retry-After`), contados por IP real y por cuenta en la tabla `rate_limits`, en su propia transacción para que un login fallido igual quede contado: login 30/15 min por IP y 10/15 min por cuenta; Google 30/15 min por IP; registro 5/h por IP; correos de verificación y recuperación 5/h por IP y 3/h por correo; enlaces 20/h por IP.
+- **Login uniforme**: correo inexistente, contraseña incorrecta, cuenta inactiva o bloqueada responden igual (`401` con el mismo mensaje y el mismo tiempo de bcrypt). Tras 5 fallos la cuenta se bloquea 15 minutos.
+- **Bitácora agrupada**: los intentos fallidos y los accesos bloqueados repetidos dentro de 15 minutos suman `occurrences` en una sola fila (con `lastOccurredAt`) en vez de llenar la bitácora; el bloqueo de una cuenta queda como evento `CRITICAL` aparte.
+- **Datos clínicos**: `GET /patients` devuelve un resumen **sin anamnesis**; la ficha completa solo sale por `GET /patients/{id}`, que queda en la bitácora. Listar o descargar documentos exige la misma regla de consentimiento que la anamnesis. Al subir un archivo se comprueba que su contenido real (firma de bytes) coincide con el tipo declarado.
+- **Búsquedas**: `%`, `_` y `\` se buscan como texto, no como comodines.
+- **Perímetro HTTP**: cabeceras `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy`, `Content-Security-Policy` y `Cache-Control: no-store` en la API; `Strict-Transport-Security` en prod. CORS solo para `CORS_ORIGINS` (https en prod) y los encabezados `Content-Type`, `X-CSRF-Token` y `X-Request-ID`.
+- **Producción**: la API no arranca con `ENV=prod` si el correo es `console`, Turnstile usa la clave de prueba, `COOKIE_SECURE=false`, `RATE_LIMITS_ENABLED=false` o algún origen CORS no es https.
+
 ## 7. Calidad: Ruff y pytest
 
 ```bash
@@ -202,3 +213,4 @@ Backend/
 | Un error 500 con «código …» | Busca ese código (`request_id`) en los logs de la API: ahí está el detalle técnico, que nunca se envía al navegador. |
 | `ResolutionImpossible ... protobuf` al instalar | Estás usando el `requirements.txt` antiguo en UTF-16; usa el de esta carpeta. |
 | `401 La sesión expiró por inactividad` | Pasaron 15 minutos sin peticiones; inicia sesión otra vez. |
+| `429 Demasiados intentos` | Se superó un límite de peticiones; espera los segundos que indica `Retry-After`. En local puedes vaciar la tabla: `docker compose exec db psql -U aspar -d aspar -c "delete from rate_limits"`. |

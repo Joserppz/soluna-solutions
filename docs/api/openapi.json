@@ -694,6 +694,84 @@
         "title": "PatientOut",
         "type": "object"
       },
+      "PatientSummaryOut": {
+        "description": "Fila del listado: sin anamnesis (S5). La ficha clínica completa solo se obtiene con\nGET /patients/{id}, que queda en la bitácora.",
+        "properties": {
+          "accessStatus": {
+            "title": "Accessstatus",
+            "type": "string"
+          },
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          },
+          "ci": {
+            "title": "Ci",
+            "type": "string"
+          },
+          "consent": {
+            "title": "Consent",
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "imageConsent": {
+            "title": "Imageconsent",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "phone": {
+            "title": "Phone",
+            "type": "string"
+          },
+          "primaryContact": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContactOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "title": "Updatedat",
+            "type": "string"
+          },
+          "zone": {
+            "title": "Zone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "ci",
+          "phone",
+          "zone",
+          "consent",
+          "imageConsent",
+          "accessStatus",
+          "primaryContact",
+          "active",
+          "createdAt",
+          "updatedAt"
+        ],
+        "title": "PatientSummaryOut",
+        "type": "object"
+      },
       "PatientUpdate": {
         "description": "PATCH parcial: solo se modifican los campos enviados.",
         "properties": {
@@ -1952,7 +2030,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/PatientOut"
+                    "$ref": "#/components/schemas/PatientSummaryOut"
                   },
                   "title": "Response List Patients Api V1 Patients Get",
                   "type": "array"

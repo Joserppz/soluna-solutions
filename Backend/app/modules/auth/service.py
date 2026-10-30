@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.adapters.email import EmailMessage, EmailSender
 from app.core.config import settings
 from app.core.database import after_commit
-from app.core.errors import Conflict, DomainError, Forbidden, Locked, Unauthorized, ValidationError
+from app.core.errors import Conflict, DomainError, Forbidden, Unauthorized, ValidationError
 from app.core.security import hash_password, verify_password
 from app.modules.audit import service as audit_service
 from app.modules.auth import repository as session_repository
@@ -19,10 +19,12 @@ from app.modules.users import repository as user_repository
 from app.modules.users.models import User
 from app.modules.users.service import validate_password
 
-INVALID_CREDENTIALS = "Correo o contraseña incorrectos, o usuario inactivo."
-ACCOUNT_LOCKED = (
-    "Cuenta bloqueada temporalmente por {minutes} minutos tras 5 intentos fallidos (RNF-02)."
+# S6: la misma respuesta para correo inexistente, contraseña incorrecta, cuenta inactiva o
+# bloqueada. Así no se puede averiguar qué correos tienen cuenta.
+INVALID_CREDENTIALS = (
+    "Correo o contraseña incorrectos. Tras 5 intentos fallidos el acceso se bloquea 15 minutos."
 )
+FAILED_LOGIN_WINDOW = timedelta(minutes=15)
 EMAIL_NOT_VERIFIED = (
     "Confirma tu correo antes de ingresar: revisa tu bandeja o pide un enlace nuevo."
 )
@@ -101,21 +103,26 @@ def login(
     user = user_repository.get_by_email(db, email)
     now = datetime.now(UTC)
 
+    # bcrypt se ejecuta SIEMPRE (también si la cuenta no existe, no tiene contraseña o
+    # está bloqueada): el tiempo de respuesta no revela nada.
+    stored_hash = user.password_hash if user is not None else None
+    password_ok = verify_password(password, stored_hash or _DUMMY_HASH) and bool(stored_hash)
+
     if user is not None and user.locked_until is not None and user.locked_until > now:
-        minutes = max(1, int((user.locked_until - now).total_seconds() // 60) + 1)
-        _record(
+        audit_service.record_grouped(
             db,
-            email,
-            ip,
+            group_key=f"login_bloqueado:{email}",
+            window=FAILED_LOGIN_WINDOW,
+            actor=email,
+            actor_role="Sistema",
+            category="AUTENTICACION",
             severity="WARNING",
             action="Intento de acceso a cuenta bloqueada",
             detail=f"La cuenta {email} sigue bloqueada por intentos fallidos",
+            ip_address=ip,
         )
-        raise Locked(ACCOUNT_LOCKED.format(minutes=minutes), persist=True)
+        raise Unauthorized(INVALID_CREDENTIALS, persist=True)
 
-    stored_hash = user.password_hash if user is not None else None
-    # Sin contraseña (cuenta solo de Google) se gasta el mismo tiempo y se rechaza
-    password_ok = verify_password(password, stored_hash or _DUMMY_HASH) and bool(stored_hash)
     if user is None or not user.active or not password_ok:
         _register_failed_attempt(db, user, email, ip, now)
         # persist=True: el contador de intentos y la bitácora se guardan aunque falle el login
@@ -136,24 +143,34 @@ def login(
 def _register_failed_attempt(
     db: Session, user: User | None, email: str, ip: str | None, now: datetime
 ) -> None:
-    severity = "WARNING"
-    detail = f"Credenciales inválidas o cuenta inactiva para {email}"
     if user is not None and user.active:
         user.failed_login_attempts += 1
         if user.failed_login_attempts >= MAX_FAILED_ATTEMPTS:
             user.locked_until = now + timedelta(minutes=LOCK_MINUTES)
             user.failed_login_attempts = 0
-            severity = "CRITICAL"
-            detail = (
-                f"Cuenta {email} bloqueada {LOCK_MINUTES} min tras {MAX_FAILED_ATTEMPTS} intentos"
+            # El bloqueo es un evento aparte (crítico); los intentos se agrupan en una fila
+            _record(
+                db,
+                email,
+                ip,
+                severity="CRITICAL",
+                action="Cuenta bloqueada por intentos fallidos",
+                detail=(
+                    f"Cuenta {email} bloqueada {LOCK_MINUTES} min "
+                    f"tras {MAX_FAILED_ATTEMPTS} intentos"
+                ),
             )
-    _record(
+    audit_service.record_grouped(
         db,
-        email,
-        ip,
-        severity=severity,
+        group_key=f"login_fallido:{email}",
+        window=FAILED_LOGIN_WINDOW,
+        actor=email,
+        actor_role="Sistema",
+        category="AUTENTICACION",
+        severity="WARNING",
         action="Intento fallido de inicio de sesión",
-        detail=detail,
+        detail=f"Credenciales inválidas o cuenta inactiva para {email}",
+        ip_address=ip,
     )
 
 

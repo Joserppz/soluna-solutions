@@ -36,7 +36,8 @@ def list_documents(
     db: DbSession,
     current: CurrentUser = Depends(require_permission(PATIENTS_READ_CLINICAL)),
 ):
-    return [to_document_out(doc) for doc in document_service.list_documents(db, patient_id)]
+    documents = document_service.list_documents(db, current, patient_id)
+    return [to_document_out(doc) for doc in documents]
 
 
 @router.post(

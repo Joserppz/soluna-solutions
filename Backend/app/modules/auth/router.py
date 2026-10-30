@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, Request, Response, status
 from app.adapters.email import EmailSender, get_email_sender
 from app.adapters.google import GoogleVerifier, get_google_verifier
 from app.adapters.turnstile import TurnstileVerifier, get_turnstile
+from app.core import rate_limit
 from app.core.config import settings
 from app.core.database import DbSession
 from app.core.network import client_ip
@@ -58,8 +59,11 @@ def session_out(
 
 @router.post("/login", response_model=SessionOut, response_model_by_alias=True)
 def login(payload: LoginRequest, request: Request, response: Response, db: DbSession):
+    ip = client_ip(request)
+    rate_limit.hit(rate_limit.by_ip("login", ip), *rate_limit.LOGIN_PER_IP)
+    rate_limit.hit(rate_limit.by_account("login", payload.email), *rate_limit.LOGIN_PER_ACCOUNT)
     result = auth_service.login(
-        db, payload.email, payload.password, client_ip(request), request.headers.get("user-agent")
+        db, payload.email, payload.password, ip, request.headers.get("user-agent")
     )
     return _start(response, db, result)
 
@@ -103,10 +107,10 @@ def login_with_google(
     google: GoogleVerifier = Depends(get_google_verifier),
 ):
     """Continuar con Google: inicia sesión o crea una cuenta pendiente de aprobación."""
+    ip = client_ip(request)
+    rate_limit.hit(rate_limit.by_ip("google", ip), *rate_limit.GOOGLE_PER_IP)
     claims = google.verify(payload.credential)
-    result = auth_service.login_with_google(
-        db, claims, client_ip(request), request.headers.get("user-agent")
-    )
+    result = auth_service.login_with_google(db, claims, ip, request.headers.get("user-agent"))
     return _start(response, db, result)
 
 
@@ -120,6 +124,7 @@ def register(
 ):
     """Crea una cuenta sin rol y envía el enlace de verificación (respuesta siempre igual)."""
     ip = client_ip(request)
+    rate_limit.hit(rate_limit.by_ip("registro", ip), *rate_limit.REGISTER_PER_IP)
     auth_service.require_human(turnstile.verify(payload.turnstile_token, ip))
     auth_service.register(
         db, name=payload.name, email=payload.email, password=payload.password, ip=ip, sender=sender
@@ -129,7 +134,9 @@ def register(
 
 @router.post("/verify-email", response_model=MessageResponse)
 def verify_email(payload: TokenRequest, request: Request, db: DbSession):
-    auth_service.verify_email(db, payload.token, client_ip(request))
+    ip = client_ip(request)
+    rate_limit.hit(rate_limit.by_ip("enlace", ip), *rate_limit.TOKEN_PER_IP)
+    auth_service.verify_email(db, payload.token, ip)
     return MessageResponse(message="Tu correo quedó confirmado. Ya puedes ingresar.")
 
 
@@ -143,7 +150,10 @@ def resend_verification(
     turnstile: TurnstileVerifier = Depends(get_turnstile),
     sender: EmailSender = Depends(get_email_sender),
 ):
-    auth_service.require_human(turnstile.verify(payload.turnstile_token, client_ip(request)))
+    ip = client_ip(request)
+    rate_limit.hit(rate_limit.by_ip("correo", ip), *rate_limit.EMAIL_PER_IP)
+    rate_limit.hit(rate_limit.by_account("correo", payload.email), *rate_limit.EMAIL_PER_ACCOUNT)
+    auth_service.require_human(turnstile.verify(payload.turnstile_token, ip))
     auth_service.resend_verification(db, payload.email, sender)
     return MessageResponse(message=auth_service.CHECK_INBOX)
 
@@ -159,6 +169,8 @@ def forgot_password(
     sender: EmailSender = Depends(get_email_sender),
 ):
     ip = client_ip(request)
+    rate_limit.hit(rate_limit.by_ip("correo", ip), *rate_limit.EMAIL_PER_IP)
+    rate_limit.hit(rate_limit.by_account("correo", payload.email), *rate_limit.EMAIL_PER_ACCOUNT)
     auth_service.require_human(turnstile.verify(payload.turnstile_token, ip))
     auth_service.forgot_password(db, payload.email, ip, sender)
     return MessageResponse(message=auth_service.CHECK_INBOX)
@@ -166,7 +178,9 @@ def forgot_password(
 
 @router.post("/reset-password", response_model=MessageResponse)
 def reset_password(payload: ResetPasswordRequest, request: Request, db: DbSession):
-    auth_service.reset_password(db, payload.token, payload.password, client_ip(request))
+    ip = client_ip(request)
+    rate_limit.hit(rate_limit.by_ip("enlace", ip), *rate_limit.TOKEN_PER_IP)
+    auth_service.reset_password(db, payload.token, payload.password, ip)
     return MessageResponse(message="Tu contraseña se actualizó. Ya puedes ingresar.")
 
 

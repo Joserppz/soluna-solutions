@@ -17,6 +17,9 @@ os.environ["DATABASE_URL"] = TEST_DATABASE_URL or "postgresql://pruebas:pruebas@
 os.environ["JWT_SECRET"] = "secreto-solo-para-pruebas-automatizadas-aspar"
 os.environ["ENV"] = "test"
 os.environ["PROXY_TRUSTED_HOPS"] = "0"
+# Los límites de peticiones se prueban aparte (tests/test_hardening.py): con ellos activos,
+# los cientos de logins de la suite agotarían el cupo por IP.
+os.environ["RATE_LIMITS_ENABLED"] = "false"
 
 if TEST_DATABASE_URL and "supabase" in TEST_DATABASE_URL:
     pytest.exit("TEST_DATABASE_URL no puede apuntar a Supabase: las pruebas borran el esquema.")

@@ -3,6 +3,7 @@ import uuid
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
+from app.core.database import escape_like
 from app.modules.patients.models import Patient
 
 
@@ -16,8 +17,10 @@ def list_patients(
     if not include_inactive:
         query = query.where(Patient.deleted_at.is_(None))
     if search:
-        pattern = f"%{search.strip().lower()}%"
-        query = query.where(or_(func.lower(Patient.name).like(pattern), Patient.ci.like(pattern)))
+        pattern = f"%{escape_like(search.strip())}%"
+        query = query.where(
+            or_(Patient.name.ilike(pattern, escape="\\"), Patient.ci.ilike(pattern, escape="\\"))
+        )
     if access_status:
         query = query.where(Patient.access_status == access_status)
     return list(db.scalars(query))

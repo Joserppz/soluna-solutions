@@ -116,9 +116,12 @@ def require_permission(*permissions: str):
             raise Forbidden(MUST_CHANGE_PASSWORD)
         missing = [permission for permission in permissions if not current.can(permission)]
         if missing:
-            audit_service.audit(
+            audit_service.record_grouped(
                 db,
-                current,
+                group_key=f"acceso_bloqueado:{current.user.id}:{request.method}:{request.url.path}",
+                window=timedelta(minutes=15),
+                actor=current.user.email,
+                actor_role=current.user.role_name,
                 category="SISTEMA",
                 severity="WARNING",
                 action="Intento de acceso restringido bloqueado",
@@ -126,6 +129,7 @@ def require_permission(*permissions: str):
                     f"El rol {current.user.role_name} intentó {request.method} "
                     f"{request.url.path} sin el permiso {', '.join(missing)}"
                 ),
+                ip_address=current.ip,
             )
             raise Forbidden(
                 f"Tu rol ({current.user.role_name}) no tiene permiso para esta operación.",

@@ -112,6 +112,24 @@ class PatientOut(CamelModel):
     updated_at: datetime
 
 
+class PatientSummaryOut(CamelModel):
+    """Fila del listado: sin anamnesis (S5). La ficha clínica completa solo se obtiene con
+    GET /patients/{id}, que queda en la bitácora."""
+
+    id: uuid.UUID
+    name: str
+    ci: str
+    phone: str
+    zone: str
+    consent: bool
+    image_consent: bool
+    access_status: str
+    primary_contact: ContactOut | None
+    active: bool
+    created_at: datetime
+    updated_at: datetime
+
+
 RESTRICTED_ANAMNESIS = ClinicalAnamnesis(
     diagnosis="",
     stage="",
@@ -154,6 +172,26 @@ def to_patient_out(patient: Patient, clinical_access: bool) -> PatientOut:
         contacts=[to_contact_out(contact) for contact in patient.active_contacts],
         active=patient.active,
         deactivation_reason=patient.deactivation_reason,
+        created_at=patient.created_at,
+        updated_at=patient.updated_at,
+    )
+
+
+def to_patient_summary(patient: Patient) -> PatientSummaryOut:
+    contacts = patient.active_contacts
+    primary = next((contact for contact in contacts if contact.is_primary), None)
+    primary = primary or (contacts[0] if contacts else None)
+    return PatientSummaryOut(
+        id=patient.id,
+        name=patient.name,
+        ci=patient.ci,
+        phone=patient.phone,
+        zone=patient.zone,
+        consent=patient.consent,
+        image_consent=patient.image_consent,
+        access_status=patient.access_status,
+        primary_contact=to_contact_out(primary) if primary else None,
+        active=patient.active,
         created_at=patient.created_at,
         updated_at=patient.updated_at,
     )

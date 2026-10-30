@@ -11,6 +11,7 @@ from app.core.config import settings
 from app.core.database import after_commit, on_rollback
 from app.core.errors import (
     ExternalServiceError,
+    Forbidden,
     NotFound,
     PayloadTooLarge,
     UnsupportedMediaType,
@@ -25,10 +26,35 @@ from app.modules.documents.models import (
     DOCUMENT_TYPES,
     PatientDocument,
 )
-from app.modules.patients.service import get_patient
+from app.modules.patients.models import Patient
+from app.modules.patients.service import can_view_clinical_record, get_patient
 
 STORAGE_ERROR = "No se pudo acceder al almacenamiento de documentos. Intenta nuevamente."
 DOCUMENT_NOT_FOUND = "Documento no encontrado."
+NO_CLINICAL_ACCESS = (
+    "Los documentos de esta ficha no están disponibles: falta el consentimiento firmado o el "
+    "acceso no está Activo (RNF-06)."
+)
+CONTENT_MISMATCH = "El contenido del archivo no corresponde a un PDF, JPG, PNG o WEBP real."
+
+
+def matches_content_type(content: bytes, content_type: str) -> bool:
+    """Revisa los primeros bytes del archivo (magic bytes), no lo que declara el navegador."""
+    if content_type == "application/pdf":
+        return content.startswith(b"%PDF-")
+    if content_type == "image/jpeg":
+        return content.startswith(b"\xff\xd8\xff")
+    if content_type == "image/png":
+        return content.startswith(b"\x89PNG\r\n\x1a\n")
+    if content_type == "image/webp":
+        return content[:4] == b"RIFF" and content[8:12] == b"WEBP"
+    return False
+
+
+def _require_clinical_access(current: CurrentUser, patient: Patient) -> None:
+    # S4: los documentos siguen la misma regla que la anamnesis
+    if not can_view_clinical_record(current, patient):
+        raise Forbidden(NO_CLINICAL_ACCESS)
 
 
 def _safe_file_name(file_name: str) -> str:
@@ -42,8 +68,10 @@ def _audit(db: Session, current: CurrentUser, severity: str, action: str, detail
     )
 
 
-def list_documents(db: Session, patient_id: uuid.UUID) -> list[PatientDocument]:
-    get_patient(db, patient_id)
+def list_documents(
+    db: Session, current: CurrentUser, patient_id: uuid.UUID
+) -> list[PatientDocument]:
+    _require_clinical_access(current, get_patient(db, patient_id))
     return document_repository.list_for_patient(db, patient_id)
 
 
@@ -67,6 +95,8 @@ def upload_document(
         raise ValidationError("El archivo está vacío.")
     if len(content) > DOCUMENT_MAX_BYTES:
         raise PayloadTooLarge("El archivo supera el máximo de 10 MB.")
+    if not matches_content_type(content, content_type):
+        raise UnsupportedMediaType(CONTENT_MISMATCH)
 
     document_id = uuid.uuid4()
     storage_path = f"{patient.id}/{document_id}{DOCUMENT_CONTENT_TYPES[content_type]}"
@@ -107,6 +137,7 @@ def signed_url(
     patient_id: uuid.UUID,
     document_id: uuid.UUID,
 ) -> tuple[str, int]:
+    _require_clinical_access(current, get_patient(db, patient_id))
     document = document_repository.get_for_patient(db, patient_id, document_id)
     if document is None:
         raise NotFound(DOCUMENT_NOT_FOUND)
