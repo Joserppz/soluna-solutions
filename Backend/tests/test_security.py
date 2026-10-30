@@ -1,3 +1,6 @@
+import time
+from datetime import UTC, datetime, timedelta
+
 import jwt
 import pytest
 
@@ -22,24 +25,21 @@ def test_bcrypt_acepta_hashes_generados_por_pgcrypto():
     assert not security.verify_password("x", "no-es-un-hash")
 
 
-def test_token_incluye_sesion_y_expira_en_milisegundos():
-    token = security.create_access_token(
-        user_id="u-1", session_id="s-1", email="a@b.co", name="Ana", role="Administrador"
-    )
+def test_token_estandar_en_segundos_sin_datos_personales():
+    expires = datetime.now(UTC) + timedelta(minutes=30)
+    token = security.create_access_token(user_id="u-1", session_id="s-1", expires_at=expires)
     payload = security.decode_access_token(token)
 
-    assert payload["sub"] == "u-1"
-    assert payload["sid"] == "s-1"
-    assert payload["exp"] - payload["iat"] == settings.session_max_age_seconds * 1000
-    assert payload["exp"] > security.now_ms()
+    assert set(payload) == {"sub", "sid", "iat", "exp"}
+    assert payload["exp"] == int(expires.timestamp())
+    assert abs(payload["exp"] - payload["iat"] - 1800) <= 1
 
 
 def test_token_alterado_es_rechazado():
-    token = security.create_access_token(
-        user_id="u-1", session_id="s-1", email="a@b.co", name="Ana", role="Voluntario"
-    )
+    expires = datetime.now(UTC) + timedelta(minutes=30)
+    token = security.create_access_token(user_id="u-1", session_id="s-1", expires_at=expires)
     forged = jwt.encode(
-        {**jwt.decode(token, options={"verify_signature": False}), "role": "Administrador"},
+        {**jwt.decode(token, options={"verify_signature": False}), "sid": "otra"},
         "otro-secreto-de-un-atacante-de-32-bytes",
         algorithm="HS256",
     )
@@ -49,11 +49,21 @@ def test_token_alterado_es_rechazado():
 
 
 def test_token_expirado_es_rechazado():
+    now = int(time.time())
     expired = jwt.encode(
-        {"sub": "u-1", "sid": "s-1", "exp": security.now_ms() - 1},
+        {"sub": "u-1", "sid": "s-1", "iat": now - 60, "exp": now - 1},
         settings.jwt_secret.get_secret_value(),
         algorithm="HS256",
     )
 
     with pytest.raises(jwt.ExpiredSignatureError):
         security.decode_access_token(expired)
+
+
+def test_csrf_ligado_a_la_sesion():
+    token = security.csrf_token_for("sesion-1")
+
+    assert security.csrf_token_matches("sesion-1", token)
+    assert not security.csrf_token_matches("sesion-2", token)
+    assert not security.csrf_token_matches("sesion-1", None)
+    assert not security.csrf_token_matches("sesion-1", "")

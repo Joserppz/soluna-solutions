@@ -1,26 +1,29 @@
-"""Dependencias de FastAPI: usuario autenticado a partir del token Bearer."""
+"""Dependencias de FastAPI: usuario autenticado a partir de la cookie de sesión."""
 
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
 import jwt
-from fastapi import Depends, Header, Request
+from fastapi import Depends, Request
 
 from app.core.config import settings
 from app.core.database import DbSession
 from app.core.errors import Forbidden, Unauthorized
 from app.core.logging import set_current_user_id
+from app.core.middleware import UNSAFE_METHODS
 from app.core.network import client_ip
-from app.core.security import decode_access_token
+from app.core.security import csrf_token_matches, decode_access_token
 from app.modules.audit import service as audit_service
 from app.modules.auth import repository as session_repository
+from app.modules.auth.cookies import CSRF_HEADER, SESSION_COOKIE
 from app.modules.auth.models import UserSession
 from app.modules.users import repository as user_repository
 from app.modules.users.models import User
 
 SESSION_INVALID = "Sesión inválida o expirada. Inicia sesión nuevamente."
 SESSION_IDLE_EXPIRED = "La sesión expiró por inactividad (15 minutos). Inicia sesión nuevamente."
+CSRF_INVALID = "Falta el token de seguridad de la sesión (X-CSRF-Token). Recarga la página."
 # La actividad se guarda como mucho una vez por minuto: evita escribir en cada petición
 ACTIVITY_WRITE_INTERVAL = timedelta(seconds=60)
 
@@ -32,15 +35,12 @@ class CurrentUser:
     ip: str | None
 
 
-def get_current_user(
-    request: Request,
-    db: DbSession,
-    authorization: str | None = Header(default=None),
-) -> CurrentUser:
-    if not authorization or not authorization.startswith("Bearer "):
-        raise Unauthorized("Token Bearer requerido")
+def get_current_user(request: Request, db: DbSession) -> CurrentUser:
+    token = request.cookies.get(SESSION_COOKIE)
+    if not token:
+        raise Unauthorized("Inicia sesión para continuar.")
     try:
-        payload = decode_access_token(authorization.removeprefix("Bearer ").strip())
+        payload = decode_access_token(token)
     except jwt.PyJWTError as exc:
         raise Unauthorized(SESSION_INVALID) from exc
 
@@ -58,6 +58,11 @@ def get_current_user(
         or session.absolute_expires_at <= now
     ):
         raise Unauthorized(SESSION_INVALID)
+    # CSRF: toda petición que modifica datos repite el token de la cookie aspar_csrf
+    if request.method in UNSAFE_METHODS and not csrf_token_matches(
+        str(session.id), request.headers.get(CSRF_HEADER)
+    ):
+        raise Forbidden(CSRF_INVALID)
     if session.last_activity_at + timedelta(seconds=settings.session_idle_limit_seconds) <= now:
         session.revoked_at = now
         raise Unauthorized(SESSION_IDLE_EXPIRED, persist=True)

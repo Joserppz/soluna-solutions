@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.errors import Locked, Unauthorized
-from app.core.security import create_access_token, hash_password, verify_password
+from app.core.security import hash_password, verify_password
 from app.modules.audit import service as audit_service
 from app.modules.auth import repository as session_repository
 from app.modules.auth.models import UserSession
@@ -27,20 +27,12 @@ _DUMMY_HASH = hash_password("aspar-usuario-inexistente")
 
 @dataclass
 class LoginResult:
-    access_token: str
-    expires_in: int
-    idle_timeout: int
+    session: UserSession
     user: User
 
 
-def issue_token(user: User, session: UserSession) -> str:
-    return create_access_token(
-        user_id=str(user.id),
-        session_id=str(session.id),
-        email=user.email,
-        name=user.name,
-        role=user.role_key or "",
-    )
+def seconds_left(session: UserSession) -> int:
+    return max(0, int((session.expires_at - datetime.now(UTC)).total_seconds()))
 
 
 def login(
@@ -94,15 +86,10 @@ def login(
         category="AUTENTICACION",
         severity="INFO",
         action="Inicio de sesión administrativo",
-        detail=f"Autenticación JWT exitosa para {user.email} ({user.role_name})",
+        detail=f"Inicio de sesión de {user.email} ({user.role_name})",
         ip_address=ip,
     )
-    return LoginResult(
-        access_token=issue_token(user, session),
-        expires_in=settings.session_max_age_seconds,
-        idle_timeout=settings.session_idle_limit_seconds,
-        user=user,
-    )
+    return LoginResult(session=session, user=user)
 
 
 def _register_failed_attempt(
@@ -131,13 +118,7 @@ def _register_failed_attempt(
     )
 
 
-@dataclass
-class RefreshResult:
-    access_token: str
-    expires_in: int
-
-
-def refresh(db: Session, user: User, session: UserSession, ip: str | None) -> RefreshResult:
+def refresh(db: Session, user: User, session: UserSession, ip: str | None) -> UserSession:
     now = datetime.now(UTC)
     # La renovación nunca pasa del tope absoluto de la sesión
     session.expires_at = min(
@@ -151,14 +132,11 @@ def refresh(db: Session, user: User, session: UserSession, ip: str | None) -> Re
         actor_role=user.role_name,
         category="AUTENTICACION",
         severity="INFO",
-        action="Renovación de token JWT",
+        action="Renovación de sesión",
         detail=f"Se renovó el token de sesión activa para {user.email}",
         ip_address=ip,
     )
-    return RefreshResult(
-        access_token=issue_token(user, session),
-        expires_in=int((session.expires_at - now).total_seconds()),
-    )
+    return session
 
 
 def logout(db: Session, user: User, session: UserSession, ip: str | None) -> None:

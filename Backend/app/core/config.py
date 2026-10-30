@@ -39,6 +39,12 @@ class Settings(BaseSettings):
     session_absolute_max_seconds: int = Field(default=28800, ge=300)
     cors_origins: Annotated[list[str], NoDecode] = ["http://localhost:5173"]
 
+    # Cookies de sesión. En producción: COOKIE_DOMAIN=.aspar.com para compartirlas entre
+    # aspar.com (frontend) y api.aspar.com (API). Vacío = solo el dominio de la API.
+    cookie_domain: str | None = None
+    cookie_secure: bool = True
+    cookie_samesite: Literal["lax", "strict"] = "lax"
+
     # Proxies de confianza que agregan una IP al final de X-Forwarded-For (Cloud Run: 1)
     proxy_trusted_hops: int = Field(default=0, ge=0, le=5)
 
@@ -64,6 +70,11 @@ class Settings(BaseSettings):
         if isinstance(value, str):
             return [origin.strip() for origin in value.split(",") if origin.strip()]
         return value
+
+    @field_validator("cookie_domain", mode="before")
+    @classmethod
+    def _dominio_vacio_es_none(cls, value: object) -> object:
+        return value or None
 
     @field_validator("supabase_url")
     @classmethod

@@ -13,6 +13,7 @@ from app.core.config import settings
 from app.core.database import DbSession
 from app.core.errors import register_error_handlers
 from app.core.logging import RequestContextMiddleware, configure_logging
+from app.core.middleware import OriginCheckMiddleware
 from app.modules.audit import router as audit
 from app.modules.auth import router as auth
 from app.modules.documents import router as documents
@@ -33,11 +34,13 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
+    # El navegador envía las cookies de sesión a la API
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["X-Request-ID"],
 )
+app.add_middleware(OriginCheckMiddleware)
 # Se agrega al final para envolver a todos: el request_id existe incluso en errores de CORS
 app.add_middleware(RequestContextMiddleware)
 

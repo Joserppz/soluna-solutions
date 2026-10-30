@@ -269,12 +269,12 @@ def test_actividad_de_la_sesion_se_actualiza_como_mucho_cada_minuto(
     ).first()
     first_activity = session.last_activity_at
 
-    client.get("/api/v1/auth/verify", headers=headers)
+    client.get("/api/v1/auth/me", headers=headers)
     db_session.refresh(session)
     assert session.last_activity_at == first_activity
 
     session.last_activity_at = datetime.now(UTC) - timedelta(minutes=2)
     db_session.flush()
-    client.get("/api/v1/auth/verify", headers=headers)
+    client.get("/api/v1/auth/me", headers=headers)
     db_session.refresh(session)
     assert session.last_activity_at > datetime.now(UTC) - timedelta(seconds=30)

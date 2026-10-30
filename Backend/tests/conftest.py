@@ -21,6 +21,14 @@ os.environ["PROXY_TRUSTED_HOPS"] = "0"
 if TEST_DATABASE_URL and "supabase" in TEST_DATABASE_URL:
     pytest.exit("TEST_DATABASE_URL no puede apuntar a Supabase: las pruebas borran el esquema.")
 
+# docker-compose.yml y Backend/.env traen valores de desarrollo (por ejemplo
+# COOKIE_SECURE=false). Las pruebas fijan los suyos: dan el mismo resultado en tu PC,
+# dentro del contenedor y en GitHub Actions.
+os.environ["COOKIE_SECURE"] = "true"
+os.environ["COOKIE_DOMAIN"] = ""
+os.environ["COOKIE_SAMESITE"] = "lax"
+os.environ["CORS_ORIGINS"] = "http://localhost:5173"
+
 requires_db = pytest.mark.skipif(
     not TEST_DATABASE_URL, reason="Requiere TEST_DATABASE_URL (PostgreSQL de pruebas)"
 )
@@ -77,7 +85,8 @@ def client(db_session):
         yield from unit_of_work(db_session)
 
     app.dependency_overrides[get_db] = test_db
-    with TestClient(app) as test_client:
+    # https: las cookies de sesión son Secure y httpx no las envía por http
+    with TestClient(app, base_url="https://testserver") as test_client:
         yield test_client
     app.dependency_overrides.clear()
 
@@ -109,19 +118,34 @@ def patient_ids(db_session) -> dict[str, "uuid.UUID"]:
     }
 
 
+def session_headers(client, response) -> dict[str, str]:
+    """Convierte las cookies de un login en encabezados explícitos.
+
+    Así cada prueba puede alternar entre usuarios con el mismo cliente: se vacía el
+    almacén de cookies y cada petición indica su propia sesión y su token CSRF.
+    """
+    from app.modules.auth.cookies import CSRF_COOKIE, CSRF_HEADER, SESSION_COOKIE
+
+    session, csrf = response.cookies[SESSION_COOKIE], response.cookies[CSRF_COOKIE]
+    client.cookies.clear()
+    return {"Cookie": f"{SESSION_COOKIE}={session}; {CSRF_COOKIE}={csrf}", CSRF_HEADER: csrf}
+
+
+def login(client, role: str | None = "admin"):
+    email, password = demo_credentials(role)
+    return client.post("/api/v1/auth/login", json={"email": email, "password": password})
+
+
 @pytest.fixture
 def auth_headers(client):
-    """Devuelve una función clave de rol -> cabecera Authorization con un token válido."""
+    """Devuelve una función clave de rol -> encabezados con la sesión de ese rol."""
     cache: dict[str | None, dict[str, str]] = {}
 
     def headers_for(role: str | None = "admin") -> dict[str, str]:
         if role not in cache:
-            email, password = demo_credentials(role)
-            response = client.post(
-                "/api/v1/auth/login", json={"email": email, "password": password}
-            )
+            response = login(client, role)
             assert response.status_code == 200, response.text
-            cache[role] = {"Authorization": f"Bearer {response.json()['access_token']}"}
+            cache[role] = session_headers(client, response)
         return cache[role]
 
     return headers_for

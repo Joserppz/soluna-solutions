@@ -1,6 +1,9 @@
-"""Contraseñas con bcrypt (RNF-02) y tokens JWT HS256 (RF-01)."""
+"""Contraseñas con bcrypt (RNF-02), tokens JWT HS256 (RF-01) y tokens CSRF."""
 
+import hashlib
+import hmac
 import time
+from datetime import datetime
 from typing import Any
 
 import bcrypt
@@ -23,34 +26,41 @@ def verify_password(password: str, password_hash: str) -> bool:
         return False
 
 
-def now_ms() -> int:
-    return int(time.time() * 1000)
+def create_access_token(*, user_id: str, session_id: str, expires_at: datetime) -> str:
+    """JWT estándar (iat y exp en segundos) que solo identifica la sesión.
 
-
-def create_access_token(*, user_id: str, session_id: str, email: str, name: str, role: str) -> str:
-    # El frontend (decodeJwtExpiry en services/aspar.ts) compara "exp" con Date.now(),
-    # por eso "iat" y "exp" van en milisegundos. La expiración real se valida en la
-    # tabla sessions (app/core/deps.py), no solo con el token.
-    issued_at = now_ms()
+    El rol, la inactividad y la revocación se validan en la tabla sessions en cada
+    petición: el token no lleva datos personales ni permisos.
+    """
+    issued_at = int(time.time())
     payload = {
         "sub": user_id,
         "sid": session_id,
-        "email": email,
-        "name": name,
-        "role": role,
         "iat": issued_at,
-        "exp": issued_at + settings.session_max_age_seconds * 1000,
+        "exp": int(expires_at.timestamp()),
     }
     return jwt.encode(payload, settings.jwt_secret.get_secret_value(), algorithm=JWT_ALGORITHM)
 
 
 def decode_access_token(token: str) -> dict[str, Any]:
-    payload = jwt.decode(
+    return jwt.decode(
         token,
         settings.jwt_secret.get_secret_value(),
         algorithms=[JWT_ALGORITHM],
-        options={"verify_exp": False, "verify_iat": False, "require": ["sub", "sid", "exp"]},
+        options={"require": ["sub", "sid", "iat", "exp"]},
     )
-    if payload["exp"] <= now_ms():
-        raise jwt.ExpiredSignatureError("Token expirado")
-    return payload
+
+
+def csrf_token_for(session_id: str) -> str:
+    """Token CSRF ligado a la sesión (patrón double-submit firmado).
+
+    Se entrega en una cookie legible por el frontend; el frontend lo repite en el
+    encabezado X-CSRF-Token. Otro sitio no puede leer la cookie, así que no puede
+    falsificar el encabezado.
+    """
+    key = settings.jwt_secret.get_secret_value().encode()
+    return hmac.new(key, f"csrf:{session_id}".encode(), hashlib.sha256).hexdigest()
+
+
+def csrf_token_matches(session_id: str, token: str | None) -> bool:
+    return bool(token) and hmac.compare_digest(csrf_token_for(session_id), token)

@@ -43,6 +43,7 @@ cp .env.example .env
 | `SESSION_IDLE_LIMIT_SECONDS` | No | Inactividad permitida (por defecto 900 = 15 min). |
 | `SESSION_ABSOLUTE_MAX_SECONDS` | No | Tope absoluto de una sesión aunque se renueve (por defecto 28800 = 8 h). |
 | `CORS_ORIGINS` | No | Orígenes del frontend separados por coma (por defecto `http://localhost:5173`). |
+| `COOKIE_DOMAIN`, `COOKIE_SECURE`, `COOKIE_SAMESITE` | No | Cookies de sesión. Producción: `COOKIE_DOMAIN=.aspar.com`, `COOKIE_SECURE=true`. En Docker local `COOKIE_SECURE=false` (http). |
 | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Solo para documentos | Supabase → Project Settings → API Keys. La `service_role` es secreta: **solo** en este `.env`, nunca en el frontend. Sin ellas, `/patients/{id}/documents` responde 503. |
 
 `.env` está en `.gitignore`; nunca lo subas al repositorio.
@@ -99,11 +100,13 @@ Con Docker: `docker compose exec api python -m scripts.seed_demo` (o `make seed`
 | Grupo | Rutas | Roles |
 | :--- | :--- | :--- |
 | Sistema | `GET /health` (prueba de vida, sin base), `GET /health/db` (conexión con PostgreSQL) | Público |
-| Autenticación | `POST /auth/login`, `GET /auth/verify`, `POST /auth/refresh`, `POST /auth/logout` | Login público; resto con sesión |
+| Autenticación | `POST /auth/login`, `GET /auth/me`, `POST /auth/refresh`, `POST /auth/logout` | Login público; resto con sesión |
 | Afiliados | `GET/POST /patients`, `GET/PATCH /patients/{id}`, `POST /patients/{id}/deactivate`, `POST /patients/{id}/reactivate` | Lectura: personal con rol; edición: admin, coordination, professional, reception; baja y reactivación: admin |
 | Documentos privados | `GET/POST /patients/{id}/documents`, `GET .../{doc}/url`, `DELETE .../{doc}` | Listar/descargar: personal clínico; subir: editores; borrar: admin |
 | Usuarios y roles | `GET/POST /users`, `PATCH /users/{id}`, `POST /users/{id}/reset-password` | admin |
 | Bitácora | `GET /audit?category=&severity=&actor=&from=&to=&limit=` | admin |
+
+**Sesión con cookies.** El login responde con dos cookies: `aspar_session` (el JWT, `HttpOnly`, `Secure`, `SameSite=Lax`, solo para `/api`: JavaScript no puede leerla) y `aspar_csrf` (legible). El frontend envía las peticiones con `credentials: 'include'` y, en todo `POST/PUT/PATCH/DELETE`, repite el valor de `aspar_csrf` en el encabezado `X-CSRF-Token`; sin él la API responde 403. Además se rechaza cualquier petición que modifique datos con un `Origin` que no esté en `CORS_ORIGINS`. El token dura 30 minutos (renovable con `/auth/refresh`), la sesión se cierra a los 15 minutos sin actividad y nunca dura más de 8 horas.
 
 Los roles se identifican por su **clave fija** (`admin`, `coordination`, `professional`, `reception`, `volunteer`) y se muestran con su nombre (`Administración`, `Coordinación`...). Una cuenta sin rol está **Pendiente de aprobación**: puede iniciar sesión, pero no accede a ningún dato del panel. Las fichas no se borran: se dan de baja con un motivo y se pueden reactivar.
 

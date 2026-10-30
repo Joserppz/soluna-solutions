@@ -1,22 +1,24 @@
-"""DTOs de autenticación: LoginRequestDto / LoginResponseDto de Frontend/src/types/aspar.ts."""
+"""DTOs de autenticación."""
 
 import re
 import uuid
 
-from pydantic import BaseModel, field_validator
+from pydantic import Field, field_validator
+
+from app.core.schemas import CamelModel
 
 EMAIL_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 
 
-class LoginRequest(BaseModel):
-    email: str
-    password: str
+class LoginRequest(CamelModel):
+    email: str = Field(max_length=150)
+    password: str = Field(max_length=200)
 
     @field_validator("email")
     @classmethod
     def validate_email(cls, value: str) -> str:
         value = value.strip().lower()
-        if not EMAIL_PATTERN.match(value) or len(value) > 150:
+        if not EMAIL_PATTERN.match(value):
             raise ValueError("ingresa un correo electrónico válido")
         return value
 
@@ -30,8 +32,8 @@ class LoginRequest(BaseModel):
         return value
 
 
-class SessionUserOut(BaseModel):
-    """Datos del usuario que inició sesión (respuesta de /auth/login)."""
+class SessionUserOut(CamelModel):
+    """Datos del usuario que inició sesión."""
 
     id: uuid.UUID
     name: str
@@ -43,20 +45,13 @@ class SessionUserOut(BaseModel):
     active: bool
 
 
-class LoginResponse(BaseModel):
-    access_token: str
-    token_type: str = "bearer"  # noqa: S105 - tipo de token OAuth2, no una contraseña
-    expires_in: int
-    idle_timeout: int
+class SessionOut(CamelModel):
+    """Estado de la sesión. El token viaja solo en la cookie HttpOnly aspar_session."""
+
     user: SessionUserOut
-
-
-class VerifyResponse(BaseModel):
-    valid: bool
-    user: dict
-
-
-class RefreshResponse(BaseModel):
-    access_token: str
-    token_type: str = "bearer"  # noqa: S105 - tipo de token OAuth2, no una contraseña
+    # Segundos hasta que vence el token (renovar con POST /auth/refresh antes de ese plazo)
     expires_in: int
+    # Segundos de inactividad que cierran la sesión
+    idle_timeout: int
+    # Mismo valor que la cookie aspar_csrf: enviarlo en X-CSRF-Token al modificar datos
+    csrf_token: str

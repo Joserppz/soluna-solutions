@@ -117,7 +117,7 @@ def test_cambiar_rol_cierra_las_sesiones_del_usuario(client, auth_headers, db_se
 
     assert response.status_code == 200
     assert response.json()["role"] == "reception"
-    assert client.get("/api/v1/auth/verify", headers=volunteer_headers).status_code == 401
+    assert client.get("/api/v1/auth/me", headers=volunteer_headers).status_code == 401
     assert (
         db_session.scalar(
             select(UserSession).where(
