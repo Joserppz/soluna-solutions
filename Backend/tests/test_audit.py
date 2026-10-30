@@ -33,7 +33,7 @@ def test_consultar_bitacora_con_formato_del_frontend(client, auth_headers):
         "occurrences",
         "lastOccurredAt",
     }
-    assert event["action"] == "Inicio de sesión administrativo"
+    assert event["action"] == "Inicio de sesión"
 
 
 def test_filtros_por_categoria_severidad_y_actor(client, auth_headers):
@@ -78,7 +78,7 @@ def test_operaciones_sensibles_quedan_en_la_bitacora(client, auth_headers, db_se
 
     registered = actions(db_session)
     for expected in (
-        "Inicio de sesión administrativo",
+        "Inicio de sesión",
         "Actualización de ficha de afiliado",
         "Actualización de consentimiento / acceso de afiliado",
         "Actualización de usuario y rol",

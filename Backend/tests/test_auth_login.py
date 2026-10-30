@@ -24,6 +24,10 @@ def test_login_correcto_crea_la_sesion_en_cookies(client, db_session):
         "roleName": "Administración",
         "department": "General",
         "active": True,
+        "emailVerified": True,
+        "mustChangePassword": False,
+        "hasPassword": True,
+        "googleLinked": False,
     }
     assert db_session.scalar(select(UserSession).where(UserSession.user_id == admin.id))
 

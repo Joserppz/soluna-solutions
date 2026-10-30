@@ -59,6 +59,7 @@ def test_crear_usuario_con_contrasena_temporal_que_permite_iniciar_sesion(
     assert body["email"] == "paola.vargas@aspar.org"
     assert body["roleName"] == "Profesional"
     assert body["temporaryPassword"]
+    assert body["mustChangePassword"] is True
     login = client.post(
         "/api/v1/auth/login",
         json={"email": "paola.vargas@aspar.org", "password": body["temporaryPassword"]},
@@ -68,15 +69,6 @@ def test_crear_usuario_con_contrasena_temporal_que_permite_iniciar_sesion(
     assert db_session.scalar(select(AuditLog).where(AuditLog.action == "Creación de usuario"))
 
 
-def test_crear_usuario_con_contrasena_propia(client, auth_headers):
-    response = client.post(
-        "/api/v1/users", json=NEW_USER | {"password": "Fono2026x"}, headers=auth_headers()
-    )
-
-    assert response.status_code == 201
-    assert response.json()["temporaryPassword"] is None
-
-
 def test_validaciones_de_usuario(client, auth_headers):
     headers = auth_headers()
     cases = [
@@ -84,8 +76,6 @@ def test_validaciones_de_usuario(client, auth_headers):
         ({"email": "sin-arroba"}, 422, "correo"),
         ({"role": "director"}, 422, "Rol inválido"),
         ({"name": "Al"}, 422, "3 caracteres"),
-        ({"password": "corta1"}, 422, "8 caracteres"),
-        ({"password": "solamenteletras"}, 422, "letras y números"),
         ({"name": "x" * 121}, 422, "name"),
     ]
     for override, code, message in cases:

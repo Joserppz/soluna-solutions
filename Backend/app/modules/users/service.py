@@ -3,10 +3,11 @@
 import re
 import secrets
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.errors import Conflict, NotFound, ValidationError
 from app.core.security import hash_password
 from app.modules.audit import service as audit_service
@@ -29,8 +30,152 @@ def validate_password(password: str) -> None:
         raise ValidationError("La contraseña debe combinar letras y números.")
 
 
+# Palabras para contraseñas temporales legibles (formato Palabra-4Digitos-Palabra).
+# 122 x 122 x 10.000 combinaciones (~27 bits): suficiente para una contraseña
+# que vence en TEMP_PASSWORD_HOURS, se cambia al ingresar y tiene bloqueo por intentos.
+TEMP_PASSWORD_WORDS = (
+    "Achachi",
+    "Aguila",
+    "Alba",
+    "Alpaca",
+    "Amaru",
+    "Andes",
+    "Arce",
+    "Arena",
+    "Aroma",
+    "Arroyo",
+    "Aurora",
+    "Avena",
+    "Ayni",
+    "Bahia",
+    "Brisa",
+    "Cacao",
+    "Calma",
+    "Camino",
+    "Canela",
+    "Cantuta",
+    "Cedro",
+    "Ceibo",
+    "Celeste",
+    "Cielo",
+    "Cima",
+    "Coca",
+    "Colibri",
+    "Condor",
+    "Coral",
+    "Cosecha",
+    "Cristal",
+    "Cumbre",
+    "Delta",
+    "Diana",
+    "Dorado",
+    "Duna",
+    "Eco",
+    "Encino",
+    "Estrella",
+    "Fuente",
+    "Gacela",
+    "Girasol",
+    "Granito",
+    "Guinda",
+    "Halcon",
+    "Helecho",
+    "Hoja",
+    "Huerto",
+    "Illampu",
+    "Illimani",
+    "Inti",
+    "Isla",
+    "Jade",
+    "Jaguar",
+    "Jardin",
+    "Jazmin",
+    "Kantuta",
+    "Killa",
+    "Lago",
+    "Laguna",
+    "Lapacho",
+    "Laurel",
+    "Lirio",
+    "Llama",
+    "Llovizna",
+    "Luna",
+    "Madero",
+    "Maiz",
+    "Mango",
+    "Manzana",
+    "Mar",
+    "Menta",
+    "Mirlo",
+    "Molle",
+    "Monte",
+    "Musgo",
+    "Nevado",
+    "Niebla",
+    "Nogal",
+    "Nube",
+    "Olivo",
+    "Ombu",
+    "Ondina",
+    "Orquidea",
+    "Pacha",
+    "Palma",
+    "Paloma",
+    "Pampa",
+    "Pino",
+    "Plata",
+    "Pradera",
+    "Puma",
+    "Quinua",
+    "Rayo",
+    "Retama",
+    "Rio",
+    "Roble",
+    "Rocio",
+    "Rosal",
+    "Sabana",
+    "Salvia",
+    "Sauce",
+    "Selva",
+    "Sendero",
+    "Sol",
+    "Suri",
+    "Tajibo",
+    "Tarija",
+    "Tierra",
+    "Titicaca",
+    "Topacio",
+    "Trigo",
+    "Tulipan",
+    "Tunari",
+    "Urpi",
+    "Valle",
+    "Vicuna",
+    "Viento",
+    "Yareta",
+    "Yungas",
+    "Zafiro",
+    "Zorzal",
+)
+
+
 def temporary_password() -> str:
-    return f"Aspar-{secrets.token_urlsafe(9)}7"
+    """Contraseña temporal legible, distinta cada vez (por ejemplo Ceibo-4821-Sol)."""
+    first, last = secrets.choice(TEMP_PASSWORD_WORDS), secrets.choice(TEMP_PASSWORD_WORDS)
+    return f"{first}-{secrets.randbelow(10000):04d}-{last}"
+
+
+def _set_temporary_password(user: User) -> str:
+    """Asigna una contraseña temporal que vence y que la persona debe cambiar al ingresar."""
+    password = temporary_password()
+    now = datetime.now(UTC)
+    user.password_hash = hash_password(password)
+    user.must_change_password = True
+    user.temp_password_expires_at = now + timedelta(hours=settings.temp_password_hours)
+    user.password_changed_at = now
+    user.failed_login_attempts = 0
+    user.locked_until = None
+    return password
 
 
 def _validate_name(name: str) -> None:
@@ -62,7 +207,8 @@ def get_user(db: Session, user_id: uuid.UUID) -> User:
     return user
 
 
-def create_user(db: Session, data: UserCreate, current: CurrentUser) -> tuple[User, str | None]:
+def create_user(db: Session, data: UserCreate, current: CurrentUser) -> tuple[User, str]:
+    """Invitación: Administración crea la cuenta y entrega en persona la contraseña temporal."""
     email = data.email.strip().lower()
     _validate_name(data.name)
     role = _role(db, data.role)
@@ -71,24 +217,17 @@ def create_user(db: Session, data: UserCreate, current: CurrentUser) -> tuple[Us
     if user_repository.get_by_email(db, email) is not None:
         raise Conflict("Ya existe un usuario con ese correo.")
 
-    generated = None if data.password else temporary_password()
-    password = data.password or generated
-    validate_password(password)
-
-    user = user_repository.add(
-        db,
-        User(
-            name=data.name.strip(),
-            email=email,
-            password_hash=hash_password(password),
-            role=role,
-            department=data.department.strip() or "General",
-            # Administración crea la cuenta y conoce a la persona: el correo se da por válido
-            email_verified=True,
-            active=True,
-            failed_login_attempts=0,
-        ),
+    user = User(
+        name=data.name.strip(),
+        email=email,
+        role=role,
+        department=data.department.strip() or "General",
+        # Administración crea la cuenta y conoce a la persona: el correo se da por válido
+        email_verified=True,
+        active=True,
     )
+    generated = _set_temporary_password(user)
+    user_repository.add(db, user)
     _audit(
         db,
         current,
@@ -139,18 +278,9 @@ def update_user(db: Session, user_id: uuid.UUID, data: UserUpdate, current: Curr
     return user
 
 
-def reset_password(
-    db: Session, user_id: uuid.UUID, password: str | None, current: CurrentUser
-) -> str | None:
+def reset_password(db: Session, user_id: uuid.UUID, current: CurrentUser) -> str:
     user = get_user(db, user_id)
-    generated = None if password else temporary_password()
-    new_password = password or generated
-    validate_password(new_password)
-
-    user.password_hash = hash_password(new_password)
-    user.failed_login_attempts = 0
-    user.locked_until = None
-    user.password_changed_at = datetime.now(UTC)
+    generated = _set_temporary_password(user)
     session_repository.revoke_all_for_user(db, user.id)
     _audit(
         db,

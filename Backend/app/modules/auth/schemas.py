@@ -43,6 +43,11 @@ class SessionUserOut(CamelModel):
     role_name: str
     department: str
     active: bool
+    email_verified: bool
+    # Contraseña temporal entregada por Administración: hay que cambiarla antes de seguir
+    must_change_password: bool
+    has_password: bool
+    google_linked: bool
 
 
 class SessionOut(CamelModel):
@@ -55,3 +60,53 @@ class SessionOut(CamelModel):
     idle_timeout: int
     # Mismo valor que la cookie aspar_csrf: enviarlo en X-CSRF-Token al modificar datos
     csrf_token: str
+
+
+def _password_rule(value: str) -> str:
+    if len(value.encode()) > 72:
+        raise ValueError("la contraseña no puede superar 72 bytes")
+    return value
+
+
+class RegisterRequest(CamelModel):
+    name: str = Field(max_length=120)
+    email: str = Field(max_length=150)
+    password: str = Field(max_length=200)
+    # Token de Cloudflare Turnstile del formulario
+    turnstile_token: str = Field(max_length=2048)
+
+    _check_password = field_validator("password")(_password_rule)
+
+
+class EmailRequest(CamelModel):
+    email: str = Field(max_length=150)
+    turnstile_token: str = Field(max_length=2048)
+
+    @field_validator("email")
+    @classmethod
+    def normalize(cls, value: str) -> str:
+        return value.strip().lower()
+
+
+class TokenRequest(CamelModel):
+    token: str = Field(min_length=20, max_length=200)
+
+
+class ResetPasswordRequest(CamelModel):
+    token: str = Field(min_length=20, max_length=200)
+    password: str = Field(max_length=200)
+
+    _check_password = field_validator("password")(_password_rule)
+
+
+class ChangePasswordRequest(CamelModel):
+    # Opcional solo para cuentas creadas con Google que aún no tienen contraseña
+    current_password: str | None = Field(default=None, max_length=200)
+    new_password: str = Field(max_length=200)
+
+    _check_password = field_validator("new_password")(_password_rule)
+
+
+class GoogleLoginRequest(CamelModel):
+    # ID token que entrega Google Identity Services en el navegador
+    credential: str = Field(min_length=20, max_length=4096)

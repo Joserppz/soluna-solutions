@@ -7,7 +7,6 @@ from app.modules.auth.dependencies import CurrentUser, require_roles
 from app.modules.users import service as user_service
 from app.modules.users.models import ADMIN
 from app.modules.users.schemas import (
-    PasswordReset,
     PasswordResetOut,
     UserCreate,
     UserCreated,
@@ -52,11 +51,10 @@ def update_user(
 )
 def reset_password(
     user_id: uuid.UUID,
-    payload: PasswordReset,
     db: DbSession,
     current: CurrentUser = Depends(admin_only),
 ):
-    generated = user_service.reset_password(db, user_id, payload.password, current)
+    generated = user_service.reset_password(db, user_id, current)
     return PasswordResetOut(
         message="Contraseña restablecida; las sesiones activas del usuario se cerraron.",
         temporary_password=generated,

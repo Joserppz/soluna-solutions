@@ -14,6 +14,10 @@ def get_by_email(db: Session, email: str) -> User | None:
     return db.scalar(select(User).where(func.lower(User.email) == email.strip().lower()))
 
 
+def get_by_google_sub(db: Session, google_sub: str) -> User | None:
+    return db.scalar(select(User).where(User.google_sub == google_sub))
+
+
 def list_users(db: Session) -> list[User]:
     return list(db.scalars(select(User).order_by(User.created_at, User.name)))
 

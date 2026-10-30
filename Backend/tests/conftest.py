@@ -28,6 +28,10 @@ os.environ["COOKIE_SECURE"] = "true"
 os.environ["COOKIE_DOMAIN"] = ""
 os.environ["COOKIE_SAMESITE"] = "lax"
 os.environ["CORS_ORIGINS"] = "http://localhost:5173"
+# Correo por consola y claves de prueba: las pruebas nunca envían correos reales
+os.environ["EMAIL_PROVIDER"] = "console"
+os.environ["TURNSTILE_SECRET_KEY"] = ""
+os.environ["GOOGLE_CLIENT_ID"] = ""
 
 requires_db = pytest.mark.skipif(
     not TEST_DATABASE_URL, reason="Requiere TEST_DATABASE_URL (PostgreSQL de pruebas)"
@@ -149,3 +153,64 @@ def auth_headers(client):
         return cache[role]
 
     return headers_for
+
+
+class FakeEmailSender:
+    def __init__(self):
+        self.sent = []
+
+    def send(self, message):
+        self.sent.append(message)
+
+    def link(self, index: int = -1) -> str:
+        """Token del último enlace enviado."""
+        import re
+
+        return re.search(r"token=([\w-]+)", self.sent[index].text).group(1)
+
+
+class FakeTurnstile:
+    """Aprueba solo el token "humano"."""
+
+    def verify(self, token, ip):
+        return token == "humano"
+
+
+class FakeGoogle:
+    def __init__(self):
+        self.claims: dict[str, dict] = {}
+
+    def verify(self, credential):
+        from app.core.errors import Unauthorized
+
+        if credential not in self.claims:
+            raise Unauthorized("No pudimos verificar tu cuenta de Google. Intenta nuevamente.")
+        return self.claims[credential]
+
+
+@pytest.fixture
+def outbox(client):
+    from app.adapters.email import get_email_sender
+    from app.main import app
+
+    sender = FakeEmailSender()
+    app.dependency_overrides[get_email_sender] = lambda: sender
+    return sender
+
+
+@pytest.fixture
+def captcha(client):
+    from app.adapters.turnstile import get_turnstile
+    from app.main import app
+
+    app.dependency_overrides[get_turnstile] = FakeTurnstile
+
+
+@pytest.fixture
+def google(client):
+    from app.adapters.google import get_google_verifier
+    from app.main import app
+
+    fake = FakeGoogle()
+    app.dependency_overrides[get_google_verifier] = lambda: fake
+    return fake

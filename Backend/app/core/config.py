@@ -9,11 +9,13 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Annotated, Literal
 
-from pydantic import Field, SecretStr, field_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
 JWT_SECRET_PLACEHOLDER = "reemplazar-por-un-secreto-aleatorio"  # noqa: S105 - valor de .env.example
+# Clave secreta de prueba de Cloudflare Turnstile: siempre aprueba (solo desarrollo)
+TURNSTILE_TEST_SECRET = "1x0000000000000000000000000000000AA"  # noqa: S105 - clave pública de prueba
 
 
 class Settings(BaseSettings):
@@ -48,6 +50,30 @@ class Settings(BaseSettings):
     # Proxies de confianza que agregan una IP al final de X-Forwarded-For (Cloud Run: 1)
     proxy_trusted_hops: int = Field(default=0, ge=0, le=5)
 
+    # Dirección del frontend: los enlaces de los correos apuntan aquí
+    frontend_url: str = "http://localhost:5173"
+
+    # Correos transaccionales (verificación y recuperación de contraseña)
+    email_provider: Literal["console", "resend", "brevo"] = "console"
+    email_from: str = "ASPAR <no-responder@aspar.com>"
+    resend_api_key: SecretStr = SecretStr("")
+    brevo_api_key: SecretStr = SecretStr("")
+    email_verification_hours: int = Field(default=24, ge=1, le=168)
+    password_reset_minutes: int = Field(default=60, ge=10, le=1440)
+    temp_password_hours: int = Field(default=72, ge=1, le=720)
+
+    # Cloudflare Turnstile (CAPTCHA) de los formularios públicos
+    turnstile_secret_key: SecretStr = SecretStr(TURNSTILE_TEST_SECRET)
+
+    @field_validator("turnstile_secret_key", mode="before")
+    @classmethod
+    def _turnstile_por_defecto(cls, value: object) -> object:
+        # TURNSTILE_SECRET_KEY vacío en .env = clave de prueba (en prod se rechaza más abajo)
+        return value or TURNSTILE_TEST_SECRET
+
+    # "Continuar con Google": Client ID de Google Cloud (vacío = desactivado)
+    google_client_id: str = ""
+
     supabase_url: str = ""
     supabase_service_role_key: SecretStr = SecretStr("")
     patient_documents_bucket: str = "documentos-pacientes"
@@ -79,6 +105,26 @@ class Settings(BaseSettings):
     @field_validator("supabase_url")
     @classmethod
     def _sin_barra_final(cls, value: str) -> str:
+        return value.rstrip("/")
+
+    @model_validator(mode="after")
+    def _produccion_segura(self) -> "Settings":
+        if self.env != "prod":
+            return self
+        problems = []
+        if self.email_provider == "console":
+            problems.append("EMAIL_PROVIDER no puede ser console (los correos no llegarían)")
+        if self.turnstile_secret_key.get_secret_value() == TURNSTILE_TEST_SECRET:
+            problems.append("TURNSTILE_SECRET_KEY es la clave de prueba de Cloudflare")
+        if not self.cookie_secure:
+            problems.append("COOKIE_SECURE debe ser true")
+        if problems:
+            raise ValueError("Configuración insegura para producción: " + "; ".join(problems))
+        return self
+
+    @field_validator("frontend_url")
+    @classmethod
+    def _url_sin_barra(cls, value: str) -> str:
         return value.rstrip("/")
 
     @property

@@ -25,8 +25,8 @@ class UserOut(CamelModel):
 
 
 class UserCreated(UserOut):
-    # Solo se devuelve si el Backend generó una contraseña temporal
-    temporary_password: str | None = None
+    # Contraseña temporal: se muestra una sola vez y se entrega en persona
+    temporary_password: str
 
 
 class UserCreate(CamelModel):
@@ -34,7 +34,6 @@ class UserCreate(CamelModel):
     email: str = Field(max_length=150)
     role: str = Field(max_length=30)
     department: str = Field(default="General", max_length=80)
-    password: str | None = Field(default=None, max_length=72)
 
 
 class UserUpdate(CamelModel):
@@ -44,13 +43,9 @@ class UserUpdate(CamelModel):
     department: str | None = Field(default=None, max_length=80)
 
 
-class PasswordReset(CamelModel):
-    password: str | None = Field(default=None, max_length=72)
-
-
 class PasswordResetOut(CamelModel):
     message: str
-    temporary_password: str | None = None
+    temporary_password: str
 
 
 def to_user_out(user: User) -> UserOut:

@@ -24,3 +24,23 @@ class UserSession(Base):
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     ip_address: Mapped[str | None] = mapped_column(String)
     user_agent: Mapped[str | None] = mapped_column(String)
+
+
+VERIFY_EMAIL = "verificar_correo"
+RESET_PASSWORD = "restablecer_contrasena"  # noqa: S105 - tipo de enlace, no una clave
+
+
+class AuthToken(Base):
+    """Enlace de un solo uso enviado por correo. Solo se guarda el SHA-256 del token."""
+
+    __tablename__ = "auth_tokens"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, primary_key=True, server_default=func.gen_random_uuid()
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    purpose: Mapped[str] = mapped_column(String)
+    token_hash: Mapped[str] = mapped_column(String, unique=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

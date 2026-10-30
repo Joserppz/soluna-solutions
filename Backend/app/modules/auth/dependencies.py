@@ -24,6 +24,7 @@ from app.modules.users.models import User
 SESSION_INVALID = "Sesión inválida o expirada. Inicia sesión nuevamente."
 SESSION_IDLE_EXPIRED = "La sesión expiró por inactividad (15 minutos). Inicia sesión nuevamente."
 CSRF_INVALID = "Falta el token de seguridad de la sesión (X-CSRF-Token). Recarga la página."
+MUST_CHANGE_PASSWORD = "Cambia tu contraseña temporal antes de continuar."  # noqa: S105
 # La actividad se guarda como mucho una vez por minuto: evita escribir en cada petición
 ACTIVITY_WRITE_INTERVAL = timedelta(seconds=60)
 
@@ -86,6 +87,8 @@ def require_roles(*roles: str):
         db: DbSession,
         current: CurrentUser = Depends(get_current_user),
     ) -> CurrentUser:
+        if current.user.must_change_password:
+            raise Forbidden(MUST_CHANGE_PASSWORD)
         if current.user.role_key not in roles:
             audit_service.audit(
                 db,
