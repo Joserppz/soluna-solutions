@@ -67,6 +67,15 @@ export type PublicSchedule = Schemas['PublicScheduleOut']
 export type PublicScheduleQuery =
   QueryOf<'public_schedules_api_v1_public_schedules_get'>
 
+// Asistencia
+export type AttendanceSheet = Schemas['AttendanceSheetOut']
+export type AttendanceEntry = Schemas['AttendanceEntryOut']
+export type AttendanceMark = Schemas['AttendanceMark']
+export type AttendanceStatus = AttendanceMark['status']
+export type NewcomerIn = Schemas['NewcomerIn']
+export type NewcomerOut = Schemas['NewcomerOut']
+export type MonthlySummary = Schemas['MonthlySummaryOut']
+
 // Bitácora
 export type AuditPage = Schemas['AuditPage']
 export type AuditEvent = Schemas['AuditEventOut']

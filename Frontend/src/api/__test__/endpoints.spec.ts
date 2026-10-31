@@ -191,6 +191,49 @@ describe('Endpoints', () => {
       ],
       [() => api.schedules.remove('s1'), 'DELETE', '/schedules/s1'],
       [
+        () => api.attendance.sheet('s1', 'alba'),
+        'GET',
+        '/schedules/s1/attendance?search=alba',
+      ],
+      [
+        () =>
+          api.attendance.mark('s1', 'p1', {
+            status: 'vino',
+            note: 'Con su hija',
+          }),
+        'PUT',
+        '/schedules/s1/attendance/p1',
+      ],
+      [
+        () => api.attendance.markAllPresent('s1'),
+        'POST',
+        '/schedules/s1/attendance/mark-all-present',
+      ],
+      [
+        () => api.attendance.close('s1'),
+        'POST',
+        '/schedules/s1/attendance/close',
+      ],
+      [
+        () => api.attendance.reopen('s1'),
+        'POST',
+        '/schedules/s1/attendance/reopen',
+      ],
+      [
+        () =>
+          api.attendance.addNewcomer('s1', {
+            name: 'Elena Quisbert',
+            phone: '71234567',
+          }),
+        'POST',
+        '/schedules/s1/attendance/newcomers',
+      ],
+      [
+        () => api.attendance.monthly('2026-10'),
+        'GET',
+        '/attendance/monthly?month=2026-10',
+      ],
+      [
         () => api.public.schedules({ from: '2026-11-01' }),
         'GET',
         '/public/schedules?from=2026-11-01',
@@ -216,6 +259,22 @@ describe('Endpoints', () => {
       expect(call(fetchMock, index).init.method, path).toBe(method)
       expect(call(fetchMock, index).url).toBe(`${BASE}${path}`)
     }
+  })
+
+  it('descarga el resumen mensual como archivo', async () => {
+    const fetchMock = fakeFetch({ body: 'Fecha;Actividad' })
+    const api = createEndpoints(
+      new HttpClient({ baseUrl: BASE, fetch: fetchMock }),
+    )
+
+    const file = await api.attendance.downloadMonthly('csv', '2026-10')
+
+    expect(call(fetchMock).url).toBe(
+      `${BASE}/attendance/monthly?month=2026-10&format=csv`,
+    )
+    // En las pruebas el Blob de fetch (Node) y el global (jsdom) son de clases distintas
+    expect(file.size).toBe(15)
+    expect(await file.text()).toBe('Fecha;Actividad')
   })
 
   it('sube documentos como multipart con su tipo', async () => {

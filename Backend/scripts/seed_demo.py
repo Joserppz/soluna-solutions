@@ -18,7 +18,14 @@ from app.core import clock
 from app.core.config import settings
 from app.core.database import SessionLocal
 from app.core.security import hash_password
-from app.models import Patient, PatientContact, PatientEvaluation, Schedule, User
+from app.models import (
+    Attendance,
+    Patient,
+    PatientContact,
+    PatientEvaluation,
+    Schedule,
+    User,
+)
 from app.modules.users import repository as user_repository
 from app.modules.users.models import (
     ADMIN,
@@ -140,6 +147,31 @@ def seed(db: Session) -> list[str]:
     schedules = _schedules(professional)
     db.add_all(schedules)
     created.append(f"{len(schedules)} actividades en la agenda (sábados alrededor de hoy)")
+    db.flush()
+    # Asistencia del sábado pasado: una vino, otro avisó que no venía, la tercera sin marcar
+    last_saturday = schedules[0]
+    marked_at = clock.now()
+    db.add_all(
+        [
+            Attendance(
+                schedule_id=last_saturday.id,
+                patient_id=patients[0].id,
+                status="vino",
+                note="Viene con su hijo",
+                marked_by=professional.id,
+                marked_at=marked_at,
+            ),
+            Attendance(
+                schedule_id=last_saturday.id,
+                patient_id=patients[1].id,
+                status="no_vino",
+                note="Avisó que estaba resfriado",
+                marked_by=professional.id,
+                marked_at=marked_at,
+            ),
+        ]
+    )
+    created.append("Asistencia de ejemplo del sábado pasado")
     db.flush()
     return created
 

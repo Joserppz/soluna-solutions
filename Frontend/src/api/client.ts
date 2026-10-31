@@ -30,6 +30,8 @@ export interface RequestOptions {
    * "datos incorrectos", no "la sesión venció".
    */
   anonymous?: boolean
+  /** Devuelve el archivo (Blob) en vez de leer JSON: descargas CSV o Excel. */
+  blob?: boolean
   signal?: AbortSignal
 }
 
@@ -140,6 +142,7 @@ export class HttpClient {
       if (response.status === 401 && !options.anonymous) this.onUnauthorized?.()
       throw await toApiError(response)
     }
+    if (options.blob) return (await response.blob()) as T
     if (response.status === 204) return undefined as T
     const text = await response.text()
     return (text ? JSON.parse(text) : undefined) as T

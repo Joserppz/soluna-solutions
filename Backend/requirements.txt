@@ -10,3 +10,6 @@ PyJWT==2.15.1
 cryptography==50.0.2
 python-multipart==0.0.31
 httpx==0.28.1
+# Resumen mensual de asistencia en Excel (.xlsx)
+openpyxl==3.1.5
+et-xmlfile==2.0.0

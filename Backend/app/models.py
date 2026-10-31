@@ -4,6 +4,7 @@ Importarlo garantiza que SQLAlchemy conozca todas las tablas, también las que s
 relacionan entre módulos por clave foránea (por ejemplo, patients.created_by -> users).
 """
 
+from app.modules.attendance.models import Attendance
 from app.modules.audit.models import AuditLog
 from app.modules.auth.models import UserSession
 from app.modules.documents.models import PatientDocument
@@ -14,6 +15,7 @@ from app.modules.schedules.models import Schedule
 from app.modules.users.models import Permission, Role, User
 
 __all__ = [
+    "Attendance",
     "AuditLog",
     "Inquiry",
     "Patient",

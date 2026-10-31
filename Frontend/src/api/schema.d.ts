@@ -4,6 +4,26 @@
  */
 
 export interface paths {
+  '/api/v1/attendance/monthly': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Monthly Summary
+     * @description Resumen del mes por actividad y por tipo. Con format=csv o xlsx se descarga.
+     */
+    get: operations['monthly_summary_api_v1_attendance_monthly_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/audit': {
     parameters: {
       query?: never
@@ -577,6 +597,126 @@ export interface paths {
     patch: operations['update_schedule_api_v1_schedules__schedule_id__patch']
     trace?: never
   }
+  '/api/v1/schedules/{schedule_id}/attendance': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Get Sheet
+     * @description Lista del día: afiliados activos con lo que se marcó, por nombre.
+     */
+    get: operations['get_sheet_api_v1_schedules__schedule_id__attendance_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/schedules/{schedule_id}/attendance/close': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Close
+     * @description «Cerrar asistencia del día»: después ya no se puede marcar.
+     */
+    post: operations['close_api_v1_schedules__schedule_id__attendance_close_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/schedules/{schedule_id}/attendance/mark-all-present': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Mark All Present
+     * @description «Marcar a todos como presentes»: solo cambia a quienes siguen sin marcar.
+     */
+    post: operations['mark_all_present_api_v1_schedules__schedule_id__attendance_mark_all_present_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/schedules/{schedule_id}/attendance/newcomers': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Add Newcomer
+     * @description «Anotar persona nueva»: crea una solicitud (origen asistencia) para Recepción.
+     */
+    post: operations['add_newcomer_api_v1_schedules__schedule_id__attendance_newcomers_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/schedules/{schedule_id}/attendance/reopen': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Reopen
+     * @description Reabre una asistencia cerrada para corregirla (Coordinación).
+     */
+    post: operations['reopen_api_v1_schedules__schedule_id__attendance_reopen_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/schedules/{schedule_id}/attendance/{patient_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    /**
+     * Mark
+     * @description Vino / No vino / sin marcar, con una nota rápida opcional.
+     */
+    put: operations['mark_api_v1_schedules__schedule_id__attendance__patient_id__put']
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/schedules/{schedule_id}/cancel': {
     parameters: {
       query?: never
@@ -716,6 +856,91 @@ export interface paths {
 export type webhooks = Record<string, never>
 export interface components {
   schemas: {
+    /** AttendanceActivity */
+    AttendanceActivity: {
+      /**
+       * Date
+       * Format: date
+       */
+      date: string
+      /**
+       * Endtime
+       * Format: time
+       */
+      endTime: string
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string
+      /** Location */
+      location: string
+      /** Professionalname */
+      professionalName: string
+      /**
+       * Starttime
+       * Format: time
+       */
+      startTime: string
+      /** Status */
+      status: string
+      /** Title */
+      title: string
+    }
+    /** AttendanceEntryOut */
+    AttendanceEntryOut: {
+      /** Markedat */
+      markedAt: string | null
+      /** Name */
+      name: string
+      /** Note */
+      note: string
+      /**
+       * Patientid
+       * Format: uuid
+       */
+      patientId: string
+      /**
+       * Status
+       * @enum {string}
+       */
+      status: 'vino' | 'no_vino' | 'sin_marcar'
+    }
+    /** AttendanceMark */
+    AttendanceMark: {
+      /** Note */
+      note?: string | null
+      /**
+       * Status
+       * @enum {string}
+       */
+      status: 'vino' | 'no_vino' | 'sin_marcar'
+    }
+    /**
+     * AttendanceSheetOut
+     * @description La planilla del día: quiénes están en la lista y qué se marcó.
+     */
+    AttendanceSheetOut: {
+      activity: components['schemas']['AttendanceActivity']
+      /** Closed */
+      closed: boolean
+      /** Closedat */
+      closedAt: string | null
+      /** Items */
+      items: components['schemas']['AttendanceEntryOut'][]
+      summary: components['schemas']['AttendanceSummary']
+    }
+    /** AttendanceSummary */
+    AttendanceSummary: {
+      /** Came */
+      came: number
+      /** Notcame */
+      notCame: number
+      /** Total */
+      total: number
+      /** Unmarked */
+      unmarked: number
+    }
     /** AuditEventOut */
     AuditEventOut: {
       /** Action */
@@ -974,6 +1199,84 @@ export interface components {
      * @description Respuesta simple con un mensaje para el usuario.
      */
     MessageResponse: {
+      /** Message */
+      message: string
+    }
+    /** MonthlyActivity */
+    MonthlyActivity: {
+      /** Came */
+      came: number
+      /** Categorylabel */
+      categoryLabel: string
+      /** Closed */
+      closed: boolean
+      /**
+       * Date
+       * Format: date
+       */
+      date: string
+      /** Notcame */
+      notCame: number
+      /**
+       * Scheduleid
+       * Format: uuid
+       */
+      scheduleId: string
+      /** Title */
+      title: string
+    }
+    /** MonthlyCategory */
+    MonthlyCategory: {
+      /** Came */
+      came: number
+      /** Category */
+      category: string
+      /** Label */
+      label: string
+    }
+    /** MonthlySummaryOut */
+    MonthlySummaryOut: {
+      /** Activities */
+      activities: components['schemas']['MonthlyActivity'][]
+      /** Bycategory */
+      byCategory: components['schemas']['MonthlyCategory'][]
+      /** Month */
+      month: string
+      /** Totalcame */
+      totalCame: number
+    }
+    /**
+     * NewcomerIn
+     * @description Persona que llegó por primera vez y no tiene ficha («Anotar persona nueva»).
+     */
+    NewcomerIn: {
+      /**
+       * Contactconsent
+       * @default false
+       */
+      contactConsent?: boolean
+      /** Name */
+      name: string
+      /**
+       * Note
+       * @default
+       */
+      note?: string
+      /**
+       * Onbehalfof
+       * @default
+       */
+      onBehalfOf?: string
+      /** Phone */
+      phone: string
+    }
+    /** NewcomerOut */
+    NewcomerOut: {
+      /**
+       * Inquiryid
+       * Format: uuid
+       */
+      inquiryId: string
       /** Message */
       message: string
     }
@@ -1435,6 +1738,8 @@ export interface components {
       attendanceClosedAt: string | null
       /** Availability */
       availability: ('libres' | 'ultimos' | 'completo') | null
+      /** Came */
+      came: number
       /** Cancellationnote */
       cancellationNote: string | null
       /**
@@ -1769,6 +2074,40 @@ export interface components {
 }
 export type $defs = Record<string, never>
 export interface operations {
+  monthly_summary_api_v1_attendance_monthly_get: {
+    parameters: {
+      query?: {
+        month?: string | null
+        format?: 'json' | 'csv' | 'xlsx'
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description JSON, o el archivo CSV / Excel con format=csv o format=xlsx */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['MonthlySummaryOut']
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': unknown
+          'text/csv; charset=utf-8': unknown
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
   list_audit_events_api_v1_audit_get: {
     parameters: {
       query?: {
@@ -3013,6 +3352,203 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['ScheduleOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  get_sheet_api_v1_schedules__schedule_id__attendance_get: {
+    parameters: {
+      query?: {
+        search?: string | null
+      }
+      header?: never
+      path: {
+        schedule_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['AttendanceSheetOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  close_api_v1_schedules__schedule_id__attendance_close_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        schedule_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['AttendanceSheetOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  mark_all_present_api_v1_schedules__schedule_id__attendance_mark_all_present_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        schedule_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['AttendanceSheetOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  add_newcomer_api_v1_schedules__schedule_id__attendance_newcomers_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        schedule_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['NewcomerIn']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['NewcomerOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  reopen_api_v1_schedules__schedule_id__attendance_reopen_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        schedule_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['AttendanceSheetOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  mark_api_v1_schedules__schedule_id__attendance__patient_id__put: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        schedule_id: string
+        patient_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AttendanceMark']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['AttendanceEntryOut']
         }
       }
       /** @description Validation Error */

@@ -1,6 +1,206 @@
 {
   "components": {
     "schemas": {
+      "AttendanceActivity": {
+        "properties": {
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "endTime": {
+            "format": "time",
+            "title": "Endtime",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "location": {
+            "title": "Location",
+            "type": "string"
+          },
+          "professionalName": {
+            "title": "Professionalname",
+            "type": "string"
+          },
+          "startTime": {
+            "format": "time",
+            "title": "Starttime",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "date",
+          "startTime",
+          "endTime",
+          "location",
+          "professionalName",
+          "status"
+        ],
+        "title": "AttendanceActivity",
+        "type": "object"
+      },
+      "AttendanceEntryOut": {
+        "properties": {
+          "markedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Markedat"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "patientId": {
+            "format": "uuid",
+            "title": "Patientid",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "vino",
+              "no_vino",
+              "sin_marcar"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "patientId",
+          "name",
+          "status",
+          "note",
+          "markedAt"
+        ],
+        "title": "AttendanceEntryOut",
+        "type": "object"
+      },
+      "AttendanceMark": {
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "status": {
+            "enum": [
+              "vino",
+              "no_vino",
+              "sin_marcar"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "AttendanceMark",
+        "type": "object"
+      },
+      "AttendanceSheetOut": {
+        "description": "La planilla del día: quiénes están en la lista y qué se marcó.",
+        "properties": {
+          "activity": {
+            "$ref": "#/components/schemas/AttendanceActivity"
+          },
+          "closed": {
+            "title": "Closed",
+            "type": "boolean"
+          },
+          "closedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closedat"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AttendanceEntryOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/AttendanceSummary"
+          }
+        },
+        "required": [
+          "activity",
+          "closed",
+          "closedAt",
+          "summary",
+          "items"
+        ],
+        "title": "AttendanceSheetOut",
+        "type": "object"
+      },
+      "AttendanceSummary": {
+        "properties": {
+          "came": {
+            "title": "Came",
+            "type": "integer"
+          },
+          "notCame": {
+            "title": "Notcame",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "unmarked": {
+            "title": "Unmarked",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "came",
+          "notCame",
+          "unmarked",
+          "total"
+        ],
+        "title": "AttendanceSummary",
+        "type": "object"
+      },
       "AuditEventOut": {
         "properties": {
           "action": {
@@ -687,6 +887,165 @@
           "message"
         ],
         "title": "MessageResponse",
+        "type": "object"
+      },
+      "MonthlyActivity": {
+        "properties": {
+          "came": {
+            "title": "Came",
+            "type": "integer"
+          },
+          "categoryLabel": {
+            "title": "Categorylabel",
+            "type": "string"
+          },
+          "closed": {
+            "title": "Closed",
+            "type": "boolean"
+          },
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "notCame": {
+            "title": "Notcame",
+            "type": "integer"
+          },
+          "scheduleId": {
+            "format": "uuid",
+            "title": "Scheduleid",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scheduleId",
+          "date",
+          "title",
+          "categoryLabel",
+          "came",
+          "notCame",
+          "closed"
+        ],
+        "title": "MonthlyActivity",
+        "type": "object"
+      },
+      "MonthlyCategory": {
+        "properties": {
+          "came": {
+            "title": "Came",
+            "type": "integer"
+          },
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "category",
+          "label",
+          "came"
+        ],
+        "title": "MonthlyCategory",
+        "type": "object"
+      },
+      "MonthlySummaryOut": {
+        "properties": {
+          "activities": {
+            "items": {
+              "$ref": "#/components/schemas/MonthlyActivity"
+            },
+            "title": "Activities",
+            "type": "array"
+          },
+          "byCategory": {
+            "items": {
+              "$ref": "#/components/schemas/MonthlyCategory"
+            },
+            "title": "Bycategory",
+            "type": "array"
+          },
+          "month": {
+            "title": "Month",
+            "type": "string"
+          },
+          "totalCame": {
+            "title": "Totalcame",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "month",
+          "activities",
+          "byCategory",
+          "totalCame"
+        ],
+        "title": "MonthlySummaryOut",
+        "type": "object"
+      },
+      "NewcomerIn": {
+        "description": "Persona que llegó por primera vez y no tiene ficha («Anotar persona nueva»).",
+        "properties": {
+          "contactConsent": {
+            "default": false,
+            "title": "Contactconsent",
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 120,
+            "title": "Name",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "maxLength": 1000,
+            "title": "Note",
+            "type": "string"
+          },
+          "onBehalfOf": {
+            "default": "",
+            "maxLength": 120,
+            "title": "Onbehalfof",
+            "type": "string"
+          },
+          "phone": {
+            "maxLength": 12,
+            "title": "Phone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "phone"
+        ],
+        "title": "NewcomerIn",
+        "type": "object"
+      },
+      "NewcomerOut": {
+        "properties": {
+          "inquiryId": {
+            "format": "uuid",
+            "title": "Inquiryid",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "inquiryId",
+          "message"
+        ],
+        "title": "NewcomerOut",
         "type": "object"
       },
       "PasswordResetOut": {
@@ -1741,6 +2100,10 @@
             ],
             "title": "Availability"
           },
+          "came": {
+            "title": "Came",
+            "type": "integer"
+          },
           "cancellationNote": {
             "anyOf": [
               {
@@ -1882,6 +2245,7 @@
           "cancellationNote",
           "imageUrl",
           "attendanceClosedAt",
+          "came",
           "createdAt",
           "updatedAt"
         ],
@@ -2587,6 +2951,77 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/attendance/monthly": {
+      "get": {
+        "description": "Resumen del mes por actividad y por tipo. Con format=csv o xlsx se descarga.",
+        "operationId": "monthly_summary_api_v1_attendance_monthly_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "month",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^\\d{4}-\\d{2}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "examples": [
+                "2026-10"
+              ],
+              "title": "Month"
+            }
+          },
+          {
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "default": "json",
+              "enum": [
+                "json",
+                "csv",
+                "xlsx"
+              ],
+              "title": "Format",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonthlySummaryOut"
+                }
+              },
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
+              "text/csv; charset=utf-8": {}
+            },
+            "description": "JSON, o el archivo CSV / Excel con format=csv o format=xlsx"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Monthly Summary",
+        "tags": [
+          "Asistencia"
+        ]
+      }
+    },
     "/api/v1/audit": {
       "get": {
         "operationId": "list_audit_events_api_v1_audit_get",
@@ -4583,6 +5018,317 @@
         "summary": "Update Schedule",
         "tags": [
           "Actividades"
+        ]
+      }
+    },
+    "/api/v1/schedules/{schedule_id}/attendance": {
+      "get": {
+        "description": "Lista del día: afiliados activos con lo que se marcó, por nombre.",
+        "operationId": "get_sheet_api_v1_schedules__schedule_id__attendance_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "schedule_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Schedule Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceSheetOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Sheet",
+        "tags": [
+          "Asistencia"
+        ]
+      }
+    },
+    "/api/v1/schedules/{schedule_id}/attendance/close": {
+      "post": {
+        "description": "«Cerrar asistencia del día»: después ya no se puede marcar.",
+        "operationId": "close_api_v1_schedules__schedule_id__attendance_close_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "schedule_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Schedule Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceSheetOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Close",
+        "tags": [
+          "Asistencia"
+        ]
+      }
+    },
+    "/api/v1/schedules/{schedule_id}/attendance/mark-all-present": {
+      "post": {
+        "description": "«Marcar a todos como presentes»: solo cambia a quienes siguen sin marcar.",
+        "operationId": "mark_all_present_api_v1_schedules__schedule_id__attendance_mark_all_present_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "schedule_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Schedule Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceSheetOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mark All Present",
+        "tags": [
+          "Asistencia"
+        ]
+      }
+    },
+    "/api/v1/schedules/{schedule_id}/attendance/newcomers": {
+      "post": {
+        "description": "«Anotar persona nueva»: crea una solicitud (origen asistencia) para Recepción.",
+        "operationId": "add_newcomer_api_v1_schedules__schedule_id__attendance_newcomers_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "schedule_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Schedule Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewcomerIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NewcomerOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Newcomer",
+        "tags": [
+          "Asistencia"
+        ]
+      }
+    },
+    "/api/v1/schedules/{schedule_id}/attendance/reopen": {
+      "post": {
+        "description": "Reabre una asistencia cerrada para corregirla (Coordinación).",
+        "operationId": "reopen_api_v1_schedules__schedule_id__attendance_reopen_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "schedule_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Schedule Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceSheetOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reopen",
+        "tags": [
+          "Asistencia"
+        ]
+      }
+    },
+    "/api/v1/schedules/{schedule_id}/attendance/{patient_id}": {
+      "put": {
+        "description": "Vino / No vino / sin marcar, con una nota rápida opcional.",
+        "operationId": "mark_api_v1_schedules__schedule_id__attendance__patient_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "schedule_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Schedule Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "patient_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Patient Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttendanceMark"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceEntryOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mark",
+        "tags": [
+          "Asistencia"
         ]
       }
     },

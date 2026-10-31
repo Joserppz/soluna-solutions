@@ -28,7 +28,7 @@ readers = require_permission(SCHEDULES_MANAGE, ATTENDANCE_WRITE, any_of=True)
 managers = require_permission(SCHEDULES_MANAGE)
 
 
-def to_schedule_out(schedule: Schedule, interested: int) -> ScheduleOut:
+def to_schedule_out(schedule: Schedule, interested: int, came: int) -> ScheduleOut:
     return ScheduleOut(
         id=schedule.id,
         title=schedule.title,
@@ -48,15 +48,16 @@ def to_schedule_out(schedule: Schedule, interested: int) -> ScheduleOut:
         cancellation_note=schedule.cancellation_note,
         image_url=schedule.image_url,
         attendance_closed_at=schedule.attendance_closed_at,
+        came=came,
         created_at=schedule.created_at,
         updated_at=schedule.updated_at,
     )
 
 
 def _out(db: DbSession, schedule: Schedule) -> ScheduleOut:
-    return to_schedule_out(
-        schedule, schedule_service.interested(db, [schedule]).get(schedule.id, 0)
-    )
+    interested = schedule_service.interested(db, [schedule]).get(schedule.id, 0)
+    came = schedule_service.came(db, [schedule]).get(schedule.id, 0)
+    return to_schedule_out(schedule, interested, came)
 
 
 @router.get("", response_model=SchedulePage, response_model_by_alias=True)
@@ -70,8 +71,11 @@ def list_schedules(
 ):
     """Agenda interna (incluye borradores), por fecha y hora."""
     result = schedule_service.list_schedules(db, date_from, date_to, status_filter, page)
-    counts = schedule_service.interested(db, result.items)
-    return SchedulePage.of(result, lambda s: to_schedule_out(s, counts.get(s.id, 0)))
+    interested = schedule_service.interested(db, result.items)
+    came = schedule_service.came(db, result.items)
+    return SchedulePage.of(
+        result, lambda s: to_schedule_out(s, interested.get(s.id, 0), came.get(s.id, 0))
+    )
 
 
 @router.get("/{schedule_id}", response_model=ScheduleOut, response_model_by_alias=True)

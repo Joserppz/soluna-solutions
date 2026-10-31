@@ -72,6 +72,8 @@ class ScheduleOut(CamelModel):
     cancellation_note: str | None
     image_url: str | None
     attendance_closed_at: dt.datetime | None
+    # Afiliados marcados como «Vino»
+    came: int
     created_at: dt.datetime
     updated_at: dt.datetime
 

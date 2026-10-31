@@ -14,6 +14,7 @@ from app.core.database import DbSession
 from app.core.errors import register_error_handlers
 from app.core.logging import RequestContextMiddleware, configure_logging
 from app.core.middleware import OriginCheckMiddleware, SecurityHeadersMiddleware
+from app.modules.attendance import router as attendance
 from app.modules.audit import router as audit
 from app.modules.auth import router as auth
 from app.modules.auth.cookies import CSRF_HEADER
@@ -67,6 +68,8 @@ def create_app() -> FastAPI:
     application.include_router(roles.router)
     application.include_router(schedules.router)
     application.include_router(schedules.public_router)
+    application.include_router(attendance.router)
+    application.include_router(attendance.summary_router)
     application.include_router(audit.router)
 
     @application.get("/api/v1/health", tags=["Sistema"])

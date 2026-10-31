@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.core import clock
 from app.core.errors import Conflict, NotFound, ValidationError
 from app.core.pagination import PageParams, PageResult
+from app.modules.attendance import repository as attendance_repository
 from app.modules.audit import service as audit_service
 from app.modules.auth.dependencies import CurrentUser
 from app.modules.schedules import repository as schedule_repository
@@ -20,6 +21,7 @@ from app.modules.schedules.schemas import ScheduleIn, ScheduleUpdate
 from app.modules.users import repository as user_repository
 
 NOT_FOUND = "Actividad no encontrada."
+HAS_ATTENDANCE = "La actividad ya tiene asistencia registrada: no se puede {}."
 OLDEST_DATE = dt.date(2020, 1, 1)
 PUBLIC_DEFAULT_DAYS = 90
 PUBLIC_MAX_DAYS = 366
@@ -47,6 +49,11 @@ def get_schedule(db: Session, schedule_id: uuid.UUID) -> Schedule:
 
 def interested(db: Session, schedules: list[Schedule]) -> dict[uuid.UUID, int]:
     return schedule_repository.interested_by_schedule(db, [s.id for s in schedules])
+
+
+def came(db: Session, schedules: list[Schedule]) -> dict[uuid.UUID, int]:
+    """Cuántos vinieron a cada actividad (columna «Vinieron» del diseño, pág. 12)."""
+    return attendance_repository.came_by_schedule(db, [s.id for s in schedules])
 
 
 def list_schedules(
@@ -185,6 +192,8 @@ def unpublish(db: Session, schedule_id: uuid.UUID, current: CurrentUser) -> Sche
     schedule = get_schedule(db, schedule_id)
     if schedule.status != "publicada":
         raise Conflict("Solo se puede volver a borrador una actividad publicada.")
+    if attendance_repository.count_marked(db, schedule.id):
+        raise Conflict(HAS_ATTENDANCE.format("volver a borrador"))
     schedule.status = "borrador"
     _audit(db, current, schedule, "Actividad devuelta a borrador", "WARNING")
     db.flush()
@@ -195,6 +204,8 @@ def cancel(db: Session, schedule_id: uuid.UUID, note: str, current: CurrentUser)
     schedule = get_schedule(db, schedule_id)
     if schedule.status == "cancelada":
         raise Conflict("La actividad ya está cancelada.")
+    if attendance_repository.count_marked(db, schedule.id):
+        raise Conflict(HAS_ATTENDANCE.format("cancelar"))
     schedule.status = "cancelada"
     schedule.cancellation_note = note.strip()
     _audit(
@@ -215,6 +226,8 @@ def delete(db: Session, schedule_id: uuid.UUID, current: CurrentUser) -> None:
         raise Conflict(
             "Solo se eliminan borradores. Una actividad publicada se cancela con un aviso."
         )
+    if attendance_repository.count_rows(db, schedule.id):
+        raise Conflict(HAS_ATTENDANCE.format("eliminar"))
     _audit(db, current, schedule, "Eliminación de borrador de actividad", "WARNING")
     db.delete(schedule)
     db.flush()

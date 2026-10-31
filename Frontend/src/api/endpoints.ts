@@ -4,6 +4,9 @@
  */
 import type { HttpClient } from './client'
 import type {
+  AttendanceEntry,
+  AttendanceMark,
+  AttendanceSheet,
   AuditListQuery,
   AuditPage,
   ChangePasswordRequest,
@@ -18,6 +21,9 @@ import type {
   GoogleLoginRequest,
   LoginRequest,
   MessageResponse,
+  MonthlySummary,
+  NewcomerIn,
+  NewcomerOut,
   PasswordResetOut,
   RoleMatrix,
   RoleOut,
@@ -207,6 +213,43 @@ export function createEndpoints(http: HttpClient) {
         http.post<ScheduleOut>(`/schedules/${id(scheduleId)}/cancel`, { body }),
       remove: (scheduleId: string) =>
         http.delete<MessageResponse>(`/schedules/${id(scheduleId)}`),
+    },
+
+    attendance: {
+      sheet: (scheduleId: string, search?: string) =>
+        http.get<AttendanceSheet>(`/schedules/${id(scheduleId)}/attendance`, {
+          query: { search },
+        }),
+      mark: (scheduleId: string, patientId: string, body: AttendanceMark) =>
+        http.put<AttendanceEntry>(
+          `/schedules/${id(scheduleId)}/attendance/${id(patientId)}`,
+          { body },
+        ),
+      markAllPresent: (scheduleId: string) =>
+        http.post<AttendanceSheet>(
+          `/schedules/${id(scheduleId)}/attendance/mark-all-present`,
+        ),
+      close: (scheduleId: string) =>
+        http.post<AttendanceSheet>(
+          `/schedules/${id(scheduleId)}/attendance/close`,
+        ),
+      reopen: (scheduleId: string) =>
+        http.post<AttendanceSheet>(
+          `/schedules/${id(scheduleId)}/attendance/reopen`,
+        ),
+      addNewcomer: (scheduleId: string, body: NewcomerIn) =>
+        http.post<NewcomerOut>(
+          `/schedules/${id(scheduleId)}/attendance/newcomers`,
+          { body },
+        ),
+      monthly: (month?: string) =>
+        http.get<MonthlySummary>('/attendance/monthly', { query: { month } }),
+      /** Archivo del resumen mensual para descargar (CSV o Excel). */
+      downloadMonthly: (format: 'csv' | 'xlsx', month?: string) =>
+        http.get<Blob>('/attendance/monthly', {
+          query: { month, format },
+          blob: true,
+        }),
     },
 
     public: {
