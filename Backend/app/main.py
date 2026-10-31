@@ -21,6 +21,7 @@ from app.modules.documents import router as documents
 from app.modules.evaluations import router as evaluations
 from app.modules.patients import router as patients
 from app.modules.roles import router as roles
+from app.modules.schedules import router as schedules
 from app.modules.users import router as users
 
 configure_logging(settings.log_level)
@@ -64,6 +65,8 @@ def create_app() -> FastAPI:
     application.include_router(evaluations.router)
     application.include_router(users.router)
     application.include_router(roles.router)
+    application.include_router(schedules.router)
+    application.include_router(schedules.public_router)
     application.include_router(audit.router)
 
     @application.get("/api/v1/health", tags=["Sistema"])

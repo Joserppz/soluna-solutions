@@ -10,7 +10,7 @@ Las contraseñas de abajo son públicas: nunca uses este script en la base de pr
 """
 
 import sys
-from datetime import date, timedelta
+from datetime import date, time, timedelta
 
 from sqlalchemy.orm import Session
 
@@ -18,7 +18,7 @@ from app.core import clock
 from app.core.config import settings
 from app.core.database import SessionLocal
 from app.core.security import hash_password
-from app.models import Patient, PatientContact, PatientEvaluation, User
+from app.models import Patient, PatientContact, PatientEvaluation, Schedule, User
 from app.modules.users import repository as user_repository
 from app.modules.users.models import (
     ADMIN,
@@ -137,8 +137,88 @@ def seed(db: Session) -> list[str]:
     for evaluation in _evaluations(patients[0], professional):
         db.add(evaluation)
     created.append(f"3 evaluaciones de seguimiento de {patients[0].name}")
+    schedules = _schedules(professional)
+    db.add_all(schedules)
+    created.append(f"{len(schedules)} actividades en la agenda (sábados alrededor de hoy)")
     db.flush()
     return created
+
+
+def _schedules(professional: User) -> list[Schedule]:
+    """Agenda de ejemplo como la del diseño: el sábado pasado y los próximos cinco."""
+    today = clock.today()
+    last_saturday = today - timedelta(days=(today.weekday() - 5) % 7)
+
+    def saturday(weeks: int) -> date:
+        return last_saturday + timedelta(weeks=weeks)
+
+    common = {"start_time": time(10), "location": "Sede ASPAR"}
+    return [
+        Schedule(
+            title="Movimiento en compañía",
+            category="fisioterapia",
+            date=saturday(0),
+            end_time=time(11, 30),
+            professional_id=professional.id,
+            professional_name=professional.name,
+            description="Una sesión de movimiento suave y un momento para conversar.",
+            spots=30,
+            status="publicada",
+            **common,
+        ),
+        Schedule(
+            title="Movimiento en compañía",
+            category="fisioterapia",
+            date=saturday(1),
+            end_time=time(11, 30),
+            professional_id=professional.id,
+            professional_name=professional.name,
+            description="Cada persona a su ritmo, con su familiar o cuidador.",
+            spots=30,
+            status="publicada",
+            **common,
+        ),
+        Schedule(
+            title="Arteterapia: crear juntos",
+            category="arteterapia",
+            date=saturday(2),
+            end_time=time(12),
+            professional_name="Lic. Carmen Ríos",
+            description="Pintura y collage para expresarnos sin palabras.",
+            spots=20,
+            status="publicada",
+            start_time=time(10),
+            location="Sala de talleres",
+        ),
+        Schedule(
+            title="Teatro y expresión",
+            category="teatro",
+            date=saturday(3),
+            end_time=time(11, 30),
+            status="cancelada",
+            cancellation_note="Se reprogramará en diciembre",
+            **common,
+        ),
+        Schedule(
+            title="Encuentro de familias",
+            category="familias",
+            date=saturday(4),
+            end_time=time(12),
+            professional_name="Coordinación",
+            description="Conversaciones para compartir dudas, experiencias y formas de cuidar.",
+            spots=25,
+            status="publicada",
+            **common,
+        ),
+        Schedule(
+            title="Preparación de diciembre",
+            category="comunitario",
+            date=saturday(5),
+            end_time=time(11, 30),
+            status="borrador",
+            **common,
+        ),
+    ]
 
 
 def _evaluations(patient: Patient, professional: User) -> list[PatientEvaluation]:

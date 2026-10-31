@@ -100,8 +100,11 @@ def get_current_user(request: Request, db: DbSession) -> CurrentUser:
     )
 
 
-def require_permission(*permissions: str):
+def require_permission(*permissions: str, any_of: bool = False):
     """Permite el acceso solo si el rol tiene TODOS los permisos indicados (tabla role_permissions).
+
+    Con ``any_of=True`` basta con uno de ellos (por ejemplo, la agenda la ve quien gestiona
+    actividades o quien toma asistencia).
 
     Los rechazos quedan en la bitácora. Una cuenta sin rol o con contraseña temporal
     pendiente de cambio no pasa ninguna verificación.
@@ -115,6 +118,8 @@ def require_permission(*permissions: str):
         if current.user.must_change_password:
             raise Forbidden(MUST_CHANGE_PASSWORD)
         missing = [permission for permission in permissions if not current.can(permission)]
+        if any_of and len(missing) < len(permissions):
+            missing = []
         if missing:
             audit_service.record_grouped(
                 db,
@@ -127,7 +132,8 @@ def require_permission(*permissions: str):
                 action="Intento de acceso restringido bloqueado",
                 detail=(
                     f"El rol {current.user.role_name} intentó {request.method} "
-                    f"{request.url.path} sin el permiso {', '.join(missing)}"
+                    f"{request.url.path} sin el permiso "
+                    f"{(' ni ' if any_of else ', ').join(missing)}"
                 ),
                 ip_address=current.ip,
             )

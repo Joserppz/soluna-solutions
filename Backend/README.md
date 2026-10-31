@@ -113,6 +113,8 @@ Con Docker: `docker compose exec api python -m scripts.seed_demo` (o `make seed`
 | Evaluaciones de seguimiento | `GET/POST /patients/{id}/evaluations?area=`, `GET/PATCH /patients/{id}/evaluations/{evaluación}` | Ver: `patients:read_clinical`; registrar y corregir: `patients:write_clinical`. Además, consentimiento firmado y acceso Activo (RNF-06). No se borran: cada corrección queda en la bitácora |
 | Equipo | `GET /users?search=&role=&limit=&offset=` (`role=pendiente`: cuentas que esperan aprobación), `POST /users` (invitar con contraseña temporal), `PATCH /users/{id}`, `POST /users/{id}/approve`, `POST /users/{id}/reset-password` | `users:manage` |
 | Roles y permisos | `GET /roles` (matriz «Qué puede ver cada rol»), `PUT /roles/{key}/permissions` | Ver: `users:manage`; editar: `roles:manage` |
+| Actividades | `GET /schedules?from=&to=&status=&limit=&offset=`, `GET /schedules/{id}`, `POST /schedules`, `PATCH /schedules/{id}`, `POST /schedules/{id}/publish`, `/unpublish`, `/cancel`, `DELETE /schedules/{id}` | Ver: `schedules:manage` o `attendance:write`; editar: `schedules:manage` |
+| Sitio público | `GET /public/schedules?from=&to=` | **Sin sesión**: actividades publicadas y canceladas (con su aviso), desde hoy y por 90 días; sin borradores ni datos del equipo |
 | Bitácora | `GET /audit?category=&severity=&actor=&from=&to=&limit=&offset=` | admin |
 
 **Listados paginados.** `GET /patients`, `GET /users` y `GET /audit` responden siempre con el mismo sobre:
@@ -158,6 +160,8 @@ Los roles se identifican por su **clave fija** (`admin`, `coordination`, `profes
 | `audit:read` ⚠️ | Registro de actividad | ✅ | ❌ | ❌ | ❌ | ❌ |
 
 ⚠️ = permiso sensible (`permissions.is_sensitive`): el panel advierte antes de dárselo a otro rol. `PUT /roles/{key}/permissions` reemplaza la lista de permisos de un rol que no es del sistema; si agrega uno sensible responde 409 con lo que se va a dar y hay que reenviar con `confirmSensitive: true`. El rol `admin` no se edita (409).
+
+**Actividades.** Una actividad nace como `borrador` (no se ve en el sitio) o publicada con `publish: true`. Una publicada se puede devolver a borrador o **cancelar con un aviso** (`{"note": "Se reprogramará en diciembre"}`): sigue apareciendo en el sitio, tachada, para que nadie llegue en vano, y ya no se edita. Solo los borradores se eliminan. Los cupos son informativos (no hay reservas): `availability` (`libres`, `ultimos`, `completo`) se calcula con las solicitudes «Quiero participar» abiertas de esa actividad.
 
 **Aprobar cuentas.** Las cuentas creadas con el registro abierto o con Google nacen sin rol. `GET /users?role=pendiente` las lista y `POST /users/{id}/approve` con `{"role": "reception"}` les asigna un rol; la persona debe haber confirmado su correo. Valores iniciales tomados de la tabla «Qué puede ver cada rol» del diseño.
 

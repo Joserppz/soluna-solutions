@@ -8,17 +8,21 @@ from app.modules.audit.models import AuditLog
 from app.modules.auth.models import UserSession
 from app.modules.documents.models import PatientDocument
 from app.modules.evaluations.models import PatientEvaluation
+from app.modules.inquiries.models import Inquiry
 from app.modules.patients.models import Patient, PatientContact
+from app.modules.schedules.models import Schedule
 from app.modules.users.models import Permission, Role, User
 
 __all__ = [
     "AuditLog",
+    "Inquiry",
     "Patient",
     "PatientContact",
     "PatientDocument",
     "PatientEvaluation",
     "Permission",
     "Role",
+    "Schedule",
     "User",
     "UserSession",
 ]

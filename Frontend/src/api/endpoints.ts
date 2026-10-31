@@ -31,6 +31,14 @@ import type {
   PatientUpdate,
   RegisterRequest,
   ResetPasswordRequest,
+  PublicSchedule,
+  PublicScheduleQuery,
+  ScheduleCancel,
+  ScheduleIn,
+  ScheduleListQuery,
+  ScheduleOut,
+  SchedulePage,
+  ScheduleUpdate,
   SessionOut,
   SignedUrl,
   TokenRequest,
@@ -180,6 +188,34 @@ export function createEndpoints(http: HttpClient) {
       matrix: () => http.get<RoleMatrix>('/roles'),
       updatePermissions: (roleKey: string, body: RolePermissionsUpdate) =>
         http.put<RoleOut>(`/roles/${id(roleKey)}/permissions`, { body }),
+    },
+
+    schedules: {
+      list: (query: ScheduleListQuery = {}) =>
+        http.get<SchedulePage>('/schedules', { query }),
+      get: (scheduleId: string) =>
+        http.get<ScheduleOut>(`/schedules/${id(scheduleId)}`),
+      create: (body: ScheduleIn) =>
+        http.post<ScheduleOut>('/schedules', { body }),
+      update: (scheduleId: string, body: ScheduleUpdate) =>
+        http.patch<ScheduleOut>(`/schedules/${id(scheduleId)}`, { body }),
+      publish: (scheduleId: string) =>
+        http.post<ScheduleOut>(`/schedules/${id(scheduleId)}/publish`),
+      unpublish: (scheduleId: string) =>
+        http.post<ScheduleOut>(`/schedules/${id(scheduleId)}/unpublish`),
+      cancel: (scheduleId: string, body: ScheduleCancel) =>
+        http.post<ScheduleOut>(`/schedules/${id(scheduleId)}/cancel`, { body }),
+      remove: (scheduleId: string) =>
+        http.delete<MessageResponse>(`/schedules/${id(scheduleId)}`),
+    },
+
+    public: {
+      // Sin sesión: la agenda del sitio
+      schedules: (query: PublicScheduleQuery = {}) =>
+        http.get<PublicSchedule[]>('/public/schedules', {
+          query,
+          anonymous: true,
+        }),
     },
 
     audit: {

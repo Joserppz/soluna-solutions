@@ -469,6 +469,28 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/public/schedules': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Public Schedules
+     * @description Agenda del sitio, sin iniciar sesión: actividades publicadas y canceladas.
+     *
+     *     Por defecto desde hoy y por 90 días. No incluye borradores ni datos del equipo.
+     */
+    get: operations['public_schedules_api_v1_public_schedules_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/roles': {
     parameters: {
       query?: never
@@ -506,6 +528,109 @@ export interface paths {
      */
     put: operations['update_permissions_api_v1_roles__role_key__permissions_put']
     post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/schedules': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * List Schedules
+     * @description Agenda interna (incluye borradores), por fecha y hora.
+     */
+    get: operations['list_schedules_api_v1_schedules_get']
+    put?: never
+    /** Create Schedule */
+    post: operations['create_schedule_api_v1_schedules_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/schedules/{schedule_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Get Schedule */
+    get: operations['get_schedule_api_v1_schedules__schedule_id__get']
+    put?: never
+    post?: never
+    /**
+     * Delete
+     * @description Elimina un borrador. Una actividad publicada no se borra: se cancela.
+     */
+    delete: operations['delete_api_v1_schedules__schedule_id__delete']
+    options?: never
+    head?: never
+    /** Update Schedule */
+    patch: operations['update_schedule_api_v1_schedules__schedule_id__patch']
+    trace?: never
+  }
+  '/api/v1/schedules/{schedule_id}/cancel': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Cancel
+     * @description Cancela con un aviso para el sitio (por ejemplo «Se reprogramará en diciembre»).
+     */
+    post: operations['cancel_api_v1_schedules__schedule_id__cancel_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/schedules/{schedule_id}/publish': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Publish
+     * @description Borrador → publicada: aparece en el sitio.
+     */
+    post: operations['publish_api_v1_schedules__schedule_id__publish_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/schedules/{schedule_id}/unpublish': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Unpublish
+     * @description Publicada → borrador: deja de verse en el sitio.
+     */
+    post: operations['unpublish_api_v1_schedules__schedule_id__unpublish_post']
     delete?: never
     options?: never
     head?: never
@@ -1093,6 +1218,65 @@ export interface components {
         | 'roles:manage'
         | 'audit:read'
     }
+    /**
+     * PublicScheduleOut
+     * @description Lo que se ve en el sitio sin iniciar sesión: sin datos del equipo.
+     */
+    PublicScheduleOut: {
+      /** Availability */
+      availability: ('libres' | 'ultimos' | 'completo') | null
+      /** Cancellationnote */
+      cancellationNote: string | null
+      /**
+       * Category
+       * @enum {string}
+       */
+      category:
+        | 'fisioterapia'
+        | 'arteterapia'
+        | 'fonoaudiologia'
+        | 'psicologia'
+        | 'teatro'
+        | 'familias'
+        | 'comunitario'
+      /** Categorylabel */
+      categoryLabel: string
+      /**
+       * Date
+       * Format: date
+       */
+      date: string
+      /** Description */
+      description: string
+      /**
+       * Endtime
+       * Format: time
+       */
+      endTime: string
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string
+      /** Imageurl */
+      imageUrl: string | null
+      /** Location */
+      location: string
+      /** Spots */
+      spots: number | null
+      /**
+       * Starttime
+       * Format: time
+       */
+      startTime: string
+      /**
+       * Status
+       * @enum {string}
+       */
+      status: 'publicada' | 'cancelada'
+      /** Title */
+      title: string
+    }
     /** RegisterRequest */
     RegisterRequest: {
       /** Email */
@@ -1184,6 +1368,192 @@ export interface components {
         | 'roles:manage'
         | 'audit:read'
       )[]
+    }
+    /** ScheduleCancel */
+    ScheduleCancel: {
+      /** Note */
+      note: string
+    }
+    /** ScheduleIn */
+    ScheduleIn: {
+      /**
+       * Category
+       * @enum {string}
+       */
+      category:
+        | 'fisioterapia'
+        | 'arteterapia'
+        | 'fonoaudiologia'
+        | 'psicologia'
+        | 'teatro'
+        | 'familias'
+        | 'comunitario'
+      /**
+       * Date
+       * Format: date
+       */
+      date: string
+      /**
+       * Description
+       * @default
+       */
+      description?: string
+      /**
+       * Endtime
+       * Format: time
+       */
+      endTime: string
+      /** Imageurl */
+      imageUrl?: string | null
+      /** Location */
+      location: string
+      /** Professionalid */
+      professionalId?: string | null
+      /**
+       * Professionalname
+       * @default
+       */
+      professionalName?: string
+      /**
+       * Publish
+       * @default false
+       */
+      publish?: boolean
+      /** Spots */
+      spots?: number | null
+      /**
+       * Starttime
+       * Format: time
+       */
+      startTime: string
+      /** Title */
+      title: string
+    }
+    /** ScheduleOut */
+    ScheduleOut: {
+      /** Attendanceclosedat */
+      attendanceClosedAt: string | null
+      /** Availability */
+      availability: ('libres' | 'ultimos' | 'completo') | null
+      /** Cancellationnote */
+      cancellationNote: string | null
+      /**
+       * Category
+       * @enum {string}
+       */
+      category:
+        | 'fisioterapia'
+        | 'arteterapia'
+        | 'fonoaudiologia'
+        | 'psicologia'
+        | 'teatro'
+        | 'familias'
+        | 'comunitario'
+      /** Categorylabel */
+      categoryLabel: string
+      /**
+       * Createdat
+       * Format: date-time
+       */
+      createdAt: string
+      /**
+       * Date
+       * Format: date
+       */
+      date: string
+      /** Description */
+      description: string
+      /**
+       * Endtime
+       * Format: time
+       */
+      endTime: string
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string
+      /** Imageurl */
+      imageUrl: string | null
+      /** Interested */
+      interested: number
+      /** Location */
+      location: string
+      /** Professionalid */
+      professionalId: string | null
+      /** Professionalname */
+      professionalName: string
+      /** Spots */
+      spots: number | null
+      /**
+       * Starttime
+       * Format: time
+       */
+      startTime: string
+      /**
+       * Status
+       * @enum {string}
+       */
+      status: 'borrador' | 'publicada' | 'cancelada'
+      /** Title */
+      title: string
+      /**
+       * Updatedat
+       * Format: date-time
+       */
+      updatedAt: string
+    }
+    /**
+     * SchedulePage
+     * @description Página de la agenda interna.
+     */
+    SchedulePage: {
+      /** Items */
+      items: components['schemas']['ScheduleOut'][]
+      /** Limit */
+      limit: number
+      /** Offset */
+      offset: number
+      /**
+       * Total
+       * @description Filas que cumplen los filtros (todas las páginas)
+       */
+      total: number
+    }
+    /** ScheduleUpdate */
+    ScheduleUpdate: {
+      /** Category */
+      category?:
+        | (
+            | 'fisioterapia'
+            | 'arteterapia'
+            | 'fonoaudiologia'
+            | 'psicologia'
+            | 'teatro'
+            | 'familias'
+            | 'comunitario'
+          )
+        | null
+      /** Date */
+      date?: string | null
+      /** Description */
+      description?: string | null
+      /** Endtime */
+      endTime?: string | null
+      /** Imageurl */
+      imageUrl?: string | null
+      /** Location */
+      location?: string | null
+      /** Professionalid */
+      professionalId?: string | null
+      /** Professionalname */
+      professionalName?: string | null
+      /** Spots */
+      spots?: number | null
+      /** Starttime */
+      startTime?: string | null
+      /** Title */
+      title?: string | null
     }
     /**
      * SessionOut
@@ -2404,6 +2774,38 @@ export interface operations {
       }
     }
   }
+  public_schedules_api_v1_public_schedules_get: {
+    parameters: {
+      query?: {
+        from?: string | null
+        to?: string | null
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['PublicScheduleOut'][]
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
   get_matrix_api_v1_roles_get: {
     parameters: {
       query?: never
@@ -2446,6 +2848,268 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['RoleOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  list_schedules_api_v1_schedules_get: {
+    parameters: {
+      query?: {
+        from?: string | null
+        to?: string | null
+        status?: ('borrador' | 'publicada' | 'cancelada') | null
+        limit?: number
+        offset?: number
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['SchedulePage']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  create_schedule_api_v1_schedules_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ScheduleIn']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ScheduleOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  get_schedule_api_v1_schedules__schedule_id__get: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        schedule_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ScheduleOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  delete_api_v1_schedules__schedule_id__delete: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        schedule_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['MessageResponse']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  update_schedule_api_v1_schedules__schedule_id__patch: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        schedule_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ScheduleUpdate']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ScheduleOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  cancel_api_v1_schedules__schedule_id__cancel_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        schedule_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ScheduleCancel']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ScheduleOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  publish_api_v1_schedules__schedule_id__publish_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        schedule_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ScheduleOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  unpublish_api_v1_schedules__schedule_id__unpublish_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        schedule_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ScheduleOut']
         }
       }
       /** @description Validation Error */

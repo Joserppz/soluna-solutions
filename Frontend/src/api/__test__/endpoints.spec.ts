@@ -159,6 +159,43 @@ describe('Endpoints', () => {
       ],
       [() => api.roles.matrix(), 'GET', '/roles'],
       [
+        () => api.schedules.list({ status: 'borrador' }),
+        'GET',
+        '/schedules?status=borrador',
+      ],
+      [() => api.schedules.get('s1'), 'GET', '/schedules/s1'],
+      [
+        () =>
+          api.schedules.create({
+            title: 'Movimiento en compañía',
+            category: 'fisioterapia',
+            date: '2026-11-07',
+            startTime: '10:00',
+            endTime: '11:30',
+            location: 'Sede ASPAR',
+          }),
+        'POST',
+        '/schedules',
+      ],
+      [
+        () => api.schedules.update('s1', { spots: 30 }),
+        'PATCH',
+        '/schedules/s1',
+      ],
+      [() => api.schedules.publish('s1'), 'POST', '/schedules/s1/publish'],
+      [() => api.schedules.unpublish('s1'), 'POST', '/schedules/s1/unpublish'],
+      [
+        () => api.schedules.cancel('s1', { note: 'Se reprograma' }),
+        'POST',
+        '/schedules/s1/cancel',
+      ],
+      [() => api.schedules.remove('s1'), 'DELETE', '/schedules/s1'],
+      [
+        () => api.public.schedules({ from: '2026-11-01' }),
+        'GET',
+        '/public/schedules?from=2026-11-01',
+      ],
+      [
         () =>
           api.roles.updatePermissions('volunteer', {
             permissions: ['attendance:write', 'patients:read'],

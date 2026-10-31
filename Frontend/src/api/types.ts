@@ -56,6 +56,17 @@ export type RoleOut = Schemas['RoleOut']
 export type PermissionInfo = Schemas['PermissionOut']
 export type RolePermissionsUpdate = Schemas['RolePermissionsUpdate']
 
+// Actividades
+export type ScheduleIn = Schemas['ScheduleIn']
+export type ScheduleOut = Schemas['ScheduleOut']
+export type ScheduleUpdate = Schemas['ScheduleUpdate']
+export type ScheduleCancel = Schemas['ScheduleCancel']
+export type SchedulePage = Schemas['SchedulePage']
+export type ScheduleListQuery = QueryOf<'list_schedules_api_v1_schedules_get'>
+export type PublicSchedule = Schemas['PublicScheduleOut']
+export type PublicScheduleQuery =
+  QueryOf<'public_schedules_api_v1_public_schedules_get'>
+
 // Bitácora
 export type AuditPage = Schemas['AuditPage']
 export type AuditEvent = Schemas['AuditEventOut']
