@@ -296,6 +296,48 @@ export interface paths {
     patch: operations['update_patient_api_v1_patients__patient_id__patch']
     trace?: never
   }
+  '/api/v1/patients/{patient_id}/contacts': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** List Contacts */
+    get: operations['list_contacts_api_v1_patients__patient_id__contacts_get']
+    put?: never
+    /**
+     * Add Contact
+     * @description Agrega un familiar o cuidador (hasta 5 activos). Con isPrimary pasa a ser el principal.
+     */
+    post: operations['add_contact_api_v1_patients__patient_id__contacts_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/patients/{patient_id}/contacts/{contact_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post?: never
+    /**
+     * Remove Contact
+     * @description Quita un contacto (baja lógica). La ficha conserva siempre al menos uno activo.
+     */
+    delete: operations['remove_contact_api_v1_patients__patient_id__contacts__contact_id__delete']
+    options?: never
+    head?: never
+    /** Update Contact */
+    patch: operations['update_contact_api_v1_patients__patient_id__contacts__contact_id__patch']
+    trace?: never
+  }
   '/api/v1/patients/{patient_id}/deactivate': {
     parameters: {
       query?: never
@@ -366,6 +408,48 @@ export interface paths {
     options?: never
     head?: never
     patch?: never
+    trace?: never
+  }
+  '/api/v1/patients/{patient_id}/evaluations': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * List Evaluations
+     * @description Evaluaciones de seguimiento, la más reciente primero (queda en la bitácora).
+     */
+    get: operations['list_evaluations_api_v1_patients__patient_id__evaluations_get']
+    put?: never
+    /** Create Evaluation */
+    post: operations['create_evaluation_api_v1_patients__patient_id__evaluations_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/patients/{patient_id}/evaluations/{evaluation_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Get Evaluation */
+    get: operations['get_evaluation_api_v1_patients__patient_id__evaluations__evaluation_id__get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    /**
+     * Update Evaluation
+     * @description Corrige una evaluación. No hay DELETE: la historia clínica no se borra.
+     */
+    patch: operations['update_evaluation_api_v1_patients__patient_id__evaluations__evaluation_id__patch']
     trace?: never
   }
   '/api/v1/patients/{patient_id}/reactivate': {
@@ -647,12 +731,101 @@ export interface components {
       /** Relation */
       relation: string
     }
+    /**
+     * ContactUpdate
+     * @description PATCH de un familiar o cuidador: solo los campos enviados.
+     */
+    ContactUpdate: {
+      /** Altphone */
+      altPhone?: string | null
+      /** Isprimary */
+      isPrimary?: boolean | null
+      /** Name */
+      name?: string | null
+      /** Phone */
+      phone?: string | null
+      /** Relation */
+      relation?: string | null
+    }
     /** EmailRequest */
     EmailRequest: {
       /** Email */
       email: string
       /** Turnstiletoken */
       turnstileToken: string
+    }
+    /** EvaluationIn */
+    EvaluationIn: {
+      /**
+       * Area
+       * @enum {string}
+       */
+      area: 'fisica' | 'fonoaudiologica' | 'psicologica'
+      /**
+       * Evaluatedon
+       * Format: date
+       */
+      evaluatedOn: string
+      /** Notes */
+      notes: string
+      /** Professionalid */
+      professionalId?: string | null
+      /** Professionalname */
+      professionalName?: string | null
+    }
+    /** EvaluationOut */
+    EvaluationOut: {
+      /**
+       * Area
+       * @enum {string}
+       */
+      area: 'fisica' | 'fonoaudiologica' | 'psicologica'
+      /** Arealabel */
+      areaLabel: string
+      /**
+       * Createdat
+       * Format: date-time
+       */
+      createdAt: string
+      /**
+       * Evaluatedon
+       * Format: date
+       */
+      evaluatedOn: string
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string
+      /** Notes */
+      notes: string
+      /**
+       * Patientid
+       * Format: uuid
+       */
+      patientId: string
+      /** Professionalid */
+      professionalId: string | null
+      /** Professionalname */
+      professionalName: string
+      /**
+       * Updatedat
+       * Format: date-time
+       */
+      updatedAt: string
+    }
+    /** EvaluationUpdate */
+    EvaluationUpdate: {
+      /** Area */
+      area?: ('fisica' | 'fonoaudiologica' | 'psicologica') | null
+      /** Evaluatedon */
+      evaluatedOn?: string | null
+      /** Notes */
+      notes?: string | null
+      /** Professionalid */
+      professionalId?: string | null
+      /** Professionalname */
+      professionalName?: string | null
     }
     /** GoogleLoginRequest */
     GoogleLoginRequest: {
@@ -1765,6 +1938,140 @@ export interface operations {
       }
     }
   }
+  list_contacts_api_v1_patients__patient_id__contacts_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        patient_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ContactOut'][]
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  add_contact_api_v1_patients__patient_id__contacts_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        patient_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ContactIn']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ContactOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  remove_contact_api_v1_patients__patient_id__contacts__contact_id__delete: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        patient_id: string
+        contact_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['MessageResponse']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  update_contact_api_v1_patients__patient_id__contacts__contact_id__patch: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        patient_id: string
+        contact_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ContactUpdate']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ContactOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
   deactivate_patient_api_v1_patients__patient_id__deactivate_post: {
     parameters: {
       query?: never
@@ -1917,6 +2224,142 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['SignedUrlOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  list_evaluations_api_v1_patients__patient_id__evaluations_get: {
+    parameters: {
+      query?: {
+        area?: ('fisica' | 'fonoaudiologica' | 'psicologica') | null
+      }
+      header?: never
+      path: {
+        patient_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['EvaluationOut'][]
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  create_evaluation_api_v1_patients__patient_id__evaluations_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        patient_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['EvaluationIn']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['EvaluationOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  get_evaluation_api_v1_patients__patient_id__evaluations__evaluation_id__get: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        patient_id: string
+        evaluation_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['EvaluationOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  update_evaluation_api_v1_patients__patient_id__evaluations__evaluation_id__patch: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        patient_id: string
+        evaluation_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['EvaluationUpdate']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['EvaluationOut']
         }
       }
       /** @description Validation Error */

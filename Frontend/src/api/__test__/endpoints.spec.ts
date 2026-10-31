@@ -78,6 +78,52 @@ describe('Endpoints', () => {
       ],
       [() => api.patients.reactivate('p1'), 'POST', '/patients/p1/reactivate'],
       [() => api.documents.list('p1'), 'GET', '/patients/p1/documents'],
+      [() => api.contacts.list('p1'), 'GET', '/patients/p1/contacts'],
+      [
+        () =>
+          api.contacts.add('p1', {
+            name: 'Rosa',
+            relation: 'Hija',
+            phone: '76559012',
+          }),
+        'POST',
+        '/patients/p1/contacts',
+      ],
+      [
+        () => api.contacts.update('p1', 'c1', { isPrimary: true }),
+        'PATCH',
+        '/patients/p1/contacts/c1',
+      ],
+      [
+        () => api.contacts.remove('p1', 'c1'),
+        'DELETE',
+        '/patients/p1/contacts/c1',
+      ],
+      [
+        () => api.evaluations.list('p1', 'fisica'),
+        'GET',
+        '/patients/p1/evaluations?area=fisica',
+      ],
+      [
+        () => api.evaluations.get('p1', 'e1'),
+        'GET',
+        '/patients/p1/evaluations/e1',
+      ],
+      [
+        () =>
+          api.evaluations.create('p1', {
+            area: 'fisica',
+            evaluatedOn: '2026-10-14',
+            notes: 'Mejor equilibrio.',
+          }),
+        'POST',
+        '/patients/p1/evaluations',
+      ],
+      [
+        () => api.evaluations.update('p1', 'e1', { notes: 'Corregido.' }),
+        'PATCH',
+        '/patients/p1/evaluations/e1',
+      ],
       [
         () => api.documents.signedUrl('p1', 'd1'),
         'GET',

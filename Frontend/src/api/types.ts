@@ -32,6 +32,13 @@ export type PatientDeactivate = Schemas['PatientDeactivate']
 export type PatientListQuery = QueryOf<'list_patients_api_v1_patients_get'>
 export type PatientDocument = Schemas['PatientDocumentOut']
 export type SignedUrl = Schemas['SignedUrlOut']
+export type ContactIn = Schemas['ContactIn']
+export type ContactOut = Schemas['ContactOut']
+export type ContactUpdate = Schemas['ContactUpdate']
+export type EvaluationIn = Schemas['EvaluationIn']
+export type EvaluationOut = Schemas['EvaluationOut']
+export type EvaluationUpdate = Schemas['EvaluationUpdate']
+export type EvaluationArea = EvaluationOut['area']
 
 // Equipo
 export type UserPage = Schemas['UserPage']

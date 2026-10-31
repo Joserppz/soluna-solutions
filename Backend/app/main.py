@@ -18,6 +18,7 @@ from app.modules.audit import router as audit
 from app.modules.auth import router as auth
 from app.modules.auth.cookies import CSRF_HEADER
 from app.modules.documents import router as documents
+from app.modules.evaluations import router as evaluations
 from app.modules.patients import router as patients
 from app.modules.roles import router as roles
 from app.modules.users import router as users
@@ -60,6 +61,7 @@ def create_app() -> FastAPI:
     application.include_router(auth.router)
     application.include_router(patients.router)
     application.include_router(documents.router)
+    application.include_router(evaluations.router)
     application.include_router(users.router)
     application.include_router(roles.router)
     application.include_router(audit.router)

@@ -21,6 +21,7 @@ from app.modules.patients.models import (
 from app.modules.patients.schemas import (
     ClinicalAnamnesis,
     ContactIn,
+    ContactUpdate,
     PatientIn,
     PatientUpdate,
 )
@@ -30,6 +31,8 @@ CI_PATTERN = re.compile(r"^\d{5,10}(-[0-9A-Za-z]{1,3})?$")
 PHONE_PATTERN = re.compile(r"^\d{7,12}$")
 DUPLICATE_CI = "Ya existe un afiliado registrado con esa Cédula de Identidad."
 NOT_FOUND = "Afiliado no encontrado."
+CONTACT_NOT_FOUND = "Familiar o persona cuidadora no encontrado."
+MAX_ACTIVE_CONTACTS = 5
 CLINICAL_DATA_FORBIDDEN = (
     "Tu rol no tiene permiso para registrar síntomas y medicación (datos clínicos, RNF-06)."
 )
@@ -293,3 +296,112 @@ def reactivate_patient(db: Session, patient_id: uuid.UUID, current: CurrentUser)
     db.flush()
     db.refresh(patient)
     return patient
+
+
+# ---------------------------------------------------------------------------
+# Familiares y personas cuidadoras (diseño pág. 9): 1 a 5 activos, uno principal
+# ---------------------------------------------------------------------------
+def _contact(patient: Patient, contact_id: uuid.UUID) -> PatientContact:
+    contact = next((c for c in patient.active_contacts if c.id == contact_id), None)
+    if contact is None:
+        raise NotFound(CONTACT_NOT_FOUND)
+    return contact
+
+
+def _make_primary(db: Session, patient: Patient, contact: PatientContact) -> None:
+    # Primero se quita el principal anterior: el índice único admite uno solo por ficha
+    for other in patient.active_contacts:
+        if other is not contact and other.is_primary:
+            other.is_primary = False
+    db.flush()
+    contact.is_primary = True
+
+
+def _audit_contact(db: Session, current: CurrentUser, patient: Patient, action: str, who: str):
+    audit_service.audit(
+        db,
+        current,
+        category="PACIENTES",
+        action=action,
+        detail=f"{who} en la ficha de {patient.name} ({patient.id})",
+    )
+
+
+def add_contact(
+    db: Session, patient_id: uuid.UUID, data: ContactIn, current: CurrentUser
+) -> PatientContact:
+    patient = get_patient(db, patient_id)
+    validate_contact(data)
+    if len(patient.active_contacts) >= MAX_ACTIVE_CONTACTS:
+        raise Conflict(f"Una ficha admite hasta {MAX_ACTIVE_CONTACTS} familiares o cuidadores.")
+    contact = PatientContact(
+        name=data.name.strip(),
+        relation=data.relation.strip(),
+        phone=data.phone.strip(),
+        alt_phone=data.alt_phone.strip() if data.alt_phone else None,
+        is_primary=False,
+        active=True,
+    )
+    patient.contacts.append(contact)
+    db.flush()
+    if data.is_primary or not any(c.is_primary for c in patient.active_contacts):
+        _make_primary(db, patient, contact)
+    _audit_contact(db, current, patient, "Registro de familiar o cuidador", contact.name)
+    db.flush()
+    return contact
+
+
+def update_contact(
+    db: Session,
+    patient_id: uuid.UUID,
+    contact_id: uuid.UUID,
+    data: ContactUpdate,
+    current: CurrentUser,
+) -> PatientContact:
+    patient = get_patient(db, patient_id)
+    contact = _contact(patient, contact_id)
+    changes = data.model_dump(exclude_unset=True)
+    make_primary = changes.pop("is_primary", None)
+    if make_primary is False and contact.is_primary:
+        raise Conflict("Toda ficha necesita un contacto principal: marca otro como principal.")
+
+    def pick(field: str) -> str | None:
+        # Los campos no enviados conservan su valor; un valor vacío se valida como vacío
+        return (changes.get(field) or "") if field in changes else getattr(contact, field)
+
+    merged = ContactIn(
+        name=pick("name"),
+        relation=pick("relation"),
+        phone=pick("phone"),
+        alt_phone=pick("alt_phone") or None,  # vacío quita el teléfono alterno
+    )
+    validate_contact(merged)
+    contact.name = merged.name.strip()
+    contact.relation = merged.relation.strip()
+    contact.phone = merged.phone.strip()
+    contact.alt_phone = merged.alt_phone.strip() if merged.alt_phone else None
+    if make_primary:
+        _make_primary(db, patient, contact)
+    _audit_contact(db, current, patient, "Actualización de familiar o cuidador", contact.name)
+    db.flush()
+    return contact
+
+
+def remove_contact(
+    db: Session, patient_id: uuid.UUID, contact_id: uuid.UUID, current: CurrentUser
+) -> None:
+    """Baja lógica del contacto: se conserva en la base, pero deja de mostrarse."""
+    patient = get_patient(db, patient_id)
+    contact = _contact(patient, contact_id)
+    if len(patient.active_contacts) == 1:
+        raise Conflict(
+            "Toda ficha necesita al menos un contacto de apoyo: agrega otro antes de quitar este."
+        )
+    was_primary = contact.is_primary
+    contact.active = False
+    contact.is_primary = False
+    db.flush()
+    if was_primary:
+        _make_primary(db, patient, patient.active_contacts[0])
+    _audit_contact(db, current, patient, "Baja de familiar o cuidador", contact.name)
+    db.flush()

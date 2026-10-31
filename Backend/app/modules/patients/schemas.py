@@ -34,6 +34,16 @@ class ContactIn(CamelModel):
     is_primary: bool = False
 
 
+class ContactUpdate(CamelModel):
+    """PATCH de un familiar o cuidador: solo los campos enviados."""
+
+    name: str | None = Field(default=None, max_length=120)
+    relation: str | None = Field(default=None, max_length=60)
+    phone: str | None = Field(default=None, max_length=12)
+    alt_phone: str | None = Field(default=None, max_length=12)
+    is_primary: bool | None = None
+
+
 class ContactOut(CamelModel):
     id: uuid.UUID
     name: str

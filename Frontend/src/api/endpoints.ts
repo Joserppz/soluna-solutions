@@ -7,7 +7,14 @@ import type {
   AuditListQuery,
   AuditPage,
   ChangePasswordRequest,
+  ContactIn,
+  ContactOut,
+  ContactUpdate,
   EmailRequest,
+  EvaluationArea,
+  EvaluationIn,
+  EvaluationOut,
+  EvaluationUpdate,
   GoogleLoginRequest,
   LoginRequest,
   MessageResponse,
@@ -88,6 +95,46 @@ export function createEndpoints(http: HttpClient) {
         }),
       reactivate: (patientId: string) =>
         http.post<PatientOut>(`/patients/${id(patientId)}/reactivate`),
+    },
+
+    contacts: {
+      list: (patientId: string) =>
+        http.get<ContactOut[]>(`/patients/${id(patientId)}/contacts`),
+      add: (patientId: string, body: ContactIn) =>
+        http.post<ContactOut>(`/patients/${id(patientId)}/contacts`, { body }),
+      update: (patientId: string, contactId: string, body: ContactUpdate) =>
+        http.patch<ContactOut>(
+          `/patients/${id(patientId)}/contacts/${id(contactId)}`,
+          { body },
+        ),
+      remove: (patientId: string, contactId: string) =>
+        http.delete<MessageResponse>(
+          `/patients/${id(patientId)}/contacts/${id(contactId)}`,
+        ),
+    },
+
+    evaluations: {
+      list: (patientId: string, area?: EvaluationArea) =>
+        http.get<EvaluationOut[]>(`/patients/${id(patientId)}/evaluations`, {
+          query: { area },
+        }),
+      get: (patientId: string, evaluationId: string) =>
+        http.get<EvaluationOut>(
+          `/patients/${id(patientId)}/evaluations/${id(evaluationId)}`,
+        ),
+      create: (patientId: string, body: EvaluationIn) =>
+        http.post<EvaluationOut>(`/patients/${id(patientId)}/evaluations`, {
+          body,
+        }),
+      update: (
+        patientId: string,
+        evaluationId: string,
+        body: EvaluationUpdate,
+      ) =>
+        http.patch<EvaluationOut>(
+          `/patients/${id(patientId)}/evaluations/${id(evaluationId)}`,
+          { body },
+        ),
     },
 
     documents: {

@@ -4,14 +4,19 @@ from fastapi import APIRouter, Depends, Query, status
 
 from app.core.database import DbSession
 from app.core.pagination import Pagination
+from app.core.schemas import MessageResponse
 from app.modules.auth.dependencies import CurrentUser, require_permission
 from app.modules.patients import service as patient_service
 from app.modules.patients.schemas import (
+    ContactIn,
+    ContactOut,
+    ContactUpdate,
     PatientDeactivate,
     PatientIn,
     PatientOut,
     PatientPage,
     PatientUpdate,
+    to_contact_out,
     to_patient_out,
     to_patient_summary,
 )
@@ -84,3 +89,56 @@ def reactivate_patient(
     patient_id: uuid.UUID, db: DbSession, current: CurrentUser = Depends(admin_only)
 ):
     return _out(patient_service.reactivate_patient(db, patient_id, current), current)
+
+
+# ---------------------------------------------------------------------------
+# Familiares y personas cuidadoras
+# ---------------------------------------------------------------------------
+@router.get("/{patient_id}/contacts", response_model=list[ContactOut], response_model_by_alias=True)
+def list_contacts(patient_id: uuid.UUID, db: DbSession, current: CurrentUser = Depends(staff)):
+    patient = patient_service.get_patient(db, patient_id)
+    return [to_contact_out(contact) for contact in patient.active_contacts]
+
+
+@router.post(
+    "/{patient_id}/contacts",
+    response_model=ContactOut,
+    response_model_by_alias=True,
+    status_code=status.HTTP_201_CREATED,
+)
+def add_contact(
+    patient_id: uuid.UUID,
+    payload: ContactIn,
+    db: DbSession,
+    current: CurrentUser = Depends(editors),
+):
+    """Agrega un familiar o cuidador (hasta 5 activos). Con isPrimary pasa a ser el principal."""
+    return to_contact_out(patient_service.add_contact(db, patient_id, payload, current))
+
+
+@router.patch(
+    "/{patient_id}/contacts/{contact_id}",
+    response_model=ContactOut,
+    response_model_by_alias=True,
+)
+def update_contact(
+    patient_id: uuid.UUID,
+    contact_id: uuid.UUID,
+    payload: ContactUpdate,
+    db: DbSession,
+    current: CurrentUser = Depends(editors),
+):
+    contact = patient_service.update_contact(db, patient_id, contact_id, payload, current)
+    return to_contact_out(contact)
+
+
+@router.delete("/{patient_id}/contacts/{contact_id}", response_model=MessageResponse)
+def remove_contact(
+    patient_id: uuid.UUID,
+    contact_id: uuid.UUID,
+    db: DbSession,
+    current: CurrentUser = Depends(editors),
+):
+    """Quita un contacto (baja lógica). La ficha conserva siempre al menos uno activo."""
+    patient_service.remove_contact(db, patient_id, contact_id, current)
+    return MessageResponse(message="Contacto quitado de la ficha.")

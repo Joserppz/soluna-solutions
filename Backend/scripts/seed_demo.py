@@ -10,14 +10,15 @@ Las contraseñas de abajo son públicas: nunca uses este script en la base de pr
 """
 
 import sys
-from datetime import date
+from datetime import date, timedelta
 
 from sqlalchemy.orm import Session
 
+from app.core import clock
 from app.core.config import settings
 from app.core.database import SessionLocal
 from app.core.security import hash_password
-from app.models import Patient, PatientContact, User
+from app.models import Patient, PatientContact, PatientEvaluation, User
 from app.modules.users import repository as user_repository
 from app.modules.users.models import (
     ADMIN,
@@ -127,11 +128,38 @@ def seed(db: Session) -> list[str]:
             )
         )
         created.append(f"{email} / {password} ({role_key or 'pendiente de aprobación'})")
-    for patient in _patients():
+    patients = _patients()
+    for patient in patients:
         db.add(patient)
         created.append(f"Afiliado {patient.name} (CI {patient.ci}, {patient.access_status})")
     db.flush()
+    professional = user_repository.get_by_email(db, DEMO_USERS[PROFESSIONAL][1])
+    for evaluation in _evaluations(patients[0], professional):
+        db.add(evaluation)
+    created.append(f"3 evaluaciones de seguimiento de {patients[0].name}")
+    db.flush()
     return created
+
+
+def _evaluations(patient: Patient, professional: User) -> list[PatientEvaluation]:
+    today = clock.today()
+    notes = {
+        "fisica": "Mejor equilibrio al levantarse de la silla; mantener ejercicios de marcha.",
+        "fonoaudiologica": "Voz con buen volumen en el grupo; practicar lectura en voz alta.",
+        "psicologica": "Ánimo estable; participa más desde que viene con su hijo.",
+    }
+    return [
+        PatientEvaluation(
+            patient_id=patient.id,
+            area=area,
+            evaluated_on=today - timedelta(days=14 + 30 * index),
+            professional_id=professional.id,
+            professional_name=professional.name,
+            notes=text,
+            created_by=professional.id,
+        )
+        for index, (area, text) in enumerate(notes.items())
+    ]
 
 
 def main() -> int:
