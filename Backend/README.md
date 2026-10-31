@@ -109,7 +109,8 @@ Con Docker: `docker compose exec api python -m scripts.seed_demo` (o `make seed`
 | Cuentas | `POST /auth/register`, `POST /auth/verify-email`, `POST /auth/resend-verification`, `POST /auth/forgot-password`, `POST /auth/reset-password`, `POST /auth/change-password` | Públicos (con Turnstile los que envían correos); `change-password` con sesión |
 | Afiliados | `GET /patients?search=&status=&includeInactive=&limit=&offset=`, `POST /patients`, `GET/PATCH /patients/{id}`, `POST /patients/{id}/deactivate`, `POST /patients/{id}/reactivate` | Lectura: personal con rol; edición: admin, coordination, professional, reception; baja y reactivación: admin |
 | Documentos privados | `GET/POST /patients/{id}/documents`, `GET .../{doc}/url`, `DELETE .../{doc}` | Listar/descargar: personal clínico; subir: editores; borrar: admin |
-| Usuarios y roles | `GET /users?search=&limit=&offset=`, `POST /users`, `PATCH /users/{id}`, `POST /users/{id}/reset-password` | admin |
+| Equipo | `GET /users?search=&role=&limit=&offset=` (`role=pendiente`: cuentas que esperan aprobación), `POST /users` (invitar con contraseña temporal), `PATCH /users/{id}`, `POST /users/{id}/approve`, `POST /users/{id}/reset-password` | `users:manage` |
+| Roles y permisos | `GET /roles` (matriz «Qué puede ver cada rol»), `PUT /roles/{key}/permissions` | Ver: `users:manage`; editar: `roles:manage` |
 | Bitácora | `GET /audit?category=&severity=&actor=&from=&to=&limit=&offset=` | admin |
 
 **Listados paginados.** `GET /patients`, `GET /users` y `GET /audit` responden siempre con el mismo sobre:
@@ -154,7 +155,9 @@ Los roles se identifican por su **clave fija** (`admin`, `coordination`, `profes
 | `roles:manage` ⚠️ | Cambiar los permisos de los roles | ✅ | ❌ | ❌ | ❌ | ❌ |
 | `audit:read` ⚠️ | Registro de actividad | ✅ | ❌ | ❌ | ❌ | ❌ |
 
-⚠️ = permiso sensible (`permissions.is_sensitive`): el panel advierte antes de dárselo a otro rol. Valores iniciales tomados de la tabla «Qué puede ver cada rol» del diseño.
+⚠️ = permiso sensible (`permissions.is_sensitive`): el panel advierte antes de dárselo a otro rol. `PUT /roles/{key}/permissions` reemplaza la lista de permisos de un rol que no es del sistema; si agrega uno sensible responde 409 con lo que se va a dar y hay que reenviar con `confirmSensitive: true`. El rol `admin` no se edita (409).
+
+**Aprobar cuentas.** Las cuentas creadas con el registro abierto o con Google nacen sin rol. `GET /users?role=pendiente` las lista y `POST /users/{id}/approve` con `{"role": "reception"}` les asigna un rol; la persona debe haber confirmado su correo. Valores iniciales tomados de la tabla «Qué puede ver cada rol» del diseño.
 
 **Endurecimiento.**
 

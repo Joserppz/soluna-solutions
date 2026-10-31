@@ -102,6 +102,26 @@ describe('Endpoints', () => {
       [() => api.users.update('u1', { active: false }), 'PATCH', '/users/u1'],
       [() => api.users.resetPassword('u1'), 'POST', '/users/u1/reset-password'],
       [
+        () => api.users.list({ role: 'pendiente' }),
+        'GET',
+        '/users?role=pendiente',
+      ],
+      [
+        () => api.users.approve('u1', { role: 'reception' }),
+        'POST',
+        '/users/u1/approve',
+      ],
+      [() => api.roles.matrix(), 'GET', '/roles'],
+      [
+        () =>
+          api.roles.updatePermissions('volunteer', {
+            permissions: ['attendance:write', 'patients:read'],
+            confirmSensitive: false,
+          }),
+        'PUT',
+        '/roles/volunteer/permissions',
+      ],
+      [
         () => api.audit.list({ severity: 'CRITICAL', from: '2026-10-01' }),
         'GET',
         '/audit?severity=CRITICAL&from=2026-10-01',

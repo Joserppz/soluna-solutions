@@ -12,6 +12,9 @@ import type {
   LoginRequest,
   MessageResponse,
   PasswordResetOut,
+  RoleMatrix,
+  RoleOut,
+  RolePermissionsUpdate,
   PatientDeactivate,
   PatientDocument,
   PatientIn,
@@ -25,6 +28,7 @@ import type {
   SignedUrl,
   TokenRequest,
   UserCreate,
+  UserApprove,
   UserCreated,
   UserListQuery,
   UserOut,
@@ -121,6 +125,14 @@ export function createEndpoints(http: HttpClient) {
         http.patch<UserOut>(`/users/${id(userId)}`, { body }),
       resetPassword: (userId: string) =>
         http.post<PasswordResetOut>(`/users/${id(userId)}/reset-password`),
+      approve: (userId: string, body: UserApprove) =>
+        http.post<UserOut>(`/users/${id(userId)}/approve`, { body }),
+    },
+
+    roles: {
+      matrix: () => http.get<RoleMatrix>('/roles'),
+      updatePermissions: (roleKey: string, body: RolePermissionsUpdate) =>
+        http.put<RoleOut>(`/roles/${id(roleKey)}/permissions`, { body }),
     },
 
     audit: {

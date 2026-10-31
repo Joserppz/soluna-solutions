@@ -9,6 +9,7 @@ from app.modules.users import service as user_service
 from app.modules.users.models import USERS_MANAGE
 from app.modules.users.schemas import (
     PasswordResetOut,
+    UserApprove,
     UserCreate,
     UserCreated,
     UserOut,
@@ -27,10 +28,15 @@ def list_users(
     db: DbSession,
     page: Pagination,
     search: str | None = Query(default=None, max_length=150),
+    role: str | None = Query(
+        default=None,
+        max_length=30,
+        description="Clave del rol, o «pendiente» para las cuentas que esperan aprobación",
+    ),
     current: CurrentUser = Depends(admin_only),
 ):
-    """Equipo, con búsqueda por nombre o correo."""
-    return UserPage.of(user_service.list_users(db, search, page), to_user_out)
+    """Equipo, con búsqueda por nombre o correo y filtro por rol."""
+    return UserPage.of(user_service.list_users(db, search, page, role), to_user_out)
 
 
 @router.post(
@@ -52,6 +58,17 @@ def update_user(
     current: CurrentUser = Depends(admin_only),
 ):
     return to_user_out(user_service.update_user(db, user_id, payload, current))
+
+
+@router.post("/{user_id}/approve", response_model=UserOut, response_model_by_alias=True)
+def approve_user(
+    user_id: uuid.UUID,
+    payload: UserApprove,
+    db: DbSession,
+    current: CurrentUser = Depends(admin_only),
+):
+    """Asigna un rol a una cuenta «Pendiente de aprobación»."""
+    return to_user_out(user_service.approve_user(db, user_id, payload, current))
 
 
 @router.post(

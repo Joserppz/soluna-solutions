@@ -20,10 +20,21 @@ def get_by_google_sub(db: Session, google_sub: str) -> User | None:
     return db.scalar(select(User).where(User.google_sub == google_sub))
 
 
+# Filtro de rol para las cuentas sin rol (registradas o con Google, esperando aprobación)
+PENDING_FILTER = "pendiente"
+
+
 def list_users(
-    db: Session, search: str | None = None, page: PageParams | None = None
+    db: Session,
+    search: str | None = None,
+    page: PageParams | None = None,
+    role: str | None = None,
 ) -> PageResult:
     query = select(User).order_by(User.created_at, User.name, User.id)
+    if role == PENDING_FILTER:
+        query = query.where(User.role_id.is_(None))
+    elif role:
+        query = query.join(Role, User.role_id == Role.id).where(Role.key == role)
     if search:
         pattern = f"%{escape_like(search.strip())}%"
         query = query.where(

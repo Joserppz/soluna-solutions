@@ -41,6 +41,13 @@ export type UserCreated = Schemas['UserCreated']
 export type UserUpdate = Schemas['UserUpdate']
 export type UserListQuery = QueryOf<'list_users_api_v1_users_get'>
 export type PasswordResetOut = Schemas['PasswordResetOut']
+export type UserApprove = Schemas['UserApprove']
+
+// Roles y permisos
+export type RoleMatrix = Schemas['RoleMatrixOut']
+export type RoleOut = Schemas['RoleOut']
+export type PermissionInfo = Schemas['PermissionOut']
+export type RolePermissionsUpdate = Schemas['RolePermissionsUpdate']
 
 // Bitácora
 export type AuditPage = Schemas['AuditPage']

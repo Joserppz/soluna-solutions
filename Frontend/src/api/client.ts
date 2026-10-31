@@ -90,6 +90,10 @@ export class HttpClient {
     return this.request<T>('POST', path, options)
   }
 
+  put<T>(path: string, options: RequestOptions = {}): Promise<T> {
+    return this.request<T>('PUT', path, options)
+  }
+
   patch<T>(path: string, options: RequestOptions = {}): Promise<T> {
     return this.request<T>('PATCH', path, options)
   }

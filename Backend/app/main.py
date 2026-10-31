@@ -19,6 +19,7 @@ from app.modules.auth import router as auth
 from app.modules.auth.cookies import CSRF_HEADER
 from app.modules.documents import router as documents
 from app.modules.patients import router as patients
+from app.modules.roles import router as roles
 from app.modules.users import router as users
 
 configure_logging(settings.log_level)
@@ -60,6 +61,7 @@ def create_app() -> FastAPI:
     application.include_router(patients.router)
     application.include_router(documents.router)
     application.include_router(users.router)
+    application.include_router(roles.router)
     application.include_router(audit.router)
 
     @application.get("/api/v1/health", tags=["Sistema"])

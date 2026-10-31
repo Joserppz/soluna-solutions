@@ -41,6 +41,13 @@ class UserCreate(CamelModel):
     department: str = Field(default="General", max_length=80)
 
 
+class UserApprove(CamelModel):
+    """Rol (y área) con que se aprueba una cuenta pendiente."""
+
+    role: str = Field(max_length=30)
+    department: str | None = Field(default=None, max_length=80)
+
+
 class UserUpdate(CamelModel):
     name: str | None = Field(default=None, max_length=120)
     role: str | None = Field(default=None, max_length=30)

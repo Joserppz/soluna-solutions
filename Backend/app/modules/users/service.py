@@ -17,7 +17,7 @@ from app.modules.auth.dependencies import CurrentUser
 from app.modules.auth.schemas import EMAIL_PATTERN
 from app.modules.users import repository as user_repository
 from app.modules.users.models import ADMIN, ROLE_KEYS, Role, User
-from app.modules.users.schemas import UserCreate, UserUpdate
+from app.modules.users.schemas import UserApprove, UserCreate, UserUpdate
 
 NOT_FOUND = "Usuario no encontrado."
 
@@ -198,9 +198,12 @@ def _audit(db: Session, current: CurrentUser, severity: str, action: str, detail
 
 
 def list_users(
-    db: Session, search: str | None = None, page: PageParams | None = None
+    db: Session,
+    search: str | None = None,
+    page: PageParams | None = None,
+    role: str | None = None,
 ) -> PageResult:
-    return user_repository.list_users(db, search, page)
+    return user_repository.list_users(db, search, page, role)
 
 
 def get_user(db: Session, user_id: uuid.UUID) -> User:
@@ -275,6 +278,30 @@ def update_user(db: Session, user_id: uuid.UUID, data: UserUpdate, current: Curr
         "Actualización de usuario y rol",
         f"Usuario {user.email}: rol={user.role_name}, activo={user.active}, "
         f"departamento={user.department}",
+    )
+    db.flush()
+    db.refresh(user)
+    return user
+
+
+def approve_user(db: Session, user_id: uuid.UUID, data: UserApprove, current: CurrentUser) -> User:
+    """Aprueba una cuenta «Pendiente de aprobación» (registro abierto o Google) con un rol."""
+    user = get_user(db, user_id)
+    if user.role is not None:
+        raise Conflict("La cuenta ya tiene un rol. Para cambiarlo, edita a la persona.")
+    if not user.active:
+        raise Conflict("La cuenta está desactivada. Reactívala antes de aprobarla.")
+    if not user.email_verified:
+        raise Conflict("La persona todavía no confirmó su correo: no se puede aprobar aún.")
+    user.role = _role(db, data.role)
+    if data.department is not None and data.department.strip():
+        user.department = data.department.strip()
+    _audit(
+        db,
+        current,
+        "WARNING",
+        "Aprobación de cuenta",
+        f"Aprobó la cuenta {user.email} con rol {user.role_name} ({user.department})",
     )
     db.flush()
     db.refresh(user)

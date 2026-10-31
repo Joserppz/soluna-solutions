@@ -385,6 +385,49 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/roles': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Get Matrix
+     * @description Roles con sus permisos y el catálogo de permisos (con los sensibles marcados).
+     */
+    get: operations['get_matrix_api_v1_roles_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/roles/{role_key}/permissions': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    /**
+     * Update Permissions
+     * @description Reemplaza los permisos de un rol que no es del sistema.
+     *
+     *     Si se agregan permisos sensibles hay que reenviar con ``confirmSensitive: true``
+     *     (409 con la lista de lo que se va a dar).
+     */
+    put: operations['update_permissions_api_v1_roles__role_key__permissions_put']
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/users': {
     parameters: {
       query?: never
@@ -394,7 +437,7 @@ export interface paths {
     }
     /**
      * List Users
-     * @description Equipo, con búsqueda por nombre o correo.
+     * @description Equipo, con búsqueda por nombre o correo y filtro por rol.
      */
     get: operations['list_users_api_v1_users_get']
     put?: never
@@ -421,6 +464,26 @@ export interface paths {
     head?: never
     /** Update User */
     patch: operations['update_user_api_v1_users__user_id__patch']
+    trace?: never
+  }
+  '/api/v1/users/{user_id}/approve': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Approve User
+     * @description Asigna un rol a una cuenta «Pendiente de aprobación».
+     */
+    post: operations['approve_user_api_v1_users__user_id__approve_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
     trace?: never
   }
   '/api/v1/users/{user_id}/reset-password': {
@@ -828,6 +891,35 @@ export interface components {
       /** Zone */
       zone?: string | null
     }
+    /** PermissionOut */
+    PermissionOut: {
+      /** Description */
+      description: string
+      /** Issensitive */
+      isSensitive: boolean
+      /**
+       * Key
+       * @enum {string}
+       */
+      key:
+        | 'patients:read'
+        | 'patients:write'
+        | 'patients:read_clinical'
+        | 'patients:write_clinical'
+        | 'patients:deactivate'
+        | 'documents:upload'
+        | 'documents:delete'
+        | 'attendance:write'
+        | 'schedules:manage'
+        | 'inventory:manage'
+        | 'donations:manage'
+        | 'inquiries:manage'
+        | 'media:manage'
+        | 'content:manage'
+        | 'users:manage'
+        | 'roles:manage'
+        | 'audit:read'
+    }
     /** RegisterRequest */
     RegisterRequest: {
       /** Email */
@@ -845,6 +937,80 @@ export interface components {
       password: string
       /** Token */
       token: string
+    }
+    /**
+     * RoleMatrixOut
+     * @description «Qué puede ver cada rol»: columnas = roles, filas = permisos.
+     */
+    RoleMatrixOut: {
+      /** Permissions */
+      permissions: components['schemas']['PermissionOut'][]
+      /** Roles */
+      roles: components['schemas']['RoleOut'][]
+    }
+    /** RoleOut */
+    RoleOut: {
+      /** Description */
+      description: string
+      /** Issystem */
+      isSystem: boolean
+      /** Key */
+      key: string
+      /**
+       * Members
+       * @description Cuentas activas con este rol
+       */
+      members: number
+      /** Name */
+      name: string
+      /** Permissions */
+      permissions: (
+        | 'patients:read'
+        | 'patients:write'
+        | 'patients:read_clinical'
+        | 'patients:write_clinical'
+        | 'patients:deactivate'
+        | 'documents:upload'
+        | 'documents:delete'
+        | 'attendance:write'
+        | 'schedules:manage'
+        | 'inventory:manage'
+        | 'donations:manage'
+        | 'inquiries:manage'
+        | 'media:manage'
+        | 'content:manage'
+        | 'users:manage'
+        | 'roles:manage'
+        | 'audit:read'
+      )[]
+    }
+    /** RolePermissionsUpdate */
+    RolePermissionsUpdate: {
+      /**
+       * Confirmsensitive
+       * @default false
+       */
+      confirmSensitive?: boolean
+      /** Permissions */
+      permissions: (
+        | 'patients:read'
+        | 'patients:write'
+        | 'patients:read_clinical'
+        | 'patients:write_clinical'
+        | 'patients:deactivate'
+        | 'documents:upload'
+        | 'documents:delete'
+        | 'attendance:write'
+        | 'schedules:manage'
+        | 'inventory:manage'
+        | 'donations:manage'
+        | 'inquiries:manage'
+        | 'media:manage'
+        | 'content:manage'
+        | 'users:manage'
+        | 'roles:manage'
+        | 'audit:read'
+      )[]
     }
     /**
      * SessionOut
@@ -921,6 +1087,16 @@ export interface components {
     TokenRequest: {
       /** Token */
       token: string
+    }
+    /**
+     * UserApprove
+     * @description Rol (y área) con que se aprueba una cuenta pendiente.
+     */
+    UserApprove: {
+      /** Department */
+      department?: string | null
+      /** Role */
+      role: string
     }
     /** UserCreate */
     UserCreate: {
@@ -1785,10 +1961,67 @@ export interface operations {
       }
     }
   }
+  get_matrix_api_v1_roles_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['RoleMatrixOut']
+        }
+      }
+    }
+  }
+  update_permissions_api_v1_roles__role_key__permissions_put: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        role_key: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RolePermissionsUpdate']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['RoleOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
   list_users_api_v1_users_get: {
     parameters: {
       query?: {
         search?: string | null
+        /** @description Clave del rol, o «pendiente» para las cuentas que esperan aprobación */
+        role?: string | null
         limit?: number
         offset?: number
       }
@@ -1863,6 +2096,41 @@ export interface operations {
     requestBody: {
       content: {
         'application/json': components['schemas']['UserUpdate']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['UserOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  approve_user_api_v1_users__user_id__approve_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        user_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UserApprove']
       }
     }
     responses: {

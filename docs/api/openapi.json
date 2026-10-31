@@ -973,6 +973,48 @@
         "title": "PatientUpdate",
         "type": "object"
       },
+      "PermissionOut": {
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "isSensitive": {
+            "title": "Issensitive",
+            "type": "boolean"
+          },
+          "key": {
+            "enum": [
+              "patients:read",
+              "patients:write",
+              "patients:read_clinical",
+              "patients:write_clinical",
+              "patients:deactivate",
+              "documents:upload",
+              "documents:delete",
+              "attendance:write",
+              "schedules:manage",
+              "inventory:manage",
+              "donations:manage",
+              "inquiries:manage",
+              "media:manage",
+              "content:manage",
+              "users:manage",
+              "roles:manage",
+              "audit:read"
+            ],
+            "title": "Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "description",
+          "isSensitive"
+        ],
+        "title": "PermissionOut",
+        "type": "object"
+      },
       "RegisterRequest": {
         "properties": {
           "email": {
@@ -1024,6 +1066,133 @@
           "password"
         ],
         "title": "ResetPasswordRequest",
+        "type": "object"
+      },
+      "RoleMatrixOut": {
+        "description": "«Qué puede ver cada rol»: columnas = roles, filas = permisos.",
+        "properties": {
+          "permissions": {
+            "items": {
+              "$ref": "#/components/schemas/PermissionOut"
+            },
+            "title": "Permissions",
+            "type": "array"
+          },
+          "roles": {
+            "items": {
+              "$ref": "#/components/schemas/RoleOut"
+            },
+            "title": "Roles",
+            "type": "array"
+          }
+        },
+        "required": [
+          "permissions",
+          "roles"
+        ],
+        "title": "RoleMatrixOut",
+        "type": "object"
+      },
+      "RoleOut": {
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "isSystem": {
+            "title": "Issystem",
+            "type": "boolean"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "members": {
+            "description": "Cuentas activas con este rol",
+            "title": "Members",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "permissions": {
+            "items": {
+              "enum": [
+                "patients:read",
+                "patients:write",
+                "patients:read_clinical",
+                "patients:write_clinical",
+                "patients:deactivate",
+                "documents:upload",
+                "documents:delete",
+                "attendance:write",
+                "schedules:manage",
+                "inventory:manage",
+                "donations:manage",
+                "inquiries:manage",
+                "media:manage",
+                "content:manage",
+                "users:manage",
+                "roles:manage",
+                "audit:read"
+              ],
+              "type": "string"
+            },
+            "title": "Permissions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "description",
+          "isSystem",
+          "permissions",
+          "members"
+        ],
+        "title": "RoleOut",
+        "type": "object"
+      },
+      "RolePermissionsUpdate": {
+        "properties": {
+          "confirmSensitive": {
+            "default": false,
+            "title": "Confirmsensitive",
+            "type": "boolean"
+          },
+          "permissions": {
+            "items": {
+              "enum": [
+                "patients:read",
+                "patients:write",
+                "patients:read_clinical",
+                "patients:write_clinical",
+                "patients:deactivate",
+                "documents:upload",
+                "documents:delete",
+                "attendance:write",
+                "schedules:manage",
+                "inventory:manage",
+                "donations:manage",
+                "inquiries:manage",
+                "media:manage",
+                "content:manage",
+                "users:manage",
+                "roles:manage",
+                "audit:read"
+              ],
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Permissions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "permissions"
+        ],
+        "title": "RolePermissionsUpdate",
         "type": "object"
       },
       "SessionOut": {
@@ -1184,6 +1353,33 @@
           "token"
         ],
         "title": "TokenRequest",
+        "type": "object"
+      },
+      "UserApprove": {
+        "description": "Rol (y área) con que se aprueba una cuenta pendiente.",
+        "properties": {
+          "department": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department"
+          },
+          "role": {
+            "maxLength": 30,
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role"
+        ],
+        "title": "UserApprove",
         "type": "object"
       },
       "UserCreate": {
@@ -2634,9 +2830,84 @@
         ]
       }
     },
+    "/api/v1/roles": {
+      "get": {
+        "description": "Roles con sus permisos y el catálogo de permisos (con los sensibles marcados).",
+        "operationId": "get_matrix_api_v1_roles_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleMatrixOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Matrix",
+        "tags": [
+          "Usuarios y roles"
+        ]
+      }
+    },
+    "/api/v1/roles/{role_key}/permissions": {
+      "put": {
+        "description": "Reemplaza los permisos de un rol que no es del sistema.\n\nSi se agregan permisos sensibles hay que reenviar con ``confirmSensitive: true``\n(409 con la lista de lo que se va a dar).",
+        "operationId": "update_permissions_api_v1_roles__role_key__permissions_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "role_key",
+            "required": true,
+            "schema": {
+              "title": "Role Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RolePermissionsUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Permissions",
+        "tags": [
+          "Usuarios y roles"
+        ]
+      }
+    },
     "/api/v1/users": {
       "get": {
-        "description": "Equipo, con búsqueda por nombre o correo.",
+        "description": "Equipo, con búsqueda por nombre o correo y filtro por rol.",
         "operationId": "list_users_api_v1_users_get",
         "parameters": [
           {
@@ -2654,6 +2925,25 @@
                 }
               ],
               "title": "Search"
+            }
+          },
+          {
+            "description": "Clave del rol, o «pendiente» para las cuentas que esperan aprobación",
+            "in": "query",
+            "name": "role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 30,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Clave del rol, o «pendiente» para las cuentas que esperan aprobación",
+              "title": "Role"
             }
           },
           {
@@ -2795,6 +3085,60 @@
           }
         },
         "summary": "Update User",
+        "tags": [
+          "Usuarios y roles"
+        ]
+      }
+    },
+    "/api/v1/users/{user_id}/approve": {
+      "post": {
+        "description": "Asigna un rol a una cuenta «Pendiente de aprobación».",
+        "operationId": "approve_user_api_v1_users__user_id__approve_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserApprove"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Approve User",
         "tags": [
           "Usuarios y roles"
         ]
