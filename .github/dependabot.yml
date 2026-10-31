@@ -1,0 +1,55 @@
+# Dependabot: revisa cada semana las dependencias y abre Pull Requests con las
+# actualizaciones. Las de seguridad llegan apenas se publica la alerta.
+# Las PR van a la rama por defecto (main); se revisan como cualquier otra PR y deben
+# pasar el CI (pruebas, cobertura, pip-audit y npm audit) antes de integrarse.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /Frontend
+    schedule:
+      interval: weekly
+      day: monday
+      time: '07:00'
+      timezone: America/La_Paz
+    open-pull-requests-limit: 5
+    labels: [dependencias, frontend]
+    commit-message:
+      prefix: 'chore(deps)'
+    groups:
+      # Parches y versiones menores juntas en una sola PR por semana
+      frontend-menores:
+        update-types: [minor, patch]
+
+  - package-ecosystem: pip
+    directory: /Backend
+    schedule:
+      interval: weekly
+      day: monday
+      time: '07:00'
+      timezone: America/La_Paz
+    open-pull-requests-limit: 5
+    labels: [dependencias, backend]
+    commit-message:
+      prefix: 'chore(deps)'
+    groups:
+      backend-menores:
+        update-types: [minor, patch]
+
+  - package-ecosystem: docker
+    directory: /Backend
+    schedule:
+      interval: weekly
+      day: monday
+      time: '07:00'
+      timezone: America/La_Paz
+    labels: [dependencias, backend]
+    commit-message:
+      prefix: 'chore(deps)'
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    labels: [dependencias, ci]
+    commit-message:
+      prefix: 'chore(ci)'

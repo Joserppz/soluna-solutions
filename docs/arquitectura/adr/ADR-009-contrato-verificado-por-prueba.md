@@ -1,6 +1,6 @@
 # ADR-009: Contrato Frontend ↔ Backend verificado por una prueba automática
 
-- **Estado:** Aceptada
+- **Estado:** Reemplazada por [ADR-013](./ADR-013-contrato-openapi-y-capa-src-api.md) (Sprint 2: los tipos del frontend se generan desde OpenAPI)
 - **Fecha:** 2026-10-26
 - **Requisitos:** RNF-11
 

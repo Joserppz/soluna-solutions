@@ -42,8 +42,18 @@ jobs:
       - name: Ejecutar análisis estático con ESLint (SCRUM-153)
         run: npm run lint
 
+      - name: Verificar que los tipos de la API coinciden con docs/api/openapi.json
+        run: npm run api:types:check
+
+      - name: Auditar dependencias con npm audit
+        # Producción (vue, vue-router): cualquier vulnerabilidad moderada o mayor bloquea.
+        # Herramientas de desarrollo: bloquean las altas y críticas.
+        run: |
+          npm audit --omit=dev --audit-level=moderate
+          npm audit --audit-level=high
+
       - name: Verificar formato de código con Prettier
-        run: npx prettier --check src/ eslint.config.mjs vite.config.ts vitest.config.ts
+        run: npx prettier --check src/ scripts/ eslint.config.mjs vite.config.ts vitest.config.ts
 
       - name: Ejecutar pruebas con Vitest y medir cobertura (SCRUM-153 / SCRUM-97)
         run: npm run test:coverage

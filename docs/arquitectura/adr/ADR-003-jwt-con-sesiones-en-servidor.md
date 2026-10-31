@@ -1,6 +1,6 @@
 # ADR-003: JWT HS256 respaldado por sesiones en la base de datos
 
-- **Estado:** Aceptada
+- **Estado:** Reemplazada por [ADR-012](./ADR-012-sesion-en-cookies-y-permisos-en-la-base.md) (Sprint 2: el JWT viaja en una cookie HttpOnly con CSRF; las sesiones en la base se mantienen)
 - **Fecha:** 2026-10-26
 - **Requisitos:** RF-01, RNF-02 (30 min de sesión máxima, 15 min de inactividad, cierre de sesión)
 

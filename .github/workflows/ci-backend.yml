@@ -10,6 +10,7 @@ on:
     paths:
       - 'Backend/**'
       - 'Frontend/src/types/**'
+      - 'docs/api/openapi.json'
       - '.github/workflows/ci-backend.yml'
   pull_request:
     branches:
@@ -18,6 +19,7 @@ on:
     paths:
       - 'Backend/**'
       - 'Frontend/src/types/**'
+      - 'docs/api/openapi.json'
       - '.github/workflows/ci-backend.yml'
 
 jobs:
@@ -61,6 +63,12 @@ jobs:
       - name: Instalar dependencias del Backend
         run: pip install -r requirements-dev.txt
 
+      - name: Auditar dependencias de ejecución con pip-audit
+        # Falla si alguna versión de requirements.txt tiene una vulnerabilidad conocida
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt --progress-spinner off
+
       - name: Analizar código con Ruff
         run: ruff check . --output-format=github
 
@@ -93,3 +101,28 @@ jobs:
           path: |
             Backend/pytest-report.xml
             Backend/coverage.xml
+
+  docker-image:
+    name: Imagen Docker de producción (runtime)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Construir la imagen runtime (la que se despliega en Cloud Run)
+        run: docker build --target runtime --tag aspar-api:ci Backend
+
+      - name: Construir la imagen de desarrollo (docker compose)
+        run: docker build --target dev --tag aspar-api:dev Backend
+
+      - name: Probar que la imagen arranca sin root y rechaza una configuración insegura
+        run: |
+          SECRET="ci-$(openssl rand -hex 24)"
+          docker run --rm -e DATABASE_URL=postgresql://ci:ci@localhost/ci -e JWT_SECRET="$SECRET" \
+            aspar-api:ci python -c "import os; from app.main import app; assert os.getuid() != 0; print('OK', len(app.routes), 'rutas')"
+          # Con ENV=prod y valores de desarrollo la API no debe arrancar
+          if docker run --rm -e ENV=prod -e DATABASE_URL=postgresql://ci:ci@localhost/ci -e JWT_SECRET="$SECRET" \
+            aspar-api:ci python -c "import app.main" 2>/dev/null; then
+            echo "La imagen arrancó en producción con configuración insegura" && exit 1
+          fi

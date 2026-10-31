@@ -32,8 +32,8 @@ cp .env.example .env
 
 | Variable | Obligatoria | Descripción |
 | :--- | :--- | :--- |
-| `DATABASE_URL` | Sí | Supabase → **Connect** → **Transaction pooler** (puerto 6543, IPv4) para la API. Reemplaza `[YOUR-PASSWORD]` **sin corchetes**. La conexión directa `db.<ref>.supabase.co` usa IPv6 y suele fallar en redes domésticas. |
-| `MIGRATION_DATABASE_URL` | No | Supabase → **Session pooler** (puerto 5432) para `scripts.migrate`. Si se omite, las migraciones usan `DATABASE_URL`. |
+| `DATABASE_URL` | Sí | Supabase → **Connect** → **Transaction pooler** (puerto 6543, IPv4) para la API. Reemplaza `[YOUR-PASSWORD]` **sin corchetes**. La conexión directa `db.<ref>.supabase.co` usa IPv6 y suele fallar en redes domésticas. En producción, con el usuario `aspar_api` (solo datos, sin cambios de esquema). |
+| `MIGRATION_DATABASE_URL` | No | Supabase → **Session pooler** (puerto 5432), con el dueño del esquema (`postgres`), para `scripts.migrate`. En Cloud Run solo la recibe el job de migraciones. Si se omite, las migraciones usan `DATABASE_URL`. |
 | `ENV` | No | `dev` (por defecto), `test` o `prod`. |
 | `LOG_LEVEL` | No | `INFO` por defecto. Los logs salen en JSON, una línea por evento, con el `request_id` de cada petición. |
 | `DB_POOL` | No | `queue` (por defecto, base directa o Docker) o `null` con el Transaction Pooler de Supabase. |
@@ -42,15 +42,15 @@ cp .env.example .env
 | `SESSION_MAX_AGE_SECONDS` | No | Duración máxima de la sesión (por defecto 1800 = 30 min). |
 | `SESSION_IDLE_LIMIT_SECONDS` | No | Inactividad permitida (por defecto 900 = 15 min). |
 | `SESSION_ABSOLUTE_MAX_SECONDS` | No | Tope absoluto de una sesión aunque se renueve (por defecto 28800 = 8 h). |
-| `CORS_ORIGINS` | No | Orígenes del frontend separados por coma (por defecto `http://localhost:5173`). |
+| `CORS_ORIGINS` | No | Orígenes del frontend separados por coma (por defecto `http://localhost:5173`). Cada entorno tiene su API: producción `https://aspar.com,https://www.aspar.com`, staging `https://staging.aspar.com`. |
 | `FRONTEND_URL`, `EMAIL_PROVIDER`, `EMAIL_FROM`, `RESEND_API_KEY` / `BREVO_API_KEY` | No (sí en prod) | Correos de verificación y recuperación. En desarrollo (`console`) el correo, con su enlace, aparece en los logs de la API. |
 | `TURNSTILE_SECRET_KEY` | No (sí en prod) | CAPTCHA de Cloudflare para registro y recuperación. Vacío = clave de prueba que siempre aprueba. |
 | `GOOGLE_CLIENT_ID` | No | Activa «Continuar con Google». |
-| `COOKIE_DOMAIN`, `COOKIE_SECURE`, `COOKIE_SAMESITE` | No | Cookies de sesión. Producción: `COOKIE_DOMAIN=.aspar.com`, `COOKIE_SECURE=true`. En Docker local `COOKIE_SECURE=false` (http). |
+| `COOKIE_DOMAIN`, `COOKIE_SECURE`, `COOKIE_SAMESITE` | No | Cookies de sesión. `COOKIE_DOMAIN` vacío en todos los entornos (cookie solo de su API: la sesión de producción nunca llega a staging, [ADR-012](../docs/arquitectura/adr/ADR-012-sesion-en-cookies-y-permisos-en-la-base.md)); `COOKIE_SECURE=true` en producción y `false` en Docker local (http). |
 | `RATE_LIMITS_ENABLED` | No | `true` por defecto: limita login, registro y correos por IP y por cuenta (tabla `rate_limits`). Solo los tests lo apagan; en prod es obligatorio. |
 | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Solo para documentos | Supabase → Project Settings → API Keys. La `service_role` es secreta: **solo** en este `.env`, nunca en el frontend. Sin ellas, `/patients/{id}/documents` responde 503. |
 
-`.env` está en `.gitignore`; nunca lo subas al repositorio.
+`.env` está en `.gitignore`; nunca lo subas al repositorio. En producción y staging no hay `.env`: los secretos están en **Google Secret Manager** y Cloud Run los entrega como variables de entorno. Los pasos están en [`docs/despliegue/GUIA_DE_DESPLIEGUE.md`](../docs/despliegue/GUIA_DE_DESPLIEGUE.md).
 
 ## 4. Base de datos y migraciones versionadas
 

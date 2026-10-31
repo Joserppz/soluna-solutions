@@ -6,14 +6,17 @@ Cada ADR documenta una decisión técnica: el contexto, la decisión, las altern
 | :--- | :--- | :--- | :--- |
 | [ADR-001](./ADR-001-api-fastapi-en-capas.md) | API FastAPI organizada en capas (routers → services → repositories) | Reemplazada por ADR-011 | RNF-11 |
 | [ADR-002](./ADR-002-postgresql-supabase-y-migraciones-sql.md) | PostgreSQL en Supabase con migraciones SQL versionadas | Aceptada | RF-02, RNF-11 |
-| [ADR-003](./ADR-003-jwt-con-sesiones-en-servidor.md) | JWT HS256 respaldado por sesiones en la base de datos | Aceptada | RF-01, RNF-02 |
+| [ADR-003](./ADR-003-jwt-con-sesiones-en-servidor.md) | JWT HS256 respaldado por sesiones en la base de datos | Reemplazada por ADR-012 | RF-01, RNF-02 |
 | [ADR-004](./ADR-004-bcrypt-y-bloqueo-por-intentos.md) | Contraseñas con bcrypt (costo 12) y bloqueo tras 5 intentos | Aceptada | RF-01, RNF-02 |
 | [ADR-005](./ADR-005-proteccion-rnf06-en-servidor.md) | Protección de datos clínicos aplicada en el servidor | Aceptada | RNF-06 |
 | [ADR-006](./ADR-006-bitacora-inmutable.md) | Bitácora de auditoría inmutable y escrita solo por el Backend | Aceptada | RF-17 |
 | [ADR-007](./ADR-007-supabase-solo-desde-el-backend.md) | Supabase accesible solo desde el Backend (RLS sin políticas) | Aceptada | RNF-06 |
 | [ADR-008](./ADR-008-modo-local-de-respaldo-en-frontend.md) | Modo local de respaldo en el Frontend, solo si la API no responde | Aceptada (temporal) | RF-01, RF-02 |
-| [ADR-009](./ADR-009-contrato-verificado-por-prueba.md) | Contrato Frontend ↔ Backend verificado por una prueba automática | Aceptada | RNF-11 |
+| [ADR-009](./ADR-009-contrato-verificado-por-prueba.md) | Contrato Frontend ↔ Backend verificado por una prueba automática | Reemplazada por ADR-013 | RNF-11 |
 | [ADR-010](./ADR-010-multimedia-en-cloudinary.md) | Galería multimedia en Cloudinary y documentos privados en Supabase Storage | Propuesta | RF-05, RNF-06, RNF-10 |
 | [ADR-011](./ADR-011-backend-por-modulos-de-dominio.md) | Backend organizado por módulos de dominio (`app/modules/<dominio>/`) | Aceptada | RNF-11 |
+| [ADR-012](./ADR-012-sesion-en-cookies-y-permisos-en-la-base.md) | Sesión en cookies HttpOnly con CSRF y permisos por rol en la base | Aceptada | RF-01, RF-11, RNF-02, RNF-06 |
+| [ADR-013](./ADR-013-contrato-openapi-y-capa-src-api.md) | Contrato único OpenAPI → TypeScript y capa de datos `src/api/` | Aceptada | RNF-11 |
+| [ADR-014](./ADR-014-despliegue-y-operacion.md) | Despliegue en Cloud Run con Secret Manager, staging separado y respaldos | Propuesta | RNF-02, RNF-06, RNF-10, RNF-11 |
 
 **Formato:** cada archivo sigue la plantilla *Contexto → Decisión → Alternativas → Consecuencias → Evidencia*. Una decisión nueva o que reemplaza a otra se agrega como un ADR nuevo con el número siguiente; los ADR aceptados no se editan, se marcan como «Reemplazada por ADR-XXX».

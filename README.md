@@ -13,8 +13,8 @@ Repositorio oficial de **Soluna Solutions** para el proyecto **ASPAR (Asociació
 
 ## Arquitectura del Repositorio
 
-- [`Frontend/`](./Frontend/README.md): Aplicación web SPA en Vue 3 + TypeScript + Vite (Portal público y Panel administrativo/clínico).
-- [`Backend/`](./Backend/README.md): API RESTful en Python + FastAPI sobre **Supabase PostgreSQL**, con autenticación JWT, sesiones, pacientes/anamnesis con protección RNF-06, documentos privados, usuarios/roles y bitácora de auditoría.
+- [`Frontend/`](./Frontend/README.md): Aplicación web SPA en Vue 3 + TypeScript + Vite (Portal público y Panel administrativo/clínico). La capa `src/api/` habla con la API con cookies y CSRF, y sus tipos se generan desde el contrato OpenAPI ([ADR-013](./docs/arquitectura/adr/ADR-013-contrato-openapi-y-capa-src-api.md)).
+- [`Backend/`](./Backend/README.md): API RESTful en Python + FastAPI sobre **Supabase PostgreSQL**, organizada por módulos de dominio (`app/modules/<dominio>/` con router, service, repository, schemas y models; [ADR-011](./docs/arquitectura/adr/ADR-011-backend-por-modulos-de-dominio.md)). Incluye sesión en cookies HttpOnly, permisos por rol en la base ([ADR-012](./docs/arquitectura/adr/ADR-012-sesion-en-cookies-y-permisos-en-la-base.md)), afiliados con protección RNF-06, documentos privados y bitácora de auditoría.
 - [`docs/`](./docs/):
   - `docs/entrevistas/DOCUMENTO_1.pdf`: Minuta de entrevista y relevamiento AS-IS / TO-BE.
   - `docs/srs/DOCUMENTO_2.pdf`: Especificación de Requisitos de Software (SRS v1.0).
@@ -28,6 +28,7 @@ Repositorio oficial de **Soluna Solutions** para el proyecto **ASPAR (Asociació
   - `docs/evidencias/`: Capturas, recorrido integrado, evidencias del Backend y de CI/cobertura del Sprint 1.
   - `docs/calidad/`: Informe de verificación, Definición de Hecho (DoD) y estado real del Sprint 1.
   - `docs/git/`: Convención de ramas, commits y Pull Requests, y trazabilidad con Jira.
+  - [`docs/despliegue/GUIA_DE_DESPLIEGUE.md`](./docs/despliegue/GUIA_DE_DESPLIEGUE.md): Despliegue en Cloud Run con Secret Manager, staging, servicios externos y respaldos ([ADR-014](./docs/arquitectura/adr/ADR-014-despliegue-y-operacion.md)).
 
 ## Puesta en marcha con Docker (recomendado)
 
@@ -65,19 +66,41 @@ La guía completa del Backend (variables, migraciones, permisos por rol, pruebas
 
 | Archivo | Variables obligatorias | Opcionales |
 | :--- | :--- | :--- |
-| [`Backend/.env.example`](./Backend/.env.example) | `DATABASE_URL`, `JWT_SECRET` (mínimo 32 caracteres aleatorios) | `SESSION_MAX_AGE_SECONDS`, `SESSION_IDLE_LIMIT_SECONDS`, `CORS_ORIGINS`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `PATIENT_DOCUMENTS_BUCKET`, `SIGNED_URL_SECONDS` |
-| [`Frontend/.env.example`](./Frontend/.env.example) | — | `VITE_API_BASE_URL` (por defecto `http://localhost:8000/api/v1`), `VITE_DEMO_MODE` (por defecto `false`) |
+| [`Backend/.env.example`](./Backend/.env.example) | `DATABASE_URL`, `JWT_SECRET` (mínimo 32 caracteres aleatorios) | `MIGRATION_DATABASE_URL`, sesión (`SESSION_*`), cookies (`COOKIE_*`), `CORS_ORIGINS`, correo (`EMAIL_PROVIDER`, `RESEND_API_KEY`…), `TURNSTILE_SECRET_KEY`, `GOOGLE_CLIENT_ID`, `SUPABASE_*`, `RATE_LIMITS_ENABLED` |
+| [`Frontend/.env.example`](./Frontend/.env.example) | — | `VITE_API_BASE_URL` (por defecto `http://localhost:8000/api/v1`), `VITE_DEMO_MODE` (por defecto `false`), `VITE_GOOGLE_CLIENT_ID`, `VITE_TURNSTILE_SITE_KEY` |
 
-Los archivos `.env` reales **nunca** se suben al repositorio. La API se niega a arrancar si `JWT_SECRET` es el valor de ejemplo.
+- Los archivos `.env` reales **nunca** se suben al repositorio.
+- La API se niega a arrancar si `JWT_SECRET` es el valor de ejemplo. Con `ENV=prod` también se niega si falta algún ajuste de producción: correo real, Turnstile real, cookies `Secure`, límites de peticiones activos y CORS solo `https`.
+- En producción y staging no hay `.env`: los secretos viven en Google Secret Manager.
 
 ## Pruebas y calidad
 
 | Comando | Dónde | Qué valida |
 | :--- | :--- | :--- |
 | `npm run lint` · `npm run test:coverage` · `npm run build` | `Frontend/` | ESLint, pruebas con cobertura mínima de 70% y tipos TypeScript |
+| `npm run api:types:check` · `npm audit` | `Frontend/` | Tipos de la API iguales al contrato `docs/api/openapi.json`; dependencias sin vulnerabilidades conocidas |
 | `ruff check .` · `ruff format --check .` · `pytest --cov=app` | `Backend/` | Estilo, pruebas unitarias y de API, cobertura mínima de 70% |
+| `pip-audit -r requirements.txt` · `docker build --target runtime Backend` | `Backend/` | Dependencias sin vulnerabilidades conocidas; la imagen de producción se construye, corre sin root y rechaza una configuración insegura |
 
-Los mismos pasos se ejecutan en GitHub Actions en cada push a `Sprint*`, `SCRUM-*` o `main` (el pipeline del Backend, cuando cambian `Backend/` o los tipos del Frontend). Ver [`docs/evidencias/EVIDENCIAS_CI_Y_COBERTURA_SPRINT1.md`](./docs/evidencias/EVIDENCIAS_CI_Y_COBERTURA_SPRINT1.md).
+- Los mismos pasos corren en GitHub Actions en cada push a `Sprint*`, `SCRUM-*` o `main`. El pipeline del Backend corre cuando cambian `Backend/`, los tipos del Frontend o `docs/api/openapi.json`. Ver [`docs/evidencias/EVIDENCIAS_CI_Y_COBERTURA_SPRINT1.md`](./docs/evidencias/EVIDENCIAS_CI_Y_COBERTURA_SPRINT1.md).
+- **Dependabot** ([`.github/dependabot.yml`](./.github/dependabot.yml)) abre cada lunes Pull Requests con las actualizaciones de npm, pip, la imagen de Python y GitHub Actions. Las de seguridad llegan apenas se publica la alerta. Cada PR pasa por el mismo CI antes de integrarse.
+
+## Despliegue
+
+| Entorno | Frontend | API (Google Cloud Run) | Base y archivos |
+| :--- | :--- | :--- | :--- |
+| Staging | `staging.aspar.com` | `api.staging.aspar.com` | Proyecto Supabase propio, sin datos reales |
+| Producción | `aspar.com` | `api.aspar.com` | Proyecto Supabase `aspar-prod` |
+
+- **Secretos:** en Google Secret Manager, uno por entorno. Cloud Run los entrega como variables de entorno.
+- **Conexiones a la base:** la API usa `DATABASE_URL` con un usuario sin permisos de esquema (`aspar_api`). Las migraciones corren antes de cada versión en un Cloud Run Job con `MIGRATION_DATABASE_URL`.
+- **Configuración manual una vez por entorno:**
+  - Google Client ID para «Continuar con Google»;
+  - Cloudflare Turnstile;
+  - Resend, con el dominio verificado por DNS.
+- **Respaldos:** diarios de la base y de los documentos, con 30 días de retención y una prueba de restauración mensual en staging.
+
+Paso a paso: [`docs/despliegue/GUIA_DE_DESPLIEGUE.md`](./docs/despliegue/GUIA_DE_DESPLIEGUE.md). Decisiones: [ADR-014](./docs/arquitectura/adr/ADR-014-despliegue-y-operacion.md).
 
 ## Flujo de trabajo
 
