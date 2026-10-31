@@ -59,6 +59,7 @@ Las migraciones son archivos `migrations/NNN_nombre.sql` que se aplican en orden
 | Migración | Contenido |
 | :--- | :--- |
 | `001_base.sql` | Esquema completo del Sprint 2 (25 tablas con UUID, límites de largo, baja lógica, RLS) y catálogos: roles, permisos y secciones del contenido. **No crea usuarios.** |
+| `002_busqueda_trigram.sql` | Extensión `pg_trgm` (esquema `extensions`) e índices GIN de trigramas para buscar por fragmentos: afiliados por nombre y CI, equipo por nombre y correo, bitácora por actor. |
 
 ```bash
 python -m scripts.migrate            # aplica las pendientes
@@ -106,10 +107,18 @@ Con Docker: `docker compose exec api python -m scripts.seed_demo` (o `make seed`
 | Sistema | `GET /health` (prueba de vida, sin base), `GET /health/db` (conexión con PostgreSQL) | Público |
 | Autenticación | `POST /auth/login`, `POST /auth/google`, `GET /auth/me`, `POST /auth/refresh`, `POST /auth/logout` | Login público; resto con sesión |
 | Cuentas | `POST /auth/register`, `POST /auth/verify-email`, `POST /auth/resend-verification`, `POST /auth/forgot-password`, `POST /auth/reset-password`, `POST /auth/change-password` | Públicos (con Turnstile los que envían correos); `change-password` con sesión |
-| Afiliados | `GET/POST /patients`, `GET/PATCH /patients/{id}`, `POST /patients/{id}/deactivate`, `POST /patients/{id}/reactivate` | Lectura: personal con rol; edición: admin, coordination, professional, reception; baja y reactivación: admin |
+| Afiliados | `GET /patients?search=&status=&includeInactive=&limit=&offset=`, `POST /patients`, `GET/PATCH /patients/{id}`, `POST /patients/{id}/deactivate`, `POST /patients/{id}/reactivate` | Lectura: personal con rol; edición: admin, coordination, professional, reception; baja y reactivación: admin |
 | Documentos privados | `GET/POST /patients/{id}/documents`, `GET .../{doc}/url`, `DELETE .../{doc}` | Listar/descargar: personal clínico; subir: editores; borrar: admin |
-| Usuarios y roles | `GET/POST /users`, `PATCH /users/{id}`, `POST /users/{id}/reset-password` | admin |
-| Bitácora | `GET /audit?category=&severity=&actor=&from=&to=&limit=` | admin |
+| Usuarios y roles | `GET /users?search=&limit=&offset=`, `POST /users`, `PATCH /users/{id}`, `POST /users/{id}/reset-password` | admin |
+| Bitácora | `GET /audit?category=&severity=&actor=&from=&to=&limit=&offset=` | admin |
+
+**Listados paginados.** `GET /patients`, `GET /users` y `GET /audit` responden siempre con el mismo sobre:
+
+```json
+{ "items": [ ... ], "total": 137, "limit": 50, "offset": 0 }
+```
+
+`limit` va de 1 a 200 (por defecto 50) y `offset` desde 0; `total` cuenta todas las filas que cumplen los filtros, para armar el paginador. El orden es estable (termina en el `id`), así que recorrer las páginas nunca repite ni salta filas. Las búsquedas (`search`, `actor`) encuentran fragmentos en cualquier parte del texto, sin distinguir mayúsculas, y usan los índices de `002_busqueda_trigram.sql`.
 
 **Sesión con cookies.** El login responde con dos cookies: `aspar_session` (el JWT, `HttpOnly`, `Secure`, `SameSite=Lax`, solo para `/api`: JavaScript no puede leerla) y `aspar_csrf` (legible). El frontend envía las peticiones con `credentials: 'include'` y, en todo `POST/PUT/PATCH/DELETE`, repite el valor de `aspar_csrf` en el encabezado `X-CSRF-Token`; sin él la API responde 403. Además se rechaza cualquier petición que modifique datos con un `Origin` que no esté en `CORS_ORIGINS`. El token dura 30 minutos (renovable con `/auth/refresh`), la sesión se cierra a los 15 minutos sin actividad y nunca dura más de 8 horas.
 
@@ -181,10 +190,13 @@ Backend/
 │   │   ├── database.py      #   motor, unidad de trabajo por petición (DbSession)
 │   │   ├── errors.py        #   errores de dominio y respuestas {"detail": ...}
 │   │   ├── logging.py       #   logs JSON con request_id
+│   │   ├── middleware.py    #   cabeceras de seguridad y control de Origin
 │   │   ├── network.py       #   IP real detrás de Cloud Run
+│   │   ├── pagination.py    #   ?limit=&offset= y sobre {items, total, limit, offset}
+│   │   ├── rate_limit.py    #   límites de peticiones (tabla rate_limits)
 │   │   ├── security.py      #   bcrypt y JWT
 │   │   └── schemas.py       #   CamelModel y MessageResponse
-│   ├── adapters/storage.py  # Supabase Storage (archivos privados)
+│   ├── adapters/            # Servicios externos: Storage, correo, Turnstile y Google
 │   └── modules/             # Un módulo por dominio, siempre con la misma plantilla:
 │       ├── auth/            #   router.py   endpoints HTTP y permisos
 │       ├── users/           #   service.py  reglas de negocio y bitácora

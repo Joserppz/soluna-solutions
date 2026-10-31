@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy.orm import Session
 
 from app.core.errors import ValidationError
+from app.core.pagination import PageParams, PageResult
 from app.modules.audit import repository as audit_repository
 from app.modules.audit.models import AUDIT_CATEGORIES, AUDIT_SEVERITIES, AuditLog
 
@@ -109,8 +110,8 @@ def list_entries(
     actor: str | None,
     date_from: datetime | None,
     date_to: datetime | None,
-    limit: int,
-) -> list[AuditLog]:
+    page: PageParams,
+) -> PageResult:
     if category and category not in AUDIT_CATEGORIES:
         raise ValidationError("Categoría inválida. Usa: " + ", ".join(AUDIT_CATEGORIES) + ".")
     if severity and severity not in AUDIT_SEVERITIES:
@@ -122,5 +123,5 @@ def list_entries(
         actor=actor,
         date_from=date_from,
         date_to=date_to,
-        limit=limit,
+        page=page,
     )

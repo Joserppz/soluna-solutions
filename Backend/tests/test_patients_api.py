@@ -41,10 +41,11 @@ def test_listar_y_buscar_pacientes(client, auth_headers):
     response = client.get("/api/v1/patients", headers=auth_headers())
 
     assert response.status_code == 200
-    assert {p["ci"] for p in response.json()} >= {"1234567", "7654321"}
-    found = client.get("/api/v1/patients?search=fern", headers=auth_headers()).json()
+    assert {p["ci"] for p in response.json()["items"]} >= {"1234567", "7654321"}
+    found = client.get("/api/v1/patients?search=fern", headers=auth_headers()).json()["items"]
     assert [p["name"] for p in found] == ["Miguel Fernández"]
     pending = client.get("/api/v1/patients?status=Pendiente", headers=auth_headers()).json()
+    pending = pending["items"]
     assert pending and all(p["accessStatus"] == "Pendiente" for p in pending)
 
 
@@ -192,10 +193,10 @@ def test_baja_logica_con_motivo_y_reactivacion(client, auth_headers, db_session,
     assert response.json()["active"] is False
     assert response.json()["deactivationReason"] == "Se mudó a Cochabamba"
     # La ficha se conserva: sale del listado normal pero se puede consultar
-    listed = client.get("/api/v1/patients", headers=auth_headers()).json()
+    listed = client.get("/api/v1/patients", headers=auth_headers()).json()["items"]
     assert str(patient_id) not in {p["id"] for p in listed}
     everyone = client.get("/api/v1/patients?includeInactive=true", headers=auth_headers()).json()
-    assert str(patient_id) in {p["id"] for p in everyone}
+    assert str(patient_id) in {p["id"] for p in everyone["items"]}
     assert db_session.get(Patient, patient_id) is not None
     assert db_session.scalar(select(AuditLog).where(AuditLog.action == "Baja de ficha de afiliado"))
 

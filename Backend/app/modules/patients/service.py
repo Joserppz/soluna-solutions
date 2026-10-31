@@ -7,6 +7,7 @@ from datetime import UTC, date, datetime
 from sqlalchemy.orm import Session
 
 from app.core.errors import Conflict, Forbidden, NotFound, ValidationError
+from app.core.pagination import PageParams, PageResult
 from app.modules.audit import service as audit_service
 from app.modules.auth.dependencies import CurrentUser
 from app.modules.patients import repository as patient_repository
@@ -111,9 +112,13 @@ def new_contacts(contacts: list[ContactIn]) -> list[PatientContact]:
 
 
 def list_patients(
-    db: Session, search: str | None, access_status: str | None, include_inactive: bool = False
-) -> list[Patient]:
-    return patient_repository.list_patients(db, search, access_status, include_inactive)
+    db: Session,
+    search: str | None,
+    access_status: str | None,
+    include_inactive: bool = False,
+    page: PageParams | None = None,
+) -> PageResult:
+    return patient_repository.list_patients(db, search, access_status, include_inactive, page)
 
 
 def get_patient(db: Session, patient_id: uuid.UUID) -> Patient:

@@ -21,8 +21,8 @@ def test_listar_usuarios_con_roles_y_cuentas_pendientes(client, auth_headers):
     response = client.get("/api/v1/users", headers=auth_headers())
 
     assert response.status_code == 200
-    users = response.json()
-    assert len(users) == 6
+    users = response.json()["items"]
+    assert len(users) == response.json()["total"] == 6
     assert set(users[0]) == {
         "id",
         "name",

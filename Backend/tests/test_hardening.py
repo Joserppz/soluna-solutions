@@ -89,7 +89,8 @@ def test_buscar_comodines_no_devuelve_todo(client, auth_headers):
     headers = auth_headers()
 
     for term in ("%", "_", "\\"):
-        assert client.get("/api/v1/patients", params={"search": term}, headers=headers).json() == []
+        found = client.get("/api/v1/patients", params={"search": term}, headers=headers).json()
+        assert found["items"] == []
     assert escape_like("50%_a\\b") == "50\\%\\_a\\\\b"
 
 

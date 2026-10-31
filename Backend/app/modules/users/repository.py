@@ -1,8 +1,10 @@
 import uuid
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
+from app.core.database import escape_like
+from app.core.pagination import PageParams, PageResult, paginate
 from app.modules.users.models import ADMIN, Role, User
 
 
@@ -18,8 +20,16 @@ def get_by_google_sub(db: Session, google_sub: str) -> User | None:
     return db.scalar(select(User).where(User.google_sub == google_sub))
 
 
-def list_users(db: Session) -> list[User]:
-    return list(db.scalars(select(User).order_by(User.created_at, User.name)))
+def list_users(
+    db: Session, search: str | None = None, page: PageParams | None = None
+) -> PageResult:
+    query = select(User).order_by(User.created_at, User.name, User.id)
+    if search:
+        pattern = f"%{escape_like(search.strip())}%"
+        query = query.where(
+            or_(User.name.ilike(pattern, escape="\\"), User.email.ilike(pattern, escape="\\"))
+        )
+    return paginate(db, query, page or PageParams())
 
 
 def get_role_by_key(db: Session, key: str) -> Role | None:

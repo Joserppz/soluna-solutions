@@ -5,6 +5,7 @@ from datetime import date, datetime
 
 from pydantic import Field, field_validator
 
+from app.core.pagination import Page
 from app.core.schemas import CamelModel
 from app.modules.patients.models import ANAMNESIS_COLUMNS, Patient, PatientContact
 
@@ -128,6 +129,10 @@ class PatientSummaryOut(CamelModel):
     active: bool
     created_at: datetime
     updated_at: datetime
+
+
+class PatientPage(Page[PatientSummaryOut]):
+    """Página del listado de afiliados."""
 
 
 RESTRICTED_ANAMNESIS = ClinicalAnamnesis(

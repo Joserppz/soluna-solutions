@@ -74,6 +74,39 @@
         "title": "AuditEventOut",
         "type": "object"
       },
+      "AuditPage": {
+        "description": "Página de la bitácora (lo más reciente primero).",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AuditEventOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "description": "Filas que cumplen los filtros (todas las páginas)",
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "AuditPage",
+        "type": "object"
+      },
       "Body_upload_document_api_v1_patients__patient_id__documents_post": {
         "properties": {
           "documentType": {
@@ -694,6 +727,39 @@
         "title": "PatientOut",
         "type": "object"
       },
+      "PatientPage": {
+        "description": "Página del listado de afiliados.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PatientSummaryOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "description": "Filas que cumplen los filtros (todas las páginas)",
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "PatientPage",
+        "type": "object"
+      },
       "PatientSummaryOut": {
         "description": "Fila del listado: sin anamnesis (S5). La ficha clínica completa solo se obtiene con\nGET /patients/{id}, que queda en la bitácora.",
         "properties": {
@@ -1298,6 +1364,39 @@
         "title": "UserOut",
         "type": "object"
       },
+      "UserPage": {
+        "description": "Página del listado del equipo.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/UserOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "description": "Filas que cumplen los filtros (todas las páginas)",
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "UserPage",
+        "type": "object"
+      },
       "UserUpdate": {
         "properties": {
           "active": {
@@ -1492,10 +1591,21 @@
             "name": "limit",
             "required": false,
             "schema": {
-              "default": 200,
-              "maximum": 1000,
+              "default": 50,
+              "maximum": 200,
               "minimum": 1,
               "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
               "type": "integer"
             }
           }
@@ -1505,11 +1615,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/AuditEventOut"
-                  },
-                  "title": "Response List Audit Events Api V1 Audit Get",
-                  "type": "array"
+                  "$ref": "#/components/schemas/AuditPage"
                 }
               }
             },
@@ -2022,6 +2128,29 @@
               "title": "Includeinactive",
               "type": "boolean"
             }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
           }
         ],
         "responses": {
@@ -2029,11 +2158,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/PatientSummaryOut"
-                  },
-                  "title": "Response List Patients Api V1 Patients Get",
-                  "type": "array"
+                  "$ref": "#/components/schemas/PatientPage"
                 }
               }
             },
@@ -2492,21 +2617,70 @@
     },
     "/api/v1/users": {
       "get": {
+        "description": "Equipo, con búsqueda por nombre o correo.",
         "operationId": "list_users_api_v1_users_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 150,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
               "application/json": {
                 "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/UserOut"
-                  },
-                  "title": "Response List Users Api V1 Users Get",
-                  "type": "array"
+                  "$ref": "#/components/schemas/UserPage"
                 }
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "summary": "List Users",

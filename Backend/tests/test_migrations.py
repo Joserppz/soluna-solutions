@@ -80,8 +80,8 @@ def test_migraciones_crean_las_tablas_del_modelo(migrated_engine):
         "inquiries",
         "inquiry_notes",
     } <= tables
-    assert "001" in applied
-    assert len(applied["001"]) == 64
+    assert {"001", "002"} <= set(applied)
+    assert all(len(checksum) == 64 for checksum in applied.values())
 
 
 @requires_db
@@ -153,3 +153,31 @@ def test_dos_procesos_no_migran_a_la_vez(migrated_engine, monkeypatch):
         finally:
             other.execute(text("select pg_advisory_unlock(:id)"), {"id": migrate.LOCK_ID})
             other.commit()
+
+
+@requires_db
+def test_busquedas_con_comodin_usan_indices_de_trigramas(migrated_engine):
+    with migrated_engine.begin() as conn:
+        indexes = set(
+            conn.execute(
+                text("select indexname from pg_indexes where indexname like '%\\_trgm'")
+            ).scalars()
+        )
+        # Con pocas filas el planificador prefiere leer la tabla; se le impide para
+        # comprobar que el índice SÍ sirve para ILIKE '%texto%' con ESCAPE
+        conn.execute(text("set local enable_seqscan = off"))
+        plan = "\n".join(
+            conn.execute(
+                text("explain select id from public.patients where name ilike :p escape '\\'"),
+                {"p": "%fern%"},
+            ).scalars()
+        )
+
+    assert indexes == {
+        "patients_name_trgm",
+        "patients_ci_trgm",
+        "users_name_trgm",
+        "users_email_trgm",
+        "audit_logs_actor_trgm",
+    }
+    assert "patients_name_trgm" in plan

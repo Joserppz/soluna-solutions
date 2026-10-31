@@ -1,8 +1,9 @@
 import uuid
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 
 from app.core.database import DbSession
+from app.core.pagination import Pagination
 from app.modules.auth.dependencies import CurrentUser, require_permission
 from app.modules.users import service as user_service
 from app.modules.users.models import USERS_MANAGE
@@ -11,6 +12,7 @@ from app.modules.users.schemas import (
     UserCreate,
     UserCreated,
     UserOut,
+    UserPage,
     UserUpdate,
     to_user_out,
 )
@@ -20,9 +22,15 @@ router = APIRouter(prefix="/api/v1/users", tags=["Usuarios y roles"])
 admin_only = require_permission(USERS_MANAGE)
 
 
-@router.get("", response_model=list[UserOut], response_model_by_alias=True)
-def list_users(db: DbSession, current: CurrentUser = Depends(admin_only)):
-    return [to_user_out(user) for user in user_service.list_users(db)]
+@router.get("", response_model=UserPage, response_model_by_alias=True)
+def list_users(
+    db: DbSession,
+    page: Pagination,
+    search: str | None = Query(default=None, max_length=150),
+    current: CurrentUser = Depends(admin_only),
+):
+    """Equipo, con búsqueda por nombre o correo."""
+    return UserPage.of(user_service.list_users(db, search, page), to_user_out)
 
 
 @router.post(

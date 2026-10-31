@@ -3,13 +3,14 @@ import uuid
 from fastapi import APIRouter, Depends, Query, status
 
 from app.core.database import DbSession
+from app.core.pagination import Pagination
 from app.modules.auth.dependencies import CurrentUser, require_permission
 from app.modules.patients import service as patient_service
 from app.modules.patients.schemas import (
     PatientDeactivate,
     PatientIn,
     PatientOut,
-    PatientSummaryOut,
+    PatientPage,
     PatientUpdate,
     to_patient_out,
     to_patient_summary,
@@ -27,16 +28,17 @@ def _out(patient, current: CurrentUser) -> PatientOut:
     return to_patient_out(patient, patient_service.can_view_clinical_record(current, patient))
 
 
-@router.get("", response_model=list[PatientSummaryOut], response_model_by_alias=True)
+@router.get("", response_model=PatientPage, response_model_by_alias=True)
 def list_patients(
     db: DbSession,
+    page: Pagination,
     search: str | None = Query(default=None, max_length=120),
     access_status: str | None = Query(default=None, alias="status", max_length=20),
     include_inactive: bool = Query(default=False, alias="includeInactive"),
     current: CurrentUser = Depends(staff),
 ):
-    patients = patient_service.list_patients(db, search, access_status, include_inactive)
-    return [to_patient_summary(patient) for patient in patients]
+    result = patient_service.list_patients(db, search, access_status, include_inactive, page)
+    return PatientPage.of(result, to_patient_summary)
 
 
 @router.get("/{patient_id}", response_model=PatientOut, response_model_by_alias=True)

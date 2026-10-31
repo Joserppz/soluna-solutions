@@ -123,7 +123,8 @@ class TestRestriccionesDeLaTabla:
             patient_repository.add(db_session, patient)
 
     def test_busqueda_por_nombre_y_ci(self, db_session):
-        assert [p.ci for p in patient_repository.list_patients(db_session, search="elena")] == [
-            "1234567"
-        ]
-        assert len(patient_repository.list_patients(db_session, access_status="Pendiente")) == 1
+        found = patient_repository.list_patients(db_session, search="elena")
+        pending = patient_repository.list_patients(db_session, access_status="Pendiente")
+
+        assert [p.ci for p in found.items] == ["1234567"]
+        assert pending.total == len(pending.items) == 1

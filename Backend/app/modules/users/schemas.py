@@ -5,6 +5,7 @@ from datetime import datetime
 
 from pydantic import Field
 
+from app.core.pagination import Page
 from app.core.schemas import CamelModel
 from app.modules.users.models import User
 
@@ -22,6 +23,10 @@ class UserOut(CamelModel):
     must_change_password: bool
     last_login_at: datetime | None
     created_at: datetime
+
+
+class UserPage(Page[UserOut]):
+    """Página del listado del equipo."""
 
 
 class UserCreated(UserOut):

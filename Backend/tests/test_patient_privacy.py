@@ -69,7 +69,7 @@ class TestAnamnesis:
 
     def test_el_listado_nunca_trae_anamnesis(self, client, auth_headers, db_session):
         # S5: ni siquiera para Administración; la anamnesis solo sale en la ficha (auditada)
-        listing = client.get("/api/v1/patients", headers=auth_headers()).json()
+        listing = client.get("/api/v1/patients", headers=auth_headers()).json()["items"]
 
         assert listing and all("anamnesis" not in p for p in listing)
         assert listing[0]["primaryContact"]["isPrimary"] is True

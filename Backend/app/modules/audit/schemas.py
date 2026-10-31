@@ -3,6 +3,7 @@
 import uuid
 from datetime import datetime
 
+from app.core.pagination import Page
 from app.core.schemas import CamelModel
 from app.modules.audit.models import AuditLog
 
@@ -20,6 +21,10 @@ class AuditEventOut(CamelModel):
     # Cuántas veces se repitió el evento (intentos fallidos agrupados) y la última vez
     occurrences: int
     last_occurred_at: datetime
+
+
+class AuditPage(Page[AuditEventOut]):
+    """Página de la bitácora (lo más reciente primero)."""
 
 
 def to_audit_out(entry: AuditLog) -> AuditEventOut:

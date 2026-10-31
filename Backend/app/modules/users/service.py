@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.errors import Conflict, NotFound, ValidationError
+from app.core.pagination import PageParams, PageResult
 from app.core.security import hash_password
 from app.modules.audit import service as audit_service
 from app.modules.auth import repository as session_repository
@@ -196,8 +197,10 @@ def _audit(db: Session, current: CurrentUser, severity: str, action: str, detail
     )
 
 
-def list_users(db: Session) -> list[User]:
-    return user_repository.list_users(db)
+def list_users(
+    db: Session, search: str | None = None, page: PageParams | None = None
+) -> PageResult:
+    return user_repository.list_users(db, search, page)
 
 
 def get_user(db: Session, user_id: uuid.UUID) -> User:

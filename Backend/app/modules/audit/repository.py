@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.database import escape_like
+from app.core.pagination import PageParams, PageResult, paginate
 from app.modules.audit.models import AuditLog
 
 
@@ -32,9 +33,9 @@ def list_entries(
     actor: str | None = None,
     date_from: datetime | None = None,
     date_to: datetime | None = None,
-    limit: int = 200,
-) -> list[AuditLog]:
-    query = select(AuditLog).order_by(AuditLog.date.desc()).limit(limit)
+    page: PageParams | None = None,
+) -> PageResult:
+    query = select(AuditLog).order_by(AuditLog.date.desc(), AuditLog.id.desc())
     if category:
         query = query.where(AuditLog.category == category)
     if severity:
@@ -45,4 +46,4 @@ def list_entries(
         query = query.where(AuditLog.date >= date_from)
     if date_to:
         query = query.where(AuditLog.date <= date_to)
-    return list(db.scalars(query))
+    return paginate(db, query, page or PageParams())

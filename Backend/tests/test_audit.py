@@ -19,7 +19,7 @@ def test_consultar_bitacora_con_formato_del_frontend(client, auth_headers):
     response = client.get("/api/v1/audit", headers=auth_headers())
 
     assert response.status_code == 200
-    event = response.json()[0]
+    event = response.json()["items"][0]
     assert set(event) == {
         "id",
         "date",
@@ -43,8 +43,8 @@ def test_filtros_por_categoria_severidad_y_actor(client, auth_headers):
     warnings = client.get("/api/v1/audit?category=AUTENTICACION&severity=WARNING", headers=headers)
     by_actor = client.get("/api/v1/audit?actor=VOLUNTARIO", headers=headers)
 
-    assert [e["severity"] for e in warnings.json()] == ["WARNING"]
-    assert {e["actor"] for e in by_actor.json()} == {"voluntario@aspar.org"}
+    assert [e["severity"] for e in warnings.json()["items"]] == ["WARNING"]
+    assert {e["actor"] for e in by_actor.json()["items"]} == {"voluntario@aspar.org"}
 
 
 def test_filtro_invalido_es_422(client, auth_headers):
