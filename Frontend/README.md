@@ -54,6 +54,21 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 | `npm run format` | `prettier --write .` | Formatea el código fuente siguiendo `.prettierrc.json` |
 | `npm run test:run` | `vitest run` | Ejecuta la suite de pruebas de componentes y servicios en `src/views/__test__/` |
 | `npm run test:coverage` | `vitest run --coverage` | Igual que `test:run`, mide la cobertura y falla si baja del 70% (RNF-05 / SCRUM-97) |
+| `npm run api:types` | `node scripts/api-types.mjs` | Regenera `src/api/schema.d.ts` desde `docs/api/openapi.json` |
+| `npm run api:types:check` | `node scripts/api-types.mjs --check` | Falla si `src/api/schema.d.ts` no coincide con el contrato (lo usa el CI) |
+
+### Tipos de la API generados desde el contrato
+
+Los tipos de cada endpoint (cuerpos, respuestas y parámetros) no se escriben a mano: se generan con [`openapi-typescript`](https://openapi-ts.dev) desde [`docs/api/openapi.json`](../docs/api/openapi.json), que a su vez exporta el Backend. Si cambias un endpoint:
+
+```bash
+# Desde Backend/
+python -m scripts.export_openapi
+# Desde Frontend/
+npm run api:types
+```
+
+Sube los dos archivos (`openapi.json` y `src/api/schema.d.ts`) en el mismo commit. Un cambio en la API que rompa al frontend aparece como error de TypeScript en `npm run build`.
 
 ## 5. Cuentas de Prueba por Rol (RF-01 / RF-11)
 
@@ -74,7 +89,10 @@ Frontend/
 ├── .env.example                 # Variables de entorno de referencia (SCRUM-91)
 ├── .prettierrc.json             # Reglas de formato Prettier (SCRUM-153)
 ├── eslint.config.mjs            # Configuración Flat ESLint + TS + Vue (SCRUM-153)
+├── scripts/api-types.mjs        # Genera y verifica src/api/schema.d.ts desde docs/api/openapi.json
 ├── src/
+│   ├── api/
+│   │   └── schema.d.ts          # GENERADO: tipos de la API desde openapi.json (no editar)
 │   ├── App.vue                  # Shell principal, barra de navegación y monitor de expiración de sesión (SCRUM-67)
 │   ├── router/index.ts          # Rutas protegidas por autenticación y rol Administrador (SCRUM-67, SCRUM-179)
 │   ├── types/aspar.ts           # Contratos DTO e interfaces alineadas al modelo C4 y PostgreSQL (SCRUM-105)

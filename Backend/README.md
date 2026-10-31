@@ -78,7 +78,7 @@ uvicorn app.main:app --reload
 
 - Salud: <http://localhost:8000/api/v1/health> y <http://localhost:8000/api/v1/health/db>
 - Documentación interactiva (Swagger): <http://localhost:8000/docs> (solo en `dev` y `test`: con `ENV=prod` no se publican `/docs`, `/redoc` ni `/openapi.json`)
-- Especificación publicada en el repositorio: [`docs/api/openapi.json`](../docs/api/openapi.json). Si cambias un endpoint o un esquema, regénerala con `python -m scripts.export_openapi` (no necesita base de datos); `tests/test_openapi.py` falla si quedó desactualizada.
+- Especificación publicada en el repositorio: [`docs/api/openapi.json`](../docs/api/openapi.json). Si cambias un endpoint o un esquema, regénerala con `python -m scripts.export_openapi` (no necesita base de datos); `tests/test_openapi.py` falla si quedó desactualizada. Después regenera los tipos del frontend con `npm run api:types` (desde `Frontend/`): el CI del frontend falla si no coinciden.
 
 ### 5.1 Cuentas: ninguna vive en el código
 
