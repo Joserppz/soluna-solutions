@@ -21,7 +21,9 @@ from app.modules.auth.cookies import CSRF_HEADER
 from app.modules.documents import router as documents
 from app.modules.donations import router as donations
 from app.modules.evaluations import router as evaluations
+from app.modules.institutional import router as institutional
 from app.modules.inventory import router as inventory
+from app.modules.media import router as media
 from app.modules.patients import router as patients
 from app.modules.roles import router as roles
 from app.modules.schedules import router as schedules
@@ -75,6 +77,10 @@ def create_app() -> FastAPI:
     application.include_router(inventory.router)
     application.include_router(donations.router)
     application.include_router(donations.public_router)
+    application.include_router(media.router)
+    application.include_router(media.public_router)
+    application.include_router(institutional.router)
+    application.include_router(institutional.public_router)
     application.include_router(audit.router)
 
     @application.get("/api/v1/health", tags=["Sistema"])

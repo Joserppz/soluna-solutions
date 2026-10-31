@@ -82,6 +82,12 @@ class Settings(BaseSettings):
     patient_documents_bucket: str = "documentos-pacientes"
     signed_url_seconds: int = Field(default=300, ge=30, le=3600)
 
+    # Galería (ADR-010): las fotos y videos se suben directo a Cloudinary con una firma
+    # que genera la API. Sin estos valores, la subida responde 503.
+    cloudinary_cloud_name: str = ""
+    cloudinary_api_key: str = ""
+    cloudinary_api_secret: SecretStr = SecretStr("")
+
     @field_validator("jwt_secret")
     @classmethod
     def _secret_aleatorio(cls, value: SecretStr) -> SecretStr:

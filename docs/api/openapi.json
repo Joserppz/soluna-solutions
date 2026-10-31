@@ -1,6 +1,425 @@
 {
   "components": {
     "schemas": {
+      "AlbumIn": {
+        "properties": {
+          "description": {
+            "default": "",
+            "maxLength": 500,
+            "title": "Description",
+            "type": "string"
+          },
+          "scheduleId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scheduleid"
+          },
+          "title": {
+            "maxLength": 120,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "AlbumIn",
+        "type": "object"
+      },
+      "AlbumOut": {
+        "properties": {
+          "assetCount": {
+            "title": "Assetcount",
+            "type": "integer"
+          },
+          "assets": {
+            "items": {
+              "$ref": "#/components/schemas/AssetOut"
+            },
+            "title": "Assets",
+            "type": "array"
+          },
+          "coverUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverurl"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "permissionsReviewed": {
+            "title": "Permissionsreviewed",
+            "type": "boolean"
+          },
+          "reviewedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewedat"
+          },
+          "scheduleId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scheduleid"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "visibility": {
+            "enum": [
+              "privado",
+              "publico"
+            ],
+            "title": "Visibility",
+            "type": "string"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/PermissionWarning"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "visibility",
+          "permissionsReviewed",
+          "scheduleId",
+          "assetCount",
+          "coverUrl",
+          "createdAt",
+          "reviewedAt",
+          "assets",
+          "warnings"
+        ],
+        "title": "AlbumOut",
+        "type": "object"
+      },
+      "AlbumPublish": {
+        "properties": {
+          "permissionsReviewed": {
+            "title": "Permissionsreviewed",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "permissionsReviewed"
+        ],
+        "title": "AlbumPublish",
+        "type": "object"
+      },
+      "AlbumSummaryOut": {
+        "properties": {
+          "assetCount": {
+            "title": "Assetcount",
+            "type": "integer"
+          },
+          "coverUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverurl"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "permissionsReviewed": {
+            "title": "Permissionsreviewed",
+            "type": "boolean"
+          },
+          "scheduleId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scheduleid"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "visibility": {
+            "enum": [
+              "privado",
+              "publico"
+            ],
+            "title": "Visibility",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "visibility",
+          "permissionsReviewed",
+          "scheduleId",
+          "assetCount",
+          "coverUrl",
+          "createdAt"
+        ],
+        "title": "AlbumSummaryOut",
+        "type": "object"
+      },
+      "AlbumUpdate": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "scheduleId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scheduleid"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "title": "AlbumUpdate",
+        "type": "object"
+      },
+      "AssetIn": {
+        "description": "Lo que devolvió Cloudinary al terminar la subida.",
+        "properties": {
+          "height": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Height"
+          },
+          "kind": {
+            "enum": [
+              "imagen",
+              "video"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "publicId": {
+            "maxLength": 255,
+            "title": "Publicid",
+            "type": "string"
+          },
+          "sizeBytes": {
+            "exclusiveMinimum": 0.0,
+            "title": "Sizebytes",
+            "type": "integer"
+          },
+          "thumbnailUrl": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumbnailurl"
+          },
+          "url": {
+            "maxLength": 500,
+            "title": "Url",
+            "type": "string"
+          },
+          "width": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Width"
+          }
+        },
+        "required": [
+          "publicId",
+          "url",
+          "kind",
+          "sizeBytes"
+        ],
+        "title": "AssetIn",
+        "type": "object"
+      },
+      "AssetOut": {
+        "properties": {
+          "height": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Height"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "imagen",
+              "video"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "sizeBytes": {
+            "title": "Sizebytes",
+            "type": "integer"
+          },
+          "tags": {
+            "items": {
+              "$ref": "#/components/schemas/TagOut"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
+          "thumbnailUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumbnailurl"
+          },
+          "uploadedAt": {
+            "format": "date-time",
+            "title": "Uploadedat",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          },
+          "width": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Width"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "url",
+          "thumbnailUrl",
+          "width",
+          "height",
+          "sizeBytes",
+          "uploadedAt",
+          "tags"
+        ],
+        "title": "AssetOut",
+        "type": "object"
+      },
       "AttendanceActivity": {
         "properties": {
           "date": {
@@ -2981,6 +3400,185 @@
         "title": "PermissionOut",
         "type": "object"
       },
+      "PermissionWarning": {
+        "properties": {
+          "assetId": {
+            "format": "uuid",
+            "title": "Assetid",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "patientId": {
+            "format": "uuid",
+            "title": "Patientid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "assetId",
+          "patientId",
+          "name"
+        ],
+        "title": "PermissionWarning",
+        "type": "object"
+      },
+      "PublicAlbumOut": {
+        "properties": {
+          "assetCount": {
+            "title": "Assetcount",
+            "type": "integer"
+          },
+          "assets": {
+            "items": {
+              "$ref": "#/components/schemas/PublicAssetOut"
+            },
+            "title": "Assets",
+            "type": "array"
+          },
+          "coverUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverurl"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "assetCount",
+          "coverUrl",
+          "assets"
+        ],
+        "title": "PublicAlbumOut",
+        "type": "object"
+      },
+      "PublicAlbumSummaryOut": {
+        "properties": {
+          "assetCount": {
+            "title": "Assetcount",
+            "type": "integer"
+          },
+          "coverUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverurl"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "assetCount",
+          "coverUrl"
+        ],
+        "title": "PublicAlbumSummaryOut",
+        "type": "object"
+      },
+      "PublicAssetOut": {
+        "properties": {
+          "height": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Height"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "imagen",
+              "video"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "thumbnailUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumbnailurl"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          },
+          "width": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Width"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "url",
+          "thumbnailUrl",
+          "width",
+          "height"
+        ],
+        "title": "PublicAssetOut",
+        "type": "object"
+      },
       "PublicGoalOut": {
         "properties": {
           "confirmedCount": {
@@ -3154,6 +3752,43 @@
           "availability"
         ],
         "title": "PublicScheduleOut",
+        "type": "object"
+      },
+      "PublicSectionOut": {
+        "properties": {
+          "content": {
+            "additionalProperties": true,
+            "title": "Content",
+            "type": "object"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "publishedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publishedat"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "title",
+          "content",
+          "publishedAt"
+        ],
+        "title": "PublicSectionOut",
         "type": "object"
       },
       "RegisterRequest": {
@@ -3819,6 +4454,101 @@
         "title": "ScheduleUpdate",
         "type": "object"
       },
+      "SectionDraftIn": {
+        "properties": {
+          "content": {
+            "additionalProperties": true,
+            "title": "Content",
+            "type": "object"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 150,
+                "minLength": 3,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "content"
+        ],
+        "title": "SectionDraftIn",
+        "type": "object"
+      },
+      "SectionOut": {
+        "properties": {
+          "draftContent": {
+            "additionalProperties": true,
+            "title": "Draftcontent",
+            "type": "object"
+          },
+          "draftUpdatedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Draftupdatedat"
+          },
+          "hasUnpublishedChanges": {
+            "title": "Hasunpublishedchanges",
+            "type": "boolean"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "publishedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publishedat"
+          },
+          "publishedContent": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publishedcontent"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "title",
+          "draftContent",
+          "publishedContent",
+          "hasUnpublishedChanges",
+          "draftUpdatedAt",
+          "publishedAt"
+        ],
+        "title": "SectionOut",
+        "type": "object"
+      },
       "SessionOut": {
         "description": "Estado de la sesión. El token viaja solo en la cookie HttpOnly aspar_session.",
         "properties": {
@@ -3964,6 +4694,73 @@
         "title": "SignedUrlOut",
         "type": "object"
       },
+      "SocialLinksIn": {
+        "description": "«Redes sociales» (diseño pág. 14): vacío = ese ícono no aparece en el sitio.",
+        "properties": {
+          "facebook": {
+            "default": "",
+            "maxLength": 300,
+            "title": "Facebook",
+            "type": "string"
+          },
+          "instagram": {
+            "default": "",
+            "maxLength": 300,
+            "title": "Instagram",
+            "type": "string"
+          },
+          "tiktok": {
+            "default": "",
+            "maxLength": 300,
+            "title": "Tiktok",
+            "type": "string"
+          }
+        },
+        "title": "SocialLinksIn",
+        "type": "object"
+      },
+      "TagOut": {
+        "properties": {
+          "imageConsent": {
+            "title": "Imageconsent",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "patientId": {
+            "format": "uuid",
+            "title": "Patientid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "patientId",
+          "name",
+          "imageConsent"
+        ],
+        "title": "TagOut",
+        "type": "object"
+      },
+      "TagsIn": {
+        "properties": {
+          "patientIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Patientids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "patientIds"
+        ],
+        "title": "TagsIn",
+        "type": "object"
+      },
       "TokenRequest": {
         "properties": {
           "token": {
@@ -3977,6 +4774,50 @@
           "token"
         ],
         "title": "TokenRequest",
+        "type": "object"
+      },
+      "UploadSignatureOut": {
+        "description": "Datos para subir un archivo directo a Cloudinary desde el navegador.",
+        "properties": {
+          "allowedFormats": {
+            "title": "Allowedformats",
+            "type": "string"
+          },
+          "apiKey": {
+            "title": "Apikey",
+            "type": "string"
+          },
+          "cloudName": {
+            "title": "Cloudname",
+            "type": "string"
+          },
+          "folder": {
+            "title": "Folder",
+            "type": "string"
+          },
+          "signature": {
+            "title": "Signature",
+            "type": "string"
+          },
+          "timestamp": {
+            "title": "Timestamp",
+            "type": "integer"
+          },
+          "uploadUrl": {
+            "title": "Uploadurl",
+            "type": "string"
+          }
+        },
+        "required": [
+          "uploadUrl",
+          "cloudName",
+          "apiKey",
+          "folder",
+          "timestamp",
+          "allowedFormats",
+          "signature"
+        ],
+        "title": "UploadSignatureOut",
         "type": "object"
       },
       "UserApprove": {
@@ -4940,6 +5781,210 @@
         "summary": "Verify Email",
         "tags": [
           "Autenticación"
+        ]
+      }
+    },
+    "/api/v1/content/sections": {
+      "get": {
+        "description": "Las 7 secciones del sitio con su borrador, lo publicado y si hay cambios sin publicar.",
+        "operationId": "list_sections_api_v1_content_sections_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SectionOut"
+                  },
+                  "title": "Response List Sections Api V1 Content Sections Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Sections",
+        "tags": [
+          "Galería y contenido"
+        ]
+      }
+    },
+    "/api/v1/content/sections/{key}": {
+      "get": {
+        "operationId": "get_section_api_v1_content_sections__key__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SectionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Section",
+        "tags": [
+          "Galería y contenido"
+        ]
+      },
+      "put": {
+        "description": "«Guardar borrador»: el sitio no cambia hasta publicar.",
+        "operationId": "save_draft_api_v1_content_sections__key__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SectionDraftIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SectionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Save Draft",
+        "tags": [
+          "Galería y contenido"
+        ]
+      }
+    },
+    "/api/v1/content/sections/{key}/publish": {
+      "post": {
+        "description": "«Publicar cambios»: el borrador pasa a verse en el sitio.",
+        "operationId": "publish_api_v1_content_sections__key__publish_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SectionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Publish",
+        "tags": [
+          "Galería y contenido"
+        ]
+      }
+    },
+    "/api/v1/content/social-links": {
+      "put": {
+        "description": "Enlaces oficiales a Facebook, Instagram y TikTok (se publican al guardar).",
+        "operationId": "save_social_links_api_v1_content_social_links_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SocialLinksIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SectionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Save Social Links",
+        "tags": [
+          "Galería y contenido"
         ]
       }
     },
@@ -5965,6 +7010,531 @@
         ]
       }
     },
+    "/api/v1/media/albums": {
+      "get": {
+        "operationId": "list_albums_api_v1_media_albums_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "visibility",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "privado",
+                    "publico"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Visibility"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AlbumSummaryOut"
+                  },
+                  "title": "Response List Albums Api V1 Media Albums Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Albums",
+        "tags": [
+          "Galería y contenido"
+        ]
+      },
+      "post": {
+        "operationId": "create_album_api_v1_media_albums_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlbumIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlbumOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Album",
+        "tags": [
+          "Galería y contenido"
+        ]
+      }
+    },
+    "/api/v1/media/albums/{album_id}": {
+      "delete": {
+        "description": "Elimina un álbum que no está publicado.",
+        "operationId": "delete_album_api_v1_media_albums__album_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "album_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Album Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Album",
+        "tags": [
+          "Galería y contenido"
+        ]
+      },
+      "get": {
+        "description": "Álbum con sus archivos, las personas etiquetadas y las advertencias de permiso.",
+        "operationId": "get_album_api_v1_media_albums__album_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "album_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Album Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlbumOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Album",
+        "tags": [
+          "Galería y contenido"
+        ]
+      },
+      "patch": {
+        "operationId": "update_album_api_v1_media_albums__album_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "album_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Album Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlbumUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlbumOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Album",
+        "tags": [
+          "Galería y contenido"
+        ]
+      }
+    },
+    "/api/v1/media/albums/{album_id}/assets": {
+      "post": {
+        "description": "Registra un archivo ya subido a Cloudinary. Un álbum publicado vuelve a revisión.",
+        "operationId": "add_asset_api_v1_media_albums__album_id__assets_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "album_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Album Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Asset",
+        "tags": [
+          "Galería y contenido"
+        ]
+      }
+    },
+    "/api/v1/media/albums/{album_id}/publish": {
+      "post": {
+        "description": "Publica en el sitio: exige la revisión de permisos y ninguna advertencia pendiente.",
+        "operationId": "publish_api_v1_media_albums__album_id__publish_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "album_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Album Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlbumPublish"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlbumOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Publish",
+        "tags": [
+          "Galería y contenido"
+        ]
+      }
+    },
+    "/api/v1/media/albums/{album_id}/unpublish": {
+      "post": {
+        "operationId": "unpublish_api_v1_media_albums__album_id__unpublish_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "album_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Album Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlbumOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Unpublish",
+        "tags": [
+          "Galería y contenido"
+        ]
+      }
+    },
+    "/api/v1/media/albums/{album_id}/upload-signature": {
+      "post": {
+        "description": "Firma para subir un archivo directo a Cloudinary (JPG, PNG, WEBP o MP4).",
+        "operationId": "upload_signature_api_v1_media_albums__album_id__upload_signature_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "album_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Album Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadSignatureOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Upload Signature",
+        "tags": [
+          "Galería y contenido"
+        ]
+      }
+    },
+    "/api/v1/media/assets/{asset_id}": {
+      "delete": {
+        "operationId": "remove_asset_api_v1_media_assets__asset_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "asset_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Asset Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Remove Asset",
+        "tags": [
+          "Galería y contenido"
+        ]
+      }
+    },
+    "/api/v1/media/assets/{asset_id}/tags": {
+      "put": {
+        "description": "Personas que aparecen en la foto. tags[].imageConsent=false bloquea la publicación.",
+        "operationId": "set_tags_api_v1_media_assets__asset_id__tags_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "asset_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Asset Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TagsIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Tags",
+        "tags": [
+          "Galería y contenido"
+        ]
+      }
+    },
     "/api/v1/patients": {
       "get": {
         "operationId": "list_patients_api_v1_patients_get",
@@ -6948,6 +8518,74 @@
         ]
       }
     },
+    "/api/v1/public/content": {
+      "get": {
+        "description": "Secciones publicadas del sitio (sin borradores).",
+        "operationId": "public_content_api_v1_public_content_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PublicSectionOut"
+                  },
+                  "title": "Response Public Content Api V1 Public Content Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Public Content",
+        "tags": [
+          "Sitio público"
+        ]
+      }
+    },
+    "/api/v1/public/content/{key}": {
+      "get": {
+        "operationId": "public_section_api_v1_public_content__key__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicSectionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Public Section",
+        "tags": [
+          "Sitio público"
+        ]
+      }
+    },
     "/api/v1/public/donations/goal": {
       "get": {
         "description": "Meta visible en el sitio e hitos; null si no hay meta visible.",
@@ -7059,6 +8697,75 @@
           }
         },
         "summary": "Track Notice",
+        "tags": [
+          "Sitio público"
+        ]
+      }
+    },
+    "/api/v1/public/media/albums": {
+      "get": {
+        "description": "Álbumes publicados (sin etiquetas ni datos de afiliados).",
+        "operationId": "public_albums_api_v1_public_media_albums_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PublicAlbumSummaryOut"
+                  },
+                  "title": "Response Public Albums Api V1 Public Media Albums Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Public Albums",
+        "tags": [
+          "Sitio público"
+        ]
+      }
+    },
+    "/api/v1/public/media/albums/{album_id}": {
+      "get": {
+        "operationId": "public_album_api_v1_public_media_albums__album_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "album_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Album Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicAlbumOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Public Album",
         "tags": [
           "Sitio público"
         ]

@@ -25,13 +25,18 @@ from app.models import (
     Donation,
     DonationGoal,
     DonationGoalMilestone,
+    InstitutionalSection,
     InventoryItem,
+    MediaAlbum,
+    MediaAsset,
+    MediaPatientTag,
     Patient,
     PatientContact,
     PatientEvaluation,
     Schedule,
     User,
 )
+from app.modules.institutional.schemas import SECTION_MODELS
 from app.modules.inventory.schemas import ItemIn
 from app.modules.inventory.service import register_item
 from app.modules.users import repository as user_repository
@@ -185,8 +190,82 @@ def seed(db: Session) -> list[str]:
         register_item(db, ItemIn(**item), coordinator.id)
     created.append(f"{len(INVENTORY)} materiales en el inventario (uno dañado)")
     created.append(_donations(db, coordinator))
+    created.append(_gallery(db, coordinator, patients))
+    created.append(_content(db, coordinator))
     db.flush()
     return created
+
+
+# Imágenes de muestra públicas de Cloudinary (cuenta «demo»)
+DEMO_IMAGE = "https://res.cloudinary.com/demo/image/upload/{}"
+
+
+def _gallery(db: Session, coordinator: User, patients: list[Patient]) -> str:
+    """Un álbum publicado y otro en revisión con una persona sin permiso de imagen."""
+    published = MediaAlbum(
+        title="Encontrarnos en movimiento",
+        description="Fisioterapia en grupo, cada sábado.",
+        visibility="publico",
+        permissions_reviewed=True,
+        reviewed_by=coordinator.id,
+        reviewed_at=clock.now(),
+        created_by=coordinator.id,
+    )
+    review = MediaAlbum(
+        title="Crear con las manos",
+        description="Una mañana de pinceles y acuarelas en el taller de arteterapia.",
+        created_by=coordinator.id,
+    )
+    db.add_all([published, review])
+    db.flush()
+    for album, names in ((published, ("sample.jpg", "couple.jpg")), (review, ("dog.jpg",))):
+        for name in names:
+            album.assets.append(
+                MediaAsset(
+                    kind="imagen",
+                    public_id=f"aspar/albums/{album.id}/{name.split('.')[0]}",
+                    url=DEMO_IMAGE.format(name),
+                    thumbnail_url=DEMO_IMAGE.format(f"w_400/{name}"),
+                    width=1200,
+                    height=800,
+                    size_bytes=250_000,
+                    uploaded_by=coordinator.id,
+                )
+            )
+    db.flush()
+    # Elena autorizó el uso de su imagen; Miguel no (la foto queda con advertencia)
+    review.assets[0].tags = [
+        MediaPatientTag(patient_id=patients[0].id, tagged_by=coordinator.id),
+        MediaPatientTag(patient_id=patients[1].id, tagged_by=coordinator.id),
+    ]
+    return "2 álbumes de galería (uno publicado y otro en revisión con una advertencia)"
+
+
+def _content(db: Session, coordinator: User) -> str:
+    texts = {
+        "presentacion": {
+            "titulo": "La vida se vive mejor en comunidad.",
+            "subtitulo": "Un espacio de encuentro para personas con Parkinson y trastornos "
+            "del movimiento, sus familias y quienes las cuidan.",
+            "texto": "",
+        },
+        "mision_vision": {
+            "titulo": "Acompañar también es hacer lugar.",
+            "mision": "Acompañar a personas con Parkinson y trastornos del movimiento, "
+            "fortaleciendo su bienestar y sus vínculos a través de actividades comunitarias.",
+            "vision": "Una comunidad donde vivir con una condición de movimiento no signifique "
+            "vivir sin apoyo.",
+        },
+    }
+    for key, content in texts.items():
+        section = db.scalar(select(InstitutionalSection).where(InstitutionalSection.key == key))
+        section.draft_content = (
+            SECTION_MODELS[key].model_validate(content).model_dump(by_alias=True)
+        )
+        section.published_content = dict(section.draft_content)
+        section.published_by = section.draft_updated_by = coordinator.id
+        section.published_at = section.draft_updated_at = clock.now()
+    return "Contenido publicado: Presentación y Misión y visión"
 
 
 def _donations(db: Session, coordinator: User) -> str:

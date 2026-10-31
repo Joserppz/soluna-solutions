@@ -101,6 +101,24 @@ export type DonationSummary = Schemas['DonationSummary']
 export type GoalIn = Schemas['GoalIn']
 export type GoalOut = Schemas['GoalOut']
 
+// Galería
+export type AlbumIn = Schemas['AlbumIn']
+export type AlbumUpdate = Schemas['AlbumUpdate']
+export type AlbumOut = Schemas['AlbumOut']
+export type AlbumSummary = Schemas['AlbumSummaryOut']
+export type AlbumPublish = Schemas['AlbumPublish']
+export type AssetIn = Schemas['AssetIn']
+export type AssetOut = Schemas['AssetOut']
+export type UploadSignature = Schemas['UploadSignatureOut']
+export type PublicAlbum = Schemas['PublicAlbumOut']
+export type PublicAlbumSummary = Schemas['PublicAlbumSummaryOut']
+
+// Contenido del sitio
+export type SectionOut = Schemas['SectionOut']
+export type SectionDraftIn = Schemas['SectionDraftIn']
+export type SocialLinksIn = Schemas['SocialLinksIn']
+export type PublicSection = Schemas['PublicSectionOut']
+
 // Bitácora
 export type AuditPage = Schemas['AuditPage']
 export type AuditEvent = Schemas['AuditEventOut']

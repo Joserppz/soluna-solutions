@@ -4,6 +4,13 @@
  */
 import type { HttpClient } from './client'
 import type {
+  AlbumIn,
+  AlbumOut,
+  AlbumPublish,
+  AlbumSummary,
+  AlbumUpdate,
+  AssetIn,
+  AssetOut,
   AttendanceEntry,
   AttendanceMark,
   AttendanceSheet,
@@ -57,7 +64,10 @@ import type {
   PatientUpdate,
   RegisterRequest,
   ResetPasswordRequest,
+  PublicAlbum,
+  PublicAlbumSummary,
   PublicGoal,
+  PublicSection,
   PublicSchedule,
   PublicScheduleQuery,
   ScheduleCancel,
@@ -66,9 +76,13 @@ import type {
   ScheduleOut,
   SchedulePage,
   ScheduleUpdate,
+  SectionDraftIn,
+  SectionOut,
   SessionOut,
+  SocialLinksIn,
   SignedUrl,
   TokenRequest,
+  UploadSignature,
   UserCreate,
   UserApprove,
   UserCreated,
@@ -313,6 +327,48 @@ export function createEndpoints(http: HttpClient) {
         http.put<GoalOut>('/donations/goal', { body }),
     },
 
+    media: {
+      albums: (visibility?: 'privado' | 'publico') =>
+        http.get<AlbumSummary[]>('/media/albums', { query: { visibility } }),
+      album: (albumId: string) =>
+        http.get<AlbumOut>(`/media/albums/${id(albumId)}`),
+      createAlbum: (body: AlbumIn) =>
+        http.post<AlbumOut>('/media/albums', { body }),
+      updateAlbum: (albumId: string, body: AlbumUpdate) =>
+        http.patch<AlbumOut>(`/media/albums/${id(albumId)}`, { body }),
+      deleteAlbum: (albumId: string) =>
+        http.delete<MessageResponse>(`/media/albums/${id(albumId)}`),
+      /** Firma para subir directo a Cloudinary; luego se registra con addAsset. */
+      uploadSignature: (albumId: string) =>
+        http.post<UploadSignature>(
+          `/media/albums/${id(albumId)}/upload-signature`,
+        ),
+      addAsset: (albumId: string, body: AssetIn) =>
+        http.post<AssetOut>(`/media/albums/${id(albumId)}/assets`, { body }),
+      removeAsset: (assetId: string) =>
+        http.delete<MessageResponse>(`/media/assets/${id(assetId)}`),
+      setTags: (assetId: string, patientIds: string[]) =>
+        http.put<AssetOut>(`/media/assets/${id(assetId)}/tags`, {
+          body: { patientIds },
+        }),
+      publish: (albumId: string, body: AlbumPublish) =>
+        http.post<AlbumOut>(`/media/albums/${id(albumId)}/publish`, { body }),
+      unpublish: (albumId: string) =>
+        http.post<AlbumOut>(`/media/albums/${id(albumId)}/unpublish`),
+    },
+
+    content: {
+      sections: () => http.get<SectionOut[]>('/content/sections'),
+      section: (key: string) =>
+        http.get<SectionOut>(`/content/sections/${id(key)}`),
+      saveDraft: (key: string, body: SectionDraftIn) =>
+        http.put<SectionOut>(`/content/sections/${id(key)}`, { body }),
+      publish: (key: string) =>
+        http.post<SectionOut>(`/content/sections/${id(key)}/publish`),
+      saveSocialLinks: (body: SocialLinksIn) =>
+        http.put<SectionOut>('/content/social-links', { body }),
+    },
+
     public: {
       // Sin sesión: la agenda del sitio
       schedules: (query: PublicScheduleQuery = {}) =>
@@ -328,6 +384,20 @@ export function createEndpoints(http: HttpClient) {
       notifyDonation: (body: DonationNoticeIn) =>
         http.post<DonationTracking>('/public/donations/notice', {
           body,
+          anonymous: true,
+        }),
+      albums: () =>
+        http.get<PublicAlbumSummary[]>('/public/media/albums', {
+          anonymous: true,
+        }),
+      album: (albumId: string) =>
+        http.get<PublicAlbum>(`/public/media/albums/${id(albumId)}`, {
+          anonymous: true,
+        }),
+      content: () =>
+        http.get<PublicSection[]>('/public/content', { anonymous: true }),
+      section: (key: string) =>
+        http.get<PublicSection>(`/public/content/${id(key)}`, {
           anonymous: true,
         }),
       trackDonation: (donationId: string) =>

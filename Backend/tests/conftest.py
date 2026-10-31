@@ -35,6 +35,9 @@ os.environ["CORS_ORIGINS"] = "http://localhost:5173"
 os.environ["EMAIL_PROVIDER"] = "console"
 os.environ["TURNSTILE_SECRET_KEY"] = ""
 os.environ["GOOGLE_CLIENT_ID"] = ""
+os.environ["CLOUDINARY_CLOUD_NAME"] = ""
+os.environ["CLOUDINARY_API_KEY"] = ""
+os.environ["CLOUDINARY_API_SECRET"] = ""
 
 requires_db = pytest.mark.skipif(
     not TEST_DATABASE_URL, reason="Requiere TEST_DATABASE_URL (PostgreSQL de pruebas)"

@@ -240,6 +240,87 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/content/sections': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * List Sections
+     * @description Las 7 secciones del sitio con su borrador, lo publicado y si hay cambios sin publicar.
+     */
+    get: operations['list_sections_api_v1_content_sections_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/content/sections/{key}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Get Section */
+    get: operations['get_section_api_v1_content_sections__key__get']
+    /**
+     * Save Draft
+     * @description «Guardar borrador»: el sitio no cambia hasta publicar.
+     */
+    put: operations['save_draft_api_v1_content_sections__key__put']
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/content/sections/{key}/publish': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Publish
+     * @description «Publicar cambios»: el borrador pasa a verse en el sitio.
+     */
+    post: operations['publish_api_v1_content_sections__key__publish_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/content/social-links': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    /**
+     * Save Social Links
+     * @description Enlaces oficiales a Facebook, Instagram y TikTok (se publican al guardar).
+     */
+    put: operations['save_social_links_api_v1_content_social_links_put']
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/donations': {
     parameters: {
       query?: never
@@ -531,6 +612,163 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/media/albums': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** List Albums */
+    get: operations['list_albums_api_v1_media_albums_get']
+    put?: never
+    /** Create Album */
+    post: operations['create_album_api_v1_media_albums_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/media/albums/{album_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Get Album
+     * @description Álbum con sus archivos, las personas etiquetadas y las advertencias de permiso.
+     */
+    get: operations['get_album_api_v1_media_albums__album_id__get']
+    put?: never
+    post?: never
+    /**
+     * Delete Album
+     * @description Elimina un álbum que no está publicado.
+     */
+    delete: operations['delete_album_api_v1_media_albums__album_id__delete']
+    options?: never
+    head?: never
+    /** Update Album */
+    patch: operations['update_album_api_v1_media_albums__album_id__patch']
+    trace?: never
+  }
+  '/api/v1/media/albums/{album_id}/assets': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Add Asset
+     * @description Registra un archivo ya subido a Cloudinary. Un álbum publicado vuelve a revisión.
+     */
+    post: operations['add_asset_api_v1_media_albums__album_id__assets_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/media/albums/{album_id}/publish': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Publish
+     * @description Publica en el sitio: exige la revisión de permisos y ninguna advertencia pendiente.
+     */
+    post: operations['publish_api_v1_media_albums__album_id__publish_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/media/albums/{album_id}/unpublish': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Unpublish */
+    post: operations['unpublish_api_v1_media_albums__album_id__unpublish_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/media/albums/{album_id}/upload-signature': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Upload Signature
+     * @description Firma para subir un archivo directo a Cloudinary (JPG, PNG, WEBP o MP4).
+     */
+    post: operations['upload_signature_api_v1_media_albums__album_id__upload_signature_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/media/assets/{asset_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post?: never
+    /** Remove Asset */
+    delete: operations['remove_asset_api_v1_media_assets__asset_id__delete']
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/media/assets/{asset_id}/tags': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    /**
+     * Set Tags
+     * @description Personas que aparecen en la foto. tags[].imageConsent=false bloquea la publicación.
+     */
+    put: operations['set_tags_api_v1_media_assets__asset_id__tags_put']
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/patients': {
     parameters: {
       query?: never
@@ -740,6 +978,43 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/public/content': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Public Content
+     * @description Secciones publicadas del sitio (sin borradores).
+     */
+    get: operations['public_content_api_v1_public_content_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/public/content/{key}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Public Section */
+    get: operations['public_section_api_v1_public_content__key__get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/public/donations/goal': {
     parameters: {
       query?: never
@@ -792,6 +1067,43 @@ export interface paths {
      * @description Estado de un aviso (Pendiente → Confirmado) con el id que recibió la persona.
      */
     get: operations['track_notice_api_v1_public_donations_notice__donation_id__get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/public/media/albums': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Public Albums
+     * @description Álbumes publicados (sin etiquetas ni datos de afiliados).
+     */
+    get: operations['public_albums_api_v1_public_media_albums_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/public/media/albums/{album_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Public Album */
+    get: operations['public_album_api_v1_public_media_albums__album_id__get']
     put?: never
     post?: never
     delete?: never
@@ -1167,6 +1479,151 @@ export interface paths {
 export type webhooks = Record<string, never>
 export interface components {
   schemas: {
+    /** AlbumIn */
+    AlbumIn: {
+      /**
+       * Description
+       * @default
+       */
+      description?: string
+      /** Scheduleid */
+      scheduleId?: string | null
+      /** Title */
+      title: string
+    }
+    /** AlbumOut */
+    AlbumOut: {
+      /** Assetcount */
+      assetCount: number
+      /** Assets */
+      assets: components['schemas']['AssetOut'][]
+      /** Coverurl */
+      coverUrl: string | null
+      /**
+       * Createdat
+       * Format: date-time
+       */
+      createdAt: string
+      /** Description */
+      description: string
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string
+      /** Permissionsreviewed */
+      permissionsReviewed: boolean
+      /** Reviewedat */
+      reviewedAt: string | null
+      /** Scheduleid */
+      scheduleId: string | null
+      /** Title */
+      title: string
+      /**
+       * Visibility
+       * @enum {string}
+       */
+      visibility: 'privado' | 'publico'
+      /** Warnings */
+      warnings: components['schemas']['PermissionWarning'][]
+    }
+    /** AlbumPublish */
+    AlbumPublish: {
+      /** Permissionsreviewed */
+      permissionsReviewed: boolean
+    }
+    /** AlbumSummaryOut */
+    AlbumSummaryOut: {
+      /** Assetcount */
+      assetCount: number
+      /** Coverurl */
+      coverUrl: string | null
+      /**
+       * Createdat
+       * Format: date-time
+       */
+      createdAt: string
+      /** Description */
+      description: string
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string
+      /** Permissionsreviewed */
+      permissionsReviewed: boolean
+      /** Scheduleid */
+      scheduleId: string | null
+      /** Title */
+      title: string
+      /**
+       * Visibility
+       * @enum {string}
+       */
+      visibility: 'privado' | 'publico'
+    }
+    /** AlbumUpdate */
+    AlbumUpdate: {
+      /** Description */
+      description?: string | null
+      /** Scheduleid */
+      scheduleId?: string | null
+      /** Title */
+      title?: string | null
+    }
+    /**
+     * AssetIn
+     * @description Lo que devolvió Cloudinary al terminar la subida.
+     */
+    AssetIn: {
+      /** Height */
+      height?: number | null
+      /**
+       * Kind
+       * @enum {string}
+       */
+      kind: 'imagen' | 'video'
+      /** Publicid */
+      publicId: string
+      /** Sizebytes */
+      sizeBytes: number
+      /** Thumbnailurl */
+      thumbnailUrl?: string | null
+      /** Url */
+      url: string
+      /** Width */
+      width?: number | null
+    }
+    /** AssetOut */
+    AssetOut: {
+      /** Height */
+      height: number | null
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string
+      /**
+       * Kind
+       * @enum {string}
+       */
+      kind: 'imagen' | 'video'
+      /** Sizebytes */
+      sizeBytes: number
+      /** Tags */
+      tags: components['schemas']['TagOut'][]
+      /** Thumbnailurl */
+      thumbnailUrl: string | null
+      /**
+       * Uploadedat
+       * Format: date-time
+       */
+      uploadedAt: string
+      /** Url */
+      url: string
+      /** Width */
+      width: number | null
+    }
     /** AttendanceActivity */
     AttendanceActivity: {
       /**
@@ -2336,6 +2793,76 @@ export interface components {
         | 'roles:manage'
         | 'audit:read'
     }
+    /** PermissionWarning */
+    PermissionWarning: {
+      /**
+       * Assetid
+       * Format: uuid
+       */
+      assetId: string
+      /** Name */
+      name: string
+      /**
+       * Patientid
+       * Format: uuid
+       */
+      patientId: string
+    }
+    /** PublicAlbumOut */
+    PublicAlbumOut: {
+      /** Assetcount */
+      assetCount: number
+      /** Assets */
+      assets: components['schemas']['PublicAssetOut'][]
+      /** Coverurl */
+      coverUrl: string | null
+      /** Description */
+      description: string
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string
+      /** Title */
+      title: string
+    }
+    /** PublicAlbumSummaryOut */
+    PublicAlbumSummaryOut: {
+      /** Assetcount */
+      assetCount: number
+      /** Coverurl */
+      coverUrl: string | null
+      /** Description */
+      description: string
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string
+      /** Title */
+      title: string
+    }
+    /** PublicAssetOut */
+    PublicAssetOut: {
+      /** Height */
+      height: number | null
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string
+      /**
+       * Kind
+       * @enum {string}
+       */
+      kind: 'imagen' | 'video'
+      /** Thumbnailurl */
+      thumbnailUrl: string | null
+      /** Url */
+      url: string
+      /** Width */
+      width: number | null
+    }
     /** PublicGoalOut */
     PublicGoalOut: {
       /** Confirmedcount */
@@ -2409,6 +2936,19 @@ export interface components {
        * @enum {string}
        */
       status: 'publicada' | 'cancelada'
+      /** Title */
+      title: string
+    }
+    /** PublicSectionOut */
+    PublicSectionOut: {
+      /** Content */
+      content: {
+        [key: string]: unknown
+      }
+      /** Key */
+      key: string
+      /** Publishedat */
+      publishedAt: string | null
       /** Title */
       title: string
     }
@@ -2692,6 +3232,36 @@ export interface components {
       /** Title */
       title?: string | null
     }
+    /** SectionDraftIn */
+    SectionDraftIn: {
+      /** Content */
+      content: {
+        [key: string]: unknown
+      }
+      /** Title */
+      title?: string | null
+    }
+    /** SectionOut */
+    SectionOut: {
+      /** Draftcontent */
+      draftContent: {
+        [key: string]: unknown
+      }
+      /** Draftupdatedat */
+      draftUpdatedAt: string | null
+      /** Hasunpublishedchanges */
+      hasUnpublishedChanges: boolean
+      /** Key */
+      key: string
+      /** Publishedat */
+      publishedAt: string | null
+      /** Publishedcontent */
+      publishedContent: {
+        [key: string]: unknown
+      } | null
+      /** Title */
+      title: string
+    }
     /**
      * SessionOut
      * @description Estado de la sesión. El token viaja solo en la cookie HttpOnly aspar_session.
@@ -2763,10 +3333,68 @@ export interface components {
       /** Url */
       url: string
     }
+    /**
+     * SocialLinksIn
+     * @description «Redes sociales» (diseño pág. 14): vacío = ese ícono no aparece en el sitio.
+     */
+    SocialLinksIn: {
+      /**
+       * Facebook
+       * @default
+       */
+      facebook?: string
+      /**
+       * Instagram
+       * @default
+       */
+      instagram?: string
+      /**
+       * Tiktok
+       * @default
+       */
+      tiktok?: string
+    }
+    /** TagOut */
+    TagOut: {
+      /** Imageconsent */
+      imageConsent: boolean
+      /** Name */
+      name: string
+      /**
+       * Patientid
+       * Format: uuid
+       */
+      patientId: string
+    }
+    /** TagsIn */
+    TagsIn: {
+      /** Patientids */
+      patientIds: string[]
+    }
     /** TokenRequest */
     TokenRequest: {
       /** Token */
       token: string
+    }
+    /**
+     * UploadSignatureOut
+     * @description Datos para subir un archivo directo a Cloudinary desde el navegador.
+     */
+    UploadSignatureOut: {
+      /** Allowedformats */
+      allowedFormats: string
+      /** Apikey */
+      apiKey: string
+      /** Cloudname */
+      cloudName: string
+      /** Folder */
+      folder: string
+      /** Signature */
+      signature: string
+      /** Timestamp */
+      timestamp: number
+      /** Uploadurl */
+      uploadUrl: string
     }
     /**
      * UserApprove
@@ -3288,6 +3916,156 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['MessageResponse']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  list_sections_api_v1_content_sections_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['SectionOut'][]
+        }
+      }
+    }
+  }
+  get_section_api_v1_content_sections__key__get: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        key: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['SectionOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  save_draft_api_v1_content_sections__key__put: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        key: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SectionDraftIn']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['SectionOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  publish_api_v1_content_sections__key__publish_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        key: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['SectionOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  save_social_links_api_v1_content_social_links_put: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SocialLinksIn']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['SectionOut']
         }
       }
       /** @description Validation Error */
@@ -3879,6 +4657,365 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['MovementOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  list_albums_api_v1_media_albums_get: {
+    parameters: {
+      query?: {
+        visibility?: ('privado' | 'publico') | null
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['AlbumSummaryOut'][]
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  create_album_api_v1_media_albums_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AlbumIn']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['AlbumOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  get_album_api_v1_media_albums__album_id__get: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        album_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['AlbumOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  delete_album_api_v1_media_albums__album_id__delete: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        album_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['MessageResponse']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  update_album_api_v1_media_albums__album_id__patch: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        album_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AlbumUpdate']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['AlbumOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  add_asset_api_v1_media_albums__album_id__assets_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        album_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AssetIn']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['AssetOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  publish_api_v1_media_albums__album_id__publish_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        album_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AlbumPublish']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['AlbumOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  unpublish_api_v1_media_albums__album_id__unpublish_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        album_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['AlbumOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  upload_signature_api_v1_media_albums__album_id__upload_signature_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        album_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['UploadSignatureOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  remove_asset_api_v1_media_assets__asset_id__delete: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        asset_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['MessageResponse']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  set_tags_api_v1_media_assets__asset_id__tags_put: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        asset_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['TagsIn']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['AssetOut']
         }
       }
       /** @description Validation Error */
@@ -4492,6 +5629,57 @@ export interface operations {
       }
     }
   }
+  public_content_api_v1_public_content_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['PublicSectionOut'][]
+        }
+      }
+    }
+  }
+  public_section_api_v1_public_content__key__get: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        key: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['PublicSectionOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
   public_goal_api_v1_public_donations_goal_get: {
     parameters: {
       query?: never
@@ -4563,6 +5751,57 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['DonationTrackingOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  public_albums_api_v1_public_media_albums_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['PublicAlbumSummaryOut'][]
+        }
+      }
+    }
+  }
+  public_album_api_v1_public_media_albums__album_id__get: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        album_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['PublicAlbumOut']
         }
       }
       /** @description Validation Error */

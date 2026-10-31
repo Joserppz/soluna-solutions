@@ -80,6 +80,7 @@ printf '%s' '<DATABASE_URL con aspar_api>'      | crear aspar-<entorno>-database
 printf '%s' '<service_role de Supabase>'        | crear aspar-<entorno>-supabase-service-role aspar-api-<entorno>
 printf '%s' '<API key de Resend>'               | crear aspar-<entorno>-resend-api-key aspar-api-<entorno>
 printf '%s' '<secret key de Turnstile>'         | crear aspar-<entorno>-turnstile-secret aspar-api-<entorno>
+printf '%s' '<API secret de Cloudinary>'        | crear aspar-<entorno>-cloudinary-secret aspar-api-<entorno>
 printf '%s' '<MIGRATION_DATABASE_URL>'          | crear aspar-<entorno>-migration-database-url aspar-migrate-<entorno>
 ```
 
@@ -122,6 +123,8 @@ EMAIL_PROVIDER: resend
 EMAIL_FROM: ASPAR <no-responder@aspar.com>
 GOOGLE_CLIENT_ID: <id>.apps.googleusercontent.com
 SUPABASE_URL: https://<project-ref>.supabase.co
+CLOUDINARY_CLOUD_NAME: <cloud-name>
+CLOUDINARY_API_KEY: '<api-key>'
 ```
 
 ```bash
@@ -129,7 +132,7 @@ gcloud run deploy aspar-api-<entorno> --region=southamerica-east1 \
   --image=southamerica-east1-docker.pkg.dev/<proyecto>/aspar/api:<versión> \
   --service-account=aspar-api-<entorno>@<proyecto>.iam.gserviceaccount.com \
   --env-vars-file=env.<entorno>.yaml \
-  --set-secrets=JWT_SECRET=aspar-<entorno>-jwt-secret:latest,DATABASE_URL=aspar-<entorno>-database-url:latest,SUPABASE_SERVICE_ROLE_KEY=aspar-<entorno>-supabase-service-role:latest,RESEND_API_KEY=aspar-<entorno>-resend-api-key:latest,TURNSTILE_SECRET_KEY=aspar-<entorno>-turnstile-secret:latest \
+  --set-secrets=JWT_SECRET=aspar-<entorno>-jwt-secret:latest,DATABASE_URL=aspar-<entorno>-database-url:latest,SUPABASE_SERVICE_ROLE_KEY=aspar-<entorno>-supabase-service-role:latest,RESEND_API_KEY=aspar-<entorno>-resend-api-key:latest,TURNSTILE_SECRET_KEY=aspar-<entorno>-turnstile-secret:latest,CLOUDINARY_API_SECRET=aspar-<entorno>-cloudinary-secret:latest \
   --allow-unauthenticated --min-instances=0 --max-instances=3
 ```
 

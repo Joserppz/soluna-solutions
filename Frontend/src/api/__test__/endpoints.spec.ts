@@ -330,6 +330,75 @@ describe('Endpoints', () => {
         '/public/donations/notice/d1',
       ],
       [
+        () => api.media.albums('publico'),
+        'GET',
+        '/media/albums?visibility=publico',
+      ],
+      [() => api.media.album('a1'), 'GET', '/media/albums/a1'],
+      [
+        () => api.media.createAlbum({ title: 'Crear con las manos' }),
+        'POST',
+        '/media/albums',
+      ],
+      [
+        () => api.media.updateAlbum('a1', { description: 'Taller' }),
+        'PATCH',
+        '/media/albums/a1',
+      ],
+      [() => api.media.deleteAlbum('a1'), 'DELETE', '/media/albums/a1'],
+      [
+        () => api.media.uploadSignature('a1'),
+        'POST',
+        '/media/albums/a1/upload-signature',
+      ],
+      [
+        () =>
+          api.media.addAsset('a1', {
+            publicId: 'aspar/albums/a1/foto',
+            url: 'https://res.cloudinary.com/aspar/image/upload/foto.jpg',
+            kind: 'imagen',
+            sizeBytes: 1000,
+          }),
+        'POST',
+        '/media/albums/a1/assets',
+      ],
+      [() => api.media.removeAsset('f1'), 'DELETE', '/media/assets/f1'],
+      [() => api.media.setTags('f1', ['p1']), 'PUT', '/media/assets/f1/tags'],
+      [
+        () => api.media.publish('a1', { permissionsReviewed: true }),
+        'POST',
+        '/media/albums/a1/publish',
+      ],
+      [() => api.media.unpublish('a1'), 'POST', '/media/albums/a1/unpublish'],
+      [() => api.content.sections(), 'GET', '/content/sections'],
+      [
+        () => api.content.section('historia'),
+        'GET',
+        '/content/sections/historia',
+      ],
+      [
+        () => api.content.saveDraft('historia', { content: { texto: 'x' } }),
+        'PUT',
+        '/content/sections/historia',
+      ],
+      [
+        () => api.content.publish('historia'),
+        'POST',
+        '/content/sections/historia/publish',
+      ],
+      [
+        () =>
+          api.content.saveSocialLinks({
+            facebook: 'https://facebook.com/aspar',
+          }),
+        'PUT',
+        '/content/social-links',
+      ],
+      [() => api.public.albums(), 'GET', '/public/media/albums'],
+      [() => api.public.album('a1'), 'GET', '/public/media/albums/a1'],
+      [() => api.public.content(), 'GET', '/public/content'],
+      [() => api.public.section('historia'), 'GET', '/public/content/historia'],
+      [
         () => api.public.schedules({ from: '2026-11-01' }),
         'GET',
         '/public/schedules?from=2026-11-01',
