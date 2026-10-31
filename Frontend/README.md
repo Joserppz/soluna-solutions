@@ -97,6 +97,20 @@ try {
 - **Errores**: todo error es un `ApiError` con `status` y el `message` que envía la API; `status === 0` significa sin conexión y `retryAfter` indica cuánto esperar tras un 429.
 - **Sesión vencida**: un 401 en cualquier petición con sesión deja `session.state.status === 'expired'`, para que la app lleve a la persona al login.
 - **Permisos**: `session.can(...)` y `session.canAny(...)` solo deciden qué se muestra; la API los vuelve a verificar siempre. Las claves (`'patients:read'`...) están tipadas desde el contrato: un error de tipeo no compila.
+- **Cobertura del contrato**: la capa tiene un método para cada operación de `docs/api/openapi.json`. `src/api/__test__/endpoints.spec.ts` lo verifica: falla si un endpoint del Backend no tiene su método aquí o si un método llama a una ruta que no existe.
+
+| Grupo | Para qué |
+| :--- | :--- |
+| `api.auth` | Login con contraseña o Google, sesión, registro, verificación y recuperación, cambio de contraseña |
+| `api.patients`, `api.contacts`, `api.evaluations`, `api.documents` | Fichas, familiares o cuidadores, evaluaciones de seguimiento y documentos privados |
+| `api.users`, `api.roles` | Equipo, cuentas pendientes y matriz de permisos |
+| `api.schedules`, `api.attendance` | Agenda y toma de asistencia (con el resumen mensual en CSV o Excel) |
+| `api.inventory` | Materiales, movimientos, bajas y exportación para la Alcaldía |
+| `api.donations` | Registro de aportes, confirmación con el extracto, aportes en la sede y meta |
+| `api.media`, `api.content` | Galería con subida firmada a Cloudinary y contenido del sitio |
+| `api.inquiries`, `api.dashboard` | Bandeja de solicitudes, inscripción como afiliado y resumen del panel |
+| `api.audit`, `api.system` | Bitácora y estado de la API |
+| `api.public` | Lo que usa el sitio sin sesión: agenda, meta y avisos de aporte, galería, contenido y solicitudes |
 
 ## 5. Cuentas de Prueba por Rol (RF-01 / RF-11)
 

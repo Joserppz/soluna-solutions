@@ -403,6 +403,15 @@ export function createEndpoints(http: HttpClient) {
       summary: () => http.get<DashboardSummary>('/dashboard/summary'),
     },
 
+    system: {
+      /** La API responde (sin consultar la base). */
+      health: () =>
+        http.get<Record<string, unknown>>('/health', { anonymous: true }),
+      /** La API llega a PostgreSQL. */
+      healthDb: () =>
+        http.get<Record<string, unknown>>('/health/db', { anonymous: true }),
+    },
+
     public: {
       // Sin sesión: la agenda del sitio
       schedules: (query: PublicScheduleQuery = {}) =>
