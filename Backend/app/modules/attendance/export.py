@@ -6,16 +6,10 @@ import io
 from openpyxl import Workbook
 from openpyxl.styles import Font
 
+from app.core.spreadsheet import safe
 from app.modules.attendance.schemas import MonthlySummaryOut
 
 HEADERS = ("Fecha", "Actividad", "Tipo", "Vinieron", "No vinieron", "Asistencia cerrada")
-# Un texto que empieza con estos caracteres se ejecutaría como fórmula al abrirlo en Excel
-FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
-
-
-def safe(value: str) -> str:
-    """Evita la inyección de fórmulas: los títulos los escribe una persona."""
-    return f"'{value}" if value.startswith(FORMULA_PREFIXES) else value
 
 
 def _rows(summary: MonthlySummaryOut) -> list[tuple]:

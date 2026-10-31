@@ -855,6 +855,449 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "InventorySummary": {
+        "description": "Contadores del encabezado (diseño pág. 11): materiales activos, no unidades.",
+        "properties": {
+          "alcaldia": {
+            "title": "Alcaldia",
+            "type": "integer"
+          },
+          "damaged": {
+            "title": "Damaged",
+            "type": "integer"
+          },
+          "donado": {
+            "title": "Donado",
+            "type": "integer"
+          },
+          "propio": {
+            "title": "Propio",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "alcaldia",
+          "donado",
+          "propio",
+          "damaged"
+        ],
+        "title": "InventorySummary",
+        "type": "object"
+      },
+      "ItemDeactivate": {
+        "properties": {
+          "reason": {
+            "maxLength": 300,
+            "minLength": 3,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "ItemDeactivate",
+        "type": "object"
+      },
+      "ItemIn": {
+        "properties": {
+          "category": {
+            "enum": [
+              "fisioterapia",
+              "movilidad",
+              "mobiliario",
+              "papeleria",
+              "otro"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "maxLength": 30,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "condition": {
+            "enum": [
+              "nuevo",
+              "bueno",
+              "regular",
+              "dañado"
+            ],
+            "title": "Condition",
+            "type": "string"
+          },
+          "donorOrInstitution": {
+            "default": "",
+            "maxLength": 120,
+            "title": "Donororinstitution",
+            "type": "string"
+          },
+          "entryDate": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entrydate"
+          },
+          "location": {
+            "default": "",
+            "maxLength": 120,
+            "title": "Location",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 120,
+            "title": "Name",
+            "type": "string"
+          },
+          "origin": {
+            "enum": [
+              "propio",
+              "donado",
+              "alcaldia"
+            ],
+            "title": "Origin",
+            "type": "string"
+          },
+          "quantity": {
+            "maximum": 100000.0,
+            "minimum": 0.0,
+            "title": "Quantity",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "category",
+          "quantity",
+          "condition",
+          "origin"
+        ],
+        "title": "ItemIn",
+        "type": "object"
+      },
+      "ItemOut": {
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          },
+          "category": {
+            "enum": [
+              "fisioterapia",
+              "movilidad",
+              "mobiliario",
+              "papeleria",
+              "otro"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "categoryLabel": {
+            "title": "Categorylabel",
+            "type": "string"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "condition": {
+            "enum": [
+              "nuevo",
+              "bueno",
+              "regular",
+              "dañado"
+            ],
+            "title": "Condition",
+            "type": "string"
+          },
+          "conditionLabel": {
+            "title": "Conditionlabel",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "deactivationReason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deactivationreason"
+          },
+          "donorOrInstitution": {
+            "title": "Donororinstitution",
+            "type": "string"
+          },
+          "entryDate": {
+            "format": "date",
+            "title": "Entrydate",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "location": {
+            "title": "Location",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "origin": {
+            "enum": [
+              "propio",
+              "donado",
+              "alcaldia"
+            ],
+            "title": "Origin",
+            "type": "string"
+          },
+          "originLabel": {
+            "title": "Originlabel",
+            "type": "string"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "integer"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "title": "Updatedat",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "category",
+          "categoryLabel",
+          "quantity",
+          "condition",
+          "conditionLabel",
+          "origin",
+          "originLabel",
+          "donorOrInstitution",
+          "entryDate",
+          "location",
+          "active",
+          "deactivationReason",
+          "createdAt",
+          "updatedAt"
+        ],
+        "title": "ItemOut",
+        "type": "object"
+      },
+      "ItemPage": {
+        "description": "Página del inventario.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ItemOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "description": "Filas que cumplen los filtros (todas las páginas)",
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "ItemPage",
+        "type": "object"
+      },
+      "ItemUpdate": {
+        "properties": {
+          "category": {
+            "anyOf": [
+              {
+                "enum": [
+                  "fisioterapia",
+                  "movilidad",
+                  "mobiliario",
+                  "papeleria",
+                  "otro"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "maxLength": 30,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "condition": {
+            "anyOf": [
+              {
+                "enum": [
+                  "nuevo",
+                  "bueno",
+                  "regular",
+                  "dañado"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Condition"
+          },
+          "donorOrInstitution": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Donororinstitution"
+          },
+          "entryDate": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entrydate"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "origin": {
+            "anyOf": [
+              {
+                "enum": [
+                  "propio",
+                  "donado",
+                  "alcaldia"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Origin"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "maximum": 100000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "title": "ItemUpdate",
+        "type": "object"
+      },
       "LoginRequest": {
         "properties": {
           "email": {
@@ -989,6 +1432,108 @@
           "totalCame"
         ],
         "title": "MonthlySummaryOut",
+        "type": "object"
+      },
+      "MovementIn": {
+        "properties": {
+          "counterpart": {
+            "default": "",
+            "maxLength": 120,
+            "title": "Counterpart",
+            "type": "string"
+          },
+          "movementType": {
+            "enum": [
+              "ingreso",
+              "prestamo",
+              "devolucion",
+              "ajuste"
+            ],
+            "title": "Movementtype",
+            "type": "string"
+          },
+          "quantity": {
+            "maximum": 100000.0,
+            "minimum": -100000.0,
+            "title": "Quantity",
+            "type": "integer"
+          },
+          "reason": {
+            "default": "",
+            "maxLength": 300,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "movementType",
+          "quantity"
+        ],
+        "title": "MovementIn",
+        "type": "object"
+      },
+      "MovementOut": {
+        "properties": {
+          "counterpart": {
+            "title": "Counterpart",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "movementLabel": {
+            "title": "Movementlabel",
+            "type": "string"
+          },
+          "movementType": {
+            "enum": [
+              "ingreso",
+              "prestamo",
+              "devolucion",
+              "baja",
+              "ajuste"
+            ],
+            "title": "Movementtype",
+            "type": "string"
+          },
+          "quantityDelta": {
+            "title": "Quantitydelta",
+            "type": "integer"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "userName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username"
+          }
+        },
+        "required": [
+          "id",
+          "movementType",
+          "movementLabel",
+          "quantityDelta",
+          "reason",
+          "counterpart",
+          "userName",
+          "createdAt"
+        ],
+        "title": "MovementOut",
         "type": "object"
       },
       "NewcomerIn": {
@@ -3601,6 +4146,515 @@
         "summary": "Health Db",
         "tags": [
           "Sistema"
+        ]
+      }
+    },
+    "/api/v1/inventory": {
+      "get": {
+        "description": "Materiales por nombre, con filtros de origen, categoría y condición.",
+        "operationId": "list_items_api_v1_inventory_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "origin",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "propio",
+                    "donado",
+                    "alcaldia"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Origin"
+            }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "fisioterapia",
+                    "movilidad",
+                    "mobiliario",
+                    "papeleria",
+                    "otro"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          },
+          {
+            "in": "query",
+            "name": "condition",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "nuevo",
+                    "bueno",
+                    "regular",
+                    "dañado"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Condition"
+            }
+          },
+          {
+            "in": "query",
+            "name": "includeInactive",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Includeinactive",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Items",
+        "tags": [
+          "Inventario"
+        ]
+      },
+      "post": {
+        "description": "Registra un material; su cantidad inicial queda como movimiento de ingreso.",
+        "operationId": "create_item_api_v1_inventory_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItemIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Item",
+        "tags": [
+          "Inventario"
+        ]
+      }
+    },
+    "/api/v1/inventory/export": {
+      "get": {
+        "description": "Inventario activo para la rendición de cuentas (Alcaldía) y el resto.",
+        "operationId": "export_inventory_api_v1_inventory_export_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "default": "xlsx",
+              "enum": [
+                "csv",
+                "xlsx"
+              ],
+              "title": "Format",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              },
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
+              "text/csv; charset=utf-8": {}
+            },
+            "description": "Archivo CSV o Excel; los bienes de la Alcaldía van aparte"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Inventory",
+        "tags": [
+          "Inventario"
+        ]
+      }
+    },
+    "/api/v1/inventory/summary": {
+      "get": {
+        "description": "Contadores del encabezado: registrados, de la Alcaldía, donados, propios y dañados.",
+        "operationId": "summary_api_v1_inventory_summary_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventorySummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Summary",
+        "tags": [
+          "Inventario"
+        ]
+      }
+    },
+    "/api/v1/inventory/{item_id}": {
+      "get": {
+        "operationId": "get_item_api_v1_inventory__item_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Item Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Item",
+        "tags": [
+          "Inventario"
+        ]
+      },
+      "patch": {
+        "description": "Edita el material. Cambiar la cantidad exige «reason» y queda como ajuste.",
+        "operationId": "update_item_api_v1_inventory__item_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Item Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItemUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Item",
+        "tags": [
+          "Inventario"
+        ]
+      }
+    },
+    "/api/v1/inventory/{item_id}/deactivate": {
+      "post": {
+        "description": "Baja lógica con motivo: deja la cantidad en 0 con un movimiento de baja.",
+        "operationId": "deactivate_api_v1_inventory__item_id__deactivate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Item Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItemDeactivate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Deactivate",
+        "tags": [
+          "Inventario"
+        ]
+      }
+    },
+    "/api/v1/inventory/{item_id}/movements": {
+      "get": {
+        "description": "«Historial de este material», el más reciente primero.",
+        "operationId": "list_movements_api_v1_inventory__item_id__movements_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Item Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MovementOut"
+                  },
+                  "title": "Response List Movements Api V1 Inventory  Item Id  Movements Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Movements",
+        "tags": [
+          "Inventario"
+        ]
+      },
+      "post": {
+        "description": "Ingreso, préstamo, devolución o ajuste; actualiza la cantidad disponible.",
+        "operationId": "add_movement_api_v1_inventory__item_id__movements_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Item Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MovementIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovementOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Movement",
+        "tags": [
+          "Inventario"
         ]
       }
     },

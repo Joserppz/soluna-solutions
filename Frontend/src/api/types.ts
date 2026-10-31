@@ -76,6 +76,17 @@ export type NewcomerIn = Schemas['NewcomerIn']
 export type NewcomerOut = Schemas['NewcomerOut']
 export type MonthlySummary = Schemas['MonthlySummaryOut']
 
+// Inventario
+export type ItemIn = Schemas['ItemIn']
+export type ItemOut = Schemas['ItemOut']
+export type ItemUpdate = Schemas['ItemUpdate']
+export type ItemPage = Schemas['ItemPage']
+export type ItemDeactivate = Schemas['ItemDeactivate']
+export type ItemListQuery = QueryOf<'list_items_api_v1_inventory_get'>
+export type MovementIn = Schemas['MovementIn']
+export type MovementOut = Schemas['MovementOut']
+export type InventorySummary = Schemas['InventorySummary']
+
 // Bitácora
 export type AuditPage = Schemas['AuditPage']
 export type AuditEvent = Schemas['AuditEventOut']

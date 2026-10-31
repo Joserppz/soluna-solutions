@@ -19,8 +19,17 @@ import type {
   EvaluationOut,
   EvaluationUpdate,
   GoogleLoginRequest,
+  InventorySummary,
+  ItemDeactivate,
+  ItemIn,
+  ItemListQuery,
+  ItemOut,
+  ItemPage,
+  ItemUpdate,
   LoginRequest,
   MessageResponse,
+  MovementIn,
+  MovementOut,
   MonthlySummary,
   NewcomerIn,
   NewcomerOut,
@@ -250,6 +259,25 @@ export function createEndpoints(http: HttpClient) {
           query: { month, format },
           blob: true,
         }),
+    },
+
+    inventory: {
+      list: (query: ItemListQuery = {}) =>
+        http.get<ItemPage>('/inventory', { query }),
+      summary: () => http.get<InventorySummary>('/inventory/summary'),
+      get: (itemId: string) => http.get<ItemOut>(`/inventory/${id(itemId)}`),
+      create: (body: ItemIn) => http.post<ItemOut>('/inventory', { body }),
+      update: (itemId: string, body: ItemUpdate) =>
+        http.patch<ItemOut>(`/inventory/${id(itemId)}`, { body }),
+      movements: (itemId: string) =>
+        http.get<MovementOut[]>(`/inventory/${id(itemId)}/movements`),
+      addMovement: (itemId: string, body: MovementIn) =>
+        http.post<MovementOut>(`/inventory/${id(itemId)}/movements`, { body }),
+      deactivate: (itemId: string, body: ItemDeactivate) =>
+        http.post<ItemOut>(`/inventory/${id(itemId)}/deactivate`, { body }),
+      /** Archivo para la rendición de cuentas (la Alcaldía va aparte). */
+      export: (format: 'csv' | 'xlsx' = 'xlsx') =>
+        http.get<Blob>('/inventory/export', { query: { format }, blob: true }),
     },
 
     public: {

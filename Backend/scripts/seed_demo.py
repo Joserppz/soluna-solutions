@@ -26,6 +26,8 @@ from app.models import (
     Schedule,
     User,
 )
+from app.modules.inventory.schemas import ItemIn
+from app.modules.inventory.service import register_item
 from app.modules.users import repository as user_repository
 from app.modules.users.models import (
     ADMIN,
@@ -172,6 +174,10 @@ def seed(db: Session) -> list[str]:
         ]
     )
     created.append("Asistencia de ejemplo del sábado pasado")
+    coordinator = user_repository.get_by_email(db, DEMO_USERS[COORDINATION][1])
+    for item in INVENTORY:
+        register_item(db, ItemIn(**item), coordinator.id)
+    created.append(f"{len(INVENTORY)} materiales en el inventario (uno dañado)")
     db.flush()
     return created
 
@@ -251,6 +257,61 @@ def _schedules(professional: User) -> list[Schedule]:
             **common,
         ),
     ]
+
+
+# Materiales del diseño (pág. 11)
+INVENTORY = [
+    {
+        "name": "Colchonetas",
+        "category": "fisioterapia",
+        "quantity": 12,
+        "condition": "bueno",
+        "origin": "alcaldia",
+        "donor_or_institution": "Gobierno Municipal",
+        "code": "FIS-001",
+    },
+    {
+        "name": "Pelotas de terapia 65 cm",
+        "category": "fisioterapia",
+        "quantity": 6,
+        "condition": "nuevo",
+        "origin": "donado",
+        "donor_or_institution": "Grupo de exalumnos",
+    },
+    {
+        "name": "Bastones",
+        "category": "movilidad",
+        "quantity": 8,
+        "condition": "nuevo",
+        "origin": "donado",
+        "donor_or_institution": "Familia Rojas",
+    },
+    {
+        "name": "Hojas y cartulinas",
+        "category": "papeleria",
+        "quantity": 40,
+        "condition": "bueno",
+        "origin": "propio",
+        "donor_or_institution": "ASPAR",
+    },
+    {
+        "name": "Sillas plegables",
+        "category": "mobiliario",
+        "quantity": 15,
+        "condition": "bueno",
+        "origin": "alcaldia",
+        "donor_or_institution": "Gobierno Municipal",
+        "code": "MOB-001",
+    },
+    {
+        "name": "Banda elástica",
+        "category": "fisioterapia",
+        "quantity": 2,
+        "condition": "dañado",
+        "origin": "propio",
+        "donor_or_institution": "ASPAR",
+    },
+]
 
 
 def _evaluations(patient: Patient, professional: User) -> list[PatientEvaluation]:

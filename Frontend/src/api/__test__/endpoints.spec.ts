@@ -234,6 +234,51 @@ describe('Endpoints', () => {
         '/attendance/monthly?month=2026-10',
       ],
       [
+        () => api.inventory.list({ origin: 'alcaldia' }),
+        'GET',
+        '/inventory?origin=alcaldia',
+      ],
+      [() => api.inventory.summary(), 'GET', '/inventory/summary'],
+      [() => api.inventory.get('i1'), 'GET', '/inventory/i1'],
+      [
+        () =>
+          api.inventory.create({
+            name: 'Colchonetas',
+            category: 'fisioterapia',
+            quantity: 12,
+            condition: 'bueno',
+            origin: 'alcaldia',
+          }),
+        'POST',
+        '/inventory',
+      ],
+      [
+        () => api.inventory.update('i1', { quantity: 10, reason: 'Conteo' }),
+        'PATCH',
+        '/inventory/i1',
+      ],
+      [() => api.inventory.movements('i1'), 'GET', '/inventory/i1/movements'],
+      [
+        () =>
+          api.inventory.addMovement('i1', {
+            movementType: 'prestamo',
+            quantity: 2,
+            counterpart: 'Familia Apaza',
+          }),
+        'POST',
+        '/inventory/i1/movements',
+      ],
+      [
+        () => api.inventory.deactivate('i1', { reason: 'Se rompió' }),
+        'POST',
+        '/inventory/i1/deactivate',
+      ],
+      [
+        () => api.inventory.export('csv'),
+        'GET',
+        '/inventory/export?format=csv',
+      ],
+      [
         () => api.public.schedules({ from: '2026-11-01' }),
         'GET',
         '/public/schedules?from=2026-11-01',

@@ -280,6 +280,135 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/inventory': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * List Items
+     * @description Materiales por nombre, con filtros de origen, categoría y condición.
+     */
+    get: operations['list_items_api_v1_inventory_get']
+    put?: never
+    /**
+     * Create Item
+     * @description Registra un material; su cantidad inicial queda como movimiento de ingreso.
+     */
+    post: operations['create_item_api_v1_inventory_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/inventory/export': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Export Inventory
+     * @description Inventario activo para la rendición de cuentas (Alcaldía) y el resto.
+     */
+    get: operations['export_inventory_api_v1_inventory_export_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/inventory/summary': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Summary
+     * @description Contadores del encabezado: registrados, de la Alcaldía, donados, propios y dañados.
+     */
+    get: operations['summary_api_v1_inventory_summary_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/inventory/{item_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Get Item */
+    get: operations['get_item_api_v1_inventory__item_id__get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    /**
+     * Update Item
+     * @description Edita el material. Cambiar la cantidad exige «reason» y queda como ajuste.
+     */
+    patch: operations['update_item_api_v1_inventory__item_id__patch']
+    trace?: never
+  }
+  '/api/v1/inventory/{item_id}/deactivate': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Deactivate
+     * @description Baja lógica con motivo: deja la cantidad en 0 con un movimiento de baja.
+     */
+    post: operations['deactivate_api_v1_inventory__item_id__deactivate_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/inventory/{item_id}/movements': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * List Movements
+     * @description «Historial de este material», el más reciente primero.
+     */
+    get: operations['list_movements_api_v1_inventory__item_id__movements_get']
+    put?: never
+    /**
+     * Add Movement
+     * @description Ingreso, préstamo, devolución o ajuste; actualiza la cantidad disponible.
+     */
+    post: operations['add_movement_api_v1_inventory__item_id__movements_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/patients': {
     parameters: {
       query?: never
@@ -1187,6 +1316,165 @@ export interface components {
       /** Detail */
       detail?: components['schemas']['ValidationError'][]
     }
+    /**
+     * InventorySummary
+     * @description Contadores del encabezado (diseño pág. 11): materiales activos, no unidades.
+     */
+    InventorySummary: {
+      /** Alcaldia */
+      alcaldia: number
+      /** Damaged */
+      damaged: number
+      /** Donado */
+      donado: number
+      /** Propio */
+      propio: number
+      /** Total */
+      total: number
+    }
+    /** ItemDeactivate */
+    ItemDeactivate: {
+      /** Reason */
+      reason: string
+    }
+    /** ItemIn */
+    ItemIn: {
+      /**
+       * Category
+       * @enum {string}
+       */
+      category:
+        'fisioterapia' | 'movilidad' | 'mobiliario' | 'papeleria' | 'otro'
+      /** Code */
+      code?: string | null
+      /**
+       * Condition
+       * @enum {string}
+       */
+      condition: 'nuevo' | 'bueno' | 'regular' | 'dañado'
+      /**
+       * Donororinstitution
+       * @default
+       */
+      donorOrInstitution?: string
+      /** Entrydate */
+      entryDate?: string | null
+      /**
+       * Location
+       * @default
+       */
+      location?: string
+      /** Name */
+      name: string
+      /**
+       * Origin
+       * @enum {string}
+       */
+      origin: 'propio' | 'donado' | 'alcaldia'
+      /** Quantity */
+      quantity: number
+    }
+    /** ItemOut */
+    ItemOut: {
+      /** Active */
+      active: boolean
+      /**
+       * Category
+       * @enum {string}
+       */
+      category:
+        'fisioterapia' | 'movilidad' | 'mobiliario' | 'papeleria' | 'otro'
+      /** Categorylabel */
+      categoryLabel: string
+      /** Code */
+      code: string | null
+      /**
+       * Condition
+       * @enum {string}
+       */
+      condition: 'nuevo' | 'bueno' | 'regular' | 'dañado'
+      /** Conditionlabel */
+      conditionLabel: string
+      /**
+       * Createdat
+       * Format: date-time
+       */
+      createdAt: string
+      /** Deactivationreason */
+      deactivationReason: string | null
+      /** Donororinstitution */
+      donorOrInstitution: string
+      /**
+       * Entrydate
+       * Format: date
+       */
+      entryDate: string
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string
+      /** Location */
+      location: string
+      /** Name */
+      name: string
+      /**
+       * Origin
+       * @enum {string}
+       */
+      origin: 'propio' | 'donado' | 'alcaldia'
+      /** Originlabel */
+      originLabel: string
+      /** Quantity */
+      quantity: number
+      /**
+       * Updatedat
+       * Format: date-time
+       */
+      updatedAt: string
+    }
+    /**
+     * ItemPage
+     * @description Página del inventario.
+     */
+    ItemPage: {
+      /** Items */
+      items: components['schemas']['ItemOut'][]
+      /** Limit */
+      limit: number
+      /** Offset */
+      offset: number
+      /**
+       * Total
+       * @description Filas que cumplen los filtros (todas las páginas)
+       */
+      total: number
+    }
+    /** ItemUpdate */
+    ItemUpdate: {
+      /** Category */
+      category?:
+        | ('fisioterapia' | 'movilidad' | 'mobiliario' | 'papeleria' | 'otro')
+        | null
+      /** Code */
+      code?: string | null
+      /** Condition */
+      condition?: ('nuevo' | 'bueno' | 'regular' | 'dañado') | null
+      /** Donororinstitution */
+      donorOrInstitution?: string | null
+      /** Entrydate */
+      entryDate?: string | null
+      /** Location */
+      location?: string | null
+      /** Name */
+      name?: string | null
+      /** Origin */
+      origin?: ('propio' | 'donado' | 'alcaldia') | null
+      /** Quantity */
+      quantity?: number | null
+      /** Reason */
+      reason?: string | null
+    }
     /** LoginRequest */
     LoginRequest: {
       /** Email */
@@ -1244,6 +1532,54 @@ export interface components {
       month: string
       /** Totalcame */
       totalCame: number
+    }
+    /** MovementIn */
+    MovementIn: {
+      /**
+       * Counterpart
+       * @default
+       */
+      counterpart?: string
+      /**
+       * Movementtype
+       * @enum {string}
+       */
+      movementType: 'ingreso' | 'prestamo' | 'devolucion' | 'ajuste'
+      /** Quantity */
+      quantity: number
+      /**
+       * Reason
+       * @default
+       */
+      reason?: string
+    }
+    /** MovementOut */
+    MovementOut: {
+      /** Counterpart */
+      counterpart: string
+      /**
+       * Createdat
+       * Format: date-time
+       */
+      createdAt: string
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string
+      /** Movementlabel */
+      movementLabel: string
+      /**
+       * Movementtype
+       * @enum {string}
+       */
+      movementType: 'ingreso' | 'prestamo' | 'devolucion' | 'baja' | 'ajuste'
+      /** Quantitydelta */
+      quantityDelta: number
+      /** Reason */
+      reason: string
+      /** Username */
+      userName: string | null
     }
     /**
      * NewcomerIn
@@ -2509,6 +2845,298 @@ export interface operations {
           'application/json': {
             [key: string]: unknown
           }
+        }
+      }
+    }
+  }
+  list_items_api_v1_inventory_get: {
+    parameters: {
+      query?: {
+        search?: string | null
+        origin?: ('propio' | 'donado' | 'alcaldia') | null
+        category?:
+          | ('fisioterapia' | 'movilidad' | 'mobiliario' | 'papeleria' | 'otro')
+          | null
+        condition?: ('nuevo' | 'bueno' | 'regular' | 'dañado') | null
+        includeInactive?: boolean
+        limit?: number
+        offset?: number
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ItemPage']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  create_item_api_v1_inventory_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ItemIn']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ItemOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  export_inventory_api_v1_inventory_export_get: {
+    parameters: {
+      query?: {
+        format?: 'csv' | 'xlsx'
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Archivo CSV o Excel; los bienes de la Alcaldía van aparte */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': unknown
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': unknown
+          'text/csv; charset=utf-8': unknown
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  summary_api_v1_inventory_summary_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['InventorySummary']
+        }
+      }
+    }
+  }
+  get_item_api_v1_inventory__item_id__get: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        item_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ItemOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  update_item_api_v1_inventory__item_id__patch: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        item_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ItemUpdate']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ItemOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  deactivate_api_v1_inventory__item_id__deactivate_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        item_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ItemDeactivate']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ItemOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  list_movements_api_v1_inventory__item_id__movements_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        item_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['MovementOut'][]
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  add_movement_api_v1_inventory__item_id__movements_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        item_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['MovementIn']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['MovementOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
         }
       }
     }
