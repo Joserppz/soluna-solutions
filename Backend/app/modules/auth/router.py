@@ -24,7 +24,7 @@ from app.modules.auth.schemas import (
     SessionUserOut,
     TokenRequest,
 )
-from app.modules.users.models import User
+from app.modules.users.models import PERMISSION_KEYS, User
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Autenticación"])
 
@@ -50,7 +50,9 @@ def session_out(
 ) -> SessionOut:
     return SessionOut(
         user=session_user_out(user),
-        permissions=sorted(permissions),
+        # Solo las claves del contrato (PermissionKey): un permiso nuevo en la base que
+        # el código todavía no conoce no rompe el inicio de sesión
+        permissions=sorted(key for key in permissions if key in PERMISSION_KEYS),
         expires_in=auth_service.seconds_left(session),
         idle_timeout=settings.session_idle_limit_seconds,
         csrf_token=csrf_token,

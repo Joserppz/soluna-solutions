@@ -88,10 +88,18 @@ def test_el_consentimiento_manda_aunque_el_rol_tenga_permiso_clinico(
 
 
 def test_administracion_tiene_siempre_todos_los_permisos(client, auth_headers, db_session):
+    from app.models import User
+    from app.modules.auth.dependencies import load_permissions
+    from app.modules.users.models import PERMISSION_KEYS
+
     db_session.add(Permission(key="nuevo:permiso", description="Permiso agregado después"))
     db_session.commit()
+    admin = db_session.scalar(select(User).where(User.email == "admin@aspar.org"))
 
-    assert "nuevo:permiso" in permissions_of(client, auth_headers())
+    # En el servidor, Administración tiene también el permiso agregado después
+    assert "nuevo:permiso" in load_permissions(db_session, admin)
+    # La sesión publica solo las claves del contrato: la clave nueva no rompe el login
+    assert set(permissions_of(client, auth_headers())) == set(PERMISSION_KEYS)
 
 
 def test_los_permisos_de_administracion_no_se_pueden_quitar(db_session):
@@ -124,3 +132,14 @@ def test_el_nombre_visible_de_un_rol_si_se_puede_cambiar(client, auth_headers, d
 
     assert response.json()["user"]["roleName"] == "Voluntarios"
     assert response.json()["user"]["role"] == "volunteer"
+
+
+def test_las_claves_del_contrato_son_las_de_la_base(db_session):
+    """PermissionKey (OpenAPI y tipos del frontend) y la tabla permissions no se separan."""
+    from typing import get_args
+
+    from app.modules.users.models import PERMISSION_KEYS, PermissionKey
+
+    keys = set(db_session.scalars(text("select key from permissions")))
+
+    assert keys == set(PERMISSION_KEYS) == set(get_args(PermissionKey))

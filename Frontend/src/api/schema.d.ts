@@ -858,7 +858,25 @@ export interface components {
       /** Idletimeout */
       idleTimeout: number
       /** Permissions */
-      permissions: string[]
+      permissions: (
+        | 'patients:read'
+        | 'patients:write'
+        | 'patients:read_clinical'
+        | 'patients:write_clinical'
+        | 'patients:deactivate'
+        | 'documents:upload'
+        | 'documents:delete'
+        | 'attendance:write'
+        | 'schedules:manage'
+        | 'inventory:manage'
+        | 'donations:manage'
+        | 'inquiries:manage'
+        | 'media:manage'
+        | 'content:manage'
+        | 'users:manage'
+        | 'roles:manage'
+        | 'audit:read'
+      )[]
       user: components['schemas']['SessionUserOut']
     }
     /**

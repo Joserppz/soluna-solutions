@@ -70,6 +70,34 @@ npm run api:types
 
 Sube los dos archivos (`openapi.json` y `src/api/schema.d.ts`) en el mismo commit. Un cambio en la API que rompa al frontend aparece como error de TypeScript en `npm run build`.
 
+### Capa de datos `src/api/`
+
+Es la forma de hablar con la API desde el Sprint 2. Las vistas actuales todavía usan `src/services/` y el modo demo (ADR-008); se migrarán una por una a esta capa.
+
+```ts
+import { api, isApiError, session } from '../api'
+
+await session.restore() // al cargar la página: ¿sigue la cookie de sesión?
+await session.login(email, password) // guarda usuario, permisos y token CSRF
+
+if (session.can('patients:read')) {
+  const page = await api.patients.list({ search: 'rojas', limit: 20, offset: 0 })
+  // page.items, page.total, page.limit, page.offset
+}
+
+try {
+  await api.users.create({ name, email, role: 'volunteer' })
+} catch (error) {
+  if (isApiError(error)) mostrar(error.message) // mensaje de la API, listo para la persona
+}
+```
+
+- **Sesión en cookies**: el token vive en la cookie `HttpOnly` `aspar_session`; JavaScript nunca lo ve ni lo guarda en `localStorage`. Todas las peticiones van con `credentials: 'include'`.
+- **CSRF**: en `POST/PUT/PATCH/DELETE` el cliente agrega `X-CSRF-Token` con el token que llega en cada respuesta de sesión (o la cookie legible `aspar_csrf`).
+- **Errores**: todo error es un `ApiError` con `status` y el `message` que envía la API; `status === 0` significa sin conexión y `retryAfter` indica cuánto esperar tras un 429.
+- **Sesión vencida**: un 401 en cualquier petición con sesión deja `session.state.status === 'expired'`, para que la app lleve a la persona al login.
+- **Permisos**: `session.can(...)` y `session.canAny(...)` solo deciden qué se muestra; la API los vuelve a verificar siempre. Las claves (`'patients:read'`...) están tipadas desde el contrato: un error de tipeo no compila.
+
 ## 5. Cuentas de Prueba por Rol (RF-01 / RF-11)
 
 > Estas cuentas solo se muestran en la pantalla de login en modo desarrollo (`npm run dev`); el build de producción las oculta.
@@ -91,8 +119,15 @@ Frontend/
 ├── eslint.config.mjs            # Configuración Flat ESLint + TS + Vue (SCRUM-153)
 ├── scripts/api-types.mjs        # Genera y verifica src/api/schema.d.ts desde docs/api/openapi.json
 ├── src/
-│   ├── api/
-│   │   └── schema.d.ts          # GENERADO: tipos de la API desde openapi.json (no editar)
+│   ├── api/                     # Capa de datos nueva (Sprint 2): API real con cookies y CSRF
+│   │   ├── schema.d.ts          # GENERADO: tipos de la API desde openapi.json (no editar)
+│   │   ├── types.ts             # Nombres cortos de esos tipos (SessionOut, PatientPage, Permission...)
+│   │   ├── client.ts            # HttpClient: credentials 'include', X-CSRF-Token, errores
+│   │   ├── errors.ts            # ApiError con el mensaje de la API (status 0 = sin conexión)
+│   │   ├── endpoints.ts         # Un método por endpoint: api.patients.list(), api.users.create()...
+│   │   ├── session.ts           # Estado de sesión y permisos: login, restore, can('patients:read')
+│   │   ├── index.ts             # Instancias compartidas: import { api, session } from '../api'
+│   │   └── __test__/            # Pruebas de la capa con fetch simulado
 │   ├── App.vue                  # Shell principal, barra de navegación y monitor de expiración de sesión (SCRUM-67)
 │   ├── router/index.ts          # Rutas protegidas por autenticación y rol Administrador (SCRUM-67, SCRUM-179)
 │   ├── types/aspar.ts           # Contratos DTO e interfaces alineadas al modelo C4 y PostgreSQL (SCRUM-105)

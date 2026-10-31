@@ -6,6 +6,7 @@ import uuid
 from pydantic import Field, field_validator
 
 from app.core.schemas import CamelModel
+from app.modules.users.models import PermissionKey
 
 EMAIL_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 
@@ -56,7 +57,7 @@ class SessionOut(CamelModel):
     user: SessionUserOut
     # Permisos del rol (vacío si la cuenta está pendiente de aprobación): el frontend
     # decide qué menús mostrar; la API vuelve a verificarlos en cada petición
-    permissions: list[str]
+    permissions: list[PermissionKey]
     # Segundos hasta que vence el token (renovar con POST /auth/refresh antes de ese plazo)
     expires_in: int
     # Segundos de inactividad que cierran la sesión

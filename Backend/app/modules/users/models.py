@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Literal
 
 from sqlalchemy import (
     Boolean,
@@ -42,6 +43,27 @@ CONTENT_MANAGE = "content:manage"
 USERS_MANAGE = "users:manage"
 ROLES_MANAGE = "roles:manage"
 AUDIT_READ = "audit:read"
+PERMISSION_KEYS = (
+    PATIENTS_READ,
+    PATIENTS_WRITE,
+    PATIENTS_READ_CLINICAL,
+    PATIENTS_WRITE_CLINICAL,
+    PATIENTS_DEACTIVATE,
+    DOCUMENTS_UPLOAD,
+    DOCUMENTS_DELETE,
+    ATTENDANCE_WRITE,
+    SCHEDULES_MANAGE,
+    INVENTORY_MANAGE,
+    DONATIONS_MANAGE,
+    INQUIRIES_MANAGE,
+    MEDIA_MANAGE,
+    CONTENT_MANAGE,
+    USERS_MANAGE,
+    ROLES_MANAGE,
+    AUDIT_READ,
+)
+# Se publica en OpenAPI como enumeración: el frontend recibe el tipo exacto de cada clave
+PermissionKey = Literal[PERMISSION_KEYS]
 
 # Cuenta registrada que todavía no tiene rol: puede iniciar sesión, pero no ve el panel
 PENDING_ROLE_NAME = "Pendiente de aprobación"
