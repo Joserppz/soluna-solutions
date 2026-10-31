@@ -8,6 +8,7 @@ from app.modules.attendance.models import Attendance
 from app.modules.audit.models import AuditLog
 from app.modules.auth.models import UserSession
 from app.modules.documents.models import PatientDocument
+from app.modules.donations.models import Donation, DonationGoal, DonationGoalMilestone
 from app.modules.evaluations.models import PatientEvaluation
 from app.modules.inquiries.models import Inquiry
 from app.modules.inventory.models import InventoryItem, InventoryMovement
@@ -18,6 +19,9 @@ from app.modules.users.models import Permission, Role, User
 __all__ = [
     "Attendance",
     "AuditLog",
+    "Donation",
+    "DonationGoal",
+    "DonationGoalMilestone",
     "Inquiry",
     "InventoryItem",
     "InventoryMovement",

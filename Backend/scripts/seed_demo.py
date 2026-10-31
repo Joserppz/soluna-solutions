@@ -11,7 +11,9 @@ Las contraseñas de abajo son públicas: nunca uses este script en la base de pr
 
 import sys
 from datetime import date, time, timedelta
+from decimal import Decimal
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core import clock
@@ -20,6 +22,10 @@ from app.core.database import SessionLocal
 from app.core.security import hash_password
 from app.models import (
     Attendance,
+    Donation,
+    DonationGoal,
+    DonationGoalMilestone,
+    InventoryItem,
     Patient,
     PatientContact,
     PatientEvaluation,
@@ -178,8 +184,96 @@ def seed(db: Session) -> list[str]:
     for item in INVENTORY:
         register_item(db, ItemIn(**item), coordinator.id)
     created.append(f"{len(INVENTORY)} materiales en el inventario (uno dañado)")
+    created.append(_donations(db, coordinator))
     db.flush()
     return created
+
+
+def _donations(db: Session, coordinator: User) -> str:
+    """Meta visible con hitos y aportes en cada estado (diseño págs. 4 y 15)."""
+    goal = DonationGoal(
+        title="Espacio propio y equipos de fisioterapia",
+        description="Soñamos con un espacio propio y con equipos para los sábados.",
+        target_bs=Decimal(60000),
+        manual_adjustment_bs=Decimal(18000),
+        visible=True,
+        starts_on=clock.today() - timedelta(days=200),
+        milestones=[
+            DonationGoalMilestone(label="Colchonetas y bandas", status="cubierto", position=0),
+            DonationGoalMilestone(label="Barras paralelas", status="en_camino", position=1),
+            DonationGoalMilestone(label="Espacio propio", status="pendiente", position=2),
+        ],
+    )
+    db.add(goal)
+    db.flush()
+    today = clock.today()
+    reviewed = {"reviewed_by": coordinator.id, "reviewed_at": clock.now()}
+    pelotas = db.scalar(select(InventoryItem).where(InventoryItem.name.like("Pelotas%")))
+    db.add_all(
+        [
+            Donation(
+                donor_name="Marcela Quispe",
+                channel="qr_bancario",
+                amount_bs=Decimal(100),
+                declared_reference="48213907",
+                status="pendiente",
+                goal_id=goal.id,
+                date=today,
+            ),
+            Donation(
+                channel="qr_bancario",
+                amount_bs=Decimal(50),
+                status="pendiente",
+                goal_id=goal.id,
+                date=today,
+            ),
+            Donation(
+                donor_name="Jorge Arce Vargas",
+                channel="qr_bancario",
+                amount_bs=Decimal(200),
+                status="confirmado",
+                bank_reference="EXT-20261027-0193",
+                credited_on=today - timedelta(days=1),
+                goal_id=goal.id,
+                date=today - timedelta(days=1),
+                **reviewed,
+            ),
+            Donation(
+                donor_name="Familia Rojas Mendoza",
+                channel="efectivo",
+                source="sede",
+                amount_bs=Decimal(300),
+                declared_reference="Recibo 0127",
+                status="confirmado",
+                goal_id=goal.id,
+                date=today - timedelta(days=2),
+                registered_by=coordinator.id,
+                **reviewed,
+            ),
+            Donation(
+                donor_name="Grupo de exalumnos",
+                channel="especie",
+                source="sede",
+                in_kind_description="6 pelotas de terapia de 65 cm",
+                status="recibido",
+                inventory_item_id=pelotas.id if pelotas else None,
+                date=today - timedelta(days=3),
+                registered_by=coordinator.id,
+                **reviewed,
+            ),
+            Donation(
+                donor_name="Rodrigo Salazar",
+                channel="qr_bancario",
+                amount_bs=Decimal(1500),
+                status="anulado",
+                cancellation_reason="No se encontró en el extracto",
+                goal_id=goal.id,
+                date=today - timedelta(days=4),
+                **reviewed,
+            ),
+        ]
+    )
+    return "Meta de donaciones visible y 6 aportes (2 por confirmar)"
 
 
 def _schedules(professional: User) -> list[Schedule]:

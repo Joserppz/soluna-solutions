@@ -279,6 +279,57 @@ describe('Endpoints', () => {
         '/inventory/export?format=csv',
       ],
       [
+        () => api.donations.list({ status: 'pendiente' }),
+        'GET',
+        '/donations?status=pendiente',
+      ],
+      [
+        () => api.donations.summary('2026-10'),
+        'GET',
+        '/donations/summary?month=2026-10',
+      ],
+      [() => api.donations.get('d1'), 'GET', '/donations/d1'],
+      [
+        () =>
+          api.donations.registerReceived({
+            channel: 'efectivo',
+            amountBs: 300,
+          }),
+        'POST',
+        '/donations',
+      ],
+      [
+        () =>
+          api.donations.confirm('d1', {
+            bankReference: '48213907',
+            creditedOn: '2026-10-28',
+          }),
+        'POST',
+        '/donations/d1/confirm',
+      ],
+      [
+        () => api.donations.cancel('d1', { reason: 'No está en el extracto' }),
+        'POST',
+        '/donations/d1/cancel',
+      ],
+      [() => api.donations.goal(), 'GET', '/donations/goal'],
+      [
+        () => api.donations.saveGoal({ title: 'Meta', targetBs: 60000 }),
+        'PUT',
+        '/donations/goal',
+      ],
+      [() => api.public.donationGoal(), 'GET', '/public/donations/goal'],
+      [
+        () => api.public.notifyDonation({ amountBs: 100, turnstileToken: 't' }),
+        'POST',
+        '/public/donations/notice',
+      ],
+      [
+        () => api.public.trackDonation('d1'),
+        'GET',
+        '/public/donations/notice/d1',
+      ],
+      [
         () => api.public.schedules({ from: '2026-11-01' }),
         'GET',
         '/public/schedules?from=2026-11-01',

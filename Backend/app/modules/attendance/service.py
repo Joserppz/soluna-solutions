@@ -5,7 +5,6 @@ El voluntariado marca quién vino desde el celular. La lista son los afiliados a
 publicadas cuya fecha ya llegó (hora de Bolivia) y hasta cerrar la asistencia del día.
 """
 
-import datetime as dt
 import re
 import uuid
 from collections import defaultdict
@@ -191,22 +190,8 @@ def add_newcomer(
     return inquiry
 
 
-def parse_month(month: str | None) -> tuple[str, dt.date, dt.date]:
-    if month is None:
-        first = clock.today().replace(day=1)
-    else:
-        try:
-            first = dt.datetime.strptime(month, "%Y-%m").date()
-        except ValueError as exc:
-            raise ValidationError(
-                "El mes debe tener el formato AAAA-MM, por ejemplo 2026-10."
-            ) from exc
-    following = (first.replace(day=28) + dt.timedelta(days=4)).replace(day=1)
-    return f"{first:%Y-%m}", first, following - dt.timedelta(days=1)
-
-
 def monthly_summary(db: Session, month: str | None) -> MonthlySummaryOut:
-    label, first, last = parse_month(month)
+    label, first, last = clock.month_range(month)
     activities = []
     by_category: dict[str, int] = defaultdict(int)
     for schedule, came, not_came in attendance_repository.monthly(db, first, last):

@@ -240,6 +240,128 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/donations': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * List Donations
+     * @description Registro de aportes; busca por donante o comprobante.
+     */
+    get: operations['list_donations_api_v1_donations_get']
+    put?: never
+    /**
+     * Register Manual
+     * @description «Registrar aporte recibido»: efectivo (confirmado) o en especie (recibido + inventario).
+     */
+    post: operations['register_manual_api_v1_donations_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/donations/goal': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Get Goal */
+    get: operations['get_goal_api_v1_donations_goal_get']
+    /**
+     * Save Goal
+     * @description «Editar meta»: título, monto, ajuste manual, hitos y si se ve en el sitio.
+     */
+    put: operations['save_goal_api_v1_donations_goal_put']
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/donations/summary': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Summary
+     * @description Resumen del mes: confirmado por canal, avisos por confirmar, especie y anulados.
+     */
+    get: operations['summary_api_v1_donations_summary_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/donations/{donation_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Get Donation */
+    get: operations['get_donation_api_v1_donations__donation_id__get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/donations/{donation_id}/cancel': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Cancel
+     * @description Pendiente → anulado con motivo (queda en el historial y en la bitácora).
+     */
+    post: operations['cancel_api_v1_donations__donation_id__cancel_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/donations/{donation_id}/confirm': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Confirm
+     * @description Pendiente → confirmado con la referencia del extracto: suma a la meta.
+     */
+    post: operations['confirm_api_v1_donations__donation_id__confirm_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/health': {
     parameters: {
       query?: never
@@ -612,6 +734,66 @@ export interface paths {
     put?: never
     /** Reactivate Patient */
     post: operations['reactivate_patient_api_v1_patients__patient_id__reactivate_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/public/donations/goal': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Public Goal
+     * @description Meta visible en el sitio e hitos; null si no hay meta visible.
+     */
+    get: operations['public_goal_api_v1_public_donations_goal_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/public/donations/notice': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Register Notice
+     * @description «Ya hice mi aporte»: aviso de un aporte por QR bancario (queda pendiente).
+     */
+    post: operations['register_notice_api_v1_public_donations_notice_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/public/donations/notice/{donation_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Track Notice
+     * @description Estado de un aviso (Pendiente → Confirmado) con el id que recibió la persona.
+     */
+    get: operations['track_notice_api_v1_public_donations_notice__donation_id__get']
+    put?: never
+    post?: never
     delete?: never
     options?: never
     head?: never
@@ -1135,6 +1317,18 @@ export interface components {
       /** Newpassword */
       newPassword: string
     }
+    /** ChannelTotal */
+    ChannelTotal: {
+      /** Amountbs */
+      amountBs: number
+      /**
+       * Channel
+       * @enum {string}
+       */
+      channel: 'qr_bancario' | 'efectivo' | 'especie'
+      /** Label */
+      label: string
+    }
     /** ClinicalAnamnesis */
     ClinicalAnamnesis: {
       /**
@@ -1226,6 +1420,218 @@ export interface components {
       /** Relation */
       relation?: string | null
     }
+    /** DonationCancel */
+    DonationCancel: {
+      /** Reason */
+      reason: string
+    }
+    /** DonationConfirm */
+    DonationConfirm: {
+      /** Bankreference */
+      bankReference: string
+      /**
+       * Creditedon
+       * Format: date
+       */
+      creditedOn: string
+    }
+    /**
+     * DonationManualIn
+     * @description «Registrar un aporte recibido» en la sede (diseño pág. 16).
+     */
+    DonationManualIn: {
+      /**
+       * Addtoinventory
+       * @default true
+       */
+      addToInventory?: boolean
+      /** Amountbs */
+      amountBs?: number | string | null
+      /**
+       * Category
+       * @default otro
+       * @enum {string}
+       */
+      category?:
+        'fisioterapia' | 'movilidad' | 'mobiliario' | 'papeleria' | 'otro'
+      /**
+       * Channel
+       * @enum {string}
+       */
+      channel: 'efectivo' | 'especie'
+      /**
+       * Condition
+       * @default bueno
+       * @enum {string}
+       */
+      condition?: 'nuevo' | 'bueno' | 'regular' | 'dañado'
+      /** Date */
+      date?: string | null
+      /** Donorcontact */
+      donorContact?: string | null
+      /** Donorname */
+      donorName?: string | null
+      /** Estimatedvaluebs */
+      estimatedValueBs?: number | string | null
+      /** Inkinddescription */
+      inKindDescription?: string | null
+      /**
+       * Purpose
+       * @default Donde más se necesite
+       */
+      purpose?: string
+      /**
+       * Quantity
+       * @default 1
+       */
+      quantity?: number
+      /** Receiptnumber */
+      receiptNumber?: string | null
+    }
+    /**
+     * DonationNoticeIn
+     * @description «Avísanos de tu aporte» (diseño pág. 4): el aporte ya se hizo por QR bancario.
+     */
+    DonationNoticeIn: {
+      /** Amountbs */
+      amountBs: number | string
+      /** Declaredreference */
+      declaredReference?: string | null
+      /** Donorcontact */
+      donorContact?: string | null
+      /** Donorname */
+      donorName?: string | null
+      /**
+       * Purpose
+       * @default Donde más se necesite
+       */
+      purpose?: string
+      /** Turnstiletoken */
+      turnstileToken: string
+    }
+    /** DonationOut */
+    DonationOut: {
+      /** Amountbs */
+      amountBs: number | null
+      /** Bankreference */
+      bankReference: string | null
+      /** Cancellationreason */
+      cancellationReason: string | null
+      /**
+       * Channel
+       * @enum {string}
+       */
+      channel: 'qr_bancario' | 'efectivo' | 'especie'
+      /** Channellabel */
+      channelLabel: string
+      /**
+       * Createdat
+       * Format: date-time
+       */
+      createdAt: string
+      /** Creditedon */
+      creditedOn: string | null
+      /**
+       * Date
+       * Format: date
+       */
+      date: string
+      /** Declaredreference */
+      declaredReference: string | null
+      /** Donorcontact */
+      donorContact: string | null
+      /** Donorname */
+      donorName: string | null
+      /** Estimatedvaluebs */
+      estimatedValueBs: number | null
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string
+      /** Inkinddescription */
+      inKindDescription: string | null
+      /** Inventoryitemid */
+      inventoryItemId: string | null
+      /** Purpose */
+      purpose: string
+      /** Reviewedat */
+      reviewedAt: string | null
+      /**
+       * Source
+       * @enum {string}
+       */
+      source: 'sitio' | 'sede'
+      /**
+       * Status
+       * @enum {string}
+       */
+      status: 'pendiente' | 'confirmado' | 'recibido' | 'anulado'
+      /** Statuslabel */
+      statusLabel: string
+    }
+    /**
+     * DonationPage
+     * @description Página del registro de aportes.
+     */
+    DonationPage: {
+      /** Items */
+      items: components['schemas']['DonationOut'][]
+      /** Limit */
+      limit: number
+      /** Offset */
+      offset: number
+      /**
+       * Total
+       * @description Filas que cumplen los filtros (todas las páginas)
+       */
+      total: number
+    }
+    /**
+     * DonationSummary
+     * @description «Este mes llegaron…» (diseño pág. 15).
+     */
+    DonationSummary: {
+      /** Bychannel */
+      byChannel: components['schemas']['ChannelTotal'][]
+      /** Cancelledcount */
+      cancelledCount: number
+      /** Confirmedbs */
+      confirmedBs: number
+      /** Confirmedcount */
+      confirmedCount: number
+      /** Inkindcount */
+      inKindCount: number
+      /** Month */
+      month: string
+      /** Pendingcount */
+      pendingCount: number
+    }
+    /**
+     * DonationTrackingOut
+     * @description En qué paso está el aporte (diseño pág. 5), sin datos de quien donó.
+     */
+    DonationTrackingOut: {
+      /** Amountbs */
+      amountBs: number
+      /**
+       * Createdat
+       * Format: date-time
+       */
+      createdAt: string
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string
+      /**
+       * Status
+       * @enum {string}
+       */
+      status: 'pendiente' | 'confirmado' | 'recibido' | 'anulado'
+      /** Statuslabel */
+      statusLabel: string
+    }
     /** EmailRequest */
     EmailRequest: {
       /** Email */
@@ -1305,6 +1711,58 @@ export interface components {
       professionalId?: string | null
       /** Professionalname */
       professionalName?: string | null
+    }
+    /** GoalIn */
+    GoalIn: {
+      /**
+       * Description
+       * @default
+       */
+      description?: string
+      /**
+       * Manualadjustmentbs
+       * @default 0
+       */
+      manualAdjustmentBs?: number | string
+      /** Milestones */
+      milestones?: components['schemas']['MilestoneIn'][]
+      /** Targetbs */
+      targetBs: number | string
+      /** Title */
+      title: string
+      /**
+       * Visible
+       * @default true
+       */
+      visible?: boolean
+    }
+    /** GoalOut */
+    GoalOut: {
+      /** Confirmedbs */
+      confirmedBs: number
+      /** Confirmedcount */
+      confirmedCount: number
+      /** Description */
+      description: string
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string
+      /** Manualadjustmentbs */
+      manualAdjustmentBs: number
+      /** Milestones */
+      milestones: components['schemas']['MilestoneOut'][]
+      /** Percent */
+      percent: number
+      /** Raisedbs */
+      raisedBs: number
+      /** Targetbs */
+      targetBs: number
+      /** Title */
+      title: string
+      /** Visible */
+      visible: boolean
     }
     /** GoogleLoginRequest */
     GoogleLoginRequest: {
@@ -1489,6 +1947,27 @@ export interface components {
     MessageResponse: {
       /** Message */
       message: string
+    }
+    /** MilestoneIn */
+    MilestoneIn: {
+      /** Label */
+      label: string
+      /**
+       * Status
+       * @default pendiente
+       * @enum {string}
+       */
+      status?: 'pendiente' | 'en_camino' | 'cubierto'
+    }
+    /** MilestoneOut */
+    MilestoneOut: {
+      /** Label */
+      label: string
+      /**
+       * Status
+       * @enum {string}
+       */
+      status: 'pendiente' | 'en_camino' | 'cubierto'
     }
     /** MonthlyActivity */
     MonthlyActivity: {
@@ -1856,6 +2335,23 @@ export interface components {
         | 'users:manage'
         | 'roles:manage'
         | 'audit:read'
+    }
+    /** PublicGoalOut */
+    PublicGoalOut: {
+      /** Confirmedcount */
+      confirmedCount: number
+      /** Description */
+      description: string
+      /** Milestones */
+      milestones: components['schemas']['MilestoneOut'][]
+      /** Percent */
+      percent: number
+      /** Raisedbs */
+      raisedBs: number
+      /** Targetbs */
+      targetBs: number
+      /** Title */
+      title: string
     }
     /**
      * PublicScheduleOut
@@ -2805,6 +3301,261 @@ export interface operations {
       }
     }
   }
+  list_donations_api_v1_donations_get: {
+    parameters: {
+      query?: {
+        status?: ('pendiente' | 'confirmado' | 'recibido' | 'anulado') | null
+        channel?: ('qr_bancario' | 'efectivo' | 'especie') | null
+        search?: string | null
+        from?: string | null
+        to?: string | null
+        limit?: number
+        offset?: number
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['DonationPage']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  register_manual_api_v1_donations_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DonationManualIn']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['DonationOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  get_goal_api_v1_donations_goal_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['GoalOut'] | null
+        }
+      }
+    }
+  }
+  save_goal_api_v1_donations_goal_put: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GoalIn']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['GoalOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  summary_api_v1_donations_summary_get: {
+    parameters: {
+      query?: {
+        month?: string | null
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['DonationSummary']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  get_donation_api_v1_donations__donation_id__get: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        donation_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['DonationOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  cancel_api_v1_donations__donation_id__cancel_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        donation_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DonationCancel']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['DonationOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  confirm_api_v1_donations__donation_id__confirm_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        donation_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DonationConfirm']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['DonationOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
   health_api_v1_health_get: {
     parameters: {
       query?: never
@@ -3728,6 +4479,90 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['PatientOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  public_goal_api_v1_public_donations_goal_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['PublicGoalOut'] | null
+        }
+      }
+    }
+  }
+  register_notice_api_v1_public_donations_notice_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DonationNoticeIn']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['DonationTrackingOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  track_notice_api_v1_public_donations_notice__donation_id__get: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        donation_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['DonationTrackingOut']
         }
       }
       /** @description Validation Error */

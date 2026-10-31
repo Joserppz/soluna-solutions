@@ -10,6 +10,15 @@ import type {
   AuditListQuery,
   AuditPage,
   ChangePasswordRequest,
+  DonationCancel,
+  DonationConfirm,
+  DonationListQuery,
+  DonationManualIn,
+  DonationNoticeIn,
+  DonationOut,
+  DonationPage,
+  DonationSummary,
+  DonationTracking,
   ContactIn,
   ContactOut,
   ContactUpdate,
@@ -18,6 +27,8 @@ import type {
   EvaluationIn,
   EvaluationOut,
   EvaluationUpdate,
+  GoalIn,
+  GoalOut,
   GoogleLoginRequest,
   InventorySummary,
   ItemDeactivate,
@@ -46,6 +57,7 @@ import type {
   PatientUpdate,
   RegisterRequest,
   ResetPasswordRequest,
+  PublicGoal,
   PublicSchedule,
   PublicScheduleQuery,
   ScheduleCancel,
@@ -280,6 +292,27 @@ export function createEndpoints(http: HttpClient) {
         http.get<Blob>('/inventory/export', { query: { format }, blob: true }),
     },
 
+    donations: {
+      list: (query: DonationListQuery = {}) =>
+        http.get<DonationPage>('/donations', { query }),
+      summary: (month?: string) =>
+        http.get<DonationSummary>('/donations/summary', { query: { month } }),
+      get: (donationId: string) =>
+        http.get<DonationOut>(`/donations/${id(donationId)}`),
+      /** Aporte recibido en la sede: efectivo o en especie. */
+      registerReceived: (body: DonationManualIn) =>
+        http.post<DonationOut>('/donations', { body }),
+      confirm: (donationId: string, body: DonationConfirm) =>
+        http.post<DonationOut>(`/donations/${id(donationId)}/confirm`, {
+          body,
+        }),
+      cancel: (donationId: string, body: DonationCancel) =>
+        http.post<DonationOut>(`/donations/${id(donationId)}/cancel`, { body }),
+      goal: () => http.get<GoalOut | null>('/donations/goal'),
+      saveGoal: (body: GoalIn) =>
+        http.put<GoalOut>('/donations/goal', { body }),
+    },
+
     public: {
       // Sin sesión: la agenda del sitio
       schedules: (query: PublicScheduleQuery = {}) =>
@@ -287,6 +320,21 @@ export function createEndpoints(http: HttpClient) {
           query,
           anonymous: true,
         }),
+      donationGoal: () =>
+        http.get<PublicGoal | null>('/public/donations/goal', {
+          anonymous: true,
+        }),
+      /** «Ya hice mi aporte» (QR bancario): queda pendiente hasta confirmarlo. */
+      notifyDonation: (body: DonationNoticeIn) =>
+        http.post<DonationTracking>('/public/donations/notice', {
+          body,
+          anonymous: true,
+        }),
+      trackDonation: (donationId: string) =>
+        http.get<DonationTracking>(
+          `/public/donations/notice/${id(donationId)}`,
+          { anonymous: true },
+        ),
     },
 
     audit: {

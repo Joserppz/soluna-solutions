@@ -352,6 +352,34 @@
         "title": "ChangePasswordRequest",
         "type": "object"
       },
+      "ChannelTotal": {
+        "properties": {
+          "amountBs": {
+            "title": "Amountbs",
+            "type": "number"
+          },
+          "channel": {
+            "enum": [
+              "qr_bancario",
+              "efectivo",
+              "especie"
+            ],
+            "title": "Channel",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "channel",
+          "label",
+          "amountBs"
+        ],
+        "title": "ChannelTotal",
+        "type": "object"
+      },
       "ClinicalAnamnesis": {
         "properties": {
           "diagnosis": {
@@ -607,6 +635,595 @@
         "title": "ContactUpdate",
         "type": "object"
       },
+      "DonationCancel": {
+        "properties": {
+          "reason": {
+            "maxLength": 300,
+            "minLength": 3,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "DonationCancel",
+        "type": "object"
+      },
+      "DonationConfirm": {
+        "properties": {
+          "bankReference": {
+            "maxLength": 60,
+            "minLength": 3,
+            "title": "Bankreference",
+            "type": "string"
+          },
+          "creditedOn": {
+            "format": "date",
+            "title": "Creditedon",
+            "type": "string"
+          }
+        },
+        "required": [
+          "bankReference",
+          "creditedOn"
+        ],
+        "title": "DonationConfirm",
+        "type": "object"
+      },
+      "DonationManualIn": {
+        "description": "«Registrar un aporte recibido» en la sede (diseño pág. 16).",
+        "properties": {
+          "addToInventory": {
+            "default": true,
+            "title": "Addtoinventory",
+            "type": "boolean"
+          },
+          "amountBs": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 100000.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,6}|(?=[\\d.]{1,9}0*$)\\d{0,6}\\.\\d{0,2}0*$)",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amountbs"
+          },
+          "category": {
+            "default": "otro",
+            "enum": [
+              "fisioterapia",
+              "movilidad",
+              "mobiliario",
+              "papeleria",
+              "otro"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "channel": {
+            "enum": [
+              "efectivo",
+              "especie"
+            ],
+            "title": "Channel",
+            "type": "string"
+          },
+          "condition": {
+            "default": "bueno",
+            "enum": [
+              "nuevo",
+              "bueno",
+              "regular",
+              "dañado"
+            ],
+            "title": "Condition",
+            "type": "string"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          },
+          "donorContact": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Donorcontact"
+          },
+          "donorName": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Donorname"
+          },
+          "estimatedValueBs": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 10000000.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,8}|(?=[\\d.]{1,11}0*$)\\d{0,8}\\.\\d{0,2}0*$)",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimatedvaluebs"
+          },
+          "inKindDescription": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inkinddescription"
+          },
+          "purpose": {
+            "default": "Donde más se necesite",
+            "maxLength": 120,
+            "title": "Purpose",
+            "type": "string"
+          },
+          "quantity": {
+            "default": 1,
+            "maximum": 10000.0,
+            "minimum": 1.0,
+            "title": "Quantity",
+            "type": "integer"
+          },
+          "receiptNumber": {
+            "anyOf": [
+              {
+                "maxLength": 60,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Receiptnumber"
+          }
+        },
+        "required": [
+          "channel"
+        ],
+        "title": "DonationManualIn",
+        "type": "object"
+      },
+      "DonationNoticeIn": {
+        "description": "«Avísanos de tu aporte» (diseño pág. 4): el aporte ya se hizo por QR bancario.",
+        "properties": {
+          "amountBs": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 100000.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,6}|(?=[\\d.]{1,9}0*$)\\d{0,6}\\.\\d{0,2}0*$)",
+                "type": "string"
+              }
+            ],
+            "title": "Amountbs"
+          },
+          "declaredReference": {
+            "anyOf": [
+              {
+                "maxLength": 60,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Declaredreference"
+          },
+          "donorContact": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Donorcontact"
+          },
+          "donorName": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Donorname"
+          },
+          "purpose": {
+            "default": "Donde más se necesite",
+            "maxLength": 120,
+            "title": "Purpose",
+            "type": "string"
+          },
+          "turnstileToken": {
+            "maxLength": 2048,
+            "title": "Turnstiletoken",
+            "type": "string"
+          }
+        },
+        "required": [
+          "amountBs",
+          "turnstileToken"
+        ],
+        "title": "DonationNoticeIn",
+        "type": "object"
+      },
+      "DonationOut": {
+        "properties": {
+          "amountBs": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amountbs"
+          },
+          "bankReference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bankreference"
+          },
+          "cancellationReason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancellationreason"
+          },
+          "channel": {
+            "enum": [
+              "qr_bancario",
+              "efectivo",
+              "especie"
+            ],
+            "title": "Channel",
+            "type": "string"
+          },
+          "channelLabel": {
+            "title": "Channellabel",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "creditedOn": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Creditedon"
+          },
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "declaredReference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Declaredreference"
+          },
+          "donorContact": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Donorcontact"
+          },
+          "donorName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Donorname"
+          },
+          "estimatedValueBs": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimatedvaluebs"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "inKindDescription": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inkinddescription"
+          },
+          "inventoryItemId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inventoryitemid"
+          },
+          "purpose": {
+            "title": "Purpose",
+            "type": "string"
+          },
+          "reviewedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewedat"
+          },
+          "source": {
+            "enum": [
+              "sitio",
+              "sede"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pendiente",
+              "confirmado",
+              "recibido",
+              "anulado"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "statusLabel": {
+            "title": "Statuslabel",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "donorName",
+          "donorContact",
+          "channel",
+          "channelLabel",
+          "source",
+          "amountBs",
+          "inKindDescription",
+          "estimatedValueBs",
+          "purpose",
+          "status",
+          "statusLabel",
+          "declaredReference",
+          "bankReference",
+          "creditedOn",
+          "cancellationReason",
+          "inventoryItemId",
+          "date",
+          "reviewedAt",
+          "createdAt"
+        ],
+        "title": "DonationOut",
+        "type": "object"
+      },
+      "DonationPage": {
+        "description": "Página del registro de aportes.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DonationOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "description": "Filas que cumplen los filtros (todas las páginas)",
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "DonationPage",
+        "type": "object"
+      },
+      "DonationSummary": {
+        "description": "«Este mes llegaron…» (diseño pág. 15).",
+        "properties": {
+          "byChannel": {
+            "items": {
+              "$ref": "#/components/schemas/ChannelTotal"
+            },
+            "title": "Bychannel",
+            "type": "array"
+          },
+          "cancelledCount": {
+            "title": "Cancelledcount",
+            "type": "integer"
+          },
+          "confirmedBs": {
+            "title": "Confirmedbs",
+            "type": "number"
+          },
+          "confirmedCount": {
+            "title": "Confirmedcount",
+            "type": "integer"
+          },
+          "inKindCount": {
+            "title": "Inkindcount",
+            "type": "integer"
+          },
+          "month": {
+            "title": "Month",
+            "type": "string"
+          },
+          "pendingCount": {
+            "title": "Pendingcount",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "month",
+          "confirmedBs",
+          "confirmedCount",
+          "pendingCount",
+          "inKindCount",
+          "cancelledCount",
+          "byChannel"
+        ],
+        "title": "DonationSummary",
+        "type": "object"
+      },
+      "DonationTrackingOut": {
+        "description": "En qué paso está el aporte (diseño pág. 5), sin datos de quien donó.",
+        "properties": {
+          "amountBs": {
+            "title": "Amountbs",
+            "type": "number"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pendiente",
+              "confirmado",
+              "recibido",
+              "anulado"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "statusLabel": {
+            "title": "Statuslabel",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "statusLabel",
+          "amountBs",
+          "createdAt"
+        ],
+        "title": "DonationTrackingOut",
+        "type": "object"
+      },
       "EmailRequest": {
         "properties": {
           "email": {
@@ -825,6 +1442,137 @@
           }
         },
         "title": "EvaluationUpdate",
+        "type": "object"
+      },
+      "GoalIn": {
+        "properties": {
+          "description": {
+            "default": "",
+            "maxLength": 300,
+            "title": "Description",
+            "type": "string"
+          },
+          "manualAdjustmentBs": {
+            "anyOf": [
+              {
+                "maximum": 100000000.0,
+                "minimum": -100000000.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,10}|(?=[\\d.]{1,13}0*$)\\d{0,10}\\.\\d{0,2}0*$)",
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "title": "Manualadjustmentbs"
+          },
+          "milestones": {
+            "items": {
+              "$ref": "#/components/schemas/MilestoneIn"
+            },
+            "maxItems": 10,
+            "title": "Milestones",
+            "type": "array"
+          },
+          "targetBs": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 100000000.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,10}|(?=[\\d.]{1,13}0*$)\\d{0,10}\\.\\d{0,2}0*$)",
+                "type": "string"
+              }
+            ],
+            "title": "Targetbs"
+          },
+          "title": {
+            "maxLength": 120,
+            "minLength": 3,
+            "title": "Title",
+            "type": "string"
+          },
+          "visible": {
+            "default": true,
+            "title": "Visible",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "title",
+          "targetBs"
+        ],
+        "title": "GoalIn",
+        "type": "object"
+      },
+      "GoalOut": {
+        "properties": {
+          "confirmedBs": {
+            "title": "Confirmedbs",
+            "type": "number"
+          },
+          "confirmedCount": {
+            "title": "Confirmedcount",
+            "type": "integer"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "manualAdjustmentBs": {
+            "title": "Manualadjustmentbs",
+            "type": "number"
+          },
+          "milestones": {
+            "items": {
+              "$ref": "#/components/schemas/MilestoneOut"
+            },
+            "title": "Milestones",
+            "type": "array"
+          },
+          "percent": {
+            "title": "Percent",
+            "type": "integer"
+          },
+          "raisedBs": {
+            "title": "Raisedbs",
+            "type": "number"
+          },
+          "targetBs": {
+            "title": "Targetbs",
+            "type": "number"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "visible": {
+            "title": "Visible",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "title",
+          "description",
+          "targetBs",
+          "raisedBs",
+          "percent",
+          "confirmedCount",
+          "milestones",
+          "id",
+          "manualAdjustmentBs",
+          "confirmedBs",
+          "visible"
+        ],
+        "title": "GoalOut",
         "type": "object"
       },
       "GoogleLoginRequest": {
@@ -1330,6 +2078,54 @@
           "message"
         ],
         "title": "MessageResponse",
+        "type": "object"
+      },
+      "MilestoneIn": {
+        "properties": {
+          "label": {
+            "maxLength": 80,
+            "minLength": 3,
+            "title": "Label",
+            "type": "string"
+          },
+          "status": {
+            "default": "pendiente",
+            "enum": [
+              "pendiente",
+              "en_camino",
+              "cubierto"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label"
+        ],
+        "title": "MilestoneIn",
+        "type": "object"
+      },
+      "MilestoneOut": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pendiente",
+              "en_camino",
+              "cubierto"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "status"
+        ],
+        "title": "MilestoneOut",
         "type": "object"
       },
       "MonthlyActivity": {
@@ -2183,6 +2979,52 @@
           "isSensitive"
         ],
         "title": "PermissionOut",
+        "type": "object"
+      },
+      "PublicGoalOut": {
+        "properties": {
+          "confirmedCount": {
+            "title": "Confirmedcount",
+            "type": "integer"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "milestones": {
+            "items": {
+              "$ref": "#/components/schemas/MilestoneOut"
+            },
+            "title": "Milestones",
+            "type": "array"
+          },
+          "percent": {
+            "title": "Percent",
+            "type": "integer"
+          },
+          "raisedBs": {
+            "title": "Raisedbs",
+            "type": "number"
+          },
+          "targetBs": {
+            "title": "Targetbs",
+            "type": "number"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "description",
+          "targetBs",
+          "raisedBs",
+          "percent",
+          "confirmedCount",
+          "milestones"
+        ],
+        "title": "PublicGoalOut",
         "type": "object"
       },
       "PublicScheduleOut": {
@@ -4101,6 +4943,471 @@
         ]
       }
     },
+    "/api/v1/donations": {
+      "get": {
+        "description": "Registro de aportes; busca por donante o comprobante.",
+        "operationId": "list_donations_api_v1_donations_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "pendiente",
+                    "confirmado",
+                    "recibido",
+                    "anulado"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "qr_bancario",
+                    "efectivo",
+                    "especie"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Channel"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DonationPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Donations",
+        "tags": [
+          "Donaciones"
+        ]
+      },
+      "post": {
+        "description": "«Registrar aporte recibido»: efectivo (confirmado) o en especie (recibido + inventario).",
+        "operationId": "register_manual_api_v1_donations_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DonationManualIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DonationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Register Manual",
+        "tags": [
+          "Donaciones"
+        ]
+      }
+    },
+    "/api/v1/donations/goal": {
+      "get": {
+        "operationId": "get_goal_api_v1_donations_goal_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/GoalOut"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Get Goal Api V1 Donations Goal Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Goal",
+        "tags": [
+          "Donaciones"
+        ]
+      },
+      "put": {
+        "description": "«Editar meta»: título, monto, ajuste manual, hitos y si se ve en el sitio.",
+        "operationId": "save_goal_api_v1_donations_goal_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoalIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Save Goal",
+        "tags": [
+          "Donaciones"
+        ]
+      }
+    },
+    "/api/v1/donations/summary": {
+      "get": {
+        "description": "Resumen del mes: confirmado por canal, avisos por confirmar, especie y anulados.",
+        "operationId": "summary_api_v1_donations_summary_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "month",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^\\d{4}-\\d{2}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "examples": [
+                "2026-10"
+              ],
+              "title": "Month"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DonationSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Summary",
+        "tags": [
+          "Donaciones"
+        ]
+      }
+    },
+    "/api/v1/donations/{donation_id}": {
+      "get": {
+        "operationId": "get_donation_api_v1_donations__donation_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "donation_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Donation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DonationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Donation",
+        "tags": [
+          "Donaciones"
+        ]
+      }
+    },
+    "/api/v1/donations/{donation_id}/cancel": {
+      "post": {
+        "description": "Pendiente → anulado con motivo (queda en el historial y en la bitácora).",
+        "operationId": "cancel_api_v1_donations__donation_id__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "donation_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Donation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DonationCancel"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DonationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cancel",
+        "tags": [
+          "Donaciones"
+        ]
+      }
+    },
+    "/api/v1/donations/{donation_id}/confirm": {
+      "post": {
+        "description": "Pendiente → confirmado con la referencia del extracto: suma a la meta.",
+        "operationId": "confirm_api_v1_donations__donation_id__confirm_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "donation_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Donation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DonationConfirm"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DonationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Confirm",
+        "tags": [
+          "Donaciones"
+        ]
+      }
+    },
     "/api/v1/health": {
       "get": {
         "description": "Prueba de vida liviana: no consulta la base (la usan Docker y Cloud Run).",
@@ -5638,6 +6945,122 @@
         "summary": "Reactivate Patient",
         "tags": [
           "Afiliados"
+        ]
+      }
+    },
+    "/api/v1/public/donations/goal": {
+      "get": {
+        "description": "Meta visible en el sitio e hitos; null si no hay meta visible.",
+        "operationId": "public_goal_api_v1_public_donations_goal_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/PublicGoalOut"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Public Goal Api V1 Public Donations Goal Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Public Goal",
+        "tags": [
+          "Sitio público"
+        ]
+      }
+    },
+    "/api/v1/public/donations/notice": {
+      "post": {
+        "description": "«Ya hice mi aporte»: aviso de un aporte por QR bancario (queda pendiente).",
+        "operationId": "register_notice_api_v1_public_donations_notice_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DonationNoticeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DonationTrackingOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Register Notice",
+        "tags": [
+          "Sitio público"
+        ]
+      }
+    },
+    "/api/v1/public/donations/notice/{donation_id}": {
+      "get": {
+        "description": "Estado de un aviso (Pendiente → Confirmado) con el id que recibió la persona.",
+        "operationId": "track_notice_api_v1_public_donations_notice__donation_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "donation_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Donation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DonationTrackingOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Track Notice",
+        "tags": [
+          "Sitio público"
         ]
       }
     },

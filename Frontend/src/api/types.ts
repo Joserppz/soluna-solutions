@@ -87,6 +87,20 @@ export type MovementIn = Schemas['MovementIn']
 export type MovementOut = Schemas['MovementOut']
 export type InventorySummary = Schemas['InventorySummary']
 
+// Donaciones
+export type DonationNoticeIn = Schemas['DonationNoticeIn']
+export type DonationTracking = Schemas['DonationTrackingOut']
+export type PublicGoal = Schemas['PublicGoalOut']
+export type DonationOut = Schemas['DonationOut']
+export type DonationPage = Schemas['DonationPage']
+export type DonationListQuery = QueryOf<'list_donations_api_v1_donations_get'>
+export type DonationConfirm = Schemas['DonationConfirm']
+export type DonationCancel = Schemas['DonationCancel']
+export type DonationManualIn = Schemas['DonationManualIn']
+export type DonationSummary = Schemas['DonationSummary']
+export type GoalIn = Schemas['GoalIn']
+export type GoalOut = Schemas['GoalOut']
+
 // Bitácora
 export type AuditPage = Schemas['AuditPage']
 export type AuditEvent = Schemas['AuditEventOut']
