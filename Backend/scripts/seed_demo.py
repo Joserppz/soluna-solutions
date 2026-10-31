@@ -25,6 +25,8 @@ from app.models import (
     Donation,
     DonationGoal,
     DonationGoalMilestone,
+    Inquiry,
+    InquiryNote,
     InstitutionalSection,
     InventoryItem,
     MediaAlbum,
@@ -192,8 +194,68 @@ def seed(db: Session) -> list[str]:
     created.append(_donations(db, coordinator))
     created.append(_gallery(db, coordinator, patients))
     created.append(_content(db, coordinator))
+    created.append(_inquiries(db, coordinator, schedules[1]))
     db.flush()
     return created
+
+
+def _inquiries(db: Session, coordinator: User, next_saturday: Schedule) -> str:
+    """Solicitudes del diseño (pág. 17): 4 nuevas y una contactada con su nota."""
+    common = {"source": "sitio", "contact_consent": True}
+    contacted = Inquiry(
+        kind="orientacion",
+        name="Hugo Torrez",
+        phone="71198765",
+        message="Consulta por actividades para su madre.",
+        status="contactada",
+        **common,
+    )
+    db.add_all(
+        [
+            Inquiry(
+                kind="orientacion",
+                name="Rosa Mamani",
+                phone="71548214",
+                on_behalf_of="Su esposo, Julio",
+                zone="Villa Fátima",
+                preferred_call_time="Por la tarde",
+                message="Mi esposo casi no sale de la casa. ¿Podemos ir los dos los sábados?",
+                **common,
+            ),
+            Inquiry(
+                kind="voluntariado",
+                name="Javier Condori",
+                phone="70122334",
+                message="Quiero ser voluntario los sábados.",
+                **common,
+            ),
+            Inquiry(
+                kind="especie",
+                name="Elena Paredes",
+                phone="76655443",
+                message="Ofrezco una silla de ruedas en buen estado.",
+                **common,
+            ),
+            Inquiry(
+                kind="participar",
+                name="Martha Villca",
+                phone="72233445",
+                schedule_id=next_saturday.id,
+                **common,
+            ),
+            contacted,
+        ]
+    )
+    db.flush()
+    db.add(
+        InquiryNote(
+            inquiry_id=contacted.id,
+            author_id=coordinator.id,
+            author_name=coordinator.name,
+            note="Se le explicó el horario del sábado; vendrá con su madre.",
+        )
+    )
+    return "5 solicitudes (4 nuevas y una contactada)"
 
 
 # Imágenes de muestra públicas de Cloudinary (cuenta «demo»)

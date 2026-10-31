@@ -1054,6 +1054,70 @@
         "title": "ContactUpdate",
         "type": "object"
       },
+      "DashboardSummary": {
+        "properties": {
+          "attendanceLastSaturdays": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/SaturdayAttendance"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attendancelastsaturdays"
+          },
+          "nextActivity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NextActivity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "patients": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PatientsOverview"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "toReview": {
+            "$ref": "#/components/schemas/ToReview"
+          },
+          "upcoming": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/UpcomingActivity"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upcoming"
+          }
+        },
+        "required": [
+          "toReview",
+          "nextActivity",
+          "upcoming",
+          "attendanceLastSaturdays",
+          "patients"
+        ],
+        "title": "DashboardSummary",
+        "type": "object"
+      },
       "DonationCancel": {
         "properties": {
           "reason": {
@@ -2022,6 +2086,537 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "InquiryConvert": {
+        "description": "Ficha nueva desde la solicitud; lo que no se envía se toma de la solicitud.",
+        "properties": {
+          "address": {
+            "default": "",
+            "maxLength": 200,
+            "title": "Address",
+            "type": "string"
+          },
+          "birthDate": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Birthdate"
+          },
+          "ci": {
+            "maxLength": 14,
+            "title": "Ci",
+            "type": "string"
+          },
+          "contacts": {
+            "items": {
+              "$ref": "#/components/schemas/ContactIn"
+            },
+            "maxItems": 5,
+            "title": "Contacts",
+            "type": "array"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "maxLength": 12,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "zone": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Zone"
+          }
+        },
+        "required": [
+          "ci"
+        ],
+        "title": "InquiryConvert",
+        "type": "object"
+      },
+      "InquiryDetailOut": {
+        "properties": {
+          "assignedTo": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assignedto"
+          },
+          "assignedToName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assignedtoname"
+          },
+          "contactConsent": {
+            "title": "Contactconsent",
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "orientacion",
+              "voluntariado",
+              "especie",
+              "participar",
+              "asistencia",
+              "otro"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "kindLabel": {
+            "title": "Kindlabel",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "$ref": "#/components/schemas/NoteOut"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "onBehalfOf": {
+            "title": "Onbehalfof",
+            "type": "string"
+          },
+          "patientId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Patientid"
+          },
+          "phone": {
+            "title": "Phone",
+            "type": "string"
+          },
+          "preferredCallTime": {
+            "title": "Preferredcalltime",
+            "type": "string"
+          },
+          "scheduleId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scheduleid"
+          },
+          "scheduleTitle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scheduletitle"
+          },
+          "source": {
+            "enum": [
+              "sitio",
+              "asistencia",
+              "sede"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "recibida",
+              "por_contactar",
+              "contactada",
+              "inscrita",
+              "cerrada"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "statusLabel": {
+            "title": "Statuslabel",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "title": "Updatedat",
+            "type": "string"
+          },
+          "zone": {
+            "title": "Zone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "kindLabel",
+          "source",
+          "name",
+          "phone",
+          "onBehalfOf",
+          "zone",
+          "preferredCallTime",
+          "message",
+          "scheduleId",
+          "scheduleTitle",
+          "status",
+          "statusLabel",
+          "assignedTo",
+          "assignedToName",
+          "patientId",
+          "contactConsent",
+          "createdAt",
+          "updatedAt",
+          "notes"
+        ],
+        "title": "InquiryDetailOut",
+        "type": "object"
+      },
+      "InquiryOut": {
+        "properties": {
+          "assignedTo": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assignedto"
+          },
+          "assignedToName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assignedtoname"
+          },
+          "contactConsent": {
+            "title": "Contactconsent",
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "orientacion",
+              "voluntariado",
+              "especie",
+              "participar",
+              "asistencia",
+              "otro"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "kindLabel": {
+            "title": "Kindlabel",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "onBehalfOf": {
+            "title": "Onbehalfof",
+            "type": "string"
+          },
+          "patientId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Patientid"
+          },
+          "phone": {
+            "title": "Phone",
+            "type": "string"
+          },
+          "preferredCallTime": {
+            "title": "Preferredcalltime",
+            "type": "string"
+          },
+          "scheduleId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scheduleid"
+          },
+          "scheduleTitle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scheduletitle"
+          },
+          "source": {
+            "enum": [
+              "sitio",
+              "asistencia",
+              "sede"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "recibida",
+              "por_contactar",
+              "contactada",
+              "inscrita",
+              "cerrada"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "statusLabel": {
+            "title": "Statuslabel",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "title": "Updatedat",
+            "type": "string"
+          },
+          "zone": {
+            "title": "Zone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "kindLabel",
+          "source",
+          "name",
+          "phone",
+          "onBehalfOf",
+          "zone",
+          "preferredCallTime",
+          "message",
+          "scheduleId",
+          "scheduleTitle",
+          "status",
+          "statusLabel",
+          "assignedTo",
+          "assignedToName",
+          "patientId",
+          "contactConsent",
+          "createdAt",
+          "updatedAt"
+        ],
+        "title": "InquiryOut",
+        "type": "object"
+      },
+      "InquiryPage": {
+        "description": "Página de la bandeja de solicitudes.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/InquiryOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "description": "Filas que cumplen los filtros (todas las páginas)",
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "InquiryPage",
+        "type": "object"
+      },
+      "InquirySummary": {
+        "description": "Contadores de las pestañas de la bandeja.",
+        "properties": {
+          "cerrada": {
+            "title": "Cerrada",
+            "type": "integer"
+          },
+          "contactada": {
+            "title": "Contactada",
+            "type": "integer"
+          },
+          "inscrita": {
+            "title": "Inscrita",
+            "type": "integer"
+          },
+          "porContactar": {
+            "title": "Porcontactar",
+            "type": "integer"
+          },
+          "recibida": {
+            "title": "Recibida",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "recibida",
+          "porContactar",
+          "contactada",
+          "inscrita",
+          "cerrada",
+          "total"
+        ],
+        "title": "InquirySummary",
+        "type": "object"
+      },
+      "InquiryUpdate": {
+        "properties": {
+          "assignedTo": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assignedto"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "recibida",
+                  "por_contactar",
+                  "contactada",
+                  "inscrita",
+                  "cerrada"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "title": "InquiryUpdate",
+        "type": "object"
+      },
       "InventorySummary": {
         "description": "Contadores del encabezado (diseño pág. 11): materiales activos, no unidades.",
         "properties": {
@@ -2808,6 +3403,120 @@
         "title": "NewcomerOut",
         "type": "object"
       },
+      "NextActivity": {
+        "properties": {
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "endTime": {
+            "format": "time",
+            "title": "Endtime",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "location": {
+            "title": "Location",
+            "type": "string"
+          },
+          "newSignups": {
+            "title": "Newsignups",
+            "type": "integer"
+          },
+          "professionalName": {
+            "title": "Professionalname",
+            "type": "string"
+          },
+          "startTime": {
+            "format": "time",
+            "title": "Starttime",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "usualAttendance": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Usualattendance"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "date",
+          "startTime",
+          "endTime",
+          "location",
+          "professionalName",
+          "usualAttendance",
+          "newSignups"
+        ],
+        "title": "NextActivity",
+        "type": "object"
+      },
+      "NoteIn": {
+        "properties": {
+          "markContacted": {
+            "default": false,
+            "title": "Markcontacted",
+            "type": "boolean"
+          },
+          "note": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "note"
+        ],
+        "title": "NoteIn",
+        "type": "object"
+      },
+      "NoteOut": {
+        "properties": {
+          "authorName": {
+            "title": "Authorname",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "authorName",
+          "note",
+          "createdAt"
+        ],
+        "title": "NoteOut",
+        "type": "object"
+      },
       "PasswordResetOut": {
         "properties": {
           "message": {
@@ -2885,6 +3594,38 @@
           "uploadedAt"
         ],
         "title": "PatientDocumentOut",
+        "type": "object"
+      },
+      "PatientDraftOut": {
+        "description": "Datos para precargar la ficha nueva al «Inscribir como afiliado».",
+        "properties": {
+          "contacts": {
+            "items": {
+              "$ref": "#/components/schemas/ContactIn"
+            },
+            "title": "Contacts",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "phone": {
+            "title": "Phone",
+            "type": "string"
+          },
+          "zone": {
+            "title": "Zone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "phone",
+          "zone",
+          "contacts"
+        ],
+        "title": "PatientDraftOut",
         "type": "object"
       },
       "PatientIn": {
@@ -3358,6 +4099,29 @@
         "title": "PatientUpdate",
         "type": "object"
       },
+      "PatientsOverview": {
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "integer"
+          },
+          "joinedThisMonth": {
+            "title": "Joinedthismonth",
+            "type": "integer"
+          },
+          "withoutConsent": {
+            "title": "Withoutconsent",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "active",
+          "joinedThisMonth",
+          "withoutConsent"
+        ],
+        "title": "PatientsOverview",
+        "type": "object"
+      },
       "PermissionOut": {
         "properties": {
           "description": {
@@ -3623,6 +4387,86 @@
           "milestones"
         ],
         "title": "PublicGoalOut",
+        "type": "object"
+      },
+      "PublicInquiryIn": {
+        "description": "«No tienes que saber por dónde empezar» y «Quiero participar» (diseño págs. 2 y 17).",
+        "properties": {
+          "contactConsent": {
+            "title": "Contactconsent",
+            "type": "boolean"
+          },
+          "kind": {
+            "enum": [
+              "orientacion",
+              "voluntariado",
+              "especie",
+              "participar",
+              "otro"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "message": {
+            "default": "",
+            "maxLength": 1000,
+            "title": "Message",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 120,
+            "title": "Name",
+            "type": "string"
+          },
+          "onBehalfOf": {
+            "default": "",
+            "maxLength": 120,
+            "title": "Onbehalfof",
+            "type": "string"
+          },
+          "phone": {
+            "maxLength": 12,
+            "title": "Phone",
+            "type": "string"
+          },
+          "preferredCallTime": {
+            "default": "",
+            "maxLength": 60,
+            "title": "Preferredcalltime",
+            "type": "string"
+          },
+          "scheduleId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scheduleid"
+          },
+          "turnstileToken": {
+            "maxLength": 2048,
+            "title": "Turnstiletoken",
+            "type": "string"
+          },
+          "zone": {
+            "default": "",
+            "maxLength": 80,
+            "title": "Zone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "name",
+          "phone",
+          "contactConsent",
+          "turnstileToken"
+        ],
+        "title": "PublicInquiryIn",
         "type": "object"
       },
       "PublicScheduleOut": {
@@ -3969,6 +4813,25 @@
           "permissions"
         ],
         "title": "RolePermissionsUpdate",
+        "type": "object"
+      },
+      "SaturdayAttendance": {
+        "properties": {
+          "came": {
+            "title": "Came",
+            "type": "integer"
+          },
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "date",
+          "came"
+        ],
+        "title": "SaturdayAttendance",
         "type": "object"
       },
       "ScheduleCancel": {
@@ -4761,6 +5624,63 @@
         "title": "TagsIn",
         "type": "object"
       },
+      "ToReview": {
+        "description": "«Para revisar».",
+        "properties": {
+          "damagedItems": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Damageditems"
+          },
+          "donationsToConfirm": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Donationstoconfirm"
+          },
+          "newInquiries": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Newinquiries"
+          },
+          "patientsWithoutConsent": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Patientswithoutconsent"
+          }
+        },
+        "required": [
+          "newInquiries",
+          "donationsToConfirm",
+          "patientsWithoutConsent",
+          "damagedItems"
+        ],
+        "title": "ToReview",
+        "type": "object"
+      },
       "TokenRequest": {
         "properties": {
           "token": {
@@ -4774,6 +5694,65 @@
           "token"
         ],
         "title": "TokenRequest",
+        "type": "object"
+      },
+      "UpcomingActivity": {
+        "properties": {
+          "cancellationNote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancellationnote"
+          },
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "endTime": {
+            "format": "time",
+            "title": "Endtime",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "location": {
+            "title": "Location",
+            "type": "string"
+          },
+          "startTime": {
+            "format": "time",
+            "title": "Starttime",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "date",
+          "startTime",
+          "endTime",
+          "location",
+          "status",
+          "cancellationNote"
+        ],
+        "title": "UpcomingActivity",
         "type": "object"
       },
       "UploadSignatureOut": {
@@ -5988,6 +6967,28 @@
         ]
       }
     },
+    "/api/v1/dashboard/summary": {
+      "get": {
+        "description": "«Para revisar», próxima actividad, asistencia de los últimos 8 sábados y afiliados.",
+        "operationId": "summary_api_v1_dashboard_summary_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Summary",
+        "tags": [
+          "Panel"
+        ]
+      }
+    },
     "/api/v1/donations": {
       "get": {
         "description": "Registro de aportes; busca por donante o comprobante.",
@@ -6498,6 +7499,396 @@
         "summary": "Health Db",
         "tags": [
           "Sistema"
+        ]
+      }
+    },
+    "/api/v1/inquiries": {
+      "get": {
+        "description": "Bandeja, la más reciente primero; busca por nombre o teléfono.",
+        "operationId": "list_inquiries_api_v1_inquiries_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "recibida",
+                    "por_contactar",
+                    "contactada",
+                    "inscrita",
+                    "cerrada"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "orientacion",
+                    "voluntariado",
+                    "especie",
+                    "participar",
+                    "asistencia",
+                    "otro"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InquiryPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Inquiries",
+        "tags": [
+          "Solicitudes"
+        ]
+      }
+    },
+    "/api/v1/inquiries/summary": {
+      "get": {
+        "operationId": "summary_api_v1_inquiries_summary_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InquirySummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Summary",
+        "tags": [
+          "Solicitudes"
+        ]
+      }
+    },
+    "/api/v1/inquiries/{inquiry_id}": {
+      "get": {
+        "description": "Solicitud con su historial de notas.",
+        "operationId": "get_inquiry_api_v1_inquiries__inquiry_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "inquiry_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Inquiry Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InquiryDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Inquiry",
+        "tags": [
+          "Solicitudes"
+        ]
+      },
+      "patch": {
+        "description": "Cambia el estado (Nueva → Por contactar → Contactada, o Cerrada) o la persona asignada.",
+        "operationId": "update_inquiry_api_v1_inquiries__inquiry_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "inquiry_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Inquiry Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InquiryUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InquiryDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Inquiry",
+        "tags": [
+          "Solicitudes"
+        ]
+      }
+    },
+    "/api/v1/inquiries/{inquiry_id}/convert-to-patient": {
+      "post": {
+        "description": "«Inscribir como afiliado»: abre la ficha con nombre y teléfono ya cargados.",
+        "operationId": "convert_to_patient_api_v1_inquiries__inquiry_id__convert_to_patient_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "inquiry_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Inquiry Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InquiryConvert"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Convert To Patient",
+        "tags": [
+          "Solicitudes"
+        ]
+      }
+    },
+    "/api/v1/inquiries/{inquiry_id}/notes": {
+      "post": {
+        "description": "Nota de la llamada; con markContacted=true la marca como contactada.",
+        "operationId": "add_note_api_v1_inquiries__inquiry_id__notes_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "inquiry_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Inquiry Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoteIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InquiryDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Note",
+        "tags": [
+          "Solicitudes"
+        ]
+      }
+    },
+    "/api/v1/inquiries/{inquiry_id}/patient-draft": {
+      "get": {
+        "description": "Datos para precargar la ficha antes de inscribir.",
+        "operationId": "patient_draft_api_v1_inquiries__inquiry_id__patient_draft_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "inquiry_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Inquiry Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientDraftOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Patient Draft",
+        "tags": [
+          "Solicitudes"
         ]
       }
     },
@@ -8697,6 +10088,48 @@
           }
         },
         "summary": "Track Notice",
+        "tags": [
+          "Sitio público"
+        ]
+      }
+    },
+    "/api/v1/public/inquiries": {
+      "post": {
+        "description": "Orientación, voluntariado, donación en especie, «Quiero participar» u otro motivo.",
+        "operationId": "create_public_api_v1_public_inquiries_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicInquiryIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Public",
         "tags": [
           "Sitio público"
         ]

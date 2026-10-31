@@ -10,7 +10,7 @@ from app.modules.auth.models import UserSession
 from app.modules.documents.models import PatientDocument
 from app.modules.donations.models import Donation, DonationGoal, DonationGoalMilestone
 from app.modules.evaluations.models import PatientEvaluation
-from app.modules.inquiries.models import Inquiry
+from app.modules.inquiries.models import Inquiry, InquiryNote
 from app.modules.institutional.models import InstitutionalSection
 from app.modules.inventory.models import InventoryItem, InventoryMovement
 from app.modules.media.models import MediaAlbum, MediaAsset, MediaPatientTag
@@ -25,6 +25,7 @@ __all__ = [
     "DonationGoal",
     "DonationGoalMilestone",
     "Inquiry",
+    "InquiryNote",
     "InstitutionalSection",
     "InventoryItem",
     "InventoryMovement",

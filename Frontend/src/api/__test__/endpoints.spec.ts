@@ -399,6 +399,50 @@ describe('Endpoints', () => {
       [() => api.public.content(), 'GET', '/public/content'],
       [() => api.public.section('historia'), 'GET', '/public/content/historia'],
       [
+        () => api.inquiries.list({ status: 'recibida' }),
+        'GET',
+        '/inquiries?status=recibida',
+      ],
+      [() => api.inquiries.summary(), 'GET', '/inquiries/summary'],
+      [() => api.inquiries.get('q1'), 'GET', '/inquiries/q1'],
+      [
+        () => api.inquiries.update('q1', { status: 'por_contactar' }),
+        'PATCH',
+        '/inquiries/q1',
+      ],
+      [
+        () =>
+          api.inquiries.addNote('q1', {
+            note: 'Vendrá el sábado',
+            markContacted: true,
+          }),
+        'POST',
+        '/inquiries/q1/notes',
+      ],
+      [
+        () => api.inquiries.patientDraft('q1'),
+        'GET',
+        '/inquiries/q1/patient-draft',
+      ],
+      [
+        () => api.inquiries.convertToPatient('q1', { ci: '8899001' }),
+        'POST',
+        '/inquiries/q1/convert-to-patient',
+      ],
+      [() => api.dashboard.summary(), 'GET', '/dashboard/summary'],
+      [
+        () =>
+          api.public.sendInquiry({
+            kind: 'orientacion',
+            name: 'Rosa Mamani',
+            phone: '71548214',
+            contactConsent: true,
+            turnstileToken: 't',
+          }),
+        'POST',
+        '/public/inquiries',
+      ],
+      [
         () => api.public.schedules({ from: '2026-11-01' }),
         'GET',
         '/public/schedules?from=2026-11-01',

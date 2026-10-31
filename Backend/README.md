@@ -120,8 +120,11 @@ Con Docker: `docker compose exec api python -m scripts.seed_demo` (o `make seed`
 | Donaciones | `GET /donations?status=&channel=&search=&from=&to=`, `GET /donations/summary?month=`, `GET/PUT /donations/goal`, `GET /donations/{id}`, `POST /donations` (efectivo o especie recibidos en la sede), `POST /donations/{id}/confirm`, `POST /donations/{id}/cancel` | `donations:manage` |
 | Galería | `GET/POST /media/albums?visibility=`, `GET/PATCH/DELETE /media/albums/{id}`, `POST /media/albums/{id}/upload-signature`, `POST /media/albums/{id}/assets`, `DELETE /media/assets/{id}`, `PUT /media/assets/{id}/tags`, `POST /media/albums/{id}/publish`, `/unpublish` | `media:manage` |
 | Contenido del sitio | `GET /content/sections`, `GET/PUT /content/sections/{clave}`, `POST /content/sections/{clave}/publish`, `PUT /content/social-links` | `content:manage` |
+| Solicitudes | `GET /inquiries?status=&kind=&search=`, `GET /inquiries/summary`, `GET/PATCH /inquiries/{id}`, `POST /inquiries/{id}/notes`, `GET /inquiries/{id}/patient-draft`, `POST /inquiries/{id}/convert-to-patient` | `inquiries:manage`; inscribir exige además `patients:write` |
+| Panel | `GET /dashboard/summary` | Cualquier rol; cada contador aparece solo si el rol ve esa área (si no, `null`) |
 | Sitio público | `GET /public/schedules?from=&to=` | **Sin sesión**: actividades publicadas y canceladas (con su aviso), desde hoy y por 90 días; sin borradores ni datos del equipo |
 | Sitio público: galería y contenido | `GET /public/media/albums`, `GET /public/media/albums/{id}`, `GET /public/content`, `GET /public/content/{clave}` | **Sin sesión**: solo álbumes publicados (sin etiquetas) y secciones publicadas |
+| Sitio público: solicitudes | `POST /public/inquiries` (Turnstile) | **Sin sesión**: orientación, voluntariado, donación en especie, «Quiero participar» (con una actividad publicada y futura) u otro motivo; exige `contactConsent` |
 | Sitio público: donar | `GET /public/donations/goal`, `POST /public/donations/notice` (Turnstile), `GET /public/donations/notice/{id}` | **Sin sesión**. La meta suma solo los aportes confirmados más su ajuste manual |
 | Bitácora | `GET /audit?category=&severity=&actor=&from=&to=&limit=&offset=` | admin |
 
@@ -180,6 +183,10 @@ Los roles se identifican por su **clave fija** (`admin`, `coordination`, `profes
 **Galería.** Los archivos se suben directo del navegador a Cloudinary con una firma de un solo uso (`/upload-signature`, carpeta del álbum y formatos JPG, PNG, WEBP o MP4); después se registran con `/assets`, que verifica que vengan de la cuenta de ASPAR y de la carpeta del álbum. Etiquetar a un afiliado en una foto muestra si tiene el permiso de imagen en su ficha (`imageConsent`). Un álbum se publica solo con `permissionsReviewed: true` y sin advertencias pendientes; cualquier foto o etiqueta nueva en un álbum publicado lo devuelve a revisión.
 
 **Contenido.** Cada sección (`presentacion`, `mision_vision`, `historia`, `como_participar`, `preguntas_frecuentes`, `donaciones`, `redes_contacto`) tiene sus campos de texto plano (sin HTML). «Guardar borrador» no cambia el sitio y «Publicar cambios» copia el borrador. Los enlaces a Facebook, Instagram y TikTok se guardan y publican a la vez, y solo se aceptan sus dominios oficiales.
+
+**Solicitudes.** Llegan del sitio como `recibida` («Nueva»). Pasan a `por_contactar` y `contactada` (con notas de cada llamada; una nota con `markContacted: true` la marca como contactada), se cierran o se reabren. `inscrita` solo se alcanza con `POST /inquiries/{id}/convert-to-patient`, que abre la ficha con el nombre y el teléfono ya cargados: si la persona escribió por otra («por su esposo, Julio»), la ficha es de esa persona y quien escribió queda como su contacto. La ficha nace sin consentimiento y en estado `Pendiente`. La bandeja no guarda diagnósticos ni documentos médicos.
+
+**Panel.** `GET /dashboard/summary` reúne «Para revisar» (solicitudes nuevas, aportes por confirmar, fichas sin consentimiento y materiales dañados), la próxima actividad con cuántas personas suelen venir y las inscripciones de la última semana, las próximas actividades, la asistencia de los últimos 8 sábados y el total de afiliados activos.
 
 **Aprobar cuentas.** Las cuentas creadas con el registro abierto o con Google nacen sin rol. `GET /users?role=pendiente` las lista y `POST /users/{id}/approve` con `{"role": "reception"}` les asigna un rol; la persona debe haber confirmado su correo. Valores iniciales tomados de la tabla «Qué puede ver cada rol» del diseño.
 

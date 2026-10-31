@@ -321,6 +321,26 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/dashboard/summary': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Summary
+     * @description «Para revisar», próxima actividad, asistencia de los últimos 8 sábados y afiliados.
+     */
+    get: operations['summary_api_v1_dashboard_summary_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/donations': {
     parameters: {
       query?: never
@@ -475,6 +495,127 @@ export interface paths {
      * @description Verifica la conexión con PostgreSQL; si falla responde 503.
      */
     get: operations['health_db_api_v1_health_db_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/inquiries': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * List Inquiries
+     * @description Bandeja, la más reciente primero; busca por nombre o teléfono.
+     */
+    get: operations['list_inquiries_api_v1_inquiries_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/inquiries/summary': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Summary */
+    get: operations['summary_api_v1_inquiries_summary_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/inquiries/{inquiry_id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Get Inquiry
+     * @description Solicitud con su historial de notas.
+     */
+    get: operations['get_inquiry_api_v1_inquiries__inquiry_id__get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    /**
+     * Update Inquiry
+     * @description Cambia el estado (Nueva → Por contactar → Contactada, o Cerrada) o la persona asignada.
+     */
+    patch: operations['update_inquiry_api_v1_inquiries__inquiry_id__patch']
+    trace?: never
+  }
+  '/api/v1/inquiries/{inquiry_id}/convert-to-patient': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Convert To Patient
+     * @description «Inscribir como afiliado»: abre la ficha con nombre y teléfono ya cargados.
+     */
+    post: operations['convert_to_patient_api_v1_inquiries__inquiry_id__convert_to_patient_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/inquiries/{inquiry_id}/notes': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Add Note
+     * @description Nota de la llamada; con markContacted=true la marca como contactada.
+     */
+    post: operations['add_note_api_v1_inquiries__inquiry_id__notes_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/inquiries/{inquiry_id}/patient-draft': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Patient Draft
+     * @description Datos para precargar la ficha antes de inscribir.
+     */
+    get: operations['patient_draft_api_v1_inquiries__inquiry_id__patient_draft_get']
     put?: never
     post?: never
     delete?: never
@@ -1069,6 +1210,26 @@ export interface paths {
     get: operations['track_notice_api_v1_public_donations_notice__donation_id__get']
     put?: never
     post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/public/inquiries': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Create Public
+     * @description Orientación, voluntariado, donación en especie, «Quiero participar» u otro motivo.
+     */
+    post: operations['create_public_api_v1_public_inquiries_post']
     delete?: never
     options?: never
     head?: never
@@ -1877,6 +2038,17 @@ export interface components {
       /** Relation */
       relation?: string | null
     }
+    /** DashboardSummary */
+    DashboardSummary: {
+      /** Attendancelastsaturdays */
+      attendanceLastSaturdays:
+        components['schemas']['SaturdayAttendance'][] | null
+      nextActivity: components['schemas']['NextActivity'] | null
+      patients: components['schemas']['PatientsOverview'] | null
+      toReview: components['schemas']['ToReview']
+      /** Upcoming */
+      upcoming: components['schemas']['UpcomingActivity'][] | null
+    }
     /** DonationCancel */
     DonationCancel: {
       /** Reason */
@@ -2232,6 +2404,211 @@ export interface components {
       detail?: components['schemas']['ValidationError'][]
     }
     /**
+     * InquiryConvert
+     * @description Ficha nueva desde la solicitud; lo que no se envía se toma de la solicitud.
+     */
+    InquiryConvert: {
+      /**
+       * Address
+       * @default
+       */
+      address?: string
+      /** Birthdate */
+      birthDate?: string | null
+      /** Ci */
+      ci: string
+      /** Contacts */
+      contacts?: components['schemas']['ContactIn'][]
+      /** Name */
+      name?: string | null
+      /** Phone */
+      phone?: string | null
+      /** Zone */
+      zone?: string | null
+    }
+    /** InquiryDetailOut */
+    InquiryDetailOut: {
+      /** Assignedto */
+      assignedTo: string | null
+      /** Assignedtoname */
+      assignedToName: string | null
+      /** Contactconsent */
+      contactConsent: boolean
+      /**
+       * Createdat
+       * Format: date-time
+       */
+      createdAt: string
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string
+      /**
+       * Kind
+       * @enum {string}
+       */
+      kind:
+        | 'orientacion'
+        | 'voluntariado'
+        | 'especie'
+        | 'participar'
+        | 'asistencia'
+        | 'otro'
+      /** Kindlabel */
+      kindLabel: string
+      /** Message */
+      message: string
+      /** Name */
+      name: string
+      /** Notes */
+      notes: components['schemas']['NoteOut'][]
+      /** Onbehalfof */
+      onBehalfOf: string
+      /** Patientid */
+      patientId: string | null
+      /** Phone */
+      phone: string
+      /** Preferredcalltime */
+      preferredCallTime: string
+      /** Scheduleid */
+      scheduleId: string | null
+      /** Scheduletitle */
+      scheduleTitle: string | null
+      /**
+       * Source
+       * @enum {string}
+       */
+      source: 'sitio' | 'asistencia' | 'sede'
+      /**
+       * Status
+       * @enum {string}
+       */
+      status:
+        'recibida' | 'por_contactar' | 'contactada' | 'inscrita' | 'cerrada'
+      /** Statuslabel */
+      statusLabel: string
+      /**
+       * Updatedat
+       * Format: date-time
+       */
+      updatedAt: string
+      /** Zone */
+      zone: string
+    }
+    /** InquiryOut */
+    InquiryOut: {
+      /** Assignedto */
+      assignedTo: string | null
+      /** Assignedtoname */
+      assignedToName: string | null
+      /** Contactconsent */
+      contactConsent: boolean
+      /**
+       * Createdat
+       * Format: date-time
+       */
+      createdAt: string
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string
+      /**
+       * Kind
+       * @enum {string}
+       */
+      kind:
+        | 'orientacion'
+        | 'voluntariado'
+        | 'especie'
+        | 'participar'
+        | 'asistencia'
+        | 'otro'
+      /** Kindlabel */
+      kindLabel: string
+      /** Message */
+      message: string
+      /** Name */
+      name: string
+      /** Onbehalfof */
+      onBehalfOf: string
+      /** Patientid */
+      patientId: string | null
+      /** Phone */
+      phone: string
+      /** Preferredcalltime */
+      preferredCallTime: string
+      /** Scheduleid */
+      scheduleId: string | null
+      /** Scheduletitle */
+      scheduleTitle: string | null
+      /**
+       * Source
+       * @enum {string}
+       */
+      source: 'sitio' | 'asistencia' | 'sede'
+      /**
+       * Status
+       * @enum {string}
+       */
+      status:
+        'recibida' | 'por_contactar' | 'contactada' | 'inscrita' | 'cerrada'
+      /** Statuslabel */
+      statusLabel: string
+      /**
+       * Updatedat
+       * Format: date-time
+       */
+      updatedAt: string
+      /** Zone */
+      zone: string
+    }
+    /**
+     * InquiryPage
+     * @description Página de la bandeja de solicitudes.
+     */
+    InquiryPage: {
+      /** Items */
+      items: components['schemas']['InquiryOut'][]
+      /** Limit */
+      limit: number
+      /** Offset */
+      offset: number
+      /**
+       * Total
+       * @description Filas que cumplen los filtros (todas las páginas)
+       */
+      total: number
+    }
+    /**
+     * InquirySummary
+     * @description Contadores de las pestañas de la bandeja.
+     */
+    InquirySummary: {
+      /** Cerrada */
+      cerrada: number
+      /** Contactada */
+      contactada: number
+      /** Inscrita */
+      inscrita: number
+      /** Porcontactar */
+      porContactar: number
+      /** Recibida */
+      recibida: number
+      /** Total */
+      total: number
+    }
+    /** InquiryUpdate */
+    InquiryUpdate: {
+      /** Assignedto */
+      assignedTo?: string | null
+      /** Status */
+      status?:
+        | ('recibida' | 'por_contactar' | 'contactada' | 'inscrita' | 'cerrada')
+        | null
+    }
+    /**
      * InventorySummary
      * @description Contadores del encabezado (diseño pág. 11): materiales activos, no unidades.
      */
@@ -2552,6 +2929,66 @@ export interface components {
       /** Message */
       message: string
     }
+    /** NextActivity */
+    NextActivity: {
+      /**
+       * Date
+       * Format: date
+       */
+      date: string
+      /**
+       * Endtime
+       * Format: time
+       */
+      endTime: string
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string
+      /** Location */
+      location: string
+      /** Newsignups */
+      newSignups: number
+      /** Professionalname */
+      professionalName: string
+      /**
+       * Starttime
+       * Format: time
+       */
+      startTime: string
+      /** Title */
+      title: string
+      /** Usualattendance */
+      usualAttendance: number | null
+    }
+    /** NoteIn */
+    NoteIn: {
+      /**
+       * Markcontacted
+       * @default false
+       */
+      markContacted?: boolean
+      /** Note */
+      note: string
+    }
+    /** NoteOut */
+    NoteOut: {
+      /** Authorname */
+      authorName: string
+      /**
+       * Createdat
+       * Format: date-time
+       */
+      createdAt: string
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string
+      /** Note */
+      note: string
+    }
     /** PasswordResetOut */
     PasswordResetOut: {
       /** Message */
@@ -2589,6 +3026,20 @@ export interface components {
        * Format: date-time
        */
       uploadedAt: string
+    }
+    /**
+     * PatientDraftOut
+     * @description Datos para precargar la ficha nueva al «Inscribir como afiliado».
+     */
+    PatientDraftOut: {
+      /** Contacts */
+      contacts: components['schemas']['ContactIn'][]
+      /** Name */
+      name: string
+      /** Phone */
+      phone: string
+      /** Zone */
+      zone: string
     }
     /**
      * PatientIn
@@ -2764,6 +3215,15 @@ export interface components {
       /** Zone */
       zone?: string | null
     }
+    /** PatientsOverview */
+    PatientsOverview: {
+      /** Active */
+      active: number
+      /** Joinedthismonth */
+      joinedThisMonth: number
+      /** Withoutconsent */
+      withoutConsent: number
+    }
     /** PermissionOut */
     PermissionOut: {
       /** Description */
@@ -2879,6 +3339,47 @@ export interface components {
       targetBs: number
       /** Title */
       title: string
+    }
+    /**
+     * PublicInquiryIn
+     * @description «No tienes que saber por dónde empezar» y «Quiero participar» (diseño págs. 2 y 17).
+     */
+    PublicInquiryIn: {
+      /** Contactconsent */
+      contactConsent: boolean
+      /**
+       * Kind
+       * @enum {string}
+       */
+      kind: 'orientacion' | 'voluntariado' | 'especie' | 'participar' | 'otro'
+      /**
+       * Message
+       * @default
+       */
+      message?: string
+      /** Name */
+      name: string
+      /**
+       * Onbehalfof
+       * @default
+       */
+      onBehalfOf?: string
+      /** Phone */
+      phone: string
+      /**
+       * Preferredcalltime
+       * @default
+       */
+      preferredCallTime?: string
+      /** Scheduleid */
+      scheduleId?: string | null
+      /** Turnstiletoken */
+      turnstileToken: string
+      /**
+       * Zone
+       * @default
+       */
+      zone?: string
     }
     /**
      * PublicScheduleOut
@@ -3043,6 +3544,16 @@ export interface components {
         | 'roles:manage'
         | 'audit:read'
       )[]
+    }
+    /** SaturdayAttendance */
+    SaturdayAttendance: {
+      /** Came */
+      came: number
+      /**
+       * Date
+       * Format: date
+       */
+      date: string
     }
     /** ScheduleCancel */
     ScheduleCancel: {
@@ -3371,10 +3882,55 @@ export interface components {
       /** Patientids */
       patientIds: string[]
     }
+    /**
+     * ToReview
+     * @description «Para revisar».
+     */
+    ToReview: {
+      /** Damageditems */
+      damagedItems: number | null
+      /** Donationstoconfirm */
+      donationsToConfirm: number | null
+      /** Newinquiries */
+      newInquiries: number | null
+      /** Patientswithoutconsent */
+      patientsWithoutConsent: number | null
+    }
     /** TokenRequest */
     TokenRequest: {
       /** Token */
       token: string
+    }
+    /** UpcomingActivity */
+    UpcomingActivity: {
+      /** Cancellationnote */
+      cancellationNote: string | null
+      /**
+       * Date
+       * Format: date
+       */
+      date: string
+      /**
+       * Endtime
+       * Format: time
+       */
+      endTime: string
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string
+      /** Location */
+      location: string
+      /**
+       * Starttime
+       * Format: time
+       */
+      startTime: string
+      /** Status */
+      status: string
+      /** Title */
+      title: string
     }
     /**
      * UploadSignatureOut
@@ -4079,6 +4635,26 @@ export interface operations {
       }
     }
   }
+  summary_api_v1_dashboard_summary_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['DashboardSummary']
+        }
+      }
+    }
+  }
   list_donations_api_v1_donations_get: {
     parameters: {
       query?: {
@@ -4374,6 +4950,245 @@ export interface operations {
           'application/json': {
             [key: string]: unknown
           }
+        }
+      }
+    }
+  }
+  list_inquiries_api_v1_inquiries_get: {
+    parameters: {
+      query?: {
+        status?:
+          | (
+              | 'recibida'
+              | 'por_contactar'
+              | 'contactada'
+              | 'inscrita'
+              | 'cerrada'
+            )
+          | null
+        kind?:
+          | (
+              | 'orientacion'
+              | 'voluntariado'
+              | 'especie'
+              | 'participar'
+              | 'asistencia'
+              | 'otro'
+            )
+          | null
+        search?: string | null
+        limit?: number
+        offset?: number
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['InquiryPage']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  summary_api_v1_inquiries_summary_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['InquirySummary']
+        }
+      }
+    }
+  }
+  get_inquiry_api_v1_inquiries__inquiry_id__get: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        inquiry_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['InquiryDetailOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  update_inquiry_api_v1_inquiries__inquiry_id__patch: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        inquiry_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['InquiryUpdate']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['InquiryDetailOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  convert_to_patient_api_v1_inquiries__inquiry_id__convert_to_patient_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        inquiry_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['InquiryConvert']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['PatientOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  add_note_api_v1_inquiries__inquiry_id__notes_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        inquiry_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['NoteIn']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['InquiryDetailOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  patient_draft_api_v1_inquiries__inquiry_id__patient_draft_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        inquiry_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['PatientDraftOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
         }
       }
     }
@@ -5751,6 +6566,39 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['DonationTrackingOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  create_public_api_v1_public_inquiries_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['PublicInquiryIn']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      202: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['MessageResponse']
         }
       }
       /** @description Validation Error */

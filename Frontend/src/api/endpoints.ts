@@ -29,6 +29,7 @@ import type {
   ContactIn,
   ContactOut,
   ContactUpdate,
+  DashboardSummary,
   EmailRequest,
   EvaluationArea,
   EvaluationIn,
@@ -37,6 +38,12 @@ import type {
   GoalIn,
   GoalOut,
   GoogleLoginRequest,
+  InquiryConvert,
+  InquiryDetail,
+  InquiryListQuery,
+  InquiryPage,
+  InquirySummary,
+  InquiryUpdate,
   InventorySummary,
   ItemDeactivate,
   ItemIn,
@@ -51,6 +58,8 @@ import type {
   MonthlySummary,
   NewcomerIn,
   NewcomerOut,
+  NoteIn,
+  PatientDraft,
   PasswordResetOut,
   RoleMatrix,
   RoleOut,
@@ -67,6 +76,7 @@ import type {
   PublicAlbum,
   PublicAlbumSummary,
   PublicGoal,
+  PublicInquiryIn,
   PublicSection,
   PublicSchedule,
   PublicScheduleQuery,
@@ -369,6 +379,30 @@ export function createEndpoints(http: HttpClient) {
         http.put<SectionOut>('/content/social-links', { body }),
     },
 
+    inquiries: {
+      list: (query: InquiryListQuery = {}) =>
+        http.get<InquiryPage>('/inquiries', { query }),
+      summary: () => http.get<InquirySummary>('/inquiries/summary'),
+      get: (inquiryId: string) =>
+        http.get<InquiryDetail>(`/inquiries/${id(inquiryId)}`),
+      update: (inquiryId: string, body: InquiryUpdate) =>
+        http.patch<InquiryDetail>(`/inquiries/${id(inquiryId)}`, { body }),
+      addNote: (inquiryId: string, body: NoteIn) =>
+        http.post<InquiryDetail>(`/inquiries/${id(inquiryId)}/notes`, { body }),
+      patientDraft: (inquiryId: string) =>
+        http.get<PatientDraft>(`/inquiries/${id(inquiryId)}/patient-draft`),
+      /** «Inscribir como afiliado»: abre la ficha nueva. */
+      convertToPatient: (inquiryId: string, body: InquiryConvert) =>
+        http.post<PatientOut>(
+          `/inquiries/${id(inquiryId)}/convert-to-patient`,
+          { body },
+        ),
+    },
+
+    dashboard: {
+      summary: () => http.get<DashboardSummary>('/dashboard/summary'),
+    },
+
     public: {
       // Sin sesión: la agenda del sitio
       schedules: (query: PublicScheduleQuery = {}) =>
@@ -398,6 +432,12 @@ export function createEndpoints(http: HttpClient) {
         http.get<PublicSection[]>('/public/content', { anonymous: true }),
       section: (key: string) =>
         http.get<PublicSection>(`/public/content/${id(key)}`, {
+          anonymous: true,
+        }),
+      /** Orientación, voluntariado, especie, «Quiero participar» u otro motivo. */
+      sendInquiry: (body: PublicInquiryIn) =>
+        http.post<MessageResponse>('/public/inquiries', {
+          body,
           anonymous: true,
         }),
       trackDonation: (donationId: string) =>

@@ -119,6 +119,21 @@ export type SectionDraftIn = Schemas['SectionDraftIn']
 export type SocialLinksIn = Schemas['SocialLinksIn']
 export type PublicSection = Schemas['PublicSectionOut']
 
+// Solicitudes
+export type PublicInquiryIn = Schemas['PublicInquiryIn']
+export type InquiryOut = Schemas['InquiryOut']
+export type InquiryDetail = Schemas['InquiryDetailOut']
+export type InquiryPage = Schemas['InquiryPage']
+export type InquiryListQuery = QueryOf<'list_inquiries_api_v1_inquiries_get'>
+export type InquiryUpdate = Schemas['InquiryUpdate']
+export type InquirySummary = Schemas['InquirySummary']
+export type NoteIn = Schemas['NoteIn']
+export type PatientDraft = Schemas['PatientDraftOut']
+export type InquiryConvert = Schemas['InquiryConvert']
+
+// Panel
+export type DashboardSummary = Schemas['DashboardSummary']
+
 // Bitácora
 export type AuditPage = Schemas['AuditPage']
 export type AuditEvent = Schemas['AuditEventOut']
