@@ -278,3 +278,29 @@ def test_actividad_de_la_sesion_se_actualiza_como_mucho_cada_minuto(
     client.get("/api/v1/auth/me", headers=headers)
     db_session.refresh(session)
     assert session.last_activity_at > datetime.now(UTC) - timedelta(seconds=30)
+
+
+@requires_db
+def test_todo_error_devuelve_detail_como_texto(client, auth_headers):
+    """El frontend muestra body.detail tal cual (src/api/errors.ts): nunca una lista ni un objeto.
+
+    OpenAPI documenta el 422 de FastAPI con detail como lista; esta API lo convierte en
+    un texto legible, y esta prueba lo garantiza para cada tipo de error.
+    """
+    missing = "00000000-0000-0000-0000-000000000000"
+    responses = {
+        401: client.post("/api/v1/auth/login", json={"email": "x@y.co", "password": "mala"}),
+        422: client.post("/api/v1/auth/login", json={}),
+        404: client.get(f"/api/v1/patients/{missing}", headers=auth_headers()),
+        403: client.get("/api/v1/users", headers=auth_headers("volunteer")),
+        409: client.put(
+            "/api/v1/roles/admin/permissions", json={"permissions": []}, headers=auth_headers()
+        ),
+    }
+
+    for status, response in responses.items():
+        assert response.status_code == status, response.text
+        detail = response.json()["detail"]
+        assert isinstance(detail, str) and detail.strip(), (status, detail)
+    unauthenticated = client.get("/api/v1/patients", headers={"Cookie": ""})
+    assert isinstance(unauthenticated.json()["detail"], str)

@@ -9,7 +9,6 @@ on:
       - 'feature/**'
     paths:
       - 'Backend/**'
-      - 'Frontend/src/types/**'
       - 'docs/api/openapi.json'
       - '.github/workflows/ci-backend.yml'
   pull_request:
@@ -18,7 +17,6 @@ on:
       - 'Sprint*'
     paths:
       - 'Backend/**'
-      - 'Frontend/src/types/**'
       - 'docs/api/openapi.json'
       - '.github/workflows/ci-backend.yml'
 

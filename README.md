@@ -82,7 +82,7 @@ La guía completa del Backend (variables, migraciones, permisos por rol, pruebas
 | `ruff check .` · `ruff format --check .` · `pytest --cov=app` | `Backend/` | Estilo, pruebas unitarias y de API, cobertura mínima de 70% |
 | `pip-audit -r requirements.txt` · `docker build --target runtime Backend` | `Backend/` | Dependencias sin vulnerabilidades conocidas; la imagen de producción se construye, corre sin root y rechaza una configuración insegura |
 
-- Los mismos pasos corren en GitHub Actions en cada push a `Sprint*`, `SCRUM-*` o `main`. El pipeline del Backend corre cuando cambian `Backend/`, los tipos del Frontend o `docs/api/openapi.json`. Ver [`docs/evidencias/EVIDENCIAS_CI_Y_COBERTURA_SPRINT1.md`](./docs/evidencias/EVIDENCIAS_CI_Y_COBERTURA_SPRINT1.md).
+- Los mismos pasos corren en GitHub Actions en cada push a `Sprint*`, `SCRUM-*` o `main`. El pipeline del Backend corre cuando cambian `Backend/` o `docs/api/openapi.json`; el del Frontend, en cada push (también verifica que `src/api/` coincida con el contrato). Ver [`docs/evidencias/EVIDENCIAS_CI_Y_COBERTURA_SPRINT1.md`](./docs/evidencias/EVIDENCIAS_CI_Y_COBERTURA_SPRINT1.md).
 - **Dependabot** ([`.github/dependabot.yml`](./.github/dependabot.yml)) abre cada lunes Pull Requests con las actualizaciones de npm, pip, la imagen de Python y GitHub Actions. Las de seguridad llegan apenas se publica la alerta. Cada PR pasa por el mismo CI antes de integrarse.
 
 ## Despliegue

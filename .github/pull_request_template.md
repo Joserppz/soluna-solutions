@@ -7,7 +7,7 @@
 - [ ] Implementación / actualización de vistas o componentes en `Frontend/src/`
 - [ ] Endpoints, servicios o repositorios en `Backend/app/` (routers → services → repositories)
 - [ ] Migración SQL nueva y numerada en `Backend/migrations/` (sin editar migraciones aplicadas)
-- [ ] Integración con `Frontend/src/services/api.ts` respetando `Frontend/src/types/aspar.ts`
+- [ ] Endpoint nuevo o cambiado: `docs/api/openapi.json` y `Frontend/src/api/schema.d.ts` regenerados, con su método en `Frontend/src/api/endpoints.ts`
 - [ ] Validaciones de formulario y reglas de protección de datos (`RNF-06`)
 - [ ] Operaciones sensibles registradas en la bitácora (`RF-17`)
 - [ ] Pruebas: `eslint`, `prettier`, `vue-tsc`, Vitest (Frontend) / `ruff`, `pytest` (Backend)
