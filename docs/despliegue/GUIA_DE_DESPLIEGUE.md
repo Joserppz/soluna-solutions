@@ -231,13 +231,26 @@ pg_restore --clean --if-exists --no-owner --no-privileges --dbname "$DESTINO" ba
 
 > Los respaldos tienen datos clínicos (RNF-06). Están cifrados de punta a punta y la clave privada nunca se sube a GitHub ni a la nube.
 
-## 9. Frontend
+## 9. Frontend en Cloudflare Pages
 
-- Build con las variables del entorno y publicación de `Frontend/dist/` en el hosting estático elegido para `aspar.com` o `staging.aspar.com`.
-  - `VITE_API_BASE_URL=https://api.<dominio>/api/v1`
-  - `VITE_DEMO_MODE=false`
-  - `VITE_GOOGLE_CLIENT_ID` y `VITE_TURNSTILE_SITE_KEY`
-- El hosting debe responder `index.html` en cualquier ruta, porque es una SPA con `vue-router`.
+1. Cloudflare → **Workers & Pages → Create → Pages → Connect to Git** y elige este repositorio. Un proyecto por entorno: `aspar-web` (producción) y `aspar-web-staging`.
+2. Configuración del build:
+
+   | Campo | Valor |
+   | :--- | :--- |
+   | Rama de producción | `main` (en staging, `Sprint2` o la rama de integración) |
+   | Directorio raíz | `Frontend` |
+   | Comando de build | `npm ci && npm run build` |
+   | Directorio de salida | `dist` |
+
+3. Variables del entorno (**Settings → Variables and Secrets**). Todas son públicas: Vite las copia en el JavaScript.
+   - `NODE_VERSION=22` (la misma del CI)
+   - `VITE_API_BASE_URL=https://api.<dominio>/api/v1`
+   - `VITE_DEMO_MODE=false`
+   - `VITE_GOOGLE_CLIENT_ID` y `VITE_TURNSTILE_SITE_KEY`
+4. **Custom domains:** `aspar.com` en `aspar-web` y `staging.aspar.com` en `aspar-web-staging`.
+5. No agregues `404.html`: sin él, Pages responde `index.html` en cualquier ruta, como necesita una SPA con `vue-router`.
+6. El dominio del frontend debe estar en `CORS_ORIGINS` y en `FRONTEND_URL` de la API del mismo entorno.
 
 ## 10. Lista de verificación por despliegue
 

@@ -138,7 +138,7 @@ Las observaciones de la revisión se corrigieron y se volvieron a verificar con 
 
 | Bloque | Requisito pendiente | Historia |
 | :--- | :--- | :--- |
-| QR bancario y formulario de donación | Pasarela Libélula real, registro por canal y meta pública (RF-06, RF-14, RF-15) | SCRUM-21, SCRUM-132, SCRUM-133 |
-| Control patrimonial | «Dar de baja», acta PDF y endpoints de inventario (RF-03, RF-09, RF-13) | SCRUM-14, SCRUM-15, SCRUM-131 |
+| QR bancario y formulario de donación | Registro por canal y meta pública (RF-06, RF-14, RF-15). La API ya está (Sprint 2), sin Libélula: el aporte por QR se confirma contra el extracto | SCRUM-21, SCRUM-132, SCRUM-133 |
+| Control patrimonial | Pantallas de baja y movimientos (RF-03, RF-09, RF-13). La API ya está (Sprint 2), con exportación CSV/Excel | SCRUM-14, SCRUM-15, SCRUM-131 |
 
 El wireframe del panel se ampliará con esas pantallas y con la edición del contenido institucional (RF-07).

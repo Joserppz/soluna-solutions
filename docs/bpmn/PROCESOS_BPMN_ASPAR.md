@@ -39,11 +39,11 @@ El proceso **actual** sale del análisis AS-IS de la entrevista con ASPAR (`docs
 | Cualquiera con acceso a las hojas lee los datos clínicos | Login por rol y anamnesis solo con consentimiento y acceso `Activo` | RF-01, RF-11, RNF-06 | ✅ Implementado |
 | No queda registro de quién consultó o cambió una ficha | Bitácora inmutable de operaciones sensibles | RF-17 | ✅ Implementado |
 | El diagnóstico sin certificado no queda documentado | Campo «certificado neurológico» y notas de síntomas en la anamnesis | RF-02 | ✅ Implementado |
-| Asistencia anotada en papel | Marcación de asistencia con bloqueo RNF-06 y resumen mensual | RF-12, RNF-06 | ⚠️ Pantalla lista; datos solo locales (⏳ Sprint 2) |
-| Cronograma avisado solo por WhatsApp | Cronograma público en el portal sin iniciar sesión | RF-04, RF-10 | ⚠️ Visible; la edición por el administrador es del Sprint 2 |
-| Fotos y videos llenan Google Drive / Gmail | Galería en Cloudinary con control de cuota | RF-05, RNF-10 | ⏳ Galería y Cloudinary en el Sprint 2 |
-| Inventario en listas de papel, sin auditoría | Registro, baja, movimientos con historial y reportes para la Alcaldía | RF-03, RF-09, RF-13 | ⚠️ Registro y CSV listos; baja, PDF y Backend en el Sprint 2 |
-| Donaciones sin canal formal ni transparencia | QR oficial, pasarela Libélula, registro por canal y meta pública de recaudación | RF-06, RF-14, RF-15 | ⚠️ QR y registro local; Libélula en el Sprint 2 |
+| Asistencia anotada en papel | Marcación de asistencia con bloqueo RNF-06 y resumen mensual | RF-12, RNF-06 | ✅ API (Sprint 2) · 🎨 pantalla en modo demo hasta la migración visual |
+| Cronograma avisado solo por WhatsApp | Cronograma público en el portal sin iniciar sesión | RF-04, RF-10 | ✅ API con borrador, publicación y cancelación (Sprint 2) · 🎨 pantalla en modo demo |
+| Fotos y videos llenan Google Drive / Gmail | Galería en Cloudinary con control de cuota | RF-05, RNF-10 | ✅ API con Cloudinary (Sprint 2) · ⚠️ falta el monitoreo de cuota |
+| Inventario en listas de papel, sin auditoría | Registro, baja, movimientos con historial y reportes para la Alcaldía | RF-03, RF-09, RF-13 | ✅ API con baja, movimientos y exportación CSV/Excel (Sprint 2) · 🎨 pantalla en modo demo |
+| Donaciones sin canal formal ni transparencia | QR oficial, registro por canal, conciliación con el extracto y meta pública de recaudación | RF-06, RF-14, RF-15 | ✅ API (Sprint 2). Sin pasarela Libélula: el aporte por QR se confirma contra el extracto bancario |
 | Pérdida de información en WhatsApp | Toda la información queda en PostgreSQL, accesible según el rol | RF-02, RF-11 | ✅ Para pacientes y usuarios |
 
 ### 0.4 Cómo editar los diagramas
@@ -111,14 +111,14 @@ Cada tarea y compuerta del modelo BPMN se contrastó con la regla que la hace cu
 | 2.2 Revocación | Revocar o retirar consentimiento se audita | `patient_service.update_patient` | `audit_logs` (CONSENTIMIENTO, WARNING) | `test_retirar_consentimiento_pasa_a_pendiente_y_audita_warning` | ✅ Coincide |
 | 2.3 Anamnesis multidisciplinaria | Solo personal clínico registra evaluaciones | `patient_service._forbid_clinical_fields` (403) | `patients.symptom_notes`, `*_evaluation`, `medications` | `test_recepcion_no_registra_evaluaciones_clinicas` | ⚠️ El BPMN asigna 2.3 a "Profesional / Admin"; el Backend también permite al Coordinador, que es un rol clínico. |
 | 2.3 Ver anamnesis | Solo con consentimiento y acceso `Activo` | `patient_service.can_view_clinical_record` | `patients.consent`, `patients.access_status` | `test_patient_privacy.py` | ✅ Ahora la API no envía la anamnesis si no corresponde |
-| 2.4 Marcación de asistencia | No marcar `Presente` sin consentimiento vigente | — | `attendance` | — | ⏳ Tabla lista; endpoints y regla en el Sprint 2 |
+| 2.4 Marcación de asistencia | No marcar `Presente` sin consentimiento vigente | módulo `attendance` | `attendance` | `test_attendance.py` | ⚠️ La API de asistencia está lista (Sprint 2), pero no bloquea la marcación por consentimiento: la lista no muestra datos clínicos. Confirmar con ASPAR si la regla se mantiene. |
 
 ### Proceso 3: Portal público, galería, donaciones e inventario
 
 | Paso BPMN | Dato disponible | Estado del Backend |
 | :--- | :--- | :--- |
-| 3.1 Consulta pública | `institutional_info`, `schedules.published` | ⏳ Endpoints públicos en el Sprint 2 |
-| 3.2 Donación QR / Libélula | `donations` (monto > 0, método y estado validados por `CHECK`) | ⏳ Endpoints en el Sprint 2 |
-| 3.3 Inventario Alcaldía | `inventory_items` (origen y estado validados por `CHECK`) | ⏳ Endpoints y exportación en el Sprint 2 |
+| 3.1 Consulta pública | `institutional_sections`, `schedules` publicadas, álbumes públicos | ✅ `/public/*` (Sprint 2) |
+| 3.2 Donación QR | `donations`, `donation_goals` | ✅ Aviso público, confirmación con referencia del extracto única (migración 003) y meta (Sprint 2) |
+| 3.3 Inventario Alcaldía | `inventory_items`, `inventory_movements` | ✅ Endpoints y exportación CSV/Excel (Sprint 2) |
 
-**Conclusión:** las reglas de los procesos 1 y 2 están implementadas en el servidor y cubiertas por pruebas automáticas. Hay dos diferencias menores documentadas (⚠️), y el proceso 3 cuenta con el modelo de datos validado para el Sprint 2.
+**Conclusión:** las reglas de los tres procesos están implementadas en el servidor y cubiertas por pruebas automáticas (estado al cerrar el Backend del Sprint 2). Hay dos diferencias menores documentadas (⚠️). La pasarela Libélula del paso 3.2 se reemplazó por la confirmación manual contra el extracto bancario.

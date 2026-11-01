@@ -1,14 +1,14 @@
-# ADR-014: Despliegue y operación — Cloud Run, Secret Manager, staging y respaldos
+# ADR-014: Despliegue y operación — Cloud Run, Cloudflare Pages, Secret Manager, staging y respaldos
 
 - **Estado:** Propuesta (se acepta al hacer el primer despliegue)
 - **Fecha:** 2026-10-31
-- **Requisitos:** RNF-02, RNF-06, RNF-10, RNF-11
+- **Requisitos:** RNF-02, RNF-04, RNF-06, RNF-07, RNF-10, RNF-11
 
 ## Contexto
 
 Hasta el Sprint 2 el sistema solo corre en el entorno local (Docker). Para publicarlo hace falta decidir:
 
-- dónde corre la API;
+- dónde corren la API y el frontend;
 - cómo se guardan los secretos;
 - cómo se aplican las migraciones;
 - cómo se prueba antes de producción;
@@ -21,7 +21,7 @@ Hasta el Sprint 2 el sistema solo corre en el entorno local (Docker). Para publi
 
 | Pieza | Producción | Staging |
 | :--- | :--- | :--- |
-| Frontend (Vue, estático) | `https://aspar.com` | `https://staging.aspar.com` |
+| Frontend (Vue, estático) | Cloudflare Pages `aspar-web` → `https://aspar.com` | Cloudflare Pages `aspar-web-staging` → `https://staging.aspar.com` |
 | API (imagen `runtime` del `Backend/Dockerfile`) | Cloud Run `aspar-api` → `https://api.aspar.com` | Cloud Run `aspar-api-staging` → `https://api.staging.aspar.com` |
 | Base y documentos | Proyecto Supabase `aspar-prod` | Proyecto Supabase `aspar-staging` |
 | Secretos | Secret Manager `aspar-prod-*` | Secret Manager `aspar-staging-*` |
@@ -61,11 +61,17 @@ Cada servicio se configura una vez por entorno. Los pasos están en [`docs/despl
 
 | Qué | Cómo | Frecuencia | Retención |
 | :--- | :--- | :--- | :--- |
-| Base de datos | Respaldos automáticos de Supabase (según el plan) **y** `pg_dump` propio en un Cloud Run Job programado, guardado en un bucket privado de Cloud Storage | Diaria | 30 días (regla de ciclo de vida del bucket) |
-| Documentos privados (bucket de Supabase Storage) | Copia al mismo bucket de respaldos (los respaldos de la base no incluyen los archivos) | Diaria | 30 días |
+| Base de datos | Respaldos automáticos de Supabase (según el plan) **y** `pg_dump` propio del esquema `public` con `scripts/backup_db.py`, ejecutado por el workflow `.github/workflows/backup.yml` con el usuario de solo lectura `aspar_backup` | Diaria (cron listo para activar) | 30 días (artefacto del workflow) |
+| Documentos privados (bucket de Supabase Storage) | En el mismo archivo del respaldo, con un manifiesto SHA-256 por archivo (los respaldos de Supabase no incluyen Storage) | Diaria | 30 días |
 | Prueba de restauración | Restaurar el último respaldo en staging y revisar el recorrido principal | Cada mes | — |
 
-Objetivo: perder como máximo 24 horas de datos (RPO) y volver a operar en menos de 4 horas (RTO). Los respaldos tienen datos clínicos: el bucket es privado, cifrado y solo accesible para la cuenta de servicio del job y la dirección del proyecto.
+Objetivo: perder como máximo 24 horas de datos (RPO) y volver a operar en menos de 4 horas (RTO).
+
+Los respaldos tienen datos clínicos, por eso se cifran **antes** de salir del runner:
+
+- Cada respaldo usa una clave Fernet nueva, envuelta con la **clave pública** RSA-4096 de la asociación (secreto `BACKUP_PUBLIC_KEY`).
+- GitHub solo puede cifrar. La clave privada y su frase quedan fuera de línea, con la dirección del proyecto.
+- El archivo descargado del workflow no se puede leer sin la clave privada; uno alterado no se descifra.
 
 ### CI/CD
 
@@ -80,6 +86,8 @@ Objetivo: perder como máximo 24 horas de datos (RPO) y volver a operar en menos
 - *Una sola API para producción y staging*: un error en staging toca datos reales. Descartada.
 - *Migrar al arrancar la API*: varias instancias migrarían a la vez y la API necesitaría permisos de dueño. Descartada (en Docker local sí se hace, por comodidad).
 - *Solo los respaldos de Supabase*: dependen del plan y no incluyen los archivos de Storage. Descartada como única medida.
+- *Respaldo en un Cloud Run Job y un bucket de Cloud Storage*: suma otra cuenta de servicio, un bucket y su ciclo de vida. Con el cifrado de clave pública, los artefactos de GitHub Actions bastan y el respaldo queda fuera de Google Cloud. Descartada por ahora.
+- *Frontend en Cloud Run o Cloud Storage*: Cloudflare Pages sirve el sitio estático desde su CDN sin costo, con HTTPS, vistas previas por rama y respuesta `index.html` para las rutas de la SPA. Turnstile ya está en Cloudflare.
 
 ## Consecuencias
 
@@ -90,4 +98,4 @@ Objetivo: perder como máximo 24 horas de datos (RPO) y volver a operar en menos
 
 ## Evidencia
 
-`Backend/Dockerfile` (etapa `runtime`), `Backend/scripts/migrate.py`, `Backend/app/core/config.py` (validaciones de producción), `.github/workflows/`, `.github/dependabot.yml`, `docs/despliegue/GUIA_DE_DESPLIEGUE.md`.
+`Backend/Dockerfile` (etapa `runtime`), `Backend/scripts/migrate.py`, `Backend/scripts/backup_db.py` y `Backend/tests/test_backup.py`, `Backend/app/core/config.py` (validaciones de producción), `.github/workflows/` (incluido `backup.yml`), `.github/dependabot.yml`, `docs/despliegue/GUIA_DE_DESPLIEGUE.md`.

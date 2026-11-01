@@ -13,10 +13,10 @@ Cada ADR documenta una decisión técnica: el contexto, la decisión, las altern
 | [ADR-007](./ADR-007-supabase-solo-desde-el-backend.md) | Supabase accesible solo desde el Backend (RLS sin políticas) | Aceptada | RNF-06 |
 | [ADR-008](./ADR-008-modo-local-de-respaldo-en-frontend.md) | Modo local de respaldo en el Frontend, solo si la API no responde | Aceptada (temporal) | RF-01, RF-02 |
 | [ADR-009](./ADR-009-contrato-verificado-por-prueba.md) | Contrato Frontend ↔ Backend verificado por una prueba automática | Reemplazada por ADR-013 | RNF-11 |
-| [ADR-010](./ADR-010-multimedia-en-cloudinary.md) | Galería multimedia en Cloudinary y documentos privados en Supabase Storage | Propuesta | RF-05, RNF-06, RNF-10 |
+| [ADR-010](./ADR-010-multimedia-en-cloudinary.md) | Galería multimedia en Cloudinary y documentos privados en Supabase Storage | Aceptada | RF-05, RNF-06, RNF-10 |
 | [ADR-011](./ADR-011-backend-por-modulos-de-dominio.md) | Backend organizado por módulos de dominio (`app/modules/<dominio>/`) | Aceptada | RNF-11 |
 | [ADR-012](./ADR-012-sesion-en-cookies-y-permisos-en-la-base.md) | Sesión en cookies HttpOnly con CSRF y permisos por rol en la base | Aceptada | RF-01, RF-11, RNF-02, RNF-06 |
 | [ADR-013](./ADR-013-contrato-openapi-y-capa-src-api.md) | Contrato único OpenAPI → TypeScript y capa de datos `src/api/` | Aceptada | RNF-11 |
-| [ADR-014](./ADR-014-despliegue-y-operacion.md) | Despliegue en Cloud Run con Secret Manager, staging separado y respaldos | Propuesta | RNF-02, RNF-06, RNF-10, RNF-11 |
+| [ADR-014](./ADR-014-despliegue-y-operacion.md) | Despliegue: API en Cloud Run, frontend en Cloudflare Pages, Secret Manager, staging separado y respaldos cifrados | Propuesta | RNF-02, RNF-04, RNF-06, RNF-07, RNF-10, RNF-11 |
 
 **Formato:** cada archivo sigue la plantilla *Contexto → Decisión → Alternativas → Consecuencias → Evidencia*. Una decisión nueva o que reemplaza a otra se agrega como un ADR nuevo con el número siguiente; los ADR aceptados no se editan, se marcan como «Reemplazada por ADR-XXX».

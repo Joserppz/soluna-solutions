@@ -1,99 +1,111 @@
-# Matriz de Trazabilidad Completa de Requisitos, Pantallas y Pruebas (SCRUM-136 / SCRUM-183)
+# Matriz de trazabilidad: requisitos, módulos, endpoints y pruebas (SCRUM-136 / SCRUM-181)
 
-Esta matriz alinea los requisitos funcionales y no funcionales (**RF01–RF17** y **RNF01–RNF11**) con las pantallas implementadas en el Frontend Vue 3, los endpoints del Backend FastAPI y los casos de prueba verificados.
+Esta matriz une cada requisito funcional (**RF-01 a RF-17**) y no funcional (**RNF-01 a RNF-11**) con:
 
-> **Versión vigente:** la sección [Trazabilidad integral](#trazabilidad-integral-rfrnf--jira--c4--pruebas-scrum-136--scrum-181) une requisito, historia y subtareas de Jira, contenedor y componente C4, pantalla, endpoint y pruebas. Las tablas siguientes se conservan como registro de cada etapa del sprint. Los requisitos RF-11, RF-17, RNF-06 y RNF-11 se definen en la [adenda del SRS](../srs/SRS_ADENDA_SPRINT1.md).
+- su historia y subtareas de Jira;
+- el módulo del Backend que lo implementa;
+- sus endpoints;
+- las pruebas automáticas que lo verifican.
 
-## Trazabilidad integral: RF/RNF → Jira → C4 → pruebas (SCRUM-136 / SCRUM-181)
+Refleja el estado al **cerrar el Backend del Sprint 2**. Los requisitos RF-11 a RF-17 y RNF-06 a RNF-11 están definidos en la [adenda del SRS](../srs/SRS_ADENDA_SPRINT1.md).
 
-**Columnas Jira:** subtareas de Frontend (F), Backend (B) y verificación (V) de cada historia. **C4:** contenedor del C2 → componente del C3 ([diagramas vigentes](../arquitectura/C4_Y_MODELO_ER_ACTUALIZADO.md)). **E2E:** paso del [recorrido integrado](../evidencias/RECORRIDO_INTEGRADO_LOGIN_PACIENTES.md).
-**Estado:** ✅ implementado y probado · ⚠️ implementado con pendientes · ⏳ planificado para el Sprint 2 · ❔ sin verificar
+| Suite | Pruebas | Cobertura | Dónde corre |
+| :--- | ---: | :--- | :--- |
+| Backend (pytest, PostgreSQL real) | **412** en 31 archivos | 98 % de sentencias (mínimo 70 %) | `.github/workflows/ci-backend.yml` |
+| Frontend (Vitest) | **107** en 12 archivos | 91,75 % de líneas (mínimo 70 %) | `.github/workflows/ci-frontend.yml` |
 
-| Req. | Historia | Subtareas F / B / V | Contenedor → componente C4 | Pantalla | Endpoint `/api/v1` | Pruebas Frontend | Pruebas Backend | E2E | Estado |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **RF-01** | SCRUM-11 | 66 / 26, 27 / 28 | SPA → `LoginView` · API → `routers/auth`, `auth_service`, `core/security` | `LoginView.vue` | `POST /auth/login` | `LoginView.spec.ts` (validaciones, intento fallido, 423, API caída) | `test_auth_login.py`, `test_auth_credentials.py`, `test_security.py` | 1, 7, 8 | ✅ |
-| **RNF-02** | SCRUM-12 | 67 / 29 / 30 | SPA → `App.vue` · API → `core/deps` (JWT + `sessions`) | `App.vue` | `GET /auth/verify`, `POST /auth/refresh`, `POST /auth/logout` | `LoginView.spec.ts`, `App.spec.ts` | `test_sessions.py`, `test_security.py` | 9 | ✅ · `App.spec.ts` cubre contador, renovación y cierre |
-| **RF-02** | SCRUM-13 | 68 / 31, 32 / 69 | SPA → `PatientsView`, `RegisterPatientView` · API → `routers/patients`, `patient_service` | `PatientsView.vue`, `RegisterPatientView.vue` | `GET/POST /patients`, `GET/PATCH/DELETE /patients/{id}` | `PatientsView.spec.ts` (alta, edición), `PantallasRequisitos.spec.ts` | `test_patients_api.py`, `test_patient_model.py` | 2, 3, 4 | ✅ Registrar, editar y consultar desde la pantalla |
-| **RNF-06** | SCRUM-123 | 138 / 137 / 139 | API → `patient_service.can_view_clinical_record`, `document_service`, `adapters/storage` · BD → `CHECK` de consentimiento | `PatientsView.vue`, `AttendanceView.vue` | `GET /patients*`, `/patients/{id}/documents*` | `PatientsView.spec.ts`, `PantallasRequisitos.spec.ts`, `RouterPermisos.spec.ts` | `test_patient_privacy.py`, `test_storage_adapter.py` | 5, 6, 11 | ✅ Campos y acciones según el rol en la pantalla y en la API |
-| **RF-11** | SCRUM-129 | 161 / 160 / 162 | SPA → `UsersView`, guardia `adminOnly` · API → `routers/users`, `user_service`, `require_roles` | `UsersView.vue` | `GET/POST /users`, `PATCH /users/{id}`, `POST /users/{id}/reset-password` | `UsersView.spec.ts`, `RouterPermisos.spec.ts` | `test_users_api.py`, `test_rotar_contrasenas.py` | 10 | ✅ Contraseña temporal visible una vez; restablecimiento |
-| **RF-17** | SCRUM-135 | 179 / 178 / 180 | SPA → `AuditView` · API → `routers/audit`, `audit_service` · BD → trigger de inmutabilidad | `AuditView.vue` | `GET /audit` | `AuditView.spec.ts`, `RouterPermisos.spec.ts` | `test_audit.py` | — | ✅ |
-| **RNF-11** | SCRUM-128 | 153 / 152 / 154 | CI → `ci-frontend.yml`, `ci-backend.yml` | — | — | ESLint, Prettier, `vue-tsc` | Ruff, `test_migrations.py`, `test_openapi.py`, `test_contract_frontend.py` | — | ✅ |
-| **RNF-05** | SCRUM-61 | 96 / 95 / 97 | CI → cobertura con mínimo de 70% | — | — | Vitest: 89,26% de líneas | pytest: 96,94% | — | ✅ |
-| **RF-03 / RF-09** | SCRUM-136 | 183 / — / — | SPA → `InventoryView` · BD → `inventory_items` | `InventoryView.vue` | ⏳ | `PantallasRequisitos.spec.ts` (registro, filtro, CSV) | `test_migrations.py` (esquema) | — | ⏳ Sin «dar de baja» ni PDF; datos solo locales |
-| **RF-04 / RF-10** | SCRUM-16, SCRUM-19 | 74, 43 / 37, 76 / 38, 44 | SPA → `ScheduleManagementView`, `ScheduleView` · BD → `schedules` | `ScheduleManagementView.vue` (`/cronograma/gestion`), `ScheduleView.vue` (`/`) | ⏳ `/schedules` (SCRUM-37) | `ScheduleManagementView.spec.ts`, `RouterPermisos.spec.ts`, `PantallasRequisitos.spec.ts` | `test_migrations.py` | — | ⚠️ Pantalla de gestión lista (SCRUM-74); datos locales hasta la API de cronogramas |
-| **RF-05** | SCRUM-136 | 183 / — / — | SPA → `ScheduleView` · Cloudinary (RNF-10) · BD → `media_assets` | `ScheduleView.vue` | ⏳ | — | `test_storage_adapter.py` | — | ⏳ Cloudinary en sprints siguientes · carga solo para el personal con sesión |
-| **RF-06** | SCRUM-136 | 183 / — / — | SPA → `ScheduleView` · BD → `donations` | `ScheduleView.vue` | ⏳ | `PantallasRequisitos.spec.ts` (donación QR) | `test_migrations.py` | — | ⏳ Libélula simulada |
-| **RF-07 / RF-08** | SCRUM-136 | 183 / — / — | SPA → `ScheduleView` · BD → `institutional_info` | `ScheduleView.vue` | ⏳ | `PantallasRequisitos.spec.ts` (redes y requisitos) | `test_migrations.py` | — | ⏳ Contenido sin edición |
-| **RF-12** Asistencia | SCRUM-130 | 164 / 163 / 165 | SPA → `AttendanceView` · BD → `attendance` | `AttendanceView.vue` | ⏳ | `PantallasRequisitos.spec.ts` (bloqueo RNF-06) | `test_migrations.py` | — | ⏳ Pantalla lista; API y resumen mensual en sprints siguientes |
-| **RF-13** Movimientos de inventario | SCRUM-131 | 167 / 166 / 168 | SPA → `InventoryView` · BD → `inventory_items` | — | ⏳ | — | — | — | ⏳ Sin iniciar |
-| **RF-14** Donaciones | SCRUM-132 | 170 / 169 / 171 | SPA → `ScheduleView` · BD → `donations` | `ScheduleView.vue` (registro público) | ⏳ | `PantallasRequisitos.spec.ts` (donación QR) | `test_migrations.py` | — | ⏳ Registro solo local; falta panel y resumen por canal |
-| **RF-15** Meta de recaudación | SCRUM-133 | 173 / 172 / 174 | SPA → `ScheduleView` (contador) · BD → `donations` | `ScheduleView.vue` | ⏳ | — | — | — | ⏳ Contador local; falta la meta y el cálculo sobre donaciones confirmadas |
-| **RF-16** Contacto y preinscripciones | SCRUM-134 | 176 / 175 / 177 | — | — | ⏳ | — | — | — | ⏳ Sin iniciar |
-| **RNF-07 a RNF-10** | SCRUM-124 a SCRUM-127 | ver adenda §1.1 | Infraestructura y Cloudinary | — | — | — | — | — | ⏳ Planificados |
-| **RNF-01, RNF-03, RNF-04** | — | — | — | — | — | — | — | — | ❔ Sin verificar (ver adenda §3) |
+**Columnas:**
 
-### Tareas técnicas del Sprint 1 y su evidencia
+- **Subtareas F / B / V:** subtareas de Frontend, Backend y verificación de cada historia en Jira (`SCRUM-n`).
+- **Módulo:** carpeta `Backend/app/modules/<módulo>/` ([diagrama C3](../arquitectura/C4_Y_MODELO_ER_ACTUALIZADO.md#4-nivel-c3--componentes-de-la-api)).
+- **Pruebas:** archivo y número de pruebas. Las del Backend están en `Backend/tests/`; las del Frontend, en `src/views/__test__/` y `src/api/__test__/`.
 
-| Tarea | Subtareas F / B / V | Evidencia |
+**Estado:**
+
+- **API:** ✅ implementado y probado · ⚠️ implementado con pendientes · ❔ sin verificar.
+- **Pantalla:** ✅ conectada a la API · 🎨 existe en modo demo y falta la migración visual a `src/api/` · ⏳ sin pantalla aún.
+
+## 1. Requisitos funcionales
+
+| Req. | Historia | Subtareas F / B / V | Módulo | Endpoints `/api/v1` | Pruebas Backend | Pruebas Frontend | API | Pantalla |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :---: | :---: |
+| **RF-01** Acceso del personal | SCRUM-11 | 66 / 26, 27 / 28 | `auth` | `POST /auth/login`, `/auth/google`, `/auth/register`, `/auth/verify-email`, `/auth/resend-verification`, `/auth/forgot-password`, `/auth/reset-password`, `/auth/change-password` | `test_auth_login.py` (9), `test_auth_credentials.py` (10), `test_accounts.py` (21), `test_security.py` (6), `test_adapters.py` (9) | `LoginView.spec.ts` (13), `api/session.spec.ts` (10) | ✅ | 🎨 |
+| **RF-02** Fichas y anamnesis | SCRUM-13 | 68 / 31, 32 / 69 | `patients`, `evaluations`, `documents` | `GET/POST /patients`, `GET/PATCH /patients/{id}`, `…/deactivate`, `…/reactivate`, `…/contacts*`, `…/evaluations*`, `…/documents*` | `test_patients_api.py` (15), `test_patient_model.py` (12), `test_contacts_evaluations.py` (17) | `PatientsView.spec.ts` (17), `PantallasRequisitos.spec.ts` (14) | ✅ | 🎨 |
+| **RF-03 / RF-09 / RF-13** Inventario, reporte y movimientos | SCRUM-136, SCRUM-131 | 183 · 167 / 166 / 168 | `inventory` | `GET/POST /inventory`, `GET/PATCH /inventory/{id}`, `…/deactivate`, `GET/POST …/movements`, `GET /inventory/summary`, `GET /inventory/export` (CSV/Excel) | `test_inventory.py` (15) | `PantallasRequisitos.spec.ts` | ✅ | 🎨 |
+| **RF-04 / RF-10** Actividades y agenda pública | SCRUM-16, SCRUM-19 | 74, 43 / 37, 76 / 38, 44 | `schedules` | `GET/POST /schedules`, `GET/PATCH/DELETE /schedules/{id}`, `…/publish`, `…/unpublish`, `…/cancel`, `GET /public/schedules` | `test_schedules.py` (17) | `ScheduleManagementView.spec.ts` (6), `RouterPermisos.spec.ts` (6) | ✅ | 🎨 |
+| **RF-05** Galería multimedia | SCRUM-136 | 183 / — / — | `media` | `/media/albums*` (9), `DELETE /media/assets/{id}`, `PUT …/tags`, `GET /public/media/albums*` | `test_media.py` (31) | — | ✅ | 🎨 |
+| **RF-06 / RF-14** Donaciones por canal y resumen mensual | SCRUM-136, SCRUM-132 | 183 · 170 / 169 / 171 | `donations` | `GET/POST /donations`, `GET /donations/{id}`, `…/confirm`, `…/cancel`, `GET /donations/summary?format=json\|csv\|xlsx`, `POST /public/donations/notice` | `test_donations.py` (29) | `PantallasRequisitos.spec.ts` | ✅ | 🎨 |
+| **RF-15** Meta pública de recaudación | SCRUM-133 | 173 / 172 / 174 | `donations` | `GET/PUT /donations/goal`, `GET /public/donations/goal` | `test_donations.py` (incluido arriba) | — | ✅ | 🎨 |
+| **RF-07 / RF-08** Contenido institucional y redes | SCRUM-136 | 183 / — / — | `institutional` | `GET /content/sections*`, `PUT …/{key}`, `POST …/{key}/publish`, `PUT /content/social-links`, `GET /public/content*` | `test_content.py` (15) | `PantallasRequisitos.spec.ts` | ✅ | 🎨 |
+| **RF-11** Equipo, roles y permisos | SCRUM-129 | 161 / 160 / 162 | `users`, `roles` | `GET/POST /users`, `PATCH /users/{id}`, `…/approve`, `…/reset-password`, `GET /roles`, `PUT /roles/{key}/permissions` | `test_users_api.py` (11), `test_roles.py` (14), `test_permissions.py` (11) | `UsersView.spec.ts` (8), `RouterPermisos.spec.ts` | ✅ | 🎨 |
+| **RF-12** Asistencia | SCRUM-130 | 164 / 163 / 165 | `attendance` | `GET /schedules/{id}/attendance`, `PUT …/{patientId}`, `…/mark-all-present`, `…/newcomers`, `…/close`, `…/reopen`, `GET /attendance/monthly` | `test_attendance.py` (25) | `PantallasRequisitos.spec.ts` (bloqueo RNF-06) | ✅ | 🎨 |
+| **RF-16** Contacto y preinscripciones | SCRUM-134 | 176 / 175 / 177 | `inquiries` | `POST /public/inquiries` (Turnstile y límite por IP), `GET /inquiries*`, `PATCH /inquiries/{id}`, `…/notes`, `…/patient-draft`, `…/convert-to-patient` | `test_inquiries.py` (21) | — | ✅ | ⏳ |
+| **RF-17** Bitácora de auditoría | SCRUM-135 | 179 / 178 / 180 | `audit` | `GET /audit` | `test_audit.py` (8) | `AuditView.spec.ts` (3), `RouterPermisos.spec.ts` | ✅ | 🎨 |
+| Panel de inicio | — | — | `dashboard` | `GET /dashboard/summary` | `test_dashboard.py` (5) | — | ✅ | ⏳ |
+
+**Qué cubre cada archivo de pruebas del Backend** (resumen):
+
+- `test_accounts.py`: registro, verificación, recuperación, contraseña temporal y Google (vincular, bloquear, crear cuenta pendiente).
+- `test_inventory.py`: stock nunca negativo, movimientos, baja con motivo y exportación protegida contra fórmulas.
+- `test_schedules.py`: borrador, publicación y cancelación con aviso, horarios y cupos.
+- `test_attendance.py`: lista, marcado, cierre y reapertura, recién llegados y resumen mensual.
+- `test_media.py`: firma de subida, publicación solo con revisión y sin personas etiquetadas sin consentimiento de imagen, y borrado en Cloudinary solo después del commit.
+- `test_donations.py`: conciliación con el extracto, referencia bancaria única (migración 003), meta sin datos de donantes y exportación CSV/Excel.
+- `test_content.py`: borrador y publicación de secciones.
+- `test_inquiries.py`: formulario público, seguimiento e inscripción como afiliado.
+
+## 2. Requisitos no funcionales
+
+| Req. | Historia | Subtareas F / B / V | Dónde se cumple | Pruebas y verificación | Estado |
+| :--- | :--- | :--- | :--- | :--- | :---: |
+| **RNF-01** Rendimiento (< 3 s con 50 usuarios) | — | — | Paginación en todos los listados, índices `pg_trgm` | Falta una prueba de carga en staging | ❔ |
+| **RNF-02** Contraseñas y sesiones | SCRUM-12 | 67 / 29 / 30 | `auth`, `core/security`, tabla `sessions`, cookies HttpOnly + CSRF | `test_sessions.py` (9), `test_hardening.py` (11), `test_security.py`, `test_auth_login.py` · `api/client.spec.ts` (14), `App.spec.ts` | ✅ |
+| **RNF-03** Accesibilidad WCAG 2.1 AA | — | — | Pantallas del Frontend | Revisión pendiente con la migración visual | ❔ |
+| **RNF-04** Disponibilidad 99,5 % | — | — | Cloud Run + Supabase (ADR-014), `GET /health` y `/health/db` | `test_health.py` (2) · la medición empieza con el primer despliegue | ❔ |
+| **RNF-05** Cobertura ≥ 70 % | SCRUM-61 | 96 / 95 / 97 | CI con `--cov-fail-under=70` y umbral de Vitest | Backend 98 %, Frontend 91,75 % de líneas | ✅ |
+| **RNF-06** Privacidad clínica | SCRUM-123 | 138 / 137 / 139 | `patients.can_view_clinical_record` (permiso + consentimiento + acceso Activo), `PatientSummaryOut` sin anamnesis, `evaluations`, `documents`, bucket privado, `CHECK` en la base | `test_patient_privacy.py` (20), `test_contacts_evaluations.py`, `test_storage_adapter.py` (3), `test_media.py` (consentimiento de imagen) · `PatientsView.spec.ts`, `RouterPermisos.spec.ts` | ✅ |
+| **RNF-07** Respaldo y recuperación | SCRUM-124 | ver adenda §1.1 | `scripts/backup_db.py` (pg_dump + documentos, cifrado RSA-4096 + Fernet) y `.github/workflows/backup.yml` | `test_backup.py` (9): cifrado de ida y vuelta, clave equivocada, archivo alterado, la contraseña no queda en los argumentos, `pg_restore --list` real. Restauración completa probada en una base nueva | ⚠️ El workflow corre a mano; el cron diario se activa al cargar los secretos de producción. Falta medir RPO/RTO en staging |
+| **RNF-08** Navegadores y pantallas | SCRUM-125 | ver adenda §1.1 | Frontend | Pendiente con la migración visual | ❔ |
+| **RNF-09** Usabilidad y manual | SCRUM-126 | ver adenda §1.1 | — | Prueba con ASPAR y manual pendientes | ❔ |
+| **RNF-10** Galería en Cloudinary | SCRUM-127 | ver adenda §1.1 | `media` + `adapters/cloudinary.py`: subida firmada con formatos permitidos y carpeta por álbum; al borrar, el archivo se elimina también en Cloudinary | `test_media.py` (31) | ⚠️ Falta el procedimiento de monitoreo de cuota y contingencia |
+| **RNF-11** Mantenibilidad | SCRUM-128 | 153 / 152 / 154 | Módulos por dominio (ADR-011), migraciones versionadas, contrato OpenAPI → TypeScript (ADR-013), Ruff, ESLint, Prettier, Dependabot, `pip-audit`, `npm audit` | `test_migrations.py` (11), `test_openapi.py` (2), `test_scripts.py` (9), `test_core.py` (26), `test_pagination.py` (9) · `api/endpoints.spec.ts` (4, todas las operaciones de `openapi.json` cubiertas), `api/index.spec.ts` (1), `npm run api:types:check` | ✅ |
+
+**Conteo completo del Backend (412):** media 31 · donations 29 · core 26 · attendance 25 · inquiries 21 · accounts 21 · patient_privacy 20 · schedules 17 · contacts_evaluations 17 · patients_api 15 · inventory 15 · content 15 · roles 14 · patient_model 12 · users_api 11 · permissions 11 · migrations 11 · hardening 11 · auth_credentials 10 · sessions 9 · scripts 9 · pagination 9 · backup 9 · auth_login 9 · adapters 9 · audit 8 · security 6 · dashboard 5 · storage_adapter 3 · openapi 2 · health 2.
+
+**Conteo completo del Frontend (107):** PatientsView 17 · PantallasRequisitos 14 · api/client 14 · LoginView 13 · App 10 · api/session 10 · UsersView 8 · ScheduleManagementView 6 · RouterPermisos 6 · api/endpoints 4 · AuditView 3 · api/index 1.
+
+## 3. Tareas técnicas y su evidencia
+
+| Tarea | Subtareas F / B / V | Evidencia vigente |
 | :--- | :--- | :--- |
-| SCRUM-57 Aceptación y evidencias | 85 / 84 / 83 | `docs/evidencias/`, `docs/calidad/DEFINICION_DE_HECHO_Y_ESTADO_SPRINT1.md` |
-| SCRUM-58 Integración login y pacientes | 87 / 86 / 88 | `docs/api/CONTRATO_API_LOGIN_PACIENTES.md`, `docs/evidencias/RECORRIDO_INTEGRADO_LOGIN_PACIENTES.md` |
+| SCRUM-57 Aceptación y evidencias | 85 / 84 / 83 | `docs/evidencias/` (Sprint 1), esta matriz y el CI del Sprint 2 |
+| SCRUM-58 Integración Frontend–Backend | 87 / 86 / 88 | [`CONTRATO_API_LOGIN_PACIENTES.md`](../api/CONTRATO_API_LOGIN_PACIENTES.md), `Frontend/src/api/`, `openapi.json` |
 | SCRUM-59 README y `.env.example` | 91 / 90 / 89 | `README.md`, `Frontend/README.md`, `Backend/README.md`, `*/.env.example` |
-| SCRUM-61 CI/CD | 96 / 95 / 97 | `.github/workflows/`, `docs/evidencias/EVIDENCIAS_CI_Y_COBERTURA_SPRINT1.md` |
-| SCRUM-64 C4, datos y migraciones | 105 / 104 / 106 | `docs/arquitectura/C4_Y_MODELO_ER_ACTUALIZADO.md`, `docs/arquitectura/adr/`, `Backend/migrations/` |
+| SCRUM-61 CI/CD | 96 / 95 / 97 | `.github/workflows/` (CI, respaldo), `.github/dependabot.yml`, [ADR-014](../arquitectura/adr/ADR-014-despliegue-y-operacion.md) |
+| SCRUM-64 C4, datos y migraciones | 105 / 104 / 106 | [`C4_Y_MODELO_ER_ACTUALIZADO.md`](../arquitectura/C4_Y_MODELO_ER_ACTUALIZADO.md), [`MODELO_DATOS_Y_CONTRATOS.md`](../arquitectura/MODELO_DATOS_Y_CONTRATOS.md), `docs/arquitectura/adr/`, `Backend/migrations/` |
 | SCRUM-65 Flujo de Git | 108 / 107 / 109 | `docs/git/FLUJO_GIT_Y_PULL_REQUESTS.md` |
 | SCRUM-136 Trazabilidad | 183 / 182 / 181 | Esta matriz |
 | SCRUM-190 BPMN 2.0 | 194 / 193 / 192 | `docs/bpmn/` |
 | SCRUM-191 Wireframes | 195 / 197 / 196 | `docs/wireframes/WIREFRAMES_Y_FLUJOS_ASPAR.md` |
 
-## Registro inicial del Frontend (SCRUM-136 / SCRUM-183)
+## 4. Qué cambió desde el Sprint 1
 
-| ID Req. | Historia / Subtarea Jira | Descripción del Requisito | Pantalla / Componente Frontend | Endpoint Backend / Servicio | Estado |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **RF-01** | SCRUM-11 / SCRUM-66 | Inicio de sesión administrativo con validaciones y bloqueo por intentos fallidos | `src/views/LoginView.vue` | `POST /api/v1/auth/login` (`signInWithApi`) | Implementado y probado |
-| **RF-02** | SCRUM-13 / SCRUM-68 | Fichas de pacientes y anamnesis digital (física, fonoaudiología, psicología) | `src/views/PatientsView.vue`, `src/views/RegisterPatientView.vue` | `GET/POST/PATCH /api/v1/patients` | Implementado y probado |
-| **RF-03** | SCRUM-183 | Gestión de inventario (Propio, Donación, Préstamo Alcaldía) | `src/views/InventoryView.vue` | `getInventory`, `saveInventoryItem` | Implementado y probado |
-| **RF-04** | SCRUM-183 | Publicación y gestión del cronograma de actividades sabatinas | `src/views/ScheduleView.vue` | `schedule` / `AttendanceView.vue` | Implementado y probado |
-| **RF-05** | SCRUM-183 | Gestión de galería multimedia en Cloud Storage (S3/Cloudinary) | `src/views/ScheduleView.vue` (Sección Multimedia) | `getMediaAssets`, `addMediaAsset` | Implementado y probado |
-| **RF-06** | SCRUM-183 | Módulo de donaciones con QR bancario oficial y pasarela Libélula | `src/views/ScheduleView.vue` (Sección Donaciones) | `getDonations`, `registerDonation` | Implementado y probado |
-| **RF-07** | SCRUM-183 | Contenido institucional (misión, modelo CETRAM, requisitos de inscripción) | `src/views/ScheduleView.vue` | `institutionalInfo` | Implementado y probado |
-| **RF-08** | SCRUM-183 | Enlaces directos a redes sociales oficiales (Facebook, Instagram, TikTok) | `src/views/ScheduleView.vue` (Hero Social Links) | `institutionalInfo.socialLinks` | Implementado y probado |
-| **RF-09** | SCRUM-183 | Exportación de reportes de inventario en CSV/PDF para la Alcaldía | `src/views/InventoryView.vue` (`exportReport`) | Exportador CSV/Acta PDF | Implementado y probado |
-| **RF-10** | SCRUM-183 | Visualización pública del cronograma sabatino sin requerir login | `src/views/ScheduleView.vue` (Ruta pública `/`) | `schedule` | Implementado y probado |
-| **RF-11** | SCRUM-129 / SCRUM-161 | Gestión de usuarios y roles alineados con Jira (`Administrador`, `Coordinador`, `Profesional`, `Recepción`, `Voluntario`) | `src/views/UsersView.vue` | `GET/POST/PATCH /api/v1/users` | Implementado y probado |
-| **RF-12** | SCRUM-183 | Control de asistencia sabatina y seguimiento por actividad | `src/views/AttendanceView.vue` | `getAttendance`, `updateAttendance` | Implementado y probado |
-| **RF-17** | SCRUM-135 / SCRUM-179 | Registro y consulta de auditoría de operaciones sensibles solo para Administrador | `src/views/AuditView.vue` | `GET /api/v1/audit` (`syncAuditFromApi`) | Implementado y probado |
-| **RNF-02** | SCRUM-12 / SCRUM-67 | Sesiones JWT, expiración automática (30 min / 15 min inactividad), renovación y logout | `src/App.vue`, `src/router/index.ts` | `GET /api/v1/auth/verify`, `POST /api/v1/auth/logout` | Implementado y probado |
-| **RNF-06** | SCRUM-123 / SCRUM-138 | Protección de datos clínicos según consentimiento informado y estado de acceso | `src/views/PatientsView.vue`, `src/views/AttendanceView.vue` | `canViewClinicalRecord`, `updatePatient` | Implementado y probado |
-| **RNF-11** | SCRUM-128 / SCRUM-153 | Estándares de código (ESLint, Prettier, TypeScript) y pruebas de componentes | `eslint.config.mjs`, `.prettierrc.json`, `src/views/__test__/*.spec.ts` (Login, Pacientes, Usuarios, Bitácora) | Pipeline CI/CD GitHub Actions | Implementado y probado |
-
-## Trazabilidad del Backend: Servicios, Datos, Endpoints y Pruebas (SCRUM-136 / SCRUM-182)
-
-Alineación de cada requisito del SRS con su implementación en el Backend FastAPI sobre Supabase PostgreSQL. Las pruebas citadas están en `Backend/tests/` y se ejecutan en `.github/workflows/ci-backend.yml`.
-
-| ID Req. | Endpoint(s) `/api/v1` | Servicio / Componente C3 | Tabla(s) PostgreSQL | Pruebas automáticas | Estado Backend |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **RF-01** | `POST /auth/login`, `GET /auth/verify` | `services/auth_service.py`, `core/security.py` (bcrypt + JWT) | `users`, `sessions` | `test_auth_login.py`, `test_auth_credentials.py`, `test_security.py` | Implementado (SCRUM-26, SCRUM-27) |
-| **RF-02** | `GET/POST /patients`, `GET/PATCH/DELETE /patients/{id}` | `services/patient_service.py` | `patients` | `test_patients_api.py`, `test_patient_model.py` | Implementado (SCRUM-31, SCRUM-32) |
-| **RF-03 / RF-09** | — | — | `inventory_items` (migración 001) | `test_migrations.py` (esquema) | Modelo de datos listo; endpoints planificados para el Sprint 2 |
-| **RF-04 / RF-10** | — | — | `schedules` | `test_migrations.py` | Modelo de datos listo; endpoints en Sprint 2 |
-| **RF-05** | — | `adapters/storage.py` (reutilizable) | `media_assets` | `test_storage_adapter.py` | Adaptador de Storage listo; galería en Sprint 2 |
-| **RF-06** | — | — | `donations`, `institutional_info` | `test_migrations.py` | Modelo de datos listo; endpoints en Sprint 2 |
-| **RF-07 / RF-08** | — | — | `institutional_info` | `test_migrations.py` | Modelo de datos listo; endpoints en Sprint 2 |
-| **RF-11** | `GET/POST /users`, `PATCH /users/{id}`, `POST /users/{id}/reset-password` | `services/user_service.py` | `users`, `sessions` | `test_users_api.py` | Implementado (SCRUM-160) |
-| **RF-12** | — | — | `attendance` | `test_migrations.py` | Modelo de datos listo; endpoints en Sprint 2 |
-| **RF-17** | `GET /audit` | `services/audit_service.py` (único punto de escritura), `core/deps.py` (accesos denegados) | `audit_logs` (inmutable por trigger) | `test_audit.py` | Implementado (SCRUM-178) |
-| **RNF-02** | `POST /auth/refresh`, `POST /auth/logout` | `core/deps.py` (30 min máx., 15 min inactividad, revocación) | `sessions` | `test_sessions.py` | Implementado (SCRUM-29) |
-| **RNF-06** | `GET /patients*`, `/patients/{id}/documents*` | `patient_service.can_view_clinical_record`, `services/document_service.py` | `patients`, `patient_documents`, bucket privado `documentos-pacientes` | `test_patient_privacy.py` | Implementado (SCRUM-137) |
-| **RNF-11** | — | Ruff + pytest + migraciones versionadas (`scripts/migrate.py`) | `schema_migrations` | `test_migrations.py`, pipeline CI | Implementado (SCRUM-152, SCRUM-95) |
-
-### Diferencias resueltas entre la documentación anterior y la implementación
-
-| Tema | Antes (Sprint 1 inicial) | Ahora (Backend Supabase) |
+| Tema | Sprint 1 | Cierre del Backend (Sprint 2) |
 | :--- | :--- | :--- |
-| Base de datos | SQLite local `aspar.db` | Supabase PostgreSQL con migraciones versionadas |
-| Contraseñas | SHA-256 con sal fija | bcrypt (costo 12), exigido por RNF-02 |
-| Expiración de sesión | Solo en el token | Validada en servidor contra la tabla `sessions` (máximo, inactividad y logout) |
-| Protección RNF-06 | Solo en el frontend (`canViewClinicalRecord`) | También en el servidor: la anamnesis no sale de la API sin rol clínico y consentimiento |
-| Bitácora | Escritura desde frontend y backend | Solo el Backend escribe; la tabla es inmutable |
-| Contrato | Descrito en `MODELO_DATOS_Y_CONTRATOS.md` | Verificado por prueba automática contra `Frontend/src/types/aspar.ts` |
+| Módulos | 5 routers (auth, patients, documents, users, audit) | 16 módulos de dominio, 104 operaciones |
+| Base de datos | 12 tablas, 2 migraciones | 25 tablas, migraciones 001 a 003 |
+| Sesión | JWT en `Authorization: Bearer` guardado por el frontend | Cookie HttpOnly + token CSRF; validez decidida en `sessions` |
+| Roles | 5 roles fijos en un `CHECK` | Roles y 17 permisos en la base, editables por Administración |
+| Acceso | Solo correo y contraseña | Contraseña o Google, registro con verificación y aprobación, Turnstile |
+| RNF-06 | Anamnesis oculta según el rol | Permiso + consentimiento + acceso Activo; el listado nunca lleva datos clínicos |
+| Contrato | `test_contract_frontend.py` comparaba con `src/types/aspar.ts` | OpenAPI → `schema.d.ts` generado, verificado en los dos CI |
+| Pruebas | 103 Backend y 65 Frontend (medición de cierre) | 412 Backend y 107 Frontend |
+| Respaldos | Sin definir | Respaldo cifrado con script y workflow, restauración probada |
+
+La versión anterior de esta matriz, con el detalle por pantalla del Sprint 1, queda en el historial de Git y en [`docs/evidencias/`](../evidencias/EVIDENCIAS_SPRINT1.md).
+
+## 5. Pendiente
+
+- **Migración visual:** conectar las pantallas 🎨 a `src/api/` y crear las ⏳ (bandeja de solicitudes y panel de inicio). La API de cada una ya está probada.
+- **Verificar en staging:** RNF-01 (carga), RNF-04 (disponibilidad), RNF-07 (RPO/RTO) y la cuota de RNF-10.
+- **Con la migración visual:** RNF-03 (accesibilidad), RNF-08 (navegadores) y RNF-09 (usabilidad y manual).
