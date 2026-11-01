@@ -2,12 +2,19 @@
 
 import uuid
 from datetime import date, datetime
+from typing import Annotated, Literal
 
-from pydantic import Field, field_validator
+from pydantic import Field, StringConstraints, field_validator
 
 from app.core.pagination import Page
 from app.core.schemas import CamelModel
 from app.modules.patients.models import ANAMNESIS_COLUMNS, Patient, PatientContact
+from app.modules.schedules.models import CATEGORY_LABELS
+from app.modules.schedules.schemas import ScheduleCategory
+
+# Pestañas y órdenes del listado (diseño pág. 8)
+PatientGroup = Literal["all", "active", "consent_pending", "inactive"]
+PatientOrder = Literal["name", "-name", "recent", "oldest"]
 
 
 class ClinicalAnamnesis(CamelModel):
@@ -97,8 +104,18 @@ class PatientUpdate(CamelModel):
         return value or None
 
 
+# Motivo de una baja o una reactivación: sin espacios sobrantes, de 3 a 300 letras
+Reason = Annotated[str, StringConstraints(strip_whitespace=True, min_length=3, max_length=300)]
+
+
 class PatientDeactivate(CamelModel):
-    reason: str = Field(min_length=3, max_length=300)
+    reason: Reason
+
+
+class PatientReactivate(CamelModel):
+    """Volver a activar una ficha también deja escrito el motivo (queda en la bitácora)."""
+
+    reason: Reason
 
 
 class PatientOut(CamelModel):
@@ -123,6 +140,11 @@ class PatientOut(CamelModel):
     updated_at: datetime
 
 
+class ActivityTag(CamelModel):
+    category: ScheduleCategory
+    label: str
+
+
 class PatientSummaryOut(CamelModel):
     """Fila del listado: sin anamnesis (S5). La ficha clínica completa solo se obtiene con
     GET /patients/{id}, que queda en la bitácora."""
@@ -136,6 +158,8 @@ class PatientSummaryOut(CamelModel):
     image_consent: bool
     access_status: str
     primary_contact: ContactOut | None
+    # Actividades a las que vino en los últimos 6 meses, de la más frecuente
+    activities: list[ActivityTag]
     active: bool
     created_at: datetime
     updated_at: datetime
@@ -143,6 +167,23 @@ class PatientSummaryOut(CamelModel):
 
 class PatientPage(Page[PatientSummaryOut]):
     """Página del listado de afiliados."""
+
+
+class ActivityOption(CamelModel):
+    category: ScheduleCategory
+    label: str
+    # Fichas activas que vinieron a esta actividad en los últimos 6 meses
+    patients: int
+
+
+class PatientCounts(CamelModel):
+    """Contadores de las pestañas del listado y opciones del filtro por actividad."""
+
+    all: int
+    active: int
+    consent_pending: int
+    inactive: int
+    activities: list[ActivityOption]
 
 
 RESTRICTED_ANAMNESIS = ClinicalAnamnesis(
@@ -192,7 +233,11 @@ def to_patient_out(patient: Patient, clinical_access: bool) -> PatientOut:
     )
 
 
-def to_patient_summary(patient: Patient) -> PatientSummaryOut:
+def activity_tags(categories: list[str]) -> list[ActivityTag]:
+    return [ActivityTag(category=c, label=CATEGORY_LABELS[c]) for c in categories]
+
+
+def to_patient_summary(patient: Patient, activities: list[str] | None = None) -> PatientSummaryOut:
     contacts = patient.active_contacts
     primary = next((contact for contact in contacts if contact.is_primary), None)
     primary = primary or (contacts[0] if contacts else None)
@@ -206,6 +251,7 @@ def to_patient_summary(patient: Patient) -> PatientSummaryOut:
         image_consent=patient.image_consent,
         access_status=patient.access_status,
         primary_contact=to_contact_out(primary) if primary else None,
+        activities=activity_tags(activities or []),
         active=patient.active,
         created_at=patient.created_at,
         updated_at=patient.updated_at,

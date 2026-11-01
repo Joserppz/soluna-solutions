@@ -123,14 +123,31 @@ Todos los listados que pueden crecer (afiliados, equipo, bitácora, inventario, 
 
 | Método y ruta | Permiso | Respuesta |
 | :--- | :--- | :--- |
-| `GET /patients?search=&status=&includeInactive=&limit=&offset=` | `patients:read` | `200 PatientPage` (filas `PatientSummaryOut`) |
+| `GET /patients?search=&group=&activity=&order=&limit=&offset=` | `patients:read` | `200 PatientPage` (filas `PatientSummaryOut`) |
+| `GET /patients/summary?search=&activity=` | `patients:read` | `200 PatientCounts`: contadores de las pestañas y opciones del filtro por actividad |
+| `GET /patients/{id}/attendance?limit=&offset=` | `patients:read` | `200 PatientAttendancePage`: sábados del trimestre e historial (no es dato clínico) |
 | `GET /patients/{id}` | `patients:read` | `200 PatientOut` |
 | `POST /patients` | `patients:write` | `201 PatientOut` |
 | `PATCH /patients/{id}` | `patients:write` (y `patients:write_clinical` para síntomas y medicación) | `200 PatientOut` |
-| `POST /patients/{id}/deactivate` · `/reactivate` | `patients:deactivate` | `200 PatientOut` |
+| `POST /patients/{id}/deactivate` · `/reactivate` | `patients:deactivate` | `200 PatientOut`. Las dos piden `{ "reason" }` (3 a 300 letras): el motivo de la baja queda en la ficha y el de la reactivación, en la bitácora |
 | `GET/POST /patients/{id}/contacts`, `PATCH/DELETE …/contacts/{contactId}` | `patients:read` / `patients:write` | Familiares y cuidadores |
 | `GET/POST /patients/{id}/evaluations`, `GET/PATCH …/{evaluationId}` | `patients:read_clinical` / `patients:write_clinical` | Evaluaciones física, fonoaudiológica y psicológica |
 | `GET/POST /patients/{id}/documents`, `DELETE …/{documentId}`, `GET …/{documentId}/url` | `patients:read_clinical`, `documents:upload`, `documents:delete` | Documentos privados (PDF o imagen hasta 10 MB), URL firmada de 300 s |
+
+### Listado: pestañas, actividad y orden (diseño pág. 8)
+
+| Parámetro | Valores | Qué hace |
+| :--- | :--- | :--- |
+| `group` | `all`, `active`, `consent_pending`, `inactive` | Pestañas Todos, Activos, Consentimiento pendiente (activas sin consentimiento) e Inactivos (dadas de baja). Si se indica, reemplaza a `includeInactive` |
+| `activity` | una categoría de actividad (`fisioterapia`, `teatro`…) | Solo quienes **vinieron** a esa actividad en los últimos 6 meses |
+| `order` | `name`, `-name`, `recent` (por defecto), `oldest` | Nombre A–Z o Z–A, o fecha de alta |
+
+- Cada fila trae `activities`: las categorías a las que vino en los últimos 6 meses, de la más frecuente a la menos frecuente.
+- `GET /patients/summary` usa la misma búsqueda y actividad, así los contadores coinciden con la tabla.
+- `GET /patients/{id}/attendance`:
+  - `saturdaysHeld` son los sábados del trimestre en curso, hasta hoy, con actividades publicadas;
+  - `saturdaysAttended` son a cuántos de ellos vino («11 de 12 sábados este trimestre»);
+  - `items` es el historial de asistencias marcadas, de la más reciente a la más antigua.
 
 ### Dos formas de un afiliado: `PatientSummaryOut` y `PatientOut`
 

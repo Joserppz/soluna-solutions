@@ -200,8 +200,19 @@ def test_baja_logica_con_motivo_y_reactivacion(client, auth_headers, db_session,
     assert db_session.get(Patient, patient_id) is not None
     assert db_session.scalar(select(AuditLog).where(AuditLog.action == "Baja de ficha de afiliado"))
 
-    reactivated = client.post(f"{url}/reactivate", headers=auth_headers())
+    without_reason = client.post(
+        f"{url}/reactivate", json={"reason": "   "}, headers=auth_headers()
+    )
+    assert without_reason.status_code == 422
+    reactivated = client.post(
+        f"{url}/reactivate", json={"reason": "Volvió a los talleres"}, headers=auth_headers()
+    )
     assert reactivated.json()["active"] is True
+    assert reactivated.json()["deactivationReason"] is None
+    audit = db_session.scalar(
+        select(AuditLog).where(AuditLog.action == "Reactivación de ficha de afiliado")
+    )
+    assert audit.detail.endswith("Motivo: Volvió a los talleres")
 
 
 def test_baja_sin_motivo_es_422_y_no_existe_delete(client, auth_headers, patient_ids):

@@ -76,6 +76,7 @@ def create_app() -> FastAPI:
     application.include_router(schedules.public_router)
     application.include_router(attendance.router)
     application.include_router(attendance.summary_router)
+    application.include_router(attendance.patient_router)
     application.include_router(inventory.router)
     application.include_router(donations.router)
     application.include_router(donations.public_router)

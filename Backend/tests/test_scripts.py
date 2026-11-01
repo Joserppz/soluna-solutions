@@ -84,3 +84,26 @@ def test_seed_demo_esta_bloqueado_en_produccion(db_session, monkeypatch):
 
     with pytest.raises(seed_demo.SeedBlockedError, match="producción"):
         seed_demo.seed(db_session)
+    with pytest.raises(seed_demo.SeedBlockedError, match="producción"):
+        seed_demo.seed_community(db_session)
+
+
+def test_la_comunidad_de_ejemplo_se_agrega_una_sola_vez(db_session):
+    from app.models import Attendance, Patient
+
+    created = seed_demo.seed_community(db_session)
+    patients = db_session.scalars(
+        select(Patient).where(Patient.ci.in_([row[1] for row in seed_demo.COMMUNITY]))
+    ).all()
+
+    assert len(created) == 3
+    assert len(patients) == len(seed_demo.COMMUNITY)
+    assert sum(not patient.active for patient in patients) == 3
+    assert all(patient.contacts and patient.contacts[0].is_primary for patient in patients)
+    # Las altas se reparten en el tiempo: el orden por fecha del listado tiene sentido
+    assert len({patient.created_at.date() for patient in patients}) > 10
+    visits = db_session.scalars(
+        select(Attendance).where(Attendance.patient_id.in_([p.id for p in patients]))
+    ).all()
+    assert len(visits) == sum(len(row[8]) for row in seed_demo.COMMUNITY)
+    assert seed_demo.seed_community(db_session) == []

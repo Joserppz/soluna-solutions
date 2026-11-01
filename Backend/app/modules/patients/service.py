@@ -2,10 +2,11 @@
 
 import re
 import uuid
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy.orm import Session
 
+from app.core import clock
 from app.core.errors import Conflict, Forbidden, NotFound, ValidationError
 from app.core.pagination import PageParams, PageResult
 from app.modules.audit import service as audit_service
@@ -25,6 +26,7 @@ from app.modules.patients.schemas import (
     PatientIn,
     PatientUpdate,
 )
+from app.modules.schedules.models import CATEGORY_LABELS
 from app.modules.users.models import PATIENTS_READ_CLINICAL, PATIENTS_WRITE_CLINICAL
 
 CI_PATTERN = re.compile(r"^\d{5,10}(-[0-9A-Za-z]{1,3})?$")
@@ -114,14 +116,51 @@ def new_contacts(contacts: list[ContactIn]) -> list[PatientContact]:
     ]
 
 
+# «Actividades» de una ficha: las de los últimos 6 meses
+ACTIVITY_WINDOW = timedelta(days=183)
+
+
+def activity_since() -> date:
+    return clock.today() - ACTIVITY_WINDOW
+
+
 def list_patients(
     db: Session,
     search: str | None,
     access_status: str | None,
     include_inactive: bool = False,
     page: PageParams | None = None,
-) -> PageResult:
-    return patient_repository.list_patients(db, search, access_status, include_inactive, page)
+    *,
+    group: str | None = None,
+    activity: str | None = None,
+    order: str = "recent",
+) -> tuple[PageResult, dict[uuid.UUID, list[str]]]:
+    """Una página del listado y las actividades de cada ficha de la página."""
+    since = activity_since()
+    result = patient_repository.list_patients(
+        db,
+        search,
+        access_status,
+        include_inactive,
+        page,
+        group=group,
+        activity=activity,
+        since=since,
+        order=order,
+    )
+    ids = [patient.id for patient in result.items]
+    return result, patient_repository.activities_by_patient(db, ids, since)
+
+
+def patient_counts(db: Session, search: str | None, activity: str | None) -> dict:
+    since = activity_since()
+    by_activity = patient_repository.patients_by_activity(db, since)
+    return patient_repository.counts(db, search, activity, since) | {
+        "activities": [
+            {"category": category, "label": label, "patients": by_activity.get(category, 0)}
+            for category, label in CATEGORY_LABELS.items()
+        ]
+    }
 
 
 def get_patient(db: Session, patient_id: uuid.UUID) -> Patient:
@@ -279,7 +318,9 @@ def deactivate_patient(
     return patient
 
 
-def reactivate_patient(db: Session, patient_id: uuid.UUID, current: CurrentUser) -> Patient:
+def reactivate_patient(
+    db: Session, patient_id: uuid.UUID, reason: str, current: CurrentUser
+) -> Patient:
     patient = get_patient(db, patient_id)
     if patient.active:
         raise Conflict("La ficha ya está activa.")
@@ -291,7 +332,7 @@ def reactivate_patient(db: Session, patient_id: uuid.UUID, current: CurrentUser)
         current,
         category="PACIENTES",
         action="Reactivación de ficha de afiliado",
-        detail=f"Reactivó la ficha de {patient.name} ({patient.id})",
+        detail=f"Reactivó la ficha de {patient.name} ({patient.id}). Motivo: {reason.strip()}",
     )
     db.flush()
     db.refresh(patient)

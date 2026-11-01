@@ -29,7 +29,17 @@ export type PatientOut = Schemas['PatientOut']
 export type PatientIn = Schemas['PatientIn']
 export type PatientUpdate = Schemas['PatientUpdate']
 export type PatientDeactivate = Schemas['PatientDeactivate']
+export type PatientReactivate = Schemas['PatientReactivate']
 export type PatientListQuery = QueryOf<'list_patients_api_v1_patients_get'>
+export type PatientCountsQuery =
+  QueryOf<'patient_counts_api_v1_patients_summary_get'>
+export type PatientCounts = Schemas['PatientCounts']
+export type PatientGroup = NonNullable<PatientListQuery['group']>
+export type PatientOrder = NonNullable<PatientListQuery['order']>
+export type ActivityTag = Schemas['ActivityTag']
+export type ActivityOption = Schemas['ActivityOption']
+export type PatientAttendancePage = Schemas['PatientAttendancePage']
+export type PatientAttendanceRecord = Schemas['PatientAttendanceRecord']
 export type PatientDocument = Schemas['PatientDocumentOut']
 export type SignedUrl = Schemas['SignedUrlOut']
 export type ContactIn = Schemas['ContactIn']

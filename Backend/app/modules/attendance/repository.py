@@ -5,6 +5,7 @@ from sqlalchemy import func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
+from app.core.pagination import PageParams, PageResult, paginate
 from app.modules.attendance.models import MARKED, Attendance
 from app.modules.patients.models import Patient
 from app.modules.schedules.models import Schedule
@@ -106,3 +107,37 @@ def monthly(db: Session, first: dt.date, last: dt.date) -> list[tuple[Schedule, 
         .order_by(Schedule.date, Schedule.start_time, Schedule.id)
     )
     return [(schedule, c, n) for schedule, c, n in rows.all()]
+
+
+def patient_history(db: Session, patient_id: uuid.UUID, page: PageParams) -> PageResult:
+    """Asistencias marcadas de un afiliado, de la más reciente a la más antigua."""
+    query = (
+        select(Attendance)
+        .join(Schedule, Schedule.id == Attendance.schedule_id)
+        .where(Attendance.patient_id == patient_id, Attendance.status.in_(MARKED))
+        .order_by(Schedule.date.desc(), Schedule.start_time.desc(), Attendance.id.desc())
+    )
+    return paginate(db, query, page)
+
+
+def schedules_by_id(db: Session, schedule_ids: list[uuid.UUID]) -> dict[uuid.UUID, Schedule]:
+    if not schedule_ids:
+        return {}
+    return {s.id: s for s in db.scalars(select(Schedule).where(Schedule.id.in_(schedule_ids)))}
+
+
+def saturdays(db: Session, patient_id: uuid.UUID, first: dt.date, last: dt.date) -> tuple[int, int]:
+    """Sábados con actividades publicadas entre las fechas y a cuántos vino el afiliado."""
+    on_saturday = (
+        Schedule.status == "publicada",
+        Schedule.date >= first,
+        Schedule.date <= last,
+        func.extract("isodow", Schedule.date) == 6,
+    )
+    held = db.scalar(select(func.count(func.distinct(Schedule.date))).where(*on_saturday))
+    attended = db.scalar(
+        select(func.count(func.distinct(Schedule.date)))
+        .join(Attendance, Attendance.schedule_id == Schedule.id)
+        .where(*on_saturday, Attendance.patient_id == patient_id, Attendance.status == "vino")
+    )
+    return held or 0, attended or 0

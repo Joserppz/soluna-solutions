@@ -4,6 +4,7 @@ from typing import Literal
 from fastapi import APIRouter, Depends, Query, Response, status
 
 from app.core.database import DbSession
+from app.core.pagination import Pagination
 from app.modules.attendance import export
 from app.modules.attendance import service as attendance_service
 from app.modules.attendance.schemas import (
@@ -15,12 +16,14 @@ from app.modules.attendance.schemas import (
     MonthlySummaryOut,
     NewcomerIn,
     NewcomerOut,
+    PatientAttendancePage,
 )
 from app.modules.auth.dependencies import CurrentUser, require_permission
-from app.modules.users.models import ATTENDANCE_WRITE, SCHEDULES_MANAGE
+from app.modules.users.models import ATTENDANCE_WRITE, PATIENTS_READ, SCHEDULES_MANAGE
 
 router = APIRouter(prefix="/api/v1/schedules/{schedule_id}/attendance", tags=["Asistencia"])
 summary_router = APIRouter(prefix="/api/v1/attendance", tags=["Asistencia"])
+patient_router = APIRouter(prefix="/api/v1/patients/{patient_id}/attendance", tags=["Asistencia"])
 
 takers = require_permission(ATTENDANCE_WRITE)
 managers = require_permission(SCHEDULES_MANAGE)
@@ -160,3 +163,14 @@ def monthly_summary(
             )
         },
     )
+
+
+@patient_router.get("", response_model=PatientAttendancePage, response_model_by_alias=True)
+def patient_attendance(
+    patient_id: uuid.UUID,
+    db: DbSession,
+    page: Pagination,
+    current: CurrentUser = Depends(require_permission(PATIENTS_READ)),
+):
+    """Asistencia de un afiliado: «11 de 12 sábados este trimestre» y su historial."""
+    return attendance_service.patient_attendance(db, patient_id, page)

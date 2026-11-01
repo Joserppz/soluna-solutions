@@ -6,6 +6,7 @@ from typing import Literal
 
 from pydantic import Field
 
+from app.core.pagination import Page
 from app.core.schemas import CamelModel
 from app.modules.attendance.models import STATUSES
 
@@ -93,3 +94,25 @@ class MonthlySummaryOut(CamelModel):
     # «Personas por actividad» del diseño (pág. 10)
     by_category: list[MonthlyCategory]
     total_came: int
+
+
+class PatientAttendanceRecord(CamelModel):
+    schedule_id: uuid.UUID
+    title: str
+    category: str
+    category_label: str
+    date: dt.date
+    status: Literal["vino", "no_vino"]
+    note: str
+
+
+class PatientAttendancePage(Page[PatientAttendanceRecord]):
+    """Asistencia de un afiliado (pestaña Asistencia de su ficha, diseño pág. 9)."""
+
+    quarter_label: str = Field(
+        description="Trimestre en curso, por ejemplo «octubre a diciembre de 2026»"
+    )
+    quarter_start: dt.date
+    # Sábados del trimestre (hasta hoy) con actividades publicadas, y a cuántos vino
+    saturdays_held: int
+    saturdays_attended: int

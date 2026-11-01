@@ -1,7 +1,8 @@
 """Datos de demostración para desarrollo y pruebas. Bloqueado en producción (ENV=prod).
 
-Crea una cuenta por rol, una cuenta pendiente de aprobación y algunos afiliados de
-ejemplo. Es idempotente: si las cuentas de demostración ya existen, no hace nada.
+Crea una cuenta por rol, una cuenta pendiente de aprobación, algunos afiliados de
+ejemplo y una comunidad de afiliados para ver pestañas, filtros y páginas del listado.
+Es idempotente: lo que ya existe no se vuelve a crear.
 
 Uso (desde la carpeta Backend; con Docker: docker compose exec api python -m scripts.seed_demo):
     python -m scripts.seed_demo
@@ -10,7 +11,7 @@ Las contraseñas de abajo son públicas: nunca uses este script en la base de pr
 """
 
 import sys
-from datetime import date, time, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 from decimal import Decimal
 
 from sqlalchemy import select
@@ -41,6 +42,7 @@ from app.models import (
 from app.modules.institutional.schemas import SECTION_MODELS
 from app.modules.inventory.schemas import ItemIn
 from app.modules.inventory.service import register_item
+from app.modules.patients.models import PARKINSON_STAGES
 from app.modules.users import repository as user_repository
 from app.modules.users.models import (
     ADMIN,
@@ -197,6 +199,344 @@ def seed(db: Session) -> list[str]:
     created.append(_inquiries(db, coordinator, schedules[1]))
     db.flush()
     return created
+
+
+# Comunidad de ejemplo para el listado de afiliados (diseño pág. 8): nombre, carnet,
+# año de nacimiento, zona, consentimiento, uso de imagen, alta (años y meses atrás),
+# contacto principal, actividades a las que vino y motivo de baja si dejó de venir.
+COMMUNITY = [
+    (
+        "Alba Gutiérrez Mamani",
+        "4821557",
+        1958,
+        "Miraflores",
+        True,
+        True,
+        (2, 7),
+        ("Rosa Gutiérrez", "Hija", "76559012"),
+        ("fisioterapia", "arteterapia"),
+        None,
+    ),
+    (
+        "Bernardo Mamani Quispe",
+        "6104223",
+        1952,
+        "Villa Fátima",
+        True,
+        False,
+        (1, 4),
+        ("Julia Choque", "Esposa", "70144587"),
+        ("fisioterapia",),
+        None,
+    ),
+    (
+        "Celia Flores Ticona",
+        "3990418",
+        1949,
+        "Sopocachi",
+        False,
+        False,
+        (1, 2),
+        ("Mario Flores", "Hijo", "72015566"),
+        ("arteterapia", "familias"),
+        None,
+    ),
+    (
+        "Darío Apaza Limachi",
+        "2775901",
+        1947,
+        "El Alto",
+        True,
+        True,
+        (3, 9),
+        ("Lidia Apaza", "Hermana", "73300218"),
+        ("fisioterapia",),
+        "Se mudó con su familia a Cochabamba",
+    ),
+    (
+        "Elena Quisbert Rojas",
+        "7311064",
+        1960,
+        "Obrajes",
+        False,
+        False,
+        (0, 0),
+        ("Pedro Quisbert", "Esposo", "71188290"),
+        ("fisioterapia",),
+        None,
+    ),
+    (
+        "Fausto Rojas Calle",
+        "5208773",
+        1955,
+        "San Pedro",
+        True,
+        True,
+        (2, 5),
+        ("Ana Rojas", "Nieta", "77712345"),
+        ("teatro",),
+        None,
+    ),
+    (
+        "Hortensia Vargas Pinto",
+        "3401128",
+        1951,
+        "Achumani",
+        True,
+        True,
+        (1, 10),
+        ("Jorge Vargas", "Hijo", "70345678"),
+        ("fisioterapia", "fonoaudiologia"),
+        None,
+    ),
+    (
+        "Ignacio Torrez Huanca",
+        "6620045",
+        1957,
+        "Villa Copacabana",
+        True,
+        False,
+        (1, 1),
+        ("Marta Huanca", "Esposa", "71456789"),
+        ("teatro", "familias"),
+        None,
+    ),
+    (
+        "Juana Choque Mendoza",
+        "4105532",
+        1946,
+        "Calacoto",
+        True,
+        True,
+        (3, 2),
+        ("Sonia Choque", "Hija", "72567890"),
+        ("arteterapia",),
+        None,
+    ),
+    (
+        "Leonardo Paz Arce",
+        "5872210",
+        1954,
+        "Irpavi",
+        True,
+        True,
+        (0, 8),
+        ("Teresa Arce", "Esposa", "73678901"),
+        ("fisioterapia", "teatro"),
+        None,
+    ),
+    (
+        "María Luisa Cruz",
+        "3150987",
+        1950,
+        "Sopocachi",
+        True,
+        True,
+        (2, 1),
+        ("Elsa Poma", "Cuidadora", "74789012"),
+        ("fonoaudiologia",),
+        None,
+    ),
+    (
+        "Nicanor Aliaga Ríos",
+        "2988341",
+        1944,
+        "Miraflores",
+        True,
+        False,
+        (4, 0),
+        ("René Aliaga", "Hijo", "75890123"),
+        (),
+        "Falleció en agosto; la familia sigue en contacto",
+    ),
+    (
+        "Olga Medina Vera",
+        "6431179",
+        1959,
+        "Villa Armonía",
+        False,
+        False,
+        (0, 1),
+        ("Carla Medina", "Hija", "76901234"),
+        (),
+        None,
+    ),
+    (
+        "Pablo Siñani Coaquira",
+        "5009812",
+        1953,
+        "Alto Obrajes",
+        True,
+        True,
+        (1, 6),
+        ("Rosario Coaquira", "Esposa", "77012345"),
+        ("fisioterapia", "familias"),
+        None,
+    ),
+    (
+        "Rosa Ticona Mamani",
+        "4567321",
+        1948,
+        "Villa Fátima",
+        True,
+        True,
+        (2, 11),
+        ("Edwin Ticona", "Sobrino", "78123456"),
+        ("arteterapia", "teatro"),
+        None,
+    ),
+    (
+        "Simón Laura Gemio",
+        "6239904",
+        1956,
+        "Achachicala",
+        True,
+        False,
+        (0, 6),
+        ("Inés Gemio", "Esposa", "70234567"),
+        ("fisioterapia",),
+        None,
+    ),
+    (
+        "Teresa Callisaya Poma",
+        "3877456",
+        1945,
+        "Pampahasi",
+        True,
+        True,
+        (3, 6),
+        ("Daniel Callisaya", "Nieto", "71345678"),
+        ("familias",),
+        None,
+    ),
+    (
+        "Víctor Huarachi Lima",
+        "5544210",
+        1961,
+        "Següencoma",
+        True,
+        True,
+        (0, 4),
+        ("Nora Lima", "Hermana", "72456789"),
+        ("fisioterapia", "fonoaudiologia", "teatro"),
+        None,
+    ),
+    (
+        "Wilma Condori Salas",
+        "4732098",
+        1952,
+        "Cota Cota",
+        True,
+        True,
+        (1, 8),
+        ("Hugo Condori", "Esposo", "73567890"),
+        ("arteterapia",),
+        None,
+    ),
+    (
+        "Zenón Mamani Copa",
+        "2654310",
+        1943,
+        "Villa San Antonio",
+        True,
+        False,
+        (2, 9),
+        ("Felipa Copa", "Esposa", "74678901"),
+        (),
+        "Ahora lo acompañan en casa; pidió volver más adelante",
+    ),
+]
+
+# Encuentros pasados de la comunidad: categoría, título y semanas atrás (sábados)
+COMMUNITY_MEETINGS = [
+    ("fisioterapia", "Movimiento en compañía", 2),
+    ("arteterapia", "Arteterapia: crear juntos", 3),
+    ("teatro", "Teatro y expresión", 5),
+    ("familias", "Encuentro de familias", 6),
+    ("fonoaudiologia", "Voz y lectura en grupo", 8),
+]
+
+
+def seed_community(db: Session) -> list[str]:
+    """Afiliados de ejemplo con distintos estados y actividades, si todavía no están.
+
+    Va aparte de seed() (que usan las pruebas con sus tres afiliados conocidos) y se
+    agrega también a una base ya cargada al volver a ejecutar el script."""
+    if settings.is_prod:
+        raise SeedBlockedError("seed_demo está bloqueado en producción (ENV=prod).")
+    if db.scalar(select(Patient.id).where(Patient.ci == COMMUNITY[0][1])) is not None:
+        return []
+    today = clock.today()
+    now = clock.now()
+    last_saturday = today - timedelta(days=(today.weekday() - 5) % 7)
+    professional = user_repository.get_by_email(db, DEMO_USERS[PROFESSIONAL][1])
+    meetings = {
+        category: Schedule(
+            title=title,
+            category=category,
+            date=last_saturday - timedelta(weeks=weeks),
+            start_time=time(10),
+            end_time=time(11, 30),
+            location="Sede ASPAR",
+            professional_name=professional.name if professional else "",
+            description="Encuentro de la comunidad.",
+            status="publicada",
+        )
+        for category, title, weeks in COMMUNITY_MEETINGS
+    }
+    db.add_all(meetings.values())
+
+    patients = []
+    for name, ci, born, zone, consent, image, (
+        years,
+        months,
+    ), contact, activities, reason in COMMUNITY:
+        joined = today.replace(day=1) - timedelta(days=365 * years + 30 * months)
+        patient = Patient(
+            name=name,
+            ci=ci,
+            birth_date=date(born, 1 + len(name) % 12, 1 + len(ci) * 2),
+            phone=f"7{ci[-7:]}",
+            address=f"Zona {zone}",
+            zone=zone,
+            consent=consent,
+            consent_date=joined if consent else None,
+            image_consent=consent and image,
+            access_status="Activo" if consent else "Pendiente",
+            diagnosis="Enfermedad de Parkinson",
+            stage=PARKINSON_STAGES[len(patients) % 3],
+            neurologist_certificate=consent,
+            created_at=datetime(joined.year, joined.month, joined.day, 14, tzinfo=UTC),
+            deleted_at=now if reason else None,
+            deactivation_reason=reason,
+            contacts=[
+                PatientContact(
+                    name=contact[0], relation=contact[1], phone=contact[2], is_primary=True
+                )
+            ],
+        )
+        patients.append((patient, activities))
+        db.add(patient)
+    db.flush()
+    if professional:
+        db.add_all(_evaluations(patients[0][0], professional))
+    db.add_all(
+        Attendance(
+            schedule_id=meetings[category].id,
+            patient_id=patient.id,
+            status="vino",
+            marked_by=professional.id if professional else None,
+            marked_at=now,
+        )
+        for patient, activities in patients
+        for category in activities
+    )
+    db.flush()
+    return [
+        f"{len(COMMUNITY)} afiliados de la comunidad (3 dados de baja, 2 sin consentimiento)",
+        f"{len(COMMUNITY_MEETINGS)} encuentros pasados con su asistencia",
+        f"3 evaluaciones de seguimiento de {COMMUNITY[0][0]}",
+    ]
 
 
 def _inquiries(db: Session, coordinator: User, next_saturday: Schedule) -> str:
@@ -574,6 +914,7 @@ def main() -> int:
     db = SessionLocal()
     try:
         created = seed(db)
+        created += seed_community(db)
         db.commit()
     except SeedBlockedError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)

@@ -1,6 +1,65 @@
 {
   "components": {
     "schemas": {
+      "ActivityOption": {
+        "properties": {
+          "category": {
+            "enum": [
+              "fisioterapia",
+              "arteterapia",
+              "fonoaudiologia",
+              "psicologia",
+              "teatro",
+              "familias",
+              "comunitario"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "patients": {
+            "title": "Patients",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "category",
+          "label",
+          "patients"
+        ],
+        "title": "ActivityOption",
+        "type": "object"
+      },
+      "ActivityTag": {
+        "properties": {
+          "category": {
+            "enum": [
+              "fisioterapia",
+              "arteterapia",
+              "fonoaudiologia",
+              "psicologia",
+              "teatro",
+              "familias",
+              "comunitario"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "category",
+          "label"
+        ],
+        "title": "ActivityTag",
+        "type": "object"
+      },
       "AlbumIn": {
         "properties": {
           "description": {
@@ -3535,6 +3594,147 @@
         "title": "PasswordResetOut",
         "type": "object"
       },
+      "PatientAttendancePage": {
+        "description": "Asistencia de un afiliado (pestaña Asistencia de su ficha, diseño pág. 9).",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PatientAttendanceRecord"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "quarterLabel": {
+            "description": "Trimestre en curso, por ejemplo «octubre a diciembre de 2026»",
+            "title": "Quarterlabel",
+            "type": "string"
+          },
+          "quarterStart": {
+            "format": "date",
+            "title": "Quarterstart",
+            "type": "string"
+          },
+          "saturdaysAttended": {
+            "title": "Saturdaysattended",
+            "type": "integer"
+          },
+          "saturdaysHeld": {
+            "title": "Saturdaysheld",
+            "type": "integer"
+          },
+          "total": {
+            "description": "Filas que cumplen los filtros (todas las páginas)",
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset",
+          "quarterLabel",
+          "quarterStart",
+          "saturdaysHeld",
+          "saturdaysAttended"
+        ],
+        "title": "PatientAttendancePage",
+        "type": "object"
+      },
+      "PatientAttendanceRecord": {
+        "properties": {
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "categoryLabel": {
+            "title": "Categorylabel",
+            "type": "string"
+          },
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "scheduleId": {
+            "format": "uuid",
+            "title": "Scheduleid",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "vino",
+              "no_vino"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scheduleId",
+          "title",
+          "category",
+          "categoryLabel",
+          "date",
+          "status",
+          "note"
+        ],
+        "title": "PatientAttendanceRecord",
+        "type": "object"
+      },
+      "PatientCounts": {
+        "description": "Contadores de las pestañas del listado y opciones del filtro por actividad.",
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "integer"
+          },
+          "activities": {
+            "items": {
+              "$ref": "#/components/schemas/ActivityOption"
+            },
+            "title": "Activities",
+            "type": "array"
+          },
+          "all": {
+            "title": "All",
+            "type": "integer"
+          },
+          "consentPending": {
+            "title": "Consentpending",
+            "type": "integer"
+          },
+          "inactive": {
+            "title": "Inactive",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "all",
+          "active",
+          "consentPending",
+          "inactive",
+          "activities"
+        ],
+        "title": "PatientCounts",
+        "type": "object"
+      },
       "PatientDeactivate": {
         "properties": {
           "reason": {
@@ -3886,6 +4086,22 @@
         "title": "PatientPage",
         "type": "object"
       },
+      "PatientReactivate": {
+        "description": "Volver a activar una ficha también deja escrito el motivo (queda en la bitácora).",
+        "properties": {
+          "reason": {
+            "maxLength": 300,
+            "minLength": 3,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "PatientReactivate",
+        "type": "object"
+      },
       "PatientSummaryOut": {
         "description": "Fila del listado: sin anamnesis (S5). La ficha clínica completa solo se obtiene con\nGET /patients/{id}, que queda en la bitácora.",
         "properties": {
@@ -3896,6 +4112,13 @@
           "active": {
             "title": "Active",
             "type": "boolean"
+          },
+          "activities": {
+            "items": {
+              "$ref": "#/components/schemas/ActivityTag"
+            },
+            "title": "Activities",
+            "type": "array"
           },
           "ci": {
             "title": "Ci",
@@ -3957,6 +4180,7 @@
           "imageConsent",
           "accessStatus",
           "primaryContact",
+          "activities",
           "active",
           "createdAt",
           "updatedAt"
@@ -8993,6 +9217,73 @@
             }
           },
           {
+            "description": "Pestaña del listado; si se indica, reemplaza a includeInactive",
+            "in": "query",
+            "name": "group",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "all",
+                    "active",
+                    "consent_pending",
+                    "inactive"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Pestaña del listado; si se indica, reemplaza a includeInactive",
+              "title": "Group"
+            }
+          },
+          {
+            "description": "Solo quienes vinieron a esa actividad en los últimos 6 meses",
+            "in": "query",
+            "name": "activity",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "fisioterapia",
+                    "arteterapia",
+                    "fonoaudiologia",
+                    "psicologia",
+                    "teatro",
+                    "familias",
+                    "comunitario"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Solo quienes vinieron a esa actividad en los últimos 6 meses",
+              "title": "Activity"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "default": "recent",
+              "enum": [
+                "name",
+                "-name",
+                "recent",
+                "oldest"
+              ],
+              "title": "Order",
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "limit",
             "required": false,
@@ -9078,6 +9369,82 @@
           }
         },
         "summary": "Create Patient",
+        "tags": [
+          "Afiliados"
+        ]
+      }
+    },
+    "/api/v1/patients/summary": {
+      "get": {
+        "description": "Contadores de las pestañas (con la misma búsqueda y actividad del listado).",
+        "operationId": "patient_counts_api_v1_patients_summary_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "activity",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "fisioterapia",
+                    "arteterapia",
+                    "fonoaudiologia",
+                    "psicologia",
+                    "teatro",
+                    "familias",
+                    "comunitario"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Activity"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientCounts"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Patient Counts",
         "tags": [
           "Afiliados"
         ]
@@ -9174,6 +9541,73 @@
         "summary": "Update Patient",
         "tags": [
           "Afiliados"
+        ]
+      }
+    },
+    "/api/v1/patients/{patient_id}/attendance": {
+      "get": {
+        "description": "Asistencia de un afiliado: «11 de 12 sábados este trimestre» y su historial.",
+        "operationId": "patient_attendance_api_v1_patients__patient_id__attendance_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "patient_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Patient Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientAttendancePage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Patient Attendance",
+        "tags": [
+          "Asistencia"
         ]
       }
     },
@@ -9886,6 +10320,7 @@
     },
     "/api/v1/patients/{patient_id}/reactivate": {
       "post": {
+        "description": "Vuelve a activar una ficha dada de baja, con el motivo (por ejemplo, volvió a venir).",
         "operationId": "reactivate_patient_api_v1_patients__patient_id__reactivate_post",
         "parameters": [
           {
@@ -9899,6 +10334,16 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatientReactivate"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "content": {

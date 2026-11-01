@@ -5,6 +5,7 @@ El voluntariado marca quién vino desde el celular. La lista son los afiliados a
 publicadas cuya fecha ya llegó (hora de Bolivia) y hasta cerrar la asistencia del día.
 """
 
+import datetime as dt
 import re
 import uuid
 from collections import defaultdict
@@ -13,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from app.core import clock
 from app.core.errors import Conflict, NotFound, ValidationError
+from app.core.pagination import PageParams
 from app.modules.attendance import repository as attendance_repository
 from app.modules.attendance.models import Attendance
 from app.modules.attendance.schemas import (
@@ -20,11 +22,14 @@ from app.modules.attendance.schemas import (
     MonthlyCategory,
     MonthlySummaryOut,
     NewcomerIn,
+    PatientAttendancePage,
+    PatientAttendanceRecord,
 )
 from app.modules.audit import service as audit_service
 from app.modules.auth.dependencies import CurrentUser
 from app.modules.inquiries.models import Inquiry
 from app.modules.patients.models import Patient
+from app.modules.patients.service import get_patient
 from app.modules.schedules.models import CATEGORY_LABELS, Schedule
 from app.modules.schedules.service import get_schedule
 
@@ -215,4 +220,62 @@ def monthly_summary(db: Session, month: str | None) -> MonthlySummaryOut:
             for key, total in sorted(by_category.items(), key=lambda item: -item[1])
         ],
         total_came=sum(by_category.values()),
+    )
+
+
+MONTHS = (
+    "enero",
+    "febrero",
+    "marzo",
+    "abril",
+    "mayo",
+    "junio",
+    "julio",
+    "agosto",
+    "septiembre",
+    "octubre",
+    "noviembre",
+    "diciembre",
+)
+
+
+def quarter_of(today: dt.date) -> tuple[str, dt.date]:
+    """Trimestre calendario de la fecha: («octubre a diciembre de 2026», 2026-10-01)."""
+    first_month = (today.month - 1) // 3 * 3 + 1
+    label = f"{MONTHS[first_month - 1]} a {MONTHS[first_month + 1]} de {today.year}"
+    return label, dt.date(today.year, first_month, 1)
+
+
+def patient_attendance(
+    db: Session, patient_id: uuid.UUID, page: PageParams
+) -> PatientAttendancePage:
+    """Pestaña Asistencia de la ficha: sábados del trimestre e historial (no es dato clínico)."""
+    get_patient(db, patient_id)
+    today = clock.today()
+    label, first = quarter_of(today)
+    held, attended = attendance_repository.saturdays(db, patient_id, first, today)
+    result = attendance_repository.patient_history(db, patient_id, page)
+    schedules = attendance_repository.schedules_by_id(
+        db, [entry.schedule_id for entry in result.items]
+    )
+    return PatientAttendancePage(
+        items=[
+            PatientAttendanceRecord(
+                schedule_id=entry.schedule_id,
+                title=schedules[entry.schedule_id].title,
+                category=schedules[entry.schedule_id].category,
+                category_label=CATEGORY_LABELS[schedules[entry.schedule_id].category],
+                date=schedules[entry.schedule_id].date,
+                status=entry.status,
+                note=entry.note,
+            )
+            for entry in result.items
+        ],
+        total=result.total,
+        limit=result.limit,
+        offset=result.offset,
+        quarter_label=label,
+        quarter_start=first,
+        saturdays_held=held,
+        saturdays_attended=attended,
     )

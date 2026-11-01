@@ -933,6 +933,26 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/patients/summary': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Patient Counts
+     * @description Contadores de las pestañas (con la misma búsqueda y actividad del listado).
+     */
+    get: operations['patient_counts_api_v1_patients_summary_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/patients/{patient_id}': {
     parameters: {
       query?: never
@@ -949,6 +969,26 @@ export interface paths {
     head?: never
     /** Update Patient */
     patch: operations['update_patient_api_v1_patients__patient_id__patch']
+    trace?: never
+  }
+  '/api/v1/patients/{patient_id}/attendance': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Patient Attendance
+     * @description Asistencia de un afiliado: «11 de 12 sábados este trimestre» y su historial.
+     */
+    get: operations['patient_attendance_api_v1_patients__patient_id__attendance_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
     trace?: never
   }
   '/api/v1/patients/{patient_id}/contacts': {
@@ -1116,7 +1156,10 @@ export interface paths {
     }
     get?: never
     put?: never
-    /** Reactivate Patient */
+    /**
+     * Reactivate Patient
+     * @description Vuelve a activar una ficha dada de baja, con el motivo (por ejemplo, volvió a venir).
+     */
     post: operations['reactivate_patient_api_v1_patients__patient_id__reactivate_post']
     delete?: never
     options?: never
@@ -1645,6 +1688,42 @@ export interface paths {
 export type webhooks = Record<string, never>
 export interface components {
   schemas: {
+    /** ActivityOption */
+    ActivityOption: {
+      /**
+       * Category
+       * @enum {string}
+       */
+      category:
+        | 'fisioterapia'
+        | 'arteterapia'
+        | 'fonoaudiologia'
+        | 'psicologia'
+        | 'teatro'
+        | 'familias'
+        | 'comunitario'
+      /** Label */
+      label: string
+      /** Patients */
+      patients: number
+    }
+    /** ActivityTag */
+    ActivityTag: {
+      /**
+       * Category
+       * @enum {string}
+       */
+      category:
+        | 'fisioterapia'
+        | 'arteterapia'
+        | 'fonoaudiologia'
+        | 'psicologia'
+        | 'teatro'
+        | 'familias'
+        | 'comunitario'
+      /** Label */
+      label: string
+    }
     /** AlbumIn */
     AlbumIn: {
       /**
@@ -3001,6 +3080,79 @@ export interface components {
       /** Temporarypassword */
       temporaryPassword: string
     }
+    /**
+     * PatientAttendancePage
+     * @description Asistencia de un afiliado (pestaña Asistencia de su ficha, diseño pág. 9).
+     */
+    PatientAttendancePage: {
+      /** Items */
+      items: components['schemas']['PatientAttendanceRecord'][]
+      /** Limit */
+      limit: number
+      /** Offset */
+      offset: number
+      /**
+       * Quarterlabel
+       * @description Trimestre en curso, por ejemplo «octubre a diciembre de 2026»
+       */
+      quarterLabel: string
+      /**
+       * Quarterstart
+       * Format: date
+       */
+      quarterStart: string
+      /** Saturdaysattended */
+      saturdaysAttended: number
+      /** Saturdaysheld */
+      saturdaysHeld: number
+      /**
+       * Total
+       * @description Filas que cumplen los filtros (todas las páginas)
+       */
+      total: number
+    }
+    /** PatientAttendanceRecord */
+    PatientAttendanceRecord: {
+      /** Category */
+      category: string
+      /** Categorylabel */
+      categoryLabel: string
+      /**
+       * Date
+       * Format: date
+       */
+      date: string
+      /** Note */
+      note: string
+      /**
+       * Scheduleid
+       * Format: uuid
+       */
+      scheduleId: string
+      /**
+       * Status
+       * @enum {string}
+       */
+      status: 'vino' | 'no_vino'
+      /** Title */
+      title: string
+    }
+    /**
+     * PatientCounts
+     * @description Contadores de las pestañas del listado y opciones del filtro por actividad.
+     */
+    PatientCounts: {
+      /** Active */
+      active: number
+      /** Activities */
+      activities: components['schemas']['ActivityOption'][]
+      /** All */
+      all: number
+      /** Consentpending */
+      consentPending: number
+      /** Inactive */
+      inactive: number
+    }
     /** PatientDeactivate */
     PatientDeactivate: {
       /** Reason */
@@ -3155,6 +3307,14 @@ export interface components {
       total: number
     }
     /**
+     * PatientReactivate
+     * @description Volver a activar una ficha también deja escrito el motivo (queda en la bitácora).
+     */
+    PatientReactivate: {
+      /** Reason */
+      reason: string
+    }
+    /**
      * PatientSummaryOut
      * @description Fila del listado: sin anamnesis (S5). La ficha clínica completa solo se obtiene con
      *     GET /patients/{id}, que queda en la bitácora.
@@ -3164,6 +3324,8 @@ export interface components {
       accessStatus: string
       /** Active */
       active: boolean
+      /** Activities */
+      activities: components['schemas']['ActivityTag'][]
       /** Ci */
       ci: string
       /** Consent */
@@ -5858,6 +6020,21 @@ export interface operations {
         search?: string | null
         status?: string | null
         includeInactive?: boolean
+        /** @description Pestaña del listado; si se indica, reemplaza a includeInactive */
+        group?: ('all' | 'active' | 'consent_pending' | 'inactive') | null
+        /** @description Solo quienes vinieron a esa actividad en los últimos 6 meses */
+        activity?:
+          | (
+              | 'fisioterapia'
+              | 'arteterapia'
+              | 'fonoaudiologia'
+              | 'psicologia'
+              | 'teatro'
+              | 'familias'
+              | 'comunitario'
+            )
+          | null
+        order?: 'name' | '-name' | 'recent' | 'oldest'
         limit?: number
         offset?: number
       }
@@ -5907,6 +6084,48 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['PatientOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  patient_counts_api_v1_patients_summary_get: {
+    parameters: {
+      query?: {
+        search?: string | null
+        activity?:
+          | (
+              | 'fisioterapia'
+              | 'arteterapia'
+              | 'fonoaudiologia'
+              | 'psicologia'
+              | 'teatro'
+              | 'familias'
+              | 'comunitario'
+            )
+          | null
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['PatientCounts']
         }
       }
       /** @description Validation Error */
@@ -5973,6 +6192,40 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['PatientOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  patient_attendance_api_v1_patients__patient_id__attendance_get: {
+    parameters: {
+      query?: {
+        limit?: number
+        offset?: number
+      }
+      header?: never
+      path: {
+        patient_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['PatientAttendancePage']
         }
       }
       /** @description Validation Error */
@@ -6430,7 +6683,11 @@ export interface operations {
       }
       cookie?: never
     }
-    requestBody?: never
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['PatientReactivate']
+      }
+    }
     responses: {
       /** @description Successful Response */
       200: {

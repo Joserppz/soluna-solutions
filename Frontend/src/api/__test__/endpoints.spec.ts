@@ -112,6 +112,21 @@ function requestsFor(api: ReturnType<typeof createEndpoints>): Request[] {
       '/patients',
     ],
     [() => api.patients.get('p 1'), 'GET', '/patients/p%201'],
+    [
+      () => api.patients.list({ group: 'consent_pending', order: 'name' }),
+      'GET',
+      '/patients?group=consent_pending&order=name',
+    ],
+    [
+      () => api.patients.summary({ activity: 'teatro' }),
+      'GET',
+      '/patients/summary?activity=teatro',
+    ],
+    [
+      () => api.patients.attendance('p 1', { limit: 5 }),
+      'GET',
+      '/patients/p%201/attendance?limit=5',
+    ],
     [() => api.system.health(), 'GET', '/health'],
     [() => api.system.healthDb(), 'GET', '/health/db'],
     [
@@ -124,7 +139,11 @@ function requestsFor(api: ReturnType<typeof createEndpoints>): Request[] {
       'POST',
       '/patients/p1/deactivate',
     ],
-    [() => api.patients.reactivate('p1'), 'POST', '/patients/p1/reactivate'],
+    [
+      () => api.patients.reactivate('p1', { reason: 'Volvió' }),
+      'POST',
+      '/patients/p1/reactivate',
+    ],
     [() => api.documents.list('p1'), 'GET', '/patients/p1/documents'],
     [() => api.contacts.list('p1'), 'GET', '/patients/p1/contacts'],
     [

@@ -100,6 +100,11 @@ Cuentas que crea `seed_demo` (contraseñas públicas, solo para tu PC):
 | `voluntario@aspar.org` | `Voluntario2026!` | Voluntariado |
 | `pendiente@aspar.org` | `Pendiente2026!` | Pendiente de aprobación (sin rol) |
 
+Además de esas cuentas y tres afiliados de ejemplo (los que usan las pruebas), `seed_demo`
+agrega una comunidad de 20 afiliados con distintos estados, contactos y asistencias pasadas,
+para ver las pestañas, los filtros y las páginas del listado. Si tu base ya tenía los datos de
+demostración, volver a ejecutarlo agrega solo la comunidad.
+
 Con Docker: `docker compose exec api python -m scripts.seed_demo` (o `make seed`) y `docker compose exec api python -m scripts.create_admin` (o `make create-admin`).
 
 ## 6. Endpoints (`/api/v1`)
@@ -109,7 +114,7 @@ Con Docker: `docker compose exec api python -m scripts.seed_demo` (o `make seed`
 | Sistema | `GET /health` (prueba de vida, sin base), `GET /health/db` (conexión con PostgreSQL) | Público |
 | Autenticación | `POST /auth/login`, `POST /auth/google`, `GET /auth/me`, `POST /auth/refresh`, `POST /auth/logout` | Login público; resto con sesión |
 | Cuentas | `POST /auth/register`, `POST /auth/verify-email`, `POST /auth/resend-verification`, `POST /auth/forgot-password`, `POST /auth/reset-password`, `POST /auth/change-password` | Públicos (con Turnstile los que envían correos); `change-password` con sesión |
-| Afiliados | `GET /patients?search=&status=&includeInactive=&limit=&offset=`, `POST /patients`, `GET/PATCH /patients/{id}`, `POST /patients/{id}/deactivate`, `POST /patients/{id}/reactivate` | Lectura: personal con rol; edición: admin, coordination, professional, reception; baja y reactivación: admin |
+| Afiliados | `GET /patients?search=&group=&activity=&order=&status=&includeInactive=&limit=&offset=`, `GET /patients/summary` (contadores de las pestañas y opciones de actividad), `GET /patients/{id}/attendance` (sábados del trimestre e historial), `POST /patients`, `GET/PATCH /patients/{id}`, `POST /patients/{id}/deactivate`, `POST /patients/{id}/reactivate` | Lectura: personal con rol; edición: admin, coordination, professional, reception; baja y reactivación: admin |
 | Documentos privados | `GET/POST /patients/{id}/documents`, `GET .../{doc}/url`, `DELETE .../{doc}` | Listar/descargar: personal clínico; subir: editores; borrar: admin |
 | Familiares y cuidadores | `GET/POST /patients/{id}/contacts`, `PATCH/DELETE /patients/{id}/contacts/{contacto}` | Ver: `patients:read`; editar: `patients:write`. De 1 a 5 activos, siempre uno principal; `DELETE` es una baja lógica y nunca deja la ficha sin contactos |
 | Evaluaciones de seguimiento | `GET/POST /patients/{id}/evaluations?area=`, `GET/PATCH /patients/{id}/evaluations/{evaluación}` | Ver: `patients:read_clinical`; registrar y corregir: `patients:write_clinical`. Además, consentimiento firmado y acceso Activo (RNF-06). No se borran: cada corrección queda en la bitácora |

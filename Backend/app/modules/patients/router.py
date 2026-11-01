@@ -11,15 +11,20 @@ from app.modules.patients.schemas import (
     ContactIn,
     ContactOut,
     ContactUpdate,
+    PatientCounts,
     PatientDeactivate,
+    PatientGroup,
     PatientIn,
+    PatientOrder,
     PatientOut,
     PatientPage,
+    PatientReactivate,
     PatientUpdate,
     to_contact_out,
     to_patient_out,
     to_patient_summary,
 )
+from app.modules.schedules.schemas import ScheduleCategory
 from app.modules.users.models import PATIENTS_DEACTIVATE, PATIENTS_READ, PATIENTS_WRITE
 
 router = APIRouter(prefix="/api/v1/patients", tags=["Afiliados"])
@@ -40,10 +45,40 @@ def list_patients(
     search: str | None = Query(default=None, max_length=120),
     access_status: str | None = Query(default=None, alias="status", max_length=20),
     include_inactive: bool = Query(default=False, alias="includeInactive"),
+    group: PatientGroup | None = Query(
+        default=None,
+        description="Pestaña del listado; si se indica, reemplaza a includeInactive",
+    ),
+    activity: ScheduleCategory | None = Query(
+        default=None, description="Solo quienes vinieron a esa actividad en los últimos 6 meses"
+    ),
+    order: PatientOrder = Query(default="recent"),
     current: CurrentUser = Depends(staff),
 ):
-    result = patient_service.list_patients(db, search, access_status, include_inactive, page)
-    return PatientPage.of(result, to_patient_summary)
+    result, activities = patient_service.list_patients(
+        db,
+        search,
+        access_status,
+        include_inactive,
+        page,
+        group=group,
+        activity=activity,
+        order=order,
+    )
+    return PatientPage.of(
+        result, lambda patient: to_patient_summary(patient, activities.get(patient.id))
+    )
+
+
+@router.get("/summary", response_model=PatientCounts, response_model_by_alias=True)
+def patient_counts(
+    db: DbSession,
+    search: str | None = Query(default=None, max_length=120),
+    activity: ScheduleCategory | None = Query(default=None),
+    current: CurrentUser = Depends(staff),
+):
+    """Contadores de las pestañas (con la misma búsqueda y actividad del listado)."""
+    return patient_service.patient_counts(db, search, activity)
 
 
 @router.get("/{patient_id}", response_model=PatientOut, response_model_by_alias=True)
@@ -86,9 +121,14 @@ def deactivate_patient(
 
 @router.post("/{patient_id}/reactivate", response_model=PatientOut, response_model_by_alias=True)
 def reactivate_patient(
-    patient_id: uuid.UUID, db: DbSession, current: CurrentUser = Depends(admin_only)
+    patient_id: uuid.UUID,
+    payload: PatientReactivate,
+    db: DbSession,
+    current: CurrentUser = Depends(admin_only),
 ):
-    return _out(patient_service.reactivate_patient(db, patient_id, current), current)
+    """Vuelve a activar una ficha dada de baja, con el motivo (por ejemplo, volvió a venir)."""
+    patient = patient_service.reactivate_patient(db, patient_id, payload.reason, current)
+    return _out(patient, current)
 
 
 # ---------------------------------------------------------------------------

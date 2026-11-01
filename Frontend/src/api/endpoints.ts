@@ -68,8 +68,12 @@ import type {
   PatientDocument,
   PatientIn,
   PatientListQuery,
+  PatientAttendancePage,
+  PatientCounts,
+  PatientCountsQuery,
   PatientOut,
   PatientPage,
+  PatientReactivate,
   PatientUpdate,
   RegisterRequest,
   ResetPasswordRequest,
@@ -143,6 +147,18 @@ export function createEndpoints(http: HttpClient) {
     patients: {
       list: (query: PatientListQuery = {}) =>
         http.get<PatientPage>('/patients', { query }),
+      /** Contadores de las pestañas y opciones del filtro por actividad. */
+      summary: (query: PatientCountsQuery = {}) =>
+        http.get<PatientCounts>('/patients/summary', { query }),
+      /** Pestaña Asistencia: sábados del trimestre e historial paginado. */
+      attendance: (
+        patientId: string,
+        page: { limit?: number; offset?: number } = {},
+      ) =>
+        http.get<PatientAttendancePage>(
+          `/patients/${id(patientId)}/attendance`,
+          { query: page },
+        ),
       get: (patientId: string) =>
         http.get<PatientOut>(`/patients/${id(patientId)}`),
       create: (body: PatientIn) => http.post<PatientOut>('/patients', { body }),
@@ -152,8 +168,10 @@ export function createEndpoints(http: HttpClient) {
         http.post<PatientOut>(`/patients/${id(patientId)}/deactivate`, {
           body,
         }),
-      reactivate: (patientId: string) =>
-        http.post<PatientOut>(`/patients/${id(patientId)}/reactivate`),
+      reactivate: (patientId: string, body: PatientReactivate) =>
+        http.post<PatientOut>(`/patients/${id(patientId)}/reactivate`, {
+          body,
+        }),
     },
 
     contacts: {
