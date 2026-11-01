@@ -44,6 +44,32 @@ export const routes: RouteRecordRaw[] = [
   },
   { path: '/login', redirect: { name: 'ingresar' } },
   {
+    path: '/crear-cuenta',
+    name: 'crear-cuenta',
+    component: () => import('../views/auth/RegisterView.vue'),
+    meta: { access: 'guest', title: 'Crea tu cuenta' },
+  },
+  {
+    // Enlace del correo de confirmación (y pedido de un enlace nuevo)
+    path: '/verificar-correo',
+    name: 'verificar-correo',
+    component: () => import('../views/auth/VerifyEmailView.vue'),
+    meta: { access: 'public', title: 'Confirma tu correo' },
+  },
+  {
+    path: '/recuperar-contrasena',
+    name: 'recuperar-contrasena',
+    component: () => import('../views/auth/ForgotPasswordView.vue'),
+    meta: { access: 'guest', title: 'Recuperar contraseña' },
+  },
+  {
+    // Enlace del correo de recuperación
+    path: '/restablecer-contrasena',
+    name: 'restablecer-contrasena',
+    component: () => import('../views/auth/ResetPasswordView.vue'),
+    meta: { access: 'public', title: 'Nueva contraseña' },
+  },
+  {
     path: '/cambiar-contrasena',
     name: 'cambiar-contrasena',
     component: () => import('../views/auth/ChangePasswordView.vue'),

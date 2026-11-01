@@ -201,18 +201,17 @@ Todos los listados que pueden crecer (afiliados, equipo, bitácora, inventario, 
 
 | Tema | Backend (`Backend/tests/`) | Frontend |
 | :--- | :--- | :--- |
-| Login, bloqueo y mensajes | `test_auth_login.py`, `test_auth_credentials.py`, `test_security.py` | `src/api/__test__/session.spec.ts`, `LoginView.spec.ts` |
-| Registro, Google, correos y aprobación | `test_accounts.py`, `test_adapters.py` | `src/api/__test__/endpoints.spec.ts` |
-| Sesión, cookies, CSRF e inactividad | `test_sessions.py`, `test_hardening.py` | `src/api/__test__/client.spec.ts` |
-| Permisos | `test_permissions.py`, `test_roles.py` | `session.spec.ts` (`can`, `canAny`) |
+| Login, bloqueo y mensajes | `test_auth_login.py`, `test_auth_credentials.py`, `test_security.py` | `src/api/__test__/session.spec.ts`, `src/__test__/acceso.spec.ts`, E2E `e2e/acceso.spec.ts` |
+| Registro, Google, correos y aprobación | `test_accounts.py`, `test_adapters.py` | `src/__test__/cuentas.spec.ts`, `src/api/__test__/endpoints.spec.ts`, E2E `e2e/cuentas.spec.ts` |
+| Sesión, cookies, CSRF e inactividad | `test_sessions.py`, `test_hardening.py` | `src/api/__test__/client.spec.ts`, `src/composables/__test__/useIdleSession.spec.ts` |
+| Permisos | `test_permissions.py`, `test_roles.py` | `session.spec.ts` (`can`, `canAny`), `src/router/__test__/guards.spec.ts` |
 | Paginación | `test_pagination.py` | `endpoints.spec.ts` |
 | Afiliados y RNF-06 | `test_patients_api.py`, `test_patient_model.py`, `test_patient_privacy.py`, `test_contacts_evaluations.py`, `test_storage_adapter.py` | `PatientsView.spec.ts` (modo demo) |
 | Contrato completo | `test_openapi.py`, `scripts.export_openapi --check`, `test_core.py` (todo error es `{detail: texto}`) | `npm run api:types:check`, `endpoints.spec.ts` (todas las operaciones cubiertas) |
 
-## 6. Pendiente de integración en el Frontend
+## 6. Integración en el Frontend
 
-El contrato está completo. Lo que falta es de la **migración visual**: que las vistas (`src/views/`) usen `src/api/` en lugar de `src/services/` (modo demo, ADR-008). En particular:
+El contrato está completo. Avance de la migración visual (las vistas pasan de `src/services/`, modo demo, a `src/api/`):
 
-1. `LoginView` con `session.login`, «Continuar con Google» y Turnstile en registro y recuperación.
-2. `PatientsView` con el listado paginado (`PatientSummaryOut`) y la ficha (`PatientOut`) con evaluaciones y documentos.
-3. Contador de sesión de `App.vue` con `expiresIn` e `idleTimeout` de la API y `session.refresh()`.
+1. ✅ **Acceso y sesión (bloque F1):** ingreso con `session.login` y «Continuar con Google», registro y recuperación con Turnstile, confirmación de correo, cambio obligatorio de la contraseña temporal, cuenta pendiente y aviso de inactividad con `idleTimeout` y `session.refresh()`.
+2. ⏳ **Afiliados (bloque F2):** listado paginado (`PatientSummaryOut`) y ficha (`PatientOut`) con contactos, evaluaciones y documentos.

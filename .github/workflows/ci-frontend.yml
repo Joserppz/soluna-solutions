@@ -53,7 +53,7 @@ jobs:
           npm audit --audit-level=high
 
       - name: Verificar formato de código con Prettier
-        run: npx prettier --check src/ scripts/ eslint.config.mjs vite.config.ts vitest.config.ts
+        run: npx prettier --check src/ scripts/ e2e/ eslint.config.mjs vite.config.ts vitest.config.ts playwright.config.ts
 
       - name: Ejecutar pruebas con Vitest y medir cobertura (SCRUM-153 / SCRUM-97)
         run: npm run test:coverage

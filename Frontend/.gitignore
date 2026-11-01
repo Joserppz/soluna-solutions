@@ -29,3 +29,4 @@ coverage
 # Resultados de Playwright (E2E)
 e2e-resultados/
 playwright-report/
+dist-e2e/

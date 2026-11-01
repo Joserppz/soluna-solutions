@@ -41,6 +41,47 @@ export async function adminApi() {
 export async function evidence(page: Page, name: string) {
   const folder = process.env.E2E_EVIDENCIAS
   if (!folder) return
+  await page.evaluate(() => window.scrollTo(0, 0))
   await page.waitForTimeout(350)
   await page.screenshot({ path: `${folder}/${name}.png` })
+}
+
+/**
+ * Dobles de los scripts de Cloudflare Turnstile y de Google Identity Services: el
+ * navegador de prueba no depende de esos servicios. Las peticiones a la API siguen
+ * siendo reales.
+ */
+export async function fakeExternalWidgets(page: Page) {
+  await page.route('**/turnstile/v0/api.js*', (route) =>
+    route.fulfill({
+      contentType: 'application/javascript',
+      body: `window.turnstile = {
+        render(element, options) {
+          const button = document.createElement('button')
+          button.type = 'button'
+          button.textContent = 'Soy una persona (prueba)'
+          button.onclick = () => options.callback('XXXX.DUMMY.TOKEN.XXXX')
+          element.appendChild(button)
+          return 'prueba'
+        },
+        reset() {},
+        remove() {},
+      }`,
+    }),
+  )
+  await page.route('**/gsi/client', (route) =>
+    route.fulfill({
+      contentType: 'application/javascript',
+      body: `window.google = { accounts: { id: {
+        initialize(options) { window.__googleCallback = options.callback },
+        renderButton(element) {
+          const button = document.createElement('button')
+          button.type = 'button'
+          button.textContent = 'Continuar con Google (prueba)'
+          button.onclick = () => window.__googleCallback({ credential: 'credencial.e2e.prueba' })
+          element.appendChild(button)
+        },
+      } } }`,
+    }),
+  )
 }

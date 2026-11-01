@@ -5,12 +5,15 @@
  *   docker compose up -d && docker compose exec api python -m scripts.seed_demo
  * Luego, desde Frontend/:  npm run e2e
  *
- * El servidor de Vite se levanta solo (o se reutiliza si ya está en el puerto 5173).
+ * Se prueba el build de producción: Playwright lo construye y lo sirve con
+ * `vite preview` en el puerto 4173 (origen permitido por la API de docker compose).
+ * Los scripts de Google y de Cloudflare se reemplazan por dobles en el navegador;
+ * todo lo demás va contra la API real.
  * Con E2E_EVIDENCIAS=<carpeta> se guardan capturas para docs/evidencias.
  */
 import { defineConfig, devices } from '@playwright/test'
 
-const baseURL = process.env.E2E_BASE_URL ?? 'http://localhost:5173'
+const baseURL = process.env.E2E_BASE_URL ?? 'http://localhost:4173'
 
 export default defineConfig({
   testDir: './e2e',
@@ -41,9 +44,17 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run dev -- --port 5173 --strictPort',
+    command:
+      'npx vite build --outDir dist-e2e --emptyOutDir && npx vite preview --outDir dist-e2e --port 4173 --strictPort',
     url: baseURL,
-    reuseExistingServer: true,
-    timeout: 60_000,
+    reuseExistingServer: false,
+    timeout: 120_000,
+    env: {
+      VITE_API_BASE_URL:
+        process.env.E2E_API_URL ?? 'http://localhost:8000/api/v1',
+      VITE_GOOGLE_CLIENT_ID: 'e2e-prueba.apps.googleusercontent.com',
+      // Clave pública de prueba de Cloudflare (siempre aprueba)
+      VITE_TURNSTILE_SITE_KEY: '1x00000000000000000000AA',
+    },
   },
 })

@@ -3,6 +3,7 @@ import { computed, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { isApiError } from '../../api/errors'
+import GoogleSignInButton from '../../components/auth/GoogleSignInButton.vue'
 import AppAlert from '../../components/ui/AppAlert.vue'
 import AppButton from '../../components/ui/AppButton.vue'
 import FormField from '../../components/ui/FormField.vue'
@@ -20,6 +21,11 @@ const form = reactive({ email: '', password: '' })
 const touched = reactive({ email: false, password: false })
 const submitting = ref(false)
 const failure = ref<string | null>(null)
+/** La contraseña era correcta pero el correo aún no se confirmó (403). */
+const unverified = ref(false)
+const googleEnabled = Boolean(
+  String(import.meta.env.VITE_GOOGLE_CLIENT_ID ?? '').trim(),
+)
 
 const NOTICES: Record<string, { tone: 'info' | 'warning'; text: string }> = {
   inactividad: {
@@ -46,15 +52,12 @@ const errors = computed(() => ({
     touched.password && !form.password ? 'Escribe tu contraseña.' : null,
 }))
 
-async function submit() {
-  touched.email = true
-  touched.password = true
+async function enter(attempt: () => Promise<unknown>) {
   failure.value = null
-  if (errors.value.email || errors.value.password) return
-
+  unverified.value = false
   submitting.value = true
   try {
-    await session.login(form.email.trim(), form.password)
+    await attempt()
     const target = safeRedirect(route.query.redirect)
     await router.replace(target ?? homeFor(snapshotOf(session)))
   } catch (error) {
@@ -62,11 +65,24 @@ async function submit() {
     failure.value = isApiError(error)
       ? error.message
       : 'Algo salió mal. Inténtalo de nuevo.'
+    unverified.value = isApiError(error) && error.status === 403
     form.password = ''
     touched.password = false
   } finally {
     submitting.value = false
   }
+}
+
+async function submit() {
+  touched.email = true
+  touched.password = true
+  failure.value = null
+  if (errors.value.email || errors.value.password) return
+  await enter(() => session.login(form.email.trim(), form.password))
+}
+
+function withGoogle(credential: string) {
+  return enter(() => session.loginWithGoogle(credential))
 }
 </script>
 
@@ -83,6 +99,11 @@ async function submit() {
     <AppAlert v-if="notice && !failure" :tone="notice.tone">
       {{ notice.text }}
     </AppAlert>
+
+    <template v-if="googleEnabled">
+      <GoogleSignInButton @credential="withGoogle" />
+      <p class="login__divider"><span>o con tu correo</span></p>
+    </template>
 
     <form class="form-stack" novalidate @submit.prevent="submit">
       <FormField
@@ -117,7 +138,19 @@ async function submit() {
         />
       </FormField>
 
-      <AppAlert v-if="failure" tone="error">{{ failure }}</AppAlert>
+      <AppAlert v-if="failure" tone="error">
+        {{ failure }}
+        <RouterLink
+          v-if="unverified"
+          class="login__resend"
+          :to="{
+            name: 'verificar-correo',
+            query: { correo: form.email.trim() },
+          }"
+        >
+          Enviarme un enlace nuevo
+        </RouterLink>
+      </AppAlert>
 
       <AppButton
         type="submit"
@@ -130,12 +163,15 @@ async function submit() {
       </AppButton>
     </form>
 
-    <p class="login__help">
-      ¿Olvidaste tu contraseña?
-      <span class="text-muted"
-        >Pídele a Administración que te dé una nueva.</span
-      >
-    </p>
+    <div class="login__links">
+      <RouterLink :to="{ name: 'recuperar-contrasena' }">
+        ¿Olvidaste tu contraseña?
+      </RouterLink>
+      <p>
+        ¿Eres parte del equipo y no tienes cuenta?
+        <RouterLink :to="{ name: 'crear-cuenta' }">Créala aquí</RouterLink>
+      </p>
+    </div>
 
     <p class="login__note">
       Usa un equipo de confianza y cierra sesión al terminar. Por tu
@@ -159,7 +195,30 @@ async function submit() {
   font-size: var(--text-lg);
 }
 
-.login__help {
+.login__divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  color: var(--color-text-subtle);
+  font-size: var(--text-sm);
+}
+
+.login__divider::before,
+.login__divider::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--color-border);
+}
+
+.login__resend {
+  display: inline-block;
+  margin-top: var(--space-2);
+  font-weight: 600;
+}
+
+.login__links {
+  display: grid;
+  gap: var(--space-2);
   font-size: var(--text-md);
 }
 
