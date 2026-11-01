@@ -61,6 +61,7 @@ Las migraciones son archivos `migrations/NNN_nombre.sql` que se aplican en orden
 | :--- | :--- |
 | `001_base.sql` | Esquema completo del Sprint 2 (25 tablas con UUID, límites de largo, baja lógica, RLS) y catálogos: roles, permisos y secciones del contenido. **No crea usuarios.** |
 | `002_busqueda_trigram.sql` | Extensión `pg_trgm` (esquema `extensions`) e índices GIN de trigramas para buscar por fragmentos: afiliados por nombre y CI, equipo por nombre y correo, bitácora por actor. |
+| `003_referencia_bancaria_unica.sql` | Índice único parcial: una referencia del extracto confirma un solo aporte, aunque dos personas confirmen a la vez. |
 
 ```bash
 python -m scripts.migrate            # aplica las pendientes
@@ -117,7 +118,7 @@ Con Docker: `docker compose exec api python -m scripts.seed_demo` (o `make seed`
 | Actividades | `GET /schedules?from=&to=&status=&limit=&offset=`, `GET /schedules/{id}`, `POST /schedules`, `PATCH /schedules/{id}`, `POST /schedules/{id}/publish`, `/unpublish`, `/cancel`, `DELETE /schedules/{id}` | Ver: `schedules:manage` o `attendance:write`; editar: `schedules:manage` |
 | Asistencia | `GET /schedules/{id}/attendance?search=`, `PUT /schedules/{id}/attendance/{afiliado}`, `POST .../mark-all-present`, `POST .../close`, `POST .../reopen`, `POST .../newcomers`, `GET /attendance/monthly?month=AAAA-MM&format=json\|csv\|xlsx` | Tomar asistencia: `attendance:write`; reabrir: `schedules:manage`; resumen: `attendance:write` o `schedules:manage` |
 | Inventario | `GET /inventory?search=&origin=&category=&condition=&includeInactive=`, `GET /inventory/summary`, `GET /inventory/export?format=csv\|xlsx`, `GET/POST /inventory`, `GET/PATCH /inventory/{id}`, `GET/POST /inventory/{id}/movements`, `POST /inventory/{id}/deactivate` | `inventory:manage` |
-| Donaciones | `GET /donations?status=&channel=&search=&from=&to=`, `GET /donations/summary?month=`, `GET/PUT /donations/goal`, `GET /donations/{id}`, `POST /donations` (efectivo o especie recibidos en la sede), `POST /donations/{id}/confirm`, `POST /donations/{id}/cancel` | `donations:manage` |
+| Donaciones | `GET /donations?status=&channel=&search=&from=&to=`, `GET /donations/summary?month=&format=json\|csv\|xlsx` (resumen y detalle del mes), `GET/PUT /donations/goal`, `GET /donations/{id}`, `POST /donations` (efectivo o especie recibidos en la sede), `POST /donations/{id}/confirm`, `POST /donations/{id}/cancel` | `donations:manage` |
 | Galería | `GET/POST /media/albums?visibility=`, `GET/PATCH/DELETE /media/albums/{id}`, `POST /media/albums/{id}/upload-signature`, `POST /media/albums/{id}/assets`, `DELETE /media/assets/{id}`, `PUT /media/assets/{id}/tags`, `POST /media/albums/{id}/publish`, `/unpublish` | `media:manage` |
 | Contenido del sitio | `GET /content/sections`, `GET/PUT /content/sections/{clave}`, `POST /content/sections/{clave}/publish`, `PUT /content/social-links` | `content:manage` |
 | Solicitudes | `GET /inquiries?status=&kind=&search=`, `GET /inquiries/summary`, `GET/PATCH /inquiries/{id}`, `POST /inquiries/{id}/notes`, `GET /inquiries/{id}/patient-draft`, `POST /inquiries/{id}/convert-to-patient` | `inquiries:manage`; inscribir exige además `patients:write` |
@@ -188,6 +189,8 @@ Los roles se identifican por su **clave fija** (`admin`, `coordination`, `profes
 
 **Panel.** `GET /dashboard/summary` reúne «Para revisar» (solicitudes nuevas, aportes por confirmar, fichas sin consentimiento y materiales dañados), la próxima actividad con cuántas personas suelen venir y las inscripciones de la última semana, las próximas actividades, la asistencia de los últimos 8 sábados y el total de afiliados activos.
 
+**Respaldos.** `python -m scripts.backup_db` genera un respaldo de la base (esquema `public`) y de los documentos privados, cifrado con la clave pública de la asociación; `.github/workflows/backup.yml` lo corre a diario cuando se activa. Pasos, secretos y restauración: [`docs/despliegue/GUIA_DE_DESPLIEGUE.md`](../docs/despliegue/GUIA_DE_DESPLIEGUE.md), sección 8.
+
 **Aprobar cuentas.** Las cuentas creadas con el registro abierto o con Google nacen sin rol. `GET /users?role=pendiente` las lista y `POST /users/{id}/approve` con `{"role": "reception"}` les asigna un rol; la persona debe haber confirmado su correo. Valores iniciales tomados de la tabla «Qué puede ver cada rol» del diseño.
 
 **Endurecimiento.**
@@ -238,7 +241,7 @@ Backend/
 │       ├── documents/       #   schemas.py  DTOs de entrada y salida
 │       └── audit/           #   models.py   tabla ORM y valores de dominio
 ├── migrations/              # SQL versionado (NNN_nombre.sql)
-├── scripts/                 # migrate, export_openapi, create_admin, seed_demo
+├── scripts/                 # migrate, export_openapi, create_admin, seed_demo, backup_db
 ├── tests/                   # pytest
 ├── Dockerfile               # Etapas dev (docker compose) y runtime (Cloud Run)
 ├── pyproject.toml           # Configuración de Ruff y pytest

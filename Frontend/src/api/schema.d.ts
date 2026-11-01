@@ -396,6 +396,8 @@ export interface paths {
     /**
      * Summary
      * @description Resumen del mes: confirmado por canal, avisos por confirmar, especie y anulados.
+     *
+     *     Con format=csv o xlsx se descarga el resumen y el detalle de cada aporte del mes.
      */
     get: operations['summary_api_v1_donations_summary_get']
     put?: never
@@ -787,7 +789,7 @@ export interface paths {
     post?: never
     /**
      * Delete Album
-     * @description Elimina un álbum que no está publicado.
+     * @description Elimina un álbum que no está publicado (y sus archivos en Cloudinary).
      */
     delete: operations['delete_album_api_v1_media_albums__album_id__delete']
     options?: never
@@ -883,7 +885,10 @@ export interface paths {
     get?: never
     put?: never
     post?: never
-    /** Remove Asset */
+    /**
+     * Remove Asset
+     * @description Quita el archivo del álbum y lo borra de Cloudinary al confirmar.
+     */
     delete: operations['remove_asset_api_v1_media_assets__asset_id__delete']
     options?: never
     head?: never
@@ -4782,6 +4787,7 @@ export interface operations {
     parameters: {
       query?: {
         month?: string | null
+        format?: 'json' | 'csv' | 'xlsx'
       }
       header?: never
       path?: never
@@ -4789,13 +4795,15 @@ export interface operations {
     }
     requestBody?: never
     responses: {
-      /** @description Successful Response */
+      /** @description JSON, o el archivo CSV / Excel con format=csv o format=xlsx */
       200: {
         headers: {
           [name: string]: unknown
         }
         content: {
           'application/json': components['schemas']['DonationSummary']
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': unknown
+          'text/csv; charset=utf-8': unknown
         }
       }
       /** @description Validation Error */

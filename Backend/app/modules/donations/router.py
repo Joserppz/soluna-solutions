@@ -1,7 +1,8 @@
 import datetime as dt
 import uuid
+from typing import Literal
 
-from fastapi import APIRouter, Depends, Query, Request, status
+from fastapi import APIRouter, Depends, Query, Request, Response, status
 
 from app.adapters.turnstile import TurnstileVerifier, get_turnstile
 from app.core import rate_limit
@@ -9,8 +10,10 @@ from app.core.database import DbSession
 from app.core.errors import NotFound
 from app.core.network import client_ip
 from app.core.pagination import Pagination
+from app.core.spreadsheet import CSV_MEDIA_TYPE, XLSX_MEDIA_TYPE
 from app.modules.auth.dependencies import CurrentUser, require_permission
 from app.modules.auth.service import require_human
+from app.modules.donations import export
 from app.modules.donations import repository as donation_repository
 from app.modules.donations import service as donation_service
 from app.modules.donations.models import STATUS_LABELS
@@ -113,14 +116,40 @@ def list_donations(
     return DonationPage.of(result, to_donation_out)
 
 
-@router.get("/summary", response_model=DonationSummary, response_model_by_alias=True)
+@router.get(
+    "/summary",
+    response_model=DonationSummary,
+    response_model_by_alias=True,
+    responses={
+        200: {
+            "content": {CSV_MEDIA_TYPE: {}, XLSX_MEDIA_TYPE: {}},
+            "description": "JSON, o el archivo CSV / Excel con format=csv o format=xlsx",
+        }
+    },
+)
 def summary(
     db: DbSession,
     month: str | None = Query(default=None, pattern=r"^\d{4}-\d{2}$", examples=["2026-10"]),
+    file_format: Literal["json", "csv", "xlsx"] = Query(default="json", alias="format"),
     current: CurrentUser = Depends(managers),
 ):
-    """Resumen del mes: confirmado por canal, avisos por confirmar, especie y anulados."""
-    return DonationSummary(**donation_service.month_summary(db, month))
+    """Resumen del mes: confirmado por canal, avisos por confirmar, especie y anulados.
+
+    Con format=csv o xlsx se descarga el resumen y el detalle de cada aporte del mes.
+    """
+    report, donations = donation_service.month_report(db, month)
+    if file_format == "json":
+        return DonationSummary(**report)
+    if file_format == "csv":
+        content, media = export.to_csv(report, donations), CSV_MEDIA_TYPE
+    else:
+        content, media = export.to_xlsx(report, donations), XLSX_MEDIA_TYPE
+    name = f"donaciones-{report['month']}.{file_format}"
+    return Response(
+        content=content,
+        media_type=media,
+        headers={"Content-Disposition": f'attachment; filename="{name}"'},
+    )
 
 
 def _goal_out(db: DbSession, goal) -> GoalOut:

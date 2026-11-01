@@ -6,12 +6,15 @@ etiquetada carece del permiso de imagen en su ficha. Cualquier cambio en un álb
 publicado (una foto o etiqueta nueva) lo devuelve a revisión.
 """
 
+import logging
 import uuid
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.adapters.cloudinary import MediaSigner
 from app.core import clock
+from app.core.database import after_commit
 from app.core.errors import Conflict, NotFound, ValidationError
 from app.modules.audit import service as audit_service
 from app.modules.auth.dependencies import CurrentUser
@@ -28,7 +31,9 @@ from app.modules.patients.models import Patient
 from app.modules.schedules.service import get_schedule
 
 ALBUM_NOT_FOUND = "Álbum no encontrado."
+logger = logging.getLogger("aspar.media")
 ASSET_NOT_FOUND = "Foto o video no encontrado."
+ASSET_DUPLICATED = "Ese archivo ya está registrado en la galería."
 
 
 def folder(album: MediaAlbum) -> str:
@@ -134,11 +139,30 @@ def update_album(
     return album
 
 
-def delete_album(db: Session, album_id: uuid.UUID, current: CurrentUser) -> None:
+def _destroy_remote(db: Session, assets: list[MediaAsset], signer: MediaSigner | None) -> None:
+    """Borra los archivos en Cloudinary solo si la transacción se confirma.
+
+    Si la base revierte el cambio, los archivos siguen existiendo; si Cloudinary falla,
+    after_commit lo deja en el log (el archivo queda huérfano, pero la galería no se rompe).
+    Solo se borran archivos de la cuenta de ASPAR (los de demostración no se tocan).
+    """
+    remote = [(a.public_id, a.kind) for a in assets if signer is not None and signer.owns(a.url)]
+    if signer is None and assets:
+        logger.warning(
+            "Cloudinary no está configurado: %d archivo(s) quedan en la nube", len(assets)
+        )
+    for public_id, kind in remote:
+        after_commit(db, lambda public_id=public_id, kind=kind: signer.destroy(public_id, kind))
+
+
+def delete_album(
+    db: Session, album_id: uuid.UUID, signer: MediaSigner | None, current: CurrentUser
+) -> None:
     album = get_album(db, album_id)
     if album.visibility == "publico":
         raise Conflict("Un álbum publicado no se elimina: quítalo del sitio primero.")
     _audit(db, current, album, "Eliminación de álbum", "WARNING")
+    _destroy_remote(db, list(album.assets), signer)
     db.delete(album)
     db.flush()
 
@@ -160,7 +184,7 @@ def add_asset(
     if data.size_bytes > limit:
         raise ValidationError(f"El archivo supera el máximo de {limit // (1024 * 1024)} MB.")
     if media_repository.asset_by_public_id(db, data.public_id) is not None:
-        raise Conflict("Ese archivo ya está registrado en la galería.")
+        raise Conflict(ASSET_DUPLICATED)
     asset = MediaAsset(
         album_id=album.id,
         kind=data.kind,
@@ -174,15 +198,23 @@ def add_asset(
         uploaded_at=clock.now(),
     )
     album.assets.append(asset)
+    try:
+        # Dos registros simultáneos del mismo archivo: la restricción única decide (409)
+        db.flush()
+    except IntegrityError as exc:
+        raise Conflict(ASSET_DUPLICATED) from exc
     _back_to_review(db, current, album, "se agregó un archivo")
     db.flush()
     return asset
 
 
-def remove_asset(db: Session, asset_id: uuid.UUID, current: CurrentUser) -> None:
-    """Quita el archivo de la galería (el archivo en Cloudinary se borra desde su panel)."""
+def remove_asset(
+    db: Session, asset_id: uuid.UUID, signer: MediaSigner | None, current: CurrentUser
+) -> None:
+    """Quita el archivo de la galería y, al confirmar, también de Cloudinary."""
     asset = _asset(db, asset_id)
     album = get_album(db, asset.album_id)
+    _destroy_remote(db, [asset], signer)
     album.assets.remove(asset)
     _audit(db, current, album, "Archivo quitado del álbum", extra=f": {asset.public_id}")
     db.flush()

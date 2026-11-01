@@ -11,6 +11,7 @@ import datetime as dt
 import uuid
 from decimal import Decimal
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core import clock
@@ -30,6 +31,7 @@ from app.modules.inventory.schemas import ItemIn
 from app.modules.inventory.service import register_item
 
 NOT_FOUND = "Aporte no encontrado."
+REFERENCE_USED = "Esa referencia del extracto ya confirmó otro aporte: revisa que no sea el mismo."
 ANONYMOUS = "Anónimo"
 
 
@@ -138,9 +140,7 @@ def confirm(
     if credited_on > clock.today():
         raise ValidationError("La fecha de acreditación no puede ser futura.")
     if donation_repository.bank_reference_used(db, reference, donation.id):
-        raise Conflict(
-            "Esa referencia del extracto ya confirmó otro aporte: revisa que no sea el mismo."
-        )
+        raise Conflict(REFERENCE_USED)
     donation.status = "confirmado"
     donation.bank_reference = reference
     donation.credited_on = credited_on
@@ -149,6 +149,12 @@ def confirm(
     if donation.goal_id is None:
         goal = donation_repository.visible_goal(db)
         donation.goal_id = goal.id if goal else None
+    try:
+        # Si otra persona confirmó al mismo tiempo otro aviso con esta referencia, el índice
+        # único de la migración 003 rechaza esta: 409, nunca dos sumas a la meta
+        db.flush()
+    except IntegrityError as exc:
+        raise Conflict(REFERENCE_USED) from exc
     _audit(db, current, donation, "INFO", "Confirmación de aporte", f", extracto {reference}")
     db.flush()
     return donation
@@ -260,7 +266,8 @@ def save_goal(db: Session, data: GoalIn, current: CurrentUser) -> DonationGoal:
     return goal
 
 
-def month_summary(db: Session, month: str | None) -> dict:
+def month_report(db: Session, month: str | None) -> tuple[dict, list[Donation]]:
+    """Resumen del mes y el detalle de sus aportes (para exportarlos)."""
     label, first, last = clock.month_range(month)
     rows = donation_repository.month_rows(db, first, last)
     confirmed = [d for d in rows if d.status == "confirmado"]
@@ -269,7 +276,7 @@ def month_summary(db: Session, month: str | None) -> dict:
         by_channel[donation.channel] = by_channel.get(donation.channel, Decimal(0)) + (
             donation.amount_bs or Decimal(0)
         )
-    return {
+    summary = {
         "month": label,
         "confirmed_bs": float(sum(by_channel.values(), Decimal(0))),
         "confirmed_count": len(confirmed),
@@ -281,3 +288,4 @@ def month_summary(db: Session, month: str | None) -> dict:
             for channel, total in sorted(by_channel.items(), key=lambda item: -item[1])
         ],
     }
+    return summary, rows

@@ -169,42 +169,67 @@ La API exige `email_verified=true` y nunca vincula Google a una cuenta con contr
 
 ## 8. Respaldos y restauración
 
-### Base de datos: `pg_dump` diario
+El respaldo diario lo hace `Backend/scripts/backup_db.py` y lo ejecuta el workflow `.github/workflows/backup.yml`.
 
-- Se hace con un Cloud Run Job (imagen `postgres:16`) programado con Cloud Scheduler a las 03:00 (hora de Bolivia).
-- El job usa `MIGRATION_DATABASE_URL` en modo solo lectura y sube el archivo a un bucket privado.
+- **Qué guarda:** un `pg_dump` del esquema `public` (todas las tablas de ASPAR) y todos los archivos del bucket privado `documentos-pacientes`, más un manifiesto con el SHA-256 de cada archivo.
+- **Cómo lo cifra:** con la **clave pública** de la asociación (RSA de 4096 bits, más una clave Fernet nueva para cada respaldo).
+  - GitHub y el servidor solo pueden cifrar, nunca descifrar.
+  - La clave privada queda fuera de línea, con la dirección del proyecto.
+- **Dónde queda:** como artefacto del workflow, durante 30 días. Lo descarga cualquiera con acceso al repositorio, pero sin la clave privada no se puede leer.
 
-```bash
-gcloud storage buckets create gs://aspar-<entorno>-respaldos --location=southamerica-east1 \
-  --uniform-bucket-level-access --public-access-prevention
-# Borra los respaldos con más de 30 días
-printf '{"rule":[{"action":{"type":"Delete"},"condition":{"age":30}}]}' > ciclo.json
-gcloud storage buckets update gs://aspar-<entorno>-respaldos --lifecycle-file=ciclo.json
-```
+### Una sola vez: claves y usuario de respaldo
 
-Comando del job (formato *custom* de `pg_dump`, comprimido):
+1. **Par de claves.** En una computadora de confianza, desde `Backend/`:
 
-```bash
-pg_dump "$MIGRATION_DATABASE_URL" --format=custom --no-owner --no-privileges \
-  --file=/tmp/aspar-$(date +%F).dump
-```
+   ```bash
+   python -m scripts.backup_db keygen --output claves/
+   ```
 
-Luego se sube a `gs://aspar-<entorno>-respaldos/base/` con `gcloud storage cp` (imagen `google/cloud-sdk` con `postgresql-client`).
+   - Protege la clave privada con una frase.
+   - Guarda `aspar-respaldo-privada.pem` y su frase en dos lugares seguros (por ejemplo, un gestor de contraseñas y un USB en la sede).
+   - **Si se pierde la privada, los respaldos no se pueden recuperar.**
+2. **Usuario de solo lectura.** En Supabase → SQL Editor:
 
-### Documentos privados
+   ```sql
+   create role aspar_backup login password '<contraseña-aleatoria>'
+     nosuperuser nocreatedb nocreaterole bypassrls;
+   grant usage on schema public to aspar_backup;
+   grant select on all tables in schema public to aspar_backup;
+   grant select on all sequences in schema public to aspar_backup;
+   alter default privileges in schema public grant select on tables to aspar_backup;
+   ```
 
-Los respaldos de la base **no** incluyen los archivos de Supabase Storage. El mismo job copia el bucket `documentos-pacientes` a `gs://aspar-<entorno>-respaldos/documentos/` con la API S3 de Supabase Storage (**Project Settings → Storage → S3 access keys**) y `rclone sync`.
+   Necesita `bypassrls` por la misma razón que `aspar_api` (paso 1).
+3. **Secretos en GitHub** (Settings → Secrets and variables → Actions):
+
+   | Secreto | Valor |
+   | :--- | :--- |
+   | `BACKUP_DATABASE_URL` | Session pooler con el usuario `aspar_backup` |
+   | `BACKUP_PUBLIC_KEY` | El **contenido** de `aspar-respaldo-publica.pem` |
+   | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Los del proyecto, para copiar los documentos |
+
+4. **Activar el horario.**
+   - Prueba primero a mano: Actions → «Respaldo diario cifrado» → *Run workflow*.
+   - Cuando funcione, quita el comentario de `schedule` en `.github/workflows/backup.yml`. Queda programado todos los días a las 03:07 de Bolivia.
 
 ### Restaurar
 
 ```bash
-pg_restore --clean --if-exists --no-owner --dbname "$MIGRATION_DATABASE_URL_DESTINO" aspar-AAAA-MM-DD.dump
+# 1. Descifrar (pide la frase de la clave privada)
+python -m scripts.backup_db decrypt aspar-respaldo-AAAA-MM-DD.tar.gz.enc \
+  --private-key claves/aspar-respaldo-privada.pem --output respaldo.tar.gz
+tar -xzf respaldo.tar.gz          # base.dump, documentos/ y manifiesto.json
+
+# 2. En la base de destino (de preferencia staging): la extensión de búsqueda primero
+psql "$DESTINO" -c "create schema if not exists extensions; create extension if not exists pg_trgm with schema extensions;"
+pg_restore --clean --if-exists --no-owner --no-privileges --dbname "$DESTINO" base.dump
 ```
 
-- **Cada mes:** restaura el último respaldo de producción en **staging**, borra o anonimiza los datos de afiliados al terminar, y registra la prueba (fecha, duración y resultado).
+- **Documentos:** se vuelven a subir al bucket desde la carpeta `documentos/`, con la misma ruta.
+- **Cada mes:** restaura el último respaldo en **staging**, revisa el recorrido principal y registra la prueba (fecha, duración y resultado). Al terminar, borra o anonimiza los datos de afiliados de staging.
 - Un respaldo que nunca se restauró no está comprobado.
 
-> Los respaldos tienen datos clínicos (RNF-06). Solo la cuenta de servicio del job y la dirección del proyecto acceden al bucket.
+> Los respaldos tienen datos clínicos (RNF-06). Están cifrados de punta a punta y la clave privada nunca se sube a GitHub ni a la nube.
 
 ## 9. Frontend
 
@@ -222,4 +247,4 @@ pg_restore --clean --if-exists --no-owner --dbname "$MIGRATION_DATABASE_URL_DEST
 - [ ] Nueva revisión de la API desplegada; `GET /api/v1/health/db` responde 200.
 - [ ] Inicio de sesión, `GET /auth/me` y un listado probados en el frontend del entorno.
 - [ ] `/docs` responde 404 (en producción no se publica la documentación interactiva).
-- [ ] Último respaldo diario presente en el bucket.
+- [ ] Último respaldo diario presente en los artefactos del workflow «Respaldo diario cifrado».

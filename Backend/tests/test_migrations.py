@@ -80,7 +80,7 @@ def test_migraciones_crean_las_tablas_del_modelo(migrated_engine):
         "inquiries",
         "inquiry_notes",
     } <= tables
-    assert {"001", "002"} <= set(applied)
+    assert {"001", "002", "003"} <= set(applied)
     assert all(len(checksum) == 64 for checksum in applied.values())
 
 

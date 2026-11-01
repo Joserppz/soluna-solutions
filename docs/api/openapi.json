@@ -7251,7 +7251,7 @@
     },
     "/api/v1/donations/summary": {
       "get": {
-        "description": "Resumen del mes: confirmado por canal, avisos por confirmar, especie y anulados.",
+        "description": "Resumen del mes: confirmado por canal, avisos por confirmar, especie y anulados.\n\nCon format=csv o xlsx se descarga el resumen y el detalle de cada aporte del mes.",
         "operationId": "summary_api_v1_donations_summary_get",
         "parameters": [
           {
@@ -7273,6 +7273,21 @@
               ],
               "title": "Month"
             }
+          },
+          {
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "default": "json",
+              "enum": [
+                "json",
+                "csv",
+                "xlsx"
+              ],
+              "title": "Format",
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -7282,9 +7297,11 @@
                 "schema": {
                   "$ref": "#/components/schemas/DonationSummary"
                 }
-              }
+              },
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
+              "text/csv; charset=utf-8": {}
             },
-            "description": "Successful Response"
+            "description": "JSON, o el archivo CSV / Excel con format=csv o format=xlsx"
           },
           "422": {
             "content": {
@@ -8499,7 +8516,7 @@
     },
     "/api/v1/media/albums/{album_id}": {
       "delete": {
-        "description": "Elimina un álbum que no está publicado.",
+        "description": "Elimina un álbum que no está publicado (y sus archivos en Cloudinary).",
         "operationId": "delete_album_api_v1_media_albums__album_id__delete",
         "parameters": [
           {
@@ -8831,6 +8848,7 @@
     },
     "/api/v1/media/assets/{asset_id}": {
       "delete": {
+        "description": "Quita el archivo del álbum y lo borra de Cloudinary al confirmar.",
         "operationId": "remove_asset_api_v1_media_assets__asset_id__delete",
         "parameters": [
           {

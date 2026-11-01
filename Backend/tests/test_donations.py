@@ -315,3 +315,105 @@ class TestRegistroYMeta:
         assert client.get(URL, headers=auth_headers("volunteer")).status_code == 403
         assert client.get(URL, headers=auth_headers("professional")).status_code == 403
         assert client.get(URL, headers=auth_headers("reception")).status_code == 200
+
+
+class TestExportarResumen:
+    def test_csv_con_resumen_y_detalle(self, client, auth_headers):
+        import csv
+        import io
+
+        month = clock.today().strftime("%Y-%m")
+
+        response = client.get(
+            f"{URL}/summary", params={"month": month, "format": "csv"}, headers=auth_headers()
+        )
+
+        assert response.status_code == 200
+        assert response.headers["content-type"].startswith("text/csv")
+        assert f'filename="donaciones-{month}.csv"' in response.headers["content-disposition"]
+        assert response.content.startswith("﻿".encode())
+        rows = list(csv.reader(io.StringIO(response.content.decode("utf-8-sig")), delimiter=";"))
+        assert rows[0] == ["Resumen del mes"] and rows[2] == ["Mes", month]
+        detail = rows[rows.index(["Aportes del mes"]) + 1 :]
+        assert detail[0][:6] == ["Fecha", "Donante", "Canal", "Monto (Bs.)", "En especie", "Estado"]
+        donors = {row[1] for row in detail[1:]}
+        assert "Anónimo" in donors and "Marcela Quispe" in donors
+
+    def test_excel_con_dos_hojas(self, client, auth_headers):
+        import io
+
+        from openpyxl import load_workbook
+
+        response = client.get(f"{URL}/summary", params={"format": "xlsx"}, headers=auth_headers())
+
+        workbook = load_workbook(io.BytesIO(response.content))
+        assert workbook.sheetnames == ["Resumen", "Aportes"]
+        assert workbook["Aportes"]["A1"].value == "Fecha"
+        assert workbook["Resumen"]["A1"].font.bold
+
+    def test_formato_invalido_y_permisos(self, client, auth_headers):
+        assert (
+            client.get(
+                f"{URL}/summary", params={"format": "pdf"}, headers=auth_headers()
+            ).status_code
+            == 422
+        )
+        assert (
+            client.get(
+                f"{URL}/summary", params={"format": "csv"}, headers=auth_headers("volunteer")
+            ).status_code
+            == 403
+        )
+
+
+class TestReferenciaUnica:
+    def test_confirmacion_simultanea_con_la_misma_referencia_es_409(
+        self, client, auth_headers, db_session, monkeypatch
+    ):
+        from app.modules.donations import repository as donation_repository
+
+        anonymous = db_session.scalar(
+            select(Donation).where(Donation.donor_name.is_(None), Donation.status == "pendiente")
+        )
+        # Simula a otra persona: la revisión previa no ve la otra confirmación (aún sin guardar)
+        monkeypatch.setattr(donation_repository, "bank_reference_used", lambda *args: False)
+
+        response = client.post(
+            f"{URL}/{anonymous.id}/confirm",
+            json={"bankReference": "EXT-20261027-0193", "creditedOn": clock.today().isoformat()},
+            headers=auth_headers("coordination"),
+        )
+
+        assert response.status_code == 409
+        assert "ya confirmó otro aporte" in response.json()["detail"]
+        db_session.expire_all()
+        assert db_session.get(Donation, anonymous.id).status == "pendiente"
+        assert goal(client)["raisedBs"] == 18500
+
+    def test_la_base_rechaza_dos_confirmados_con_la_misma_referencia(self, db_session):
+        from sqlalchemy.exc import IntegrityError
+
+        anonymous = db_session.scalar(
+            select(Donation).where(Donation.donor_name.is_(None), Donation.status == "pendiente")
+        )
+        with (
+            pytest.raises(IntegrityError, match="donations_referencia_extracto_unica"),
+            db_session.begin_nested(),
+        ):
+            anonymous.status = "confirmado"
+            anonymous.bank_reference = "ext-20261027-0193"
+            anonymous.credited_on = clock.today()
+            db_session.flush()
+
+    def test_una_referencia_anulada_no_bloquea(self, client, auth_headers, db_session):
+        cancelled = db_session.scalar(select(Donation).where(Donation.status == "anulado"))
+        cancelled.bank_reference = "REF-REUSABLE"
+        db_session.flush()
+
+        response = client.post(
+            f"{URL}/{pending(db_session).id}/confirm",
+            json={"bankReference": "REF-REUSABLE", "creditedOn": clock.today().isoformat()},
+            headers=auth_headers("coordination"),
+        )
+
+        assert response.status_code == 200

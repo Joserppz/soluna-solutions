@@ -85,4 +85,10 @@ def confirmed_for_goal(db: Session, goal_id: uuid.UUID) -> tuple[Decimal, int]:
 
 
 def month_rows(db: Session, first: dt.date, last: dt.date) -> list[Donation]:
-    return list(db.scalars(select(Donation).where(Donation.date >= first, Donation.date <= last)))
+    return list(
+        db.scalars(
+            select(Donation)
+            .where(Donation.date >= first, Donation.date <= last)
+            .order_by(Donation.date, Donation.created_at, Donation.id)
+        )
+    )

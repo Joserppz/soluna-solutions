@@ -25,13 +25,22 @@ _HIT = text(
 _CLEAN_BUCKET = text("delete from public.rate_limits where bucket = :bucket and expires_at < :now")
 
 
+def _now() -> datetime:
+    """Reloj del limitador (las pruebas lo fijan para no cruzar el cambio de ventana)."""
+    return datetime.now(UTC)
+
+
 def hit(bucket: str, limit: int, window_seconds: int) -> None:
-    """Cuenta un intento en ``bucket`` y lanza 429 si superó ``limit`` en la ventana."""
+    """Cuenta un intento en ``bucket`` y lanza 429 si superó ``limit`` en la ventana.
+
+    Las ventanas son fijas (por ejemplo, de :00 a :15): al empezar una nueva, el
+    conteo vuelve a cero.
+    """
     if not settings.rate_limits_enabled:
         return
     from app.core.database import engine
 
-    now = datetime.now(UTC)
+    now = _now()
     start = datetime.fromtimestamp(int(now.timestamp()) // window_seconds * window_seconds, UTC)
     expires = start + timedelta(seconds=window_seconds)
     with engine.begin() as conn:

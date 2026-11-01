@@ -1,9 +1,12 @@
 """Endurecimiento (S2-S6): límites de peticiones, bitácora agrupada y perímetro HTTP."""
 
+from datetime import UTC, datetime, timedelta
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select, text
 
+from app.core import rate_limit
 from app.core.config import settings
 from app.core.database import escape_like
 from app.models import AuditLog
@@ -12,10 +15,20 @@ from tests.conftest import requires_db
 pytestmark = requires_db
 
 
+# Mitad de la primera ventana de 15 minutos de la hora: ninguna prueba cruza un cambio
+# de ventana (de 15 o de 60 minutos) aunque tarde varios segundos.
+FIXED_NOW = datetime.now(UTC).replace(minute=7, second=30, microsecond=0)
+
+
 @pytest.fixture
 def limits(migrated_engine, monkeypatch):
-    """Activa los límites con la tabla limpia (sus contadores van en su propia transacción)."""
+    """Activa los límites con la tabla limpia (sus contadores van en su propia transacción).
+
+    El reloj del limitador queda fijo: con el reloj real, una prueba que justo cruza las
+    :00, :15, :30 o :45 empieza a contar de nuevo y no llega al 429.
+    """
     monkeypatch.setattr(settings, "rate_limits_enabled", True)
+    monkeypatch.setattr(rate_limit, "_now", lambda: FIXED_NOW)
     with migrated_engine.begin() as conn:
         conn.execute(text("delete from rate_limits"))
     yield
@@ -41,6 +54,16 @@ def test_limite_por_ip_cubre_cuentas_distintas(client, limits):
 
     assert responses[29].status_code == 401
     assert responses[30].status_code == 429
+
+
+def test_el_conteo_vuelve_a_cero_en_la_ventana_siguiente(client, limits, monkeypatch):
+    responses = [bad_login(client) for _ in range(11)]
+    assert responses[10].status_code == 429
+
+    next_window = FIXED_NOW + timedelta(minutes=15)
+    monkeypatch.setattr(rate_limit, "_now", lambda: next_window)
+
+    assert bad_login(client).status_code == 401
 
 
 def test_los_intentos_quedan_contados_aunque_la_peticion_falle(client, limits, migrated_engine):

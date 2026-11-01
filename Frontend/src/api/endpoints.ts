@@ -321,6 +321,12 @@ export function createEndpoints(http: HttpClient) {
         http.get<DonationPage>('/donations', { query }),
       summary: (month?: string) =>
         http.get<DonationSummary>('/donations/summary', { query: { month } }),
+      /** «Descargar resumen del mes»: resumen y detalle de los aportes. */
+      downloadSummary: (format: 'csv' | 'xlsx', month?: string) =>
+        http.get<Blob>('/donations/summary', {
+          query: { month, format },
+          blob: true,
+        }),
       get: (donationId: string) =>
         http.get<DonationOut>(`/donations/${id(donationId)}`),
       /** Aporte recibido en la sede: efectivo o en especie. */

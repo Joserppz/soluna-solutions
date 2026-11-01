@@ -2,7 +2,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, status
 
-from app.adapters.cloudinary import MediaSigner, get_media_signer
+from app.adapters.cloudinary import MediaSigner, get_media_signer, get_optional_media_signer
 from app.core.database import DbSession
 from app.core.schemas import MessageResponse
 from app.modules.auth.dependencies import CurrentUser, require_permission
@@ -124,9 +124,14 @@ def update_album(
 
 
 @router.delete("/albums/{album_id}", response_model=MessageResponse)
-def delete_album(album_id: uuid.UUID, db: DbSession, current: CurrentUser = Depends(managers)):
-    """Elimina un álbum que no está publicado."""
-    media_service.delete_album(db, album_id, current)
+def delete_album(
+    album_id: uuid.UUID,
+    db: DbSession,
+    signer: MediaSigner | None = Depends(get_optional_media_signer),
+    current: CurrentUser = Depends(managers),
+):
+    """Elimina un álbum que no está publicado (y sus archivos en Cloudinary)."""
+    media_service.delete_album(db, album_id, signer, current)
     return MessageResponse(message="Álbum eliminado.")
 
 
@@ -164,8 +169,14 @@ def add_asset(
 
 
 @router.delete("/assets/{asset_id}", response_model=MessageResponse)
-def remove_asset(asset_id: uuid.UUID, db: DbSession, current: CurrentUser = Depends(managers)):
-    media_service.remove_asset(db, asset_id, current)
+def remove_asset(
+    asset_id: uuid.UUID,
+    db: DbSession,
+    signer: MediaSigner | None = Depends(get_optional_media_signer),
+    current: CurrentUser = Depends(managers),
+):
+    """Quita el archivo del álbum y lo borra de Cloudinary al confirmar."""
+    media_service.remove_asset(db, asset_id, signer, current)
     return MessageResponse(message="Archivo quitado del álbum.")
 
 

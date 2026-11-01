@@ -328,6 +328,11 @@ function requestsFor(api: ReturnType<typeof createEndpoints>): Request[] {
       'GET',
       '/donations/summary?month=2026-10',
     ],
+    [
+      () => api.donations.downloadSummary('xlsx', '2026-10'),
+      'GET',
+      '/donations/summary?month=2026-10&format=xlsx',
+    ],
     [() => api.donations.get('d1'), 'GET', '/donations/d1'],
     [
       () =>
