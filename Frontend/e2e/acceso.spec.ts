@@ -151,12 +151,14 @@ test('una persona invitada crea su propia contraseña al primer ingreso', async 
   await expect(page.getByText('Tu contraseña quedó guardada.')).toBeVisible()
   await expect(
     page.getByRole('navigation', { name: 'Secciones' }).getByRole('link'),
+    // Donaciones y Solicitudes pueden llevar la insignia de pendientes, que depende
+    // de los datos de cada base: solo se compara el nombre de la sección
   ).toHaveText([
     'Resumen',
     'Afiliados',
     'Asistencia',
-    'Donaciones',
-    /^Solicitudes/,
+    /^\s*Donaciones/,
+    /^\s*Solicitudes/,
   ])
 })
 

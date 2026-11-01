@@ -47,6 +47,11 @@ function badge(counter?: ReviewCounter): number {
   return counters.value[counter] ?? 0
 }
 
+/** «1 pendiente», «4 pendientes» (lo lee el lector de pantalla). */
+function pendingLabel(count: number): string {
+  return `${count} ${count === 1 ? 'pendiente' : 'pendientes'}`
+}
+
 async function loadCounters() {
   try {
     counters.value = (await api.dashboard.summary()).toReview
@@ -157,7 +162,7 @@ onMounted(loadCounters)
                   {{ badge(section.badge) }}
                 </span>
                 <span class="visually-hidden">
-                  ({{ badge(section.badge) }} pendientes)
+                  ({{ pendingLabel(badge(section.badge)) }})
                 </span>
               </template>
             </RouterLink>

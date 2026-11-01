@@ -176,6 +176,23 @@ describe('Espacio del equipo según el rol', () => {
     expect(wrapper.text()).toContain('Tu rol puede ver historias clínicas')
   })
 
+  it('una sola cosa pendiente se anuncia en singular', async () => {
+    const fake = createApiFake({
+      'GET /auth/me': { body: ADMIN_SESSION },
+      'GET /dashboard/summary': {
+        body: {
+          ...DASHBOARD,
+          toReview: { ...DASHBOARD.toReview, donationsToConfirm: 1 },
+        },
+      },
+    })
+    const { wrapper } = await mountApp('/equipo', fake)
+
+    expect(
+      wrapper.get('a[href="/equipo/donaciones"] .visually-hidden').text(),
+    ).toBe('(1 pendiente)')
+  })
+
   it('Administración se abre con sus subsecciones y migas de pan', async () => {
     const fake = createApiFake({
       'GET /auth/me': { body: ADMIN_SESSION },
