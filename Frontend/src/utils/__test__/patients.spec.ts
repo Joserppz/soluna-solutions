@@ -5,6 +5,11 @@ import {
   activitiesLabel,
   ageOn,
   ciError,
+  clinicalNotice,
+  documentFileError,
+  documentTypeLabel,
+  fileSize,
+  reasonError,
   cleanCi,
   cleanPhone,
   formatCi,
@@ -95,5 +100,52 @@ describe('Paginación', () => {
     expect(rangeLabel(0, 7, 95)).toBe('Mostrando 1–7 de 95')
     expect(rangeLabel(90, 5, 95)).toBe('Mostrando 91–95 de 95')
     expect(rangeLabel(0, 0, 0)).toBe('Sin resultados')
+  })
+})
+
+describe('Ficha: privacidad, documentos y motivos', () => {
+  const ok = { consent: true, accessStatus: 'Activo', clinicalAccess: true }
+
+  it('explica por qué no se ve la historia clínica, en el orden de la API', () => {
+    expect(clinicalNotice(ok, true)).toBeNull()
+    const closed = { ...ok, clinicalAccess: false }
+    expect(clinicalNotice(closed, false)).toContain('Solo el personal clínico')
+    expect(clinicalNotice({ ...closed, consent: false }, true)).toContain(
+      'Falta el consentimiento',
+    )
+    expect(
+      clinicalNotice({ ...closed, accessStatus: 'Revocado' }, true),
+    ).toContain('La familia suspendió el acceso')
+    expect(
+      clinicalNotice({ ...closed, accessStatus: 'Pendiente' }, true),
+    ).toContain('todavía no está habilitado')
+  })
+
+  it('revisa el archivo antes de subirlo', () => {
+    const pdf = (size: number) =>
+      new File([new Uint8Array(size)], 'a.pdf', { type: 'application/pdf' })
+    expect(documentFileError(null)).toContain('Elige el archivo')
+    expect(
+      documentFileError(new File(['x'], 'a.gif', { type: 'image/gif' })),
+    ).toContain('Solo se aceptan')
+    expect(documentFileError(pdf(0))).toBe('El archivo está vacío.')
+    expect(documentFileError(pdf(10 * 1024 * 1024 + 1))).toContain('10 MB')
+    expect(documentFileError(pdf(1024))).toBeNull()
+  })
+
+  it('nombra los documentos y su tamaño como se leen', () => {
+    expect(documentTypeLabel('CI')).toBe('Copia de carnet')
+    expect(documentTypeLabel('Certificado neurológico')).toBe(
+      'Certificado neurológico',
+    )
+    expect(fileSize(200)).toBe('1 KB')
+    expect(fileSize(250_000)).toBe('244 KB')
+    expect(fileSize(1_300_000)).toBe('1,2 MB')
+  })
+
+  it('pide un motivo de 3 a 300 letras', () => {
+    expect(reasonError('  ')).toContain('al menos 3 letras')
+    expect(reasonError('x'.repeat(301))).toContain('300')
+    expect(reasonError(' Se mudó ')).toBeNull()
   })
 })

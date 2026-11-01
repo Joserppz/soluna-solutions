@@ -69,6 +69,8 @@ El proceso **actual** sale del análisis AS-IS de la entrevista con ASPAR (`docs
 
 ## 2. Proceso 2: Afiliación de Paciente, Consentimiento Informado y Anamnesis Digital (RF-02, RNF-06)
 
+> Pantallas del Sprint 1. Desde el bloque F2 del Sprint 2 el alta es «+ Registrar afiliado» en `/equipo/afiliados` y el consentimiento, la historia clínica y las evaluaciones están en la ficha `/equipo/afiliados/:id`. Ver [`EVIDENCIAS_FRONTEND_F2.md`](../evidencias/EVIDENCIAS_FRONTEND_F2.md).
+
 | Paso BPMN | Actor / Rol | Acción del Usuario en la Interfaz Vue 3 | Ruta / Componente | Respuesta Visual y Validación del Sistema |
 | :--- | :--- | :--- | :--- | :--- |
 | **2.1 Registro de filiación** | Recepción / Profesional / Admin | Completa nombre, CI (5-10 dígitos), teléfono (7-12 dígitos), dirección y datos del familiar/cuidador. | `/pacientes` (`PatientsView.vue`) o `/pacientes/nuevo` | Si la CI ya existe o algún campo incumple formato, muestra alerta `role="alert"` sin perder los datos ingresados. |

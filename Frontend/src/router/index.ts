@@ -118,7 +118,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'afiliados/:id',
         name: 'afiliado',
-        component: preparingView,
+        component: () => import('../views/team/patients/PatientRecordView.vue'),
         meta: {
           access: 'team',
           permissions: ['patients:read'],

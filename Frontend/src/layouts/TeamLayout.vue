@@ -7,6 +7,7 @@ import AsparBrand from '../components/AsparBrand.vue'
 import SessionTimeoutDialog from '../components/session/SessionTimeoutDialog.vue'
 import { useApi } from '../composables/useApi'
 import { useIdleSession } from '../composables/useIdleSession'
+import { pageCrumb } from '../composables/usePageCrumb'
 import { useToast } from '../composables/useToast'
 import {
   ADMIN_GROUP_TITLE,
@@ -37,7 +38,10 @@ const adminSections = computed(() =>
 const inAdmin = computed(() =>
   adminSections.value.some((section) => section.name === route.name),
 )
-const breadcrumb = computed(() => route.meta.breadcrumb ?? [])
+const breadcrumb = computed(() => {
+  const crumbs = route.meta.breadcrumb ?? []
+  return pageCrumb.value ? [...crumbs.slice(0, -1), pageCrumb.value] : crumbs
+})
 const idleMinutes = computed(() =>
   Math.round((session.state.idleTimeout ?? 900) / 60),
 )

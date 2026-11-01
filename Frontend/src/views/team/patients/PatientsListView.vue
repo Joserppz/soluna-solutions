@@ -27,6 +27,7 @@ import InitialsAvatar from '../../../components/ui/InitialsAvatar.vue'
 import PageHeader from '../../../components/ui/PageHeader.vue'
 import StatusBadge from '../../../components/ui/StatusBadge.vue'
 import { useApi } from '../../../composables/useApi'
+import { rememberPatientsList } from '../../../composables/usePatientsListLocation'
 import { useToast } from '../../../composables/useToast'
 import {
   activitiesLabel,
@@ -179,7 +180,9 @@ function syncQuery() {
   if (activity.value) query.actividad = activity.value
   if (order.value !== 'name') query.orden = keyOf(ORDERS, order.value)
   if (page.value > 1) query.pagina = String(page.value)
-  void router.replace({ query })
+  void router
+    .replace({ query })
+    .then(() => rememberPatientsList(route.fullPath))
 }
 
 function refresh() {
@@ -235,6 +238,7 @@ function contactLabel(row: PatientSummary): string | null {
     : null
 }
 
+rememberPatientsList(route.fullPath)
 void load()
 </script>
 

@@ -146,10 +146,13 @@ onBeforeUnmount(() => {
   backdrop-filter: blur(2px);
 }
 
+/* Encabezado y botones siempre a la vista: solo se desplaza el contenido */
 .modal {
+  display: flex;
+  flex-direction: column;
   width: 100%;
-  max-height: calc(100vh - 2 * var(--space-4));
-  overflow: auto;
+  max-height: calc(100dvh - 2 * var(--space-4));
+  overflow: hidden;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
@@ -173,6 +176,7 @@ onBeforeUnmount(() => {
 }
 
 .modal__header {
+  flex: none;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -211,10 +215,14 @@ onBeforeUnmount(() => {
 }
 
 .modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
   padding: var(--space-4) var(--space-6);
 }
 
 .modal__actions {
+  flex: none;
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
@@ -250,7 +258,7 @@ onBeforeUnmount(() => {
 
   .modal {
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    max-height: 92vh;
+    max-height: 92dvh;
   }
 }
 </style>

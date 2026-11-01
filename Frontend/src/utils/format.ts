@@ -83,3 +83,54 @@ export function monthYear(value: string | Date): string {
   const part = (type: string) => parts.find((p) => p.type === type)?.value
   return `${part('month')} ${part('year')}`
 }
+
+const longDayFormat = new Intl.DateTimeFormat('es-BO', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: BOLIVIA_TIME_ZONE,
+})
+const shortDayFormat = new Intl.DateTimeFormat('es-BO', {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+  timeZone: BOLIVIA_TIME_ZONE,
+})
+const timeFormat = new Intl.DateTimeFormat('es-BO', {
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+  timeZone: BOLIVIA_TIME_ZONE,
+})
+
+/** Un día del calendario («2024-03-18») o un instante, en hora de La Paz. */
+function toDate(value: string): Date {
+  // Mediodía en La Paz: el día no cambia por la zona horaria
+  return /^\d{4}-\d{2}-\d{2}$/.test(value)
+    ? new Date(`${value}T12:00:00-04:00`)
+    : new Date(value)
+}
+
+/** «18 de marzo de 2024» */
+export function longDay(value: string): string {
+  return longDayFormat.format(toDate(value))
+}
+
+/** «14 oct 2026» */
+export function shortDay(value: string): string {
+  return shortDayFormat
+    .format(toDate(value))
+    .replace(/\./g, '')
+    .replace(/ de /g, ' ')
+}
+
+/** «hoy a las 09:58», «ayer a las 18:20» o «14 oct 2026 a las 09:58» */
+export function whenLabel(value: string, now: Date = new Date()): string {
+  const day = todayIso(new Date(value))
+  const today = todayIso(now)
+  const yesterday = todayIso(new Date(now.getTime() - 86_400_000))
+  const time = timeFormat.format(new Date(value))
+  if (day === today) return `hoy a las ${time}`
+  if (day === yesterday) return `ayer a las ${time}`
+  return `${shortDay(value)} a las ${time}`
+}

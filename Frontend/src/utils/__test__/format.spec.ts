@@ -5,8 +5,11 @@ import {
   greeting,
   initials,
   longDate,
+  longDay,
   monthYear,
+  shortDay,
   todayIso,
+  whenLabel,
 } from '../format'
 
 describe('Formatos de ASPAR', () => {
@@ -42,5 +45,21 @@ describe('Formatos de ASPAR', () => {
     expect(todayIso(new Date('2026-11-01T03:30:00Z'))).toBe('2026-10-31')
     expect(monthYear('2026-11-01T03:30:00Z')).toBe('octubre 2026')
     expect(monthYear(new Date('2024-03-18T14:00:00Z'))).toBe('marzo 2024')
+  })
+
+  it('escribe días del calendario sin correrse por la zona horaria', () => {
+    expect(longDay('2024-03-18')).toBe('18 de marzo de 2024')
+    expect(shortDay('2026-10-14')).toBe('14 oct 2026')
+    // 02:00 UTC del 15 = 22:00 del 14 en La Paz
+    expect(shortDay('2026-10-15T02:00:00Z')).toBe('14 oct 2026')
+  })
+
+  it('dice cuándo fue el último cambio', () => {
+    const now = new Date('2026-10-28T20:00:00Z') // 16:00 en La Paz
+    expect(whenLabel('2026-10-28T13:58:00Z', now)).toBe('hoy a las 09:58')
+    expect(whenLabel('2026-10-27T22:20:00Z', now)).toBe('ayer a las 18:20')
+    expect(whenLabel('2026-10-14T13:58:00Z', now)).toBe(
+      '14 oct 2026 a las 09:58',
+    )
   })
 })

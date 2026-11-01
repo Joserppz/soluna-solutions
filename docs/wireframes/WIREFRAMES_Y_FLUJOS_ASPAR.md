@@ -44,6 +44,8 @@ Se contrastó cada campo de los formularios (`v-model` de las vistas Vue) con su
 
 ### 3.2 Pacientes (`PatientsView.vue`, `RegisterPatientView.vue`)
 
+> Revisión del Sprint 1. Desde el bloque F2 del Sprint 2 estas pantallas son el listado `/equipo/afiliados` y la ficha `/equipo/afiliados/:id`, conectadas a la API. Ver [`EVIDENCIAS_FRONTEND_F2.md`](../evidencias/EVIDENCIAS_FRONTEND_F2.md).
+
 | Campo del formulario | Columna `patients` | Restricción del modelo | Quién puede editarlo | Mensaje del Backend (igual al del frontend) |
 | :--- | :--- | :--- | :--- | :--- |
 | `name` | `name` | `NOT NULL`, ≥ 3 caracteres | Editores | `El nombre completo debe tener al menos 3 caracteres.` |

@@ -134,15 +134,17 @@ try {
 
 El diseño sigue `ASPAR_diseno_completo.pdf`: paleta oficial (Verde ASPAR `#073930`, Guindo `#6D1619`, Rojo `#AB1A1C`, Rosa suave `#F6E7E3`, Crema `#F5F1EA`), Lora para titulares y Source Sans 3 para la interfaz (servidas desde el propio sitio). Todo color, sombra y espacio sale de `src/styles/tokens.css`.
 
-| Ruta                                           | Pantalla                                           | Acceso                     |
-| :--------------------------------------------- | :------------------------------------------------- | :------------------------- |
-| `/`                                            | Sitio público (portada actual; se rehace en F5b)   | Todos                      |
-| `/ingresar`                                    | Acceso del equipo: correo y contraseña o Google    | Sin sesión                 |
-| `/crear-cuenta`, `/recuperar-contrasena`       | Registro y recuperación, con Turnstile             | Sin sesión                 |
-| `/verificar-correo`, `/restablecer-contrasena` | Enlaces de los correos                             | Todos                      |
-| `/cambiar-contrasena`                          | Contraseña propia (obligatoria con la temporal)    | Con sesión                 |
-| `/cuenta-pendiente`                            | Espera de la aprobación de Administración          | Cuenta sin rol             |
-| `/equipo` y `/equipo/*`                        | Espacio del equipo: resumen y una ruta por sección | Según los permisos del rol |
+| Ruta                                           | Pantalla                                                              | Acceso                                     |
+| :--------------------------------------------- | :-------------------------------------------------------------------- | :----------------------------------------- |
+| `/`                                            | Sitio público (portada actual; se rehace en F5b)                      | Todos                                      |
+| `/ingresar`                                    | Acceso del equipo: correo y contraseña o Google                       | Sin sesión                                 |
+| `/crear-cuenta`, `/recuperar-contrasena`       | Registro y recuperación, con Turnstile                                | Sin sesión                                 |
+| `/verificar-correo`, `/restablecer-contrasena` | Enlaces de los correos                                                | Todos                                      |
+| `/cambiar-contrasena`                          | Contraseña propia (obligatoria con la temporal)                       | Con sesión                                 |
+| `/cuenta-pendiente`                            | Espera de la aprobación de Administración                             | Cuenta sin rol                             |
+| `/equipo` y `/equipo/*`                        | Espacio del equipo: resumen y una ruta por sección                    | Según los permisos del rol                 |
+| `/equipo/afiliados`                            | Listado con pestañas, filtros, páginas y alta                         | `patients:read`                            |
+| `/equipo/afiliados/:id`                        | Ficha: datos, historia clínica, evaluaciones, asistencia y documentos | `patients:read` (lo clínico, según RNF-06) |
 
 ```text
 Frontend/
@@ -154,14 +156,15 @@ Frontend/
 │   ├── components/
 │   │   ├── ui/                  # Botón, modal, aviso, insignia, tabla, esqueleto, campos, toasts
 │   │   ├── auth/                # Turnstile, Google, reglas de contraseña, formulario de correo
+│   │   ├── patients/            # Alta de afiliados, campos de contacto y pestañas de la ficha (record/)
 │   │   └── session/             # Aviso de inactividad
-│   ├── composables/             # useApi, useToast, useIdleSession
+│   ├── composables/             # useApi, useToast, useIdleSession, usePageCrumb
 │   ├── layouts/                 # TeamLayout (barra lateral), AuthLayout (acceso), PublicLayout
 │   ├── router/                  # Rutas, secciones del equipo y reglas de acceso (guards.ts)
-│   ├── utils/                   # Fechas en hora de Bolivia, validaciones, carga de scripts
+│   ├── utils/                   # Fechas en hora de Bolivia, validaciones, afiliados, paginación
 │   ├── views/
 │   │   ├── auth/                # Ingreso, registro, correo, contraseñas, cuenta pendiente
-│   │   ├── team/                # Resumen y secciones en preparación
+│   │   ├── team/                # Resumen, afiliados (patients/) y secciones en preparación
 │   │   └── *.vue                # Pantallas antiguas (modo demo), sin ruta: se reemplazan bloque a bloque
 │   └── services/, types/        # Capa antigua del modo demo; se elimina en F6
 └── src/**/__test__/             # Pruebas de Vitest junto a cada parte
@@ -169,4 +172,6 @@ Frontend/
 
 **Sesión:** la cookie HttpOnly y el token CSRF los maneja `src/api`. `useIdleSession` avisa a los 13 minutos sin uso («¿Sigues ahí?»), renueva la sesión mientras la persona trabaja y la cierra a los 15. La actividad se comparte entre pestañas.
 
-**Secciones en preparación:** las pantallas que aún no se conectan a la API muestran «Estamos preparando esta sección» en lugar de datos de ejemplo. Cada bloque (F2 a F6) las reemplaza por la vista real.
+**Secciones en preparación:** las pantallas que aún no se conectan a la API muestran «Estamos preparando esta sección» en lugar de datos de ejemplo. Cada bloque las reemplaza por la vista real; F2 ya conectó Afiliados.
+
+**Afiliados (F2):** pestaña, búsqueda, filtro, orden y página quedan en la dirección (`?pestana=activos&buscar=…&pagina=2`), así «‹ Afiliados» desde una ficha vuelve al mismo lugar. La ficha guarda los datos personales y el consentimiento con «Guardar ficha»; cada familiar, evaluación o documento se guarda al momento. Lo clínico (historia, evaluaciones y documentos) solo aparece si la API lo envía: si no, la ficha explica el motivo real (rol, consentimiento o acceso suspendido). Las tablas pasan a tarjetas según su propio ancho, para que nunca haya desplazamiento lateral.

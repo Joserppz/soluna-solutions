@@ -223,7 +223,7 @@ Todos los listados que pueden crecer (afiliados, equipo, bitácora, inventario, 
 | Sesión, cookies, CSRF e inactividad | `test_sessions.py`, `test_hardening.py` | `src/api/__test__/client.spec.ts`, `src/composables/__test__/useIdleSession.spec.ts` |
 | Permisos | `test_permissions.py`, `test_roles.py` | `session.spec.ts` (`can`, `canAny`), `src/router/__test__/guards.spec.ts` |
 | Paginación | `test_pagination.py` | `endpoints.spec.ts` |
-| Afiliados y RNF-06 | `test_patients_api.py`, `test_patient_model.py`, `test_patient_privacy.py`, `test_contacts_evaluations.py`, `test_storage_adapter.py` | `PatientsView.spec.ts` (modo demo) |
+| Afiliados y RNF-06 | `test_patients_api.py`, `test_patients_listing.py`, `test_patient_model.py`, `test_patient_privacy.py`, `test_contacts_evaluations.py`, `test_storage_adapter.py` | `src/__test__/afiliados.spec.ts`, `src/__test__/fichaAfiliado.spec.ts`, E2E `e2e/afiliados.spec.ts` y `e2e/ficha-afiliado.spec.ts` |
 | Contrato completo | `test_openapi.py`, `scripts.export_openapi --check`, `test_core.py` (todo error es `{detail: texto}`) | `npm run api:types:check`, `endpoints.spec.ts` (todas las operaciones cubiertas) |
 
 ## 6. Integración en el Frontend
