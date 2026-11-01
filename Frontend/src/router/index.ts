@@ -20,7 +20,16 @@ declare module 'vue-router' {
     /** Migas de pan después de «Espacio del equipo». */
     breadcrumb?: string[]
     description?: string
+    /** Sección del menú que queda marcada (páginas internas, como una ficha). */
+    section?: string
   }
+}
+
+const preparingView = () => import('../views/team/SectionPreparingView.vue')
+
+/** Vista de cada sección ya conectada a la API; el resto muestra el aviso. */
+const SECTION_VIEWS: Partial<Record<string, RouteRecordRaw['component']>> = {
+  afiliados: () => import('../views/team/patients/PatientsListView.vue'),
 }
 
 export const routes: RouteRecordRaw[] = [
@@ -95,7 +104,7 @@ export const routes: RouteRecordRaw[] = [
       ...TEAM_SECTIONS.map((section): RouteRecordRaw => ({
         path: section.path,
         name: section.name,
-        component: () => import('../views/team/SectionPreparingView.vue'),
+        component: SECTION_VIEWS[section.name] ?? preparingView,
         meta: {
           access: 'team',
           permissions: section.permissions,
@@ -106,6 +115,19 @@ export const routes: RouteRecordRaw[] = [
             : [section.title],
         },
       })),
+      {
+        path: 'afiliados/:id',
+        name: 'afiliado',
+        component: preparingView,
+        meta: {
+          access: 'team',
+          permissions: ['patients:read'],
+          title: 'Ficha del afiliado',
+          description: 'Datos, familiares, historia clínica y asistencia.',
+          breadcrumb: ['Afiliados', 'Ficha'],
+          section: 'afiliados',
+        },
+      },
     ],
   },
   {

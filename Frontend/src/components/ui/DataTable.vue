@@ -94,6 +94,8 @@ defineSlots<
 .table-wrap {
   width: 100%;
   overflow-x: auto;
+  /* Las filas se vuelven tarjetas según el ancho de la tabla, no de la pantalla */
+  container-type: inline-size;
 }
 
 .table {
@@ -143,8 +145,9 @@ tbody tr:not(.is-skeleton):hover {
   color: var(--color-text-muted);
 }
 
-/* En el celular cada fila se vuelve una tarjeta */
-@media (max-width: 640px) {
+/* Si la tabla no entra a lo ancho (celular, tableta o menú abierto), cada fila se
+   vuelve una tarjeta: nunca aparece una barra de desplazamiento horizontal */
+@container (max-width: 50rem) {
   .table thead {
     position: absolute;
     width: 1px;

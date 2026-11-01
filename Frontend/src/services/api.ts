@@ -5,10 +5,8 @@
 
 import type {
   AuditEvent,
-  ClinicalAnamnesis,
   LoginRequestDto,
   LoginResponseDto,
-  Patient,
   RefreshResponseDto,
   Session,
   User,
@@ -108,29 +106,6 @@ export const asparApiClient = {
   logout(): Promise<{ message: string }> {
     return apiRequest<{ message: string }>('/auth/logout', {
       method: 'POST',
-    })
-  },
-
-  fetchPatients(): Promise<Patient[]> {
-    return apiRequest<Patient[]>('/patients', { method: 'GET' })
-  },
-
-  createPatient(payload: Omit<Patient, 'id'>): Promise<Patient> {
-    return apiRequest<Patient>('/patients', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    })
-  },
-
-  patchPatient(
-    id: string,
-    changes: Partial<Omit<Patient, 'id' | 'anamnesis'>> & {
-      anamnesis?: Partial<ClinicalAnamnesis>
-    },
-  ): Promise<Patient> {
-    return apiRequest<Patient>(`/patients/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify(changes),
     })
   },
 

@@ -13,6 +13,7 @@ export const ADMIN_CSRF = 'e2e-resultados/.csrf-administracion.txt'
 export const ACCOUNTS = {
   admin: { email: 'admin@aspar.org', password: 'Admin2026!' },
   volunteer: { email: 'voluntario@aspar.org', password: 'Voluntario2026!' },
+  reception: { email: 'recepcion@aspar.org', password: 'Recep2026!' },
   pending: { email: 'pendiente@aspar.org', password: 'Pendiente2026!' },
 }
 
@@ -28,6 +29,7 @@ export async function adminApi() {
   const context = await request.newContext({ storageState: ADMIN_STATE })
   const csrfToken = readFileSync(ADMIN_CSRF, 'utf8')
   return {
+    get: (path: string) => context.get(`${API_URL}${path}`),
     post: (path: string, data: unknown) =>
       context.post(`${API_URL}${path}`, {
         data,

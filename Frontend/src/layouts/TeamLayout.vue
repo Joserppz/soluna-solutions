@@ -154,6 +154,7 @@ onMounted(loadCounters)
             <RouterLink
               :to="{ name: section.name }"
               class="nav-item"
+              :class="{ 'is-active': route.meta.section === section.name }"
               active-class="is-active"
             >
               <span>{{ section.title }}</span>
@@ -517,6 +518,35 @@ onMounted(loadCounters)
 }
 
 /* Tabletas y celulares: el menú se abre como panel lateral */
+/* Ventanas bajas (1366×768): el menú entra completo y no tiene su propia barra */
+@media (min-width: 1024px) and (max-height: 860px) {
+  .sidebar {
+    gap: var(--space-3);
+    padding-block: var(--space-4);
+  }
+
+  .sidebar ul {
+    gap: 2px;
+  }
+
+  .nav-item {
+    min-height: 2.3rem;
+    font-size: var(--text-md);
+  }
+
+  .nav-item--sub {
+    min-height: 2.1rem;
+  }
+
+  .nav-link {
+    padding-block: var(--space-1);
+  }
+
+  .sidebar__user {
+    padding: var(--space-3);
+  }
+}
+
 @media (max-width: 1023px) {
   .team {
     grid-template-columns: minmax(0, 1fr);

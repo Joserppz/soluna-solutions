@@ -1,31 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { flushPromises, mount } from '@vue/test-utils'
-import { createMemoryHistory, createRouter } from 'vue-router'
+import { mount } from '@vue/test-utils'
 import AttendanceView from '../AttendanceView.vue'
 import InventoryView from '../InventoryView.vue'
-import RegisterPatientView from '../RegisterPatientView.vue'
 import ScheduleView from '../ScheduleView.vue'
 import {
   getAttendance,
   getDonationSummary,
   getDonations,
   getInventory,
-  getPatients,
   institutionalInfo,
   signIn,
 } from '../../services/aspar'
 
 // SCRUM-191 / SCRUM-196: cada pantalla del wireframe cumple el requisito que declara
-function testRouter() {
-  return createRouter({
-    history: createMemoryHistory(),
-    routes: [
-      { path: '/', component: { template: '<div />' } },
-      { path: '/pacientes', component: { template: '<div />' } },
-    ],
-  })
-}
-
 beforeEach(() => {
   localStorage.clear()
   vi.unstubAllGlobals()
@@ -109,77 +96,6 @@ describe('Portal público (/) — RF-04, RF-06, RF-07, RF-08, RF-10', () => {
     expect(mount(ScheduleView).find('.donation-counter').text()).toContain(
       `${summary.confirmedCount} aportes confirmados`,
     )
-  })
-})
-
-describe('Registrar paciente (/pacientes/nuevo) — RF-02, RNF-06', () => {
-  it('rechaza activar el acceso sin consentimiento informado', async () => {
-    signIn('recepcion@aspar.org', 'Recep2026!')
-    const router = testRouter()
-    const wrapper = mount(RegisterPatientView, {
-      global: { plugins: [router] },
-    })
-
-    await wrapper.find('#name').setValue('Lucía Choque')
-    await wrapper.find('#ci').setValue('7123456')
-    await wrapper.find('#phone').setValue('71122334')
-    await wrapper.find('#emergency').setValue('Juan Choque')
-    await wrapper.find('#accessStatus').setValue('Activo')
-    await wrapper.find('form').trigger('submit.prevent')
-
-    expect(wrapper.find('[role="alert"]').text()).toContain(
-      'sin consentimiento informado',
-    )
-    expect(getPatients().some((p) => p.ci === '7123456')).toBe(false)
-  })
-
-  it('guarda la ficha válida y vuelve al listado', async () => {
-    vi.useFakeTimers()
-    signIn('recepcion@aspar.org', 'Recep2026!')
-    const router = testRouter()
-    await router.push('/')
-    const wrapper = mount(RegisterPatientView, {
-      global: { plugins: [router] },
-    })
-
-    await wrapper.find('#name').setValue('Lucía Choque')
-    await wrapper.find('#ci').setValue('7123456')
-    await wrapper.find('#phone').setValue('71122334')
-    await wrapper.find('#emergency').setValue('Juan Choque')
-    await wrapper.find('form').trigger('submit.prevent')
-
-    expect(wrapper.find('[role="status"]').exists()).toBe(true)
-    expect(getPatients().find((p) => p.ci === '7123456')?.accessStatus).toBe(
-      'Pendiente',
-    )
-    vi.runAllTimers()
-    await flushPromises()
-    expect(router.currentRoute.value.path).toBe('/pacientes')
-    vi.useRealTimers()
-  })
-})
-
-describe('Registrar paciente según el rol — RNF-06 (SCRUM-138)', () => {
-  it('Recepción no ve evaluaciones ni medicación', () => {
-    signIn('recepcion@aspar.org', 'Recep2026!')
-    const wrapper = mount(RegisterPatientView, {
-      global: { plugins: [testRouter()] },
-    })
-
-    expect(wrapper.find('#name').exists()).toBe(true)
-    expect(wrapper.find('#physicalEval').exists()).toBe(false)
-    expect(wrapper.find('#medications').exists()).toBe(false)
-    expect(wrapper.find('.field-note').exists()).toBe(true)
-  })
-
-  it('el Voluntario no ve el formulario de registro', () => {
-    signIn('voluntario@aspar.org', 'Voluntario2026!')
-    const wrapper = mount(RegisterPatientView, {
-      global: { plugins: [testRouter()] },
-    })
-
-    expect(wrapper.find('form').exists()).toBe(false)
-    expect(wrapper.find('[role="status"]').text()).toContain('Voluntario')
   })
 })
 

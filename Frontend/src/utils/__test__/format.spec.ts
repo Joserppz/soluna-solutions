@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
-import { firstName, greeting, initials, longDate } from '../format'
+import {
+  firstName,
+  greeting,
+  initials,
+  longDate,
+  monthYear,
+  todayIso,
+} from '../format'
 
 describe('Formatos de ASPAR', () => {
   it('muestra la fecha larga en hora de Bolivia, con mayúscula inicial', () => {
@@ -28,5 +35,12 @@ describe('Formatos de ASPAR', () => {
     expect(initials('Lucía Choque (demo)')).toBe('LC')
     expect(initials('Lic. Ana María Flores')).toBe('AF')
     expect(initials('Rosa')).toBe('R')
+  })
+
+  it('da la fecha de hoy y el mes en hora de La Paz', () => {
+    // 03:30 UTC del 1 de noviembre = 23:30 del 31 de octubre en La Paz
+    expect(todayIso(new Date('2026-11-01T03:30:00Z'))).toBe('2026-10-31')
+    expect(monthYear('2026-11-01T03:30:00Z')).toBe('octubre 2026')
+    expect(monthYear(new Date('2024-03-18T14:00:00Z'))).toBe('marzo 2024')
   })
 })

@@ -58,3 +58,28 @@ export function initials(fullName: string): string {
     .join('')
     .slice(0, 2)
 }
+
+const isoDayFormat = new Intl.DateTimeFormat('en-CA', {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  timeZone: BOLIVIA_TIME_ZONE,
+})
+
+/** Fecha de hoy en La Paz como «2026-10-28» (valor de un <input type="date">). */
+export function todayIso(date: Date = new Date()): string {
+  return isoDayFormat.format(date)
+}
+
+const monthYearFormat = new Intl.DateTimeFormat('es-BO', {
+  month: 'long',
+  year: 'numeric',
+  timeZone: BOLIVIA_TIME_ZONE,
+})
+
+/** «2024-03-18T14:00:00Z» → «marzo 2024» */
+export function monthYear(value: string | Date): string {
+  const parts = monthYearFormat.formatToParts(new Date(value))
+  const part = (type: string) => parts.find((p) => p.type === type)?.value
+  return `${part('month')} ${part('year')}`
+}
