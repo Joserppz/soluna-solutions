@@ -44,8 +44,9 @@ services:
       MIGRATION_DATABASE_URL: postgresql://aspar:aspar_local@db:5432/aspar
       TEST_DATABASE_URL: postgresql://aspar:aspar_local@db:5432/aspar_test
       JWT_SECRET: solo-desarrollo-local-no-usar-en-produccion-aspar
-      # 5173: el frontend. 8000: Swagger (/docs), para poder iniciar sesión desde ahí
-      CORS_ORIGINS: http://localhost:5173,http://localhost:8000
+      # 5173: el frontend. 4173: el build de vista previa (pruebas E2E).
+      # 8000: Swagger (/docs), para poder iniciar sesión desde ahí
+      CORS_ORIGINS: http://localhost:5173,http://localhost:4173,http://localhost:8000
       # En tu PC la API va por http: las cookies no pueden ser Secure
       COOKIE_SECURE: "false"
     ports:

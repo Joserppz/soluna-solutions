@@ -87,7 +87,7 @@ Contrato vigente entre el **Backend FastAPI** (`Backend/app/modules/*/router.py`
 
 | Código | Cuándo | `detail` |
 | :--- | :--- | :--- |
-| `401` | Correo inexistente, contraseña incorrecta, cuenta inactiva o bloqueada (mismo mensaje para todo) | `Correo o contraseña incorrectos. Tras 5 intentos fallidos el acceso se bloquea 15 minutos.` |
+| `401` | Correo inexistente, contraseña incorrecta, cuenta inactiva o bloqueada (mismo mensaje para todo) | `No pudimos iniciar sesión. Revisa tu correo y contraseña e inténtalo de nuevo. Tras 5 intentos fallidos el acceso se pausa 15 minutos.` |
 | `401` | Sin cookie | `Inicia sesión para continuar.` |
 | `401` | Token alterado, vencido, revocado o con más de 8 h | `Sesión inválida o expirada. Inicia sesión nuevamente.` |
 | `401` | 15 min sin actividad | `La sesión expiró por inactividad (15 minutos). Inicia sesión nuevamente.` |

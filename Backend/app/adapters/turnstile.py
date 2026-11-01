@@ -1,14 +1,17 @@
 """Cloudflare Turnstile: verifica que un formulario público lo envió una persona.
 
 En desarrollo se usa la clave secreta de prueba de Cloudflare, que siempre aprueba
-(https://developers.cloudflare.com/turnstile/troubleshooting/testing/).
+(https://developers.cloudflare.com/turnstile/troubleshooting/testing/). Con esa clave
+la respuesta ya se conoce, así que no se consulta a Cloudflare: el entorno local y las
+pruebas E2E funcionan sin internet. En producción la clave de prueba se rechaza al
+arrancar (config.py).
 """
 
 from typing import Protocol
 
 import httpx
 
-from app.core.config import settings
+from app.core.config import TURNSTILE_TEST_SECRET, settings
 
 VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
 
@@ -25,6 +28,8 @@ class CloudflareTurnstile:
     def verify(self, token: str, ip: str | None) -> bool:
         if not token:
             return False
+        if self.secret == TURNSTILE_TEST_SECRET:
+            return True
         data = {"secret": self.secret, "response": token}
         if ip:
             data["remoteip"] = ip

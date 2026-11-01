@@ -69,6 +69,16 @@ def test_turnstile_consulta_a_cloudflare(body, expected):
     assert b"remoteip=200.87.1.1" in seen[0].content
 
 
+def test_turnstile_con_la_clave_de_prueba_aprueba_sin_consultar():
+    from app.core.config import TURNSTILE_TEST_SECRET
+
+    seen, client = capture(body={"success": False})
+
+    assert CloudflareTurnstile(TURNSTILE_TEST_SECRET, client).verify("token", None) is True
+    assert CloudflareTurnstile(TURNSTILE_TEST_SECRET, client).verify("", None) is False
+    assert seen == []
+
+
 def test_turnstile_sin_token_no_consulta():
     seen, client = capture(body={"success": True})
 

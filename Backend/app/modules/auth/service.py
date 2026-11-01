@@ -22,7 +22,8 @@ from app.modules.users.service import validate_password
 # S6: la misma respuesta para correo inexistente, contraseña incorrecta, cuenta inactiva o
 # bloqueada. Así no se puede averiguar qué correos tienen cuenta.
 INVALID_CREDENTIALS = (
-    "Correo o contraseña incorrectos. Tras 5 intentos fallidos el acceso se bloquea 15 minutos."
+    "No pudimos iniciar sesión. Revisa tu correo y contraseña e inténtalo de nuevo. "
+    "Tras 5 intentos fallidos el acceso se pausa 15 minutos."
 )
 FAILED_LOGIN_WINDOW = timedelta(minutes=15)
 EMAIL_NOT_VERIFIED = (

@@ -157,7 +157,7 @@ La API exige `email_verified=true` y nunca vincula Google a una cuenta con contr
 
 1. Cloudflare → **Turnstile → Add widget**: nombre `ASPAR <entorno>`, modo *Managed*, dominios del entorno (`staging.aspar.com` o `aspar.com`).
 2. La **Site Key** es pública y va en `VITE_TURNSTILE_SITE_KEY` (Frontend). La **Secret Key** va al secreto `aspar-<entorno>-turnstile-secret`.
-3. En desarrollo se usan las claves de prueba de Cloudflare, que siempre aprueban. La API se niega a arrancar en producción con la de prueba.
+3. En desarrollo se usan las claves de prueba de Cloudflare, que siempre aprueban; con la clave secreta de prueba la API ni siquiera consulta a Cloudflare, así el entorno local y las pruebas E2E funcionan sin internet. La API se niega a arrancar en producción con la de prueba.
 
 ## 7. Resend (correos de verificación y recuperación)
 

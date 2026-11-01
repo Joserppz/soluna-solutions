@@ -8,7 +8,8 @@ from tests.conftest import requires_db
 
 EMAIL, PASSWORD = "coordinacion@aspar.org", "Coord2026!"
 GENERIC = (
-    "Correo o contraseña incorrectos. Tras 5 intentos fallidos el acceso se bloquea 15 minutos."
+    "No pudimos iniciar sesión. Revisa tu correo y contraseña e inténtalo de nuevo. "
+    "Tras 5 intentos fallidos el acceso se pausa 15 minutos."
 )
 
 
