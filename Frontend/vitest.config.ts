@@ -10,7 +10,8 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/**/*.{ts,vue}'],
-      exclude: ['src/**/*.spec.ts', 'src/main.ts'],
+      // Las ayudas de prueba (__test__) no son código de la aplicación
+      exclude: ['src/**/*.spec.ts', 'src/**/__test__/**', 'src/main.ts'],
       reporter: ['text', 'text-summary', 'json-summary', 'lcovonly'],
       reportsDirectory: 'coverage',
       // Mínimo de RNF-05 (70%); el CI falla si la cobertura baja de este valor

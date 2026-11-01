@@ -1,0 +1,141 @@
+/*
+ * Tokens del sistema de diseño de ASPAR.
+ * Paleta oficial del diseño: Verde ASPAR, Guindo, Rojo, Rosa suave y Crema.
+ * Todo color, sombra, espacio o tipografía de la interfaz sale de aquí.
+ */
+:root {
+  /* Paleta oficial */
+  --aspar-verde: #073930;
+  --aspar-guindo: #6d1619;
+  --aspar-rojo: #ab1a1c;
+  --aspar-rosa: #f6e7e3;
+  --aspar-crema: #f5f1ea;
+
+  /* Derivados de la paleta */
+  --verde-950: #04261f;
+  --verde-900: #073930;
+  --verde-800: #0d4a3e;
+  --verde-700: #1b5c4f;
+  --verde-100: #e3eeea;
+  --verde-50: #f0f6f3;
+  --guindo-900: #561114;
+  --guindo-700: #6d1619;
+  --guindo-600: #82201f;
+  --rojo-600: #ab1a1c;
+  --rosa-200: #eccfc8;
+  --rosa-100: #f6e7e3;
+  --rosa-50: #fbf3f1;
+  --crema-200: #ebe4d8;
+  --crema-100: #f5f1ea;
+  --crema-50: #faf8f3;
+  --blanco-calido: #fffdf9;
+
+  /* Roles semánticos */
+  --color-bg: var(--crema-100);
+  --color-surface: var(--blanco-calido);
+  --color-surface-muted: #f1ece4;
+  --color-surface-sunken: #ece6dc;
+  --color-text: #1d2a26;
+  --color-text-muted: #5b6763;
+  --color-text-subtle: #7c8783;
+  --color-heading: var(--aspar-verde);
+  --color-accent: var(--aspar-guindo);
+  --color-accent-hover: var(--guindo-900);
+  --color-danger: var(--aspar-rojo);
+  --color-link: var(--aspar-guindo);
+  --color-border: rgb(7 57 48 / 0.12);
+  --color-border-strong: rgb(7 57 48 / 0.22);
+  --color-overlay: rgb(4 38 31 / 0.48);
+
+  /* Estados (insignias y avisos) */
+  --tone-success-bg: #e2efe9;
+  --tone-success-fg: #1c5c4c;
+  --tone-warning-bg: #fbeed6;
+  --tone-warning-fg: #84560e;
+  --tone-danger-bg: var(--rosa-100);
+  --tone-danger-fg: var(--aspar-rojo);
+  --tone-neutral-bg: #ebe7e1;
+  --tone-neutral-fg: #625f5a;
+  --tone-info-bg: var(--verde-50);
+  --tone-info-fg: var(--verde-700);
+
+  /* Tipografía: serif cálida para titulares, sans-serif legible para la interfaz */
+  --font-serif: 'Lora Variable', 'Lora', Georgia, 'Times New Roman', serif;
+  --font-sans:
+    'Source Sans 3 Variable', 'Source Sans 3', system-ui, -apple-system,
+    'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+  --text-4xl: clamp(2.25rem, 1.6rem + 2.2vw, 3.25rem);
+  --leading-tight: 1.15;
+  --leading-snug: 1.3;
+  --leading-normal: 1.55;
+  --tracking-eyebrow: 0.12em;
+
+  /* Espaciado (base de 4 px) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* Bordes redondeados */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-pill: 999px;
+
+  /* Sombras multicapa (luz cálida desde arriba) */
+  --shadow-xs: 0 1px 1px rgb(7 57 48 / 0.04), 0 1px 2px rgb(7 57 48 / 0.05);
+  --shadow-sm:
+    0 1px 2px rgb(7 57 48 / 0.05), 0 2px 6px rgb(7 57 48 / 0.05),
+    0 0 0 1px rgb(7 57 48 / 0.02);
+  --shadow-md:
+    0 1px 2px rgb(7 57 48 / 0.06), 0 6px 16px -4px rgb(7 57 48 / 0.1),
+    0 12px 32px -12px rgb(7 57 48 / 0.12);
+  --shadow-lg:
+    0 2px 4px rgb(7 57 48 / 0.06), 0 16px 32px -8px rgb(7 57 48 / 0.18),
+    0 32px 64px -24px rgb(7 57 48 / 0.24);
+  --shadow-inset: inset 0 1px 2px rgb(7 57 48 / 0.06);
+
+  /* Anillo de foco visible y accesible */
+  --focus-ring: 0 0 0 3px rgb(109 22 25 / 0.22);
+  --focus-ring-on-dark: 0 0 0 3px rgb(246 231 227 / 0.55);
+
+  /* Movimiento */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+
+  /* Estructura */
+  --sidebar-width: 17.5rem;
+  --content-max: 82rem;
+  --z-sticky: 20;
+  --z-drawer: 40;
+  --z-modal: 60;
+  --z-toast: 80;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-base: 0ms;
+    --duration-slow: 0ms;
+  }
+}

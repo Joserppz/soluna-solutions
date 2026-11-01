@@ -1,7 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap');
-
-:root {
-  font-family: 'DM Sans', sans-serif;
+/*
+ * Estilos de la portada pública anterior (ScheduleView), aislados bajo .legacy-scope
+ * para que no choquen con el sistema de diseño nuevo. Se eliminan cuando el portal
+ * público se rehaga con el diseño (bloque F5b).
+ */
+.legacy-scope {
+  font-family: var(--font-sans);
   color: #173b3a;
   background: #f5f8f6;
   font-synthesis: none;
@@ -15,37 +18,37 @@
   --line: #e4ebe7;
 }
 
-* {
+.legacy-scope * {
   box-sizing: border-box;
 }
 
-body {
+.legacy-scope {
   margin: 0;
   min-width: 320px;
 }
 
-button,
-input {
+.legacy-scope button,
+.legacy-scope input {
   font: inherit;
 }
 
-button,
-a {
+.legacy-scope button,
+.legacy-scope a {
   -webkit-tap-highlight-color: transparent;
 }
 
-a {
+.legacy-scope a {
   color: inherit;
   text-decoration: none;
 }
 
-.app-shell {
+.legacy-scope .app-shell {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-.topbar {
+.legacy-scope .topbar {
   min-height: 76px;
   padding: 0 max(24px, calc((100% - 1120px) / 2));
   display: flex;
@@ -56,12 +59,13 @@ a {
   border-bottom: 1px solid var(--line);
 }
 
-.brand {
+.legacy-scope .brand {
   display: flex;
   align-items: center;
   gap: 11px;
 }
-.brand-mark {
+
+.legacy-scope .brand-mark {
   width: 42px;
   height: 42px;
   display: grid;
@@ -69,27 +73,26 @@ a {
   border-radius: 14px;
   background: var(--green);
   color: #fff;
-  font:
-    800 20px 'Manrope',
-    sans-serif;
+  font: 800 20px var(--font-serif);
 }
-.brand strong,
-.brand small {
+
+.legacy-scope .brand strong,
+.legacy-scope .brand small {
   display: block;
 }
-.brand strong {
-  font:
-    800 16px 'Manrope',
-    sans-serif;
+
+.legacy-scope .brand strong {
+  font: 800 16px var(--font-serif);
   letter-spacing: 0.08em;
 }
-.brand small {
+
+.legacy-scope .brand small {
   margin-top: 2px;
   color: var(--muted);
   font-size: 11px;
 }
 
-.nav-links {
+.legacy-scope .nav-links {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -97,46 +100,54 @@ a {
   gap: 8px 22px;
   font-size: 14px;
 }
-.nav-links a,
-.nav-links .link-button {
+
+.legacy-scope .nav-links a,
+.legacy-scope .nav-links .link-button {
   color: #61736f;
   white-space: nowrap;
 }
-/* Solo el enlace de la página o sección actual va resaltado */
-.nav-links a.is-current {
+
+.legacy-scope .nav-links a.is-current {
   color: var(--green-dark);
   font-weight: 700;
 }
-.nav-links .nav-portal {
+
+.legacy-scope .nav-links .nav-portal {
   color: var(--green);
   font-weight: 600;
 }
-.nav-session {
+
+.legacy-scope .nav-session {
   display: flex;
   align-items: center;
   gap: 14px;
   padding-left: 18px;
   border-left: 1px solid var(--line);
 }
-.session-badge {
+
+.legacy-scope .session-badge {
   white-space: nowrap;
 }
-.nav-links .nav-login {
+
+.legacy-scope .nav-links .nav-login {
   color: var(--green);
   font-weight: 700;
 }
-.link-button {
+
+.legacy-scope .link-button {
   border: 0;
   background: none;
   color: #61736f;
   cursor: pointer;
 }
-.page-container {
+
+.legacy-scope .page-container {
   width: min(100% - 40px, 1000px);
   margin: 42px auto 64px;
   flex: 1;
 }
-.site-footer {
+
+.legacy-scope .site-footer {
   padding: 22px;
   text-align: center;
   color: var(--muted);
@@ -144,37 +155,43 @@ a {
   border-top: 1px solid var(--line);
 }
 
-h1,
-h2,
-h3,
-p {
+.legacy-scope h1,
+.legacy-scope h2,
+.legacy-scope h3,
+.legacy-scope p {
   margin-top: 0;
 }
-h1,
-h2,
-h3 {
-  font-family: 'Manrope', sans-serif;
+
+.legacy-scope h1,
+.legacy-scope h2,
+.legacy-scope h3 {
+  font-family: var(--font-serif);
   color: var(--text);
 }
-h1 {
+
+.legacy-scope h1 {
   font-size: clamp(30px, 5vw, 46px);
   line-height: 1.13;
   letter-spacing: -0.04em;
 }
-h2 {
+
+.legacy-scope h2 {
   margin-bottom: 8px;
   font-size: 25px;
   letter-spacing: -0.03em;
 }
-h3 {
+
+.legacy-scope h3 {
   margin-bottom: 7px;
   font-size: 18px;
 }
-p {
+
+.legacy-scope p {
   color: var(--muted);
   line-height: 1.65;
 }
-.eyebrow {
+
+.legacy-scope .eyebrow {
   display: inline-block;
   margin-bottom: 11px;
   color: var(--green);
@@ -183,12 +200,13 @@ p {
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
-.muted {
+
+.legacy-scope .muted {
   color: var(--muted);
   font-size: 14px;
 }
 
-.hero {
+.legacy-scope .hero {
   min-height: 260px;
   padding: 42px 48px;
   border-radius: 24px;
@@ -198,18 +216,22 @@ p {
   gap: 25px;
   background: linear-gradient(120deg, #e5f1eb, #f0f5e8);
 }
-.hero > div:first-child {
+
+.legacy-scope .hero > div:first-child {
   max-width: 600px;
 }
-.hero h1 {
+
+.legacy-scope .hero h1 {
   max-width: 550px;
   margin-bottom: 12px;
 }
-.hero p {
+
+.legacy-scope .hero p {
   max-width: 470px;
   margin-bottom: 0;
 }
-.hero-badge {
+
+.legacy-scope .hero-badge {
   width: 128px;
   height: 128px;
   flex: 0 0 128px;
@@ -218,28 +240,31 @@ p {
   border: 1px solid #c5ddd1;
   border-radius: 50%;
   color: var(--green);
-  font:
-    800 21px 'Manrope',
-    sans-serif;
+  font: 800 21px var(--font-serif);
   letter-spacing: 0.06em;
 }
-.section-block {
+
+.legacy-scope .section-block {
   margin-top: 42px;
 }
-.section-title {
+
+.legacy-scope .section-title {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
   margin-bottom: 18px;
 }
-.section-title .eyebrow {
+
+.legacy-scope .section-title .eyebrow {
   margin-bottom: 4px;
 }
-.section-title h2 {
+
+.legacy-scope .section-title h2 {
   margin: 0;
 }
-.count-pill {
+
+.legacy-scope .count-pill {
   padding: 8px 12px;
   border-radius: 100px;
   color: var(--green);
@@ -248,23 +273,26 @@ p {
   font-weight: 700;
 }
 
-.card {
+.legacy-scope .card {
   border: 1px solid var(--line);
   border-radius: 16px;
   background: #fff;
   box-shadow: 0 8px 30px #174b4408;
 }
-.schedule-list {
+
+.legacy-scope .schedule-list {
   display: grid;
   gap: 12px;
 }
-.schedule-card {
+
+.legacy-scope .schedule-card {
   display: flex;
   align-items: center;
   gap: 18px;
   padding: 18px;
 }
-.date-tile {
+
+.legacy-scope .date-tile {
   width: 58px;
   height: 62px;
   flex: 0 0 58px;
@@ -275,35 +303,41 @@ p {
   color: var(--green);
   background: var(--mint);
 }
-.date-tile span {
-  font:
-    800 22px 'Manrope',
-    sans-serif;
+
+.legacy-scope .date-tile span {
+  font: 800 22px var(--font-serif);
 }
-.date-tile small {
+
+.legacy-scope .date-tile small {
   font-size: 11px;
   text-transform: uppercase;
 }
-.schedule-info {
+
+.legacy-scope .schedule-info {
   flex: 1;
 }
-.schedule-info h3 {
+
+.legacy-scope .schedule-info h3 {
   margin-top: 5px;
 }
-.schedule-info p {
+
+.legacy-scope .schedule-info p {
   margin-bottom: 0;
   font-size: 13px;
 }
-.schedule-info p span {
+
+.legacy-scope .schedule-info p span {
   padding: 0 5px;
 }
-.schedule-date {
+
+.legacy-scope .schedule-date {
   color: var(--green);
   font-size: 12px;
   font-weight: 700;
   text-transform: capitalize;
 }
-.open-label {
+
+.legacy-scope .open-label {
   padding: 6px 10px;
   border-radius: 30px;
   color: #47755e;
@@ -311,54 +345,64 @@ p {
   font-size: 11px;
   font-weight: 700;
 }
-.empty-state {
+
+.legacy-scope .empty-state {
   padding: 28px;
   color: var(--muted);
   text-align: center;
 }
 
-.page-heading {
+.legacy-scope .page-heading {
   margin-bottom: 25px;
 }
-.page-heading h1 {
+
+.legacy-scope .page-heading h1 {
   margin-bottom: 10px;
   font-size: 36px;
 }
-.page-heading p {
+
+.legacy-scope .page-heading p {
   margin-bottom: 0;
 }
 
-.auth-layout {
+.legacy-scope .auth-layout {
   min-height: 500px;
   display: grid;
   grid-template-columns: 1fr 390px;
   align-items: center;
   gap: 70px;
 }
-.auth-intro h1 {
+
+.legacy-scope .auth-intro h1 {
   max-width: 480px;
 }
-.auth-intro p {
+
+.legacy-scope .auth-intro p {
   max-width: 420px;
 }
-.form-card {
+
+.legacy-scope .form-card {
   padding: 28px;
 }
-.form-card h2 {
+
+.legacy-scope .form-card h2 {
   margin-bottom: 7px;
 }
-.form-card > .muted {
+
+.legacy-scope .form-card > .muted {
   margin-bottom: 23px;
 }
-.form-card label,
-.field label {
+
+.legacy-scope .form-card label,
+.legacy-scope .field label {
   display: block;
   margin: 16px 0 7px;
   color: #344e49;
   font-size: 13px;
   font-weight: 700;
 }
-input {
+
+.legacy-scope input {
   width: 100%;
   min-height: 45px;
   padding: 10px 12px;
@@ -368,11 +412,13 @@ input {
   color: var(--text);
   background: #fff;
 }
-input:focus {
+
+.legacy-scope input:focus {
   border-color: #65a28e;
   box-shadow: 0 0 0 3px #246b6018;
 }
-.button {
+
+.legacy-scope .button {
   min-height: 42px;
   padding: 0 16px;
   display: inline-flex;
@@ -383,22 +429,27 @@ input:focus {
   font-weight: 700;
   cursor: pointer;
 }
-.button-primary {
+
+.legacy-scope .button-primary {
   color: #fff;
   background: var(--green);
 }
-.button-primary:hover {
+
+.legacy-scope .button-primary:hover {
   background: var(--green-dark);
 }
-.button-secondary {
+
+.legacy-scope .button-secondary {
   color: var(--green);
   background: var(--mint);
 }
-.full-width {
+
+.legacy-scope .full-width {
   width: 100%;
   margin-top: 20px;
 }
-.demo-hint {
+
+.legacy-scope .demo-hint {
   margin: 17px 0 0;
   padding: 11px;
   border-radius: 9px;
@@ -406,45 +457,54 @@ input:focus {
   font-size: 11px;
   line-height: 1.7;
 }
-.form-error {
+
+.legacy-scope .form-error {
   margin: 12px 0 0;
   color: #a43e3e;
   font-size: 13px;
 }
-.success-message {
+
+.legacy-scope .success-message {
   margin: 20px 0 0;
   color: #26724e;
   font-size: 14px;
 }
-.wide-card {
+
+.legacy-scope .wide-card {
   max-width: 760px;
 }
-.form-grid {
+
+.legacy-scope .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 5px 20px;
 }
-.field label {
+
+.legacy-scope .field label {
   margin-top: 10px;
 }
-.form-actions {
+
+.legacy-scope .form-actions {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
   margin-top: 25px;
 }
 
-.table-card {
+.legacy-scope .table-card {
   overflow: hidden;
 }
-.table-heading {
+
+.legacy-scope .table-heading {
   padding: 23px 24px 16px;
   margin: 0;
 }
-.table-heading p {
+
+.legacy-scope .table-heading p {
   margin: 5px 0 0;
 }
-.attendance-row {
+
+.legacy-scope .attendance-row {
   min-height: 82px;
   padding: 14px 24px;
   display: grid;
@@ -453,24 +513,29 @@ input:focus {
   gap: 15px;
   border-top: 1px solid var(--line);
 }
-.attendance-person {
+
+.legacy-scope .attendance-person {
   display: flex;
   align-items: center;
   gap: 11px;
 }
-.attendance-person strong,
-.attendance-person small {
+
+.legacy-scope .attendance-person strong,
+.legacy-scope .attendance-person small {
   display: block;
 }
-.attendance-person strong {
+
+.legacy-scope .attendance-person strong {
   font-size: 13px;
 }
-.attendance-person small {
+
+.legacy-scope .attendance-person small {
   margin-top: 4px;
   color: var(--muted);
   font-size: 11px;
 }
-.avatar {
+
+.legacy-scope .avatar {
   width: 38px;
   height: 38px;
   display: grid;
@@ -480,122 +545,147 @@ input:focus {
   background: var(--mint);
   font-weight: 700;
 }
-.attendance-time {
+
+.legacy-scope .attendance-time {
   color: var(--muted);
   font-size: 12px;
 }
-.attendance-actions {
+
+.legacy-scope .attendance-actions {
   display: flex;
   justify-content: flex-end;
   align-items: center;
   gap: 7px;
 }
-.status {
+
+.legacy-scope .status {
   min-width: 72px;
   color: #788680;
   font-size: 11px;
   font-weight: 700;
 }
-.status-presente {
+
+.legacy-scope .status-presente {
   color: #26724e;
 }
-.status-ausente {
+
+.legacy-scope .status-ausente {
   color: #a43e3e;
 }
-.button-small {
+
+.legacy-scope .button-small {
   min-height: 32px;
   padding: 0 9px;
   font-size: 11px;
 }
-.button-present {
+
+.legacy-scope .button-present {
   color: #26724e;
   background: #edf6ee;
 }
-.button-absent {
+
+.legacy-scope .button-absent {
   color: #a43e3e;
   background: #f9eeee;
 }
 
 @media (max-width: 720px) {
-  .topbar {
+  .legacy-scope .topbar {
     padding: 14px 20px;
     align-items: flex-start;
     flex-direction: column;
     gap: 13px;
   }
-  .nav-links {
+
+  .legacy-scope .nav-links {
     width: 100%;
     flex-wrap: wrap;
     justify-content: flex-start;
     gap: 12px 18px;
     font-size: 13px;
   }
-  .nav-session {
+
+  .legacy-scope .nav-session {
     width: 100%;
     padding-left: 0;
     border-left: 0;
   }
-  .page-container {
+
+  .legacy-scope .page-container {
     width: min(100% - 28px, 1000px);
     margin-top: 25px;
   }
-  .hero {
+
+  .legacy-scope .hero {
     min-height: 0;
     padding: 30px 25px;
   }
-  .hero-badge {
+
+  .legacy-scope .hero-badge {
     width: 78px;
     height: 78px;
     flex-basis: 78px;
     font-size: 14px;
   }
-  .schedule-card {
+
+  .legacy-scope .schedule-card {
     align-items: flex-start;
     gap: 12px;
     padding: 14px;
   }
-  .open-label {
+
+  .legacy-scope .open-label {
     display: none;
   }
-  .auth-layout {
+
+  .legacy-scope .auth-layout {
     grid-template-columns: 1fr;
     gap: 18px;
   }
-  .auth-intro h1 {
+
+  .legacy-scope .auth-intro h1 {
     font-size: 34px;
   }
-  .form-grid {
+
+  .legacy-scope .form-grid {
     grid-template-columns: 1fr;
   }
-  .attendance-row {
+
+  .legacy-scope .attendance-row {
     grid-template-columns: 1fr;
     gap: 10px;
     padding: 16px;
   }
-  .attendance-actions {
+
+  .legacy-scope .attendance-actions {
     justify-content: flex-start;
     flex-wrap: wrap;
   }
-  .status {
+
+  .legacy-scope .status {
     min-width: 80px;
   }
-  .section-title {
+
+  .legacy-scope .section-title {
     align-items: flex-start;
   }
 }
 
 @media (max-width: 420px) {
-  .hero-badge {
+  .legacy-scope .hero-badge {
     display: none;
   }
-  .schedule-info p {
+
+  .legacy-scope .schedule-info p {
     font-size: 11px;
   }
-  .count-pill {
+
+  .legacy-scope .count-pill {
     font-size: 10px;
   }
 }
-select {
+
+.legacy-scope select {
   min-height: 42px;
   padding: 8px 10px;
   border: 1px solid #dce5e0;
@@ -604,7 +694,7 @@ select {
   background: #fff;
 }
 
-.checkbox-field {
+.legacy-scope .checkbox-field {
   display: flex;
   align-items: center;
   gap: 9px;
@@ -613,22 +703,22 @@ select {
   font-weight: 600;
 }
 
-.checkbox-field input {
+.legacy-scope .checkbox-field input {
   width: 17px;
   min-height: 17px;
   accent-color: #246b60;
 }
 
-.patient-list {
+.legacy-scope .patient-list {
   margin-top: 24px;
 }
 
-.patient-list-content {
+.legacy-scope .patient-list-content {
   border-top: 1px solid #e4ebe7;
 }
 
-.patient-row,
-.audit-row {
+.legacy-scope .patient-row,
+.legacy-scope .audit-row {
   min-height: 76px;
   padding: 15px 22px;
   display: flex;
@@ -638,28 +728,28 @@ select {
   border-top: 1px solid #e4ebe7;
 }
 
-.patient-main {
+.legacy-scope .patient-main {
   min-width: 180px;
   flex: 1;
 }
 
-.patient-main strong,
-.patient-main small {
+.legacy-scope .patient-main strong,
+.legacy-scope .patient-main small {
   display: block;
 }
 
-.patient-main strong {
+.legacy-scope .patient-main strong {
   color: #173b3a;
   font-size: 14px;
 }
 
-.patient-main small {
+.legacy-scope .patient-main small {
   margin-top: 4px;
   color: #71827f;
   font-size: 12px;
 }
 
-.access-control {
+.legacy-scope .access-control {
   display: grid;
   gap: 5px;
   color: #71827f;
@@ -667,55 +757,55 @@ select {
   font-weight: 700;
 }
 
-.access-control select {
+.legacy-scope .access-control select {
   min-width: 120px;
 }
 
-.search-input {
+.legacy-scope .search-input {
   max-width: 240px;
 }
 
-.audit-row > div {
+.legacy-scope .audit-row > div {
   flex: 1;
 }
 
-.audit-row p {
+.legacy-scope .audit-row p {
   margin: 5px 0 0;
   font-size: 13px;
 }
 
-.audit-row span,
-.audit-row time {
+.legacy-scope .audit-row span,
+.legacy-scope .audit-row time {
   color: #71827f;
   font-size: 12px;
 }
 
 @media (max-width: 700px) {
-  .patient-row,
-  .audit-row {
+  .legacy-scope .patient-row,
+  .legacy-scope .audit-row {
     align-items: flex-start;
     flex-direction: column;
   }
 
-  .table-heading {
+  .legacy-scope .table-heading {
     align-items: flex-start;
     flex-direction: column;
   }
 
-  .search-input {
+  .legacy-scope .search-input {
     max-width: none;
     width: 100%;
   }
 }
-/* SCRUM-66, SCRUM-67, SCRUM-68, SCRUM-138: Estilos de sesión, anamnesis y protección de datos */
-.field-hint-error {
+
+.legacy-scope .field-hint-error {
   display: block;
   margin-top: 5px;
   color: #a43e3e;
   font-size: 12px;
 }
 
-.session-badge {
+.legacy-scope .session-badge {
   padding: 5px 10px;
   border-radius: 99px;
   background: var(--mint);
@@ -723,7 +813,7 @@ select {
   font-size: 12px;
 }
 
-.session-banner {
+.legacy-scope .session-banner {
   padding: 10px 24px;
   display: flex;
   align-items: center;
@@ -733,40 +823,40 @@ select {
   font-weight: 600;
 }
 
-.session-banner-warning {
+.legacy-scope .session-banner-warning {
   background: #fff7e0;
   color: #7c5800;
   border-bottom: 1px solid #f0dc9c;
 }
 
-.session-banner-expired {
+.legacy-scope .session-banner-expired {
   background: #f9eeee;
   color: #a43e3e;
   border-bottom: 1px solid #ebcccc;
 }
 
-.subsection-heading {
+.legacy-scope .subsection-heading {
   margin-top: 24px;
   padding-top: 18px;
   border-top: 1px solid var(--line);
 }
 
-.filter-bar {
+.legacy-scope .filter-bar {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
 }
 
-.patient-item-block {
+.legacy-scope .patient-item-block {
   border-top: 1px solid var(--line);
 }
 
-.patient-item-block .patient-row {
+.legacy-scope .patient-item-block .patient-row {
   border-top: 0;
 }
 
-.anamnesis-panel {
+.legacy-scope .anamnesis-panel {
   margin: 0 22px 16px;
   padding: 14px 16px;
   border-radius: 12px;
@@ -774,33 +864,33 @@ select {
   border: 1px solid var(--line);
 }
 
-.anamnesis-grid {
+.legacy-scope .anamnesis-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 10px 16px;
   font-size: 13px;
 }
 
-.anamnesis-grid strong {
+.legacy-scope .anamnesis-grid strong {
   display: block;
   color: var(--green-dark);
   font-size: 11px;
   text-transform: uppercase;
 }
 
-.protected-notice {
+.legacy-scope .protected-notice {
   margin: 0;
   color: #8a4b0f;
   font-size: 13px;
   font-weight: 600;
 }
 
-.notice-card {
+.legacy-scope .notice-card {
   padding: 14px 18px;
   margin-bottom: 18px;
 }
 
-.consent-pill {
+.legacy-scope .consent-pill {
   display: inline-block;
   margin-top: 4px;
   padding: 2px 8px;
@@ -809,31 +899,30 @@ select {
   font-weight: 700;
 }
 
-.consent-ok {
+.legacy-scope .consent-ok {
   background: #edf6ee;
   color: #26724e;
 }
 
-.consent-blocked {
+.legacy-scope .consent-blocked {
   background: #f9eeee;
   color: #a43e3e;
 }
 
-/* SCRUM-183: Estilos de Portal Público, Galería Cloud, Donaciones e Inventario */
-.social-links {
+.legacy-scope .social-links {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 16px;
 }
 
-.portal-grid {
+.legacy-scope .portal-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
   gap: 18px;
 }
 
-.qr-box {
+.legacy-scope .qr-box {
   margin: 14px 0;
   padding: 20px;
   border: 2px dashed var(--green);
@@ -842,12 +931,12 @@ select {
   text-align: center;
 }
 
-.qr-box strong,
-.qr-box small {
+.legacy-scope .qr-box strong,
+.legacy-scope .qr-box small {
   display: block;
 }
 
-.req-list {
+.legacy-scope .req-list {
   margin: 8px 0 0;
   padding-left: 18px;
   color: var(--muted);
@@ -855,15 +944,14 @@ select {
   line-height: 1.6;
 }
 
-.audit-meta-badges {
+.legacy-scope .audit-meta-badges {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 4px;
 }
 
-/* SCRUM-161: contraseña temporal que se muestra una sola vez */
-.credential-card {
+.legacy-scope .credential-card {
   max-width: 760px;
   margin-bottom: 24px;
   padding: 24px 28px;
@@ -871,7 +959,7 @@ select {
   background: var(--mint);
 }
 
-.credential-password {
+.legacy-scope .credential-password {
   display: inline-block;
   margin: 6px 0 12px;
   padding: 8px 14px;
@@ -884,33 +972,33 @@ select {
   user-select: all;
 }
 
-/* RNF-06: aviso en lugar de los campos clínicos para roles no clínicos */
-.field-note {
+.legacy-scope .field-note {
   grid-column: 1 / -1;
   margin: 4px 0;
   font-size: 13px;
 }
 
-/* RF-04: acciones de cada actividad en la gestión del cronograma */
-.row-actions {
+.legacy-scope .row-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-/* Barra del panel en anchos intermedios: menos espacio entre enlaces */
 @media (max-width: 1200px) and (min-width: 721px) {
-  .topbar {
+  .legacy-scope .topbar {
     gap: 16px;
   }
-  .brand small {
+
+  .legacy-scope .brand small {
     max-width: 150px;
   }
-  .nav-links {
+
+  .legacy-scope .nav-links {
     gap: 8px 14px;
     font-size: 13px;
   }
-  .nav-session {
+
+  .legacy-scope .nav-session {
     gap: 10px;
     padding-left: 12px;
   }

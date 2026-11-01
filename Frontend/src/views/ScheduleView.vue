@@ -94,9 +94,7 @@ function submitMedia() {
 <template>
   <section class="hero">
     <div>
-      <span class="eyebrow">
-        Asociación de Parkinson "Mario Lagrava" · RF-07 / RF-10
-      </span>
+      <span class="eyebrow"> Asociación de Parkinson «Mario Lagrava» </span>
       <h1>Actividades para acompañarte.</h1>
       <p>
         {{ institutionalInfo.mission }} Inspirados en el modelo clínico y
@@ -136,7 +134,7 @@ function submitMedia() {
   <section id="cronograma" class="section-block">
     <div class="section-title">
       <div>
-        <span class="eyebrow">Próximos encuentros · RF-04 / RF-10</span>
+        <span class="eyebrow">Próximos encuentros</span>
         <h2>Cronograma</h2>
       </div>
 
@@ -181,9 +179,7 @@ function submitMedia() {
   <section id="galeria" class="section-block">
     <div class="section-title">
       <div>
-        <span class="eyebrow"
-          >Almacenamiento Cloud S3 / Cloudinary · RF-05</span
-        >
+        <span class="eyebrow">Momentos de comunidad</span>
         <h2>Galería Multimedia de Jornadas Sabatinas</h2>
       </div>
       <span class="count-pill">{{ mediaAssets.length }} archivos en Cloud</span>
@@ -222,7 +218,7 @@ function submitMedia() {
           <option value="Video">Video HD (> 5 MB)</option>
         </select>
         <button class="button button-secondary full-width" type="submit">
-          Subir a Cloud Storage (RF-05)
+          Subir a la galería
         </button>
       </form>
     </div>
@@ -231,8 +227,8 @@ function submitMedia() {
   <section id="donar" class="section-block">
     <div class="section-title">
       <div>
-        <span class="eyebrow">Captación de Fondos y Transparencia · RF-06</span>
-        <h2>Módulo de Donaciones (QR Bancario y Pasarela Libélula)</h2>
+        <span class="eyebrow">Tu apoyo tiene lugar aquí</span>
+        <h2>Apoya a ASPAR con el QR bancario</h2>
       </div>
       <span class="count-pill donation-counter">
         {{ donationSummary.confirmedCount }} aportes confirmados · Bs.
@@ -244,15 +240,14 @@ function submitMedia() {
       <div class="card form-card">
         <h3>Código QR Oficial ASPAR</h3>
         <p>
-          Escanea el QR institucional o utiliza la pasarela
-          <strong>Libélula</strong> para apoyar la compra de balones
+          Escanea el QR institucional para apoyar la compra de balones
           terapéuticos, colchonetas y el fondo pro-sede propia de ASPAR.
         </p>
         <div class="qr-box" aria-label="Código QR Bancario Oficial ASPAR">
           <strong>QR BANCO ASPAR · CUENTA OFICIAL</strong>
           <small>Asociación de Parkinson "Mario Lagrava" · La Paz</small>
         </div>
-        <h4>Requisitos de afiliación (RF-07):</h4>
+        <h4>Requisitos de afiliación:</h4>
         <ul class="req-list">
           <li
             v-for="req in institutionalInfo.enrollmentRequirements"
@@ -264,7 +259,7 @@ function submitMedia() {
       </div>
 
       <form class="card form-card" @submit.prevent="submitDonation">
-        <h3>Registrar aporte solidario (Pasarela Libélula / QR)</h3>
+        <h3>Avísanos de tu aporte</h3>
         <label for="donor-name">Nombre del donante</label>
         <input
           id="donor-name"
@@ -284,7 +279,6 @@ function submitMedia() {
         <label for="donor-method">Método de pago</label>
         <select id="donor-method" v-model="donationForm.method">
           <option value="QR Bancario">QR Bancario Oficial</option>
-          <option value="Pasarela Libélula">Pasarela de Pagos Libélula</option>
         </select>
 
         <label for="donor-reference">

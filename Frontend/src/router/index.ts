@@ -1,97 +1,133 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import LoginView from '../views/LoginView.vue'
-import PatientsView from '../views/PatientsView.vue'
-import RegisterPatientView from '../views/RegisterPatientView.vue'
-import UsersView from '../views/UsersView.vue'
-import AuditView from '../views/AuditView.vue'
-import ScheduleView from '../views/ScheduleView.vue'
-import AttendanceView from '../views/AttendanceView.vue'
-import InventoryView from '../views/InventoryView.vue'
-import ScheduleManagementView from '../views/ScheduleManagementView.vue'
-import { addAudit, getSession, panelHomeFor } from '../services/aspar'
+import {
+  createRouter,
+  createWebHistory,
+  type RouteRecordRaw,
+  type RouterHistory,
+} from 'vue-router'
 
-const router = createRouter({
-  history: createWebHistory(),
-  // Enlaces de la cabecera a las secciones del portal (#cronograma, #galeria, #donar)
-  scrollBehavior(to) {
-    if (to.hash) return { el: to.hash, behavior: 'smooth' }
-    return { top: 0 }
+import type { Permission } from '../api/types'
+import { defaultApiContext, type ApiContext } from '../composables/useApi'
+import { useToast } from '../composables/useToast'
+import { checkAccess, snapshotOf, type RouteAccess } from './guards'
+import { ADMIN_GROUP_TITLE, TEAM_SECTIONS } from './sections'
+
+declare module 'vue-router' {
+  interface RouteMeta {
+    access?: RouteAccess
+    /** Basta con uno de estos permisos. */
+    permissions?: Permission[]
+    title?: string
+    /** Migas de pan después de «Espacio del equipo». */
+    breadcrumb?: string[]
+    description?: string
+  }
+}
+
+export const routes: RouteRecordRaw[] = [
+  {
+    path: '/',
+    component: () => import('../layouts/PublicLayout.vue'),
+    children: [
+      {
+        path: '',
+        name: 'inicio',
+        component: () => import('../views/ScheduleView.vue'),
+        meta: { access: 'public', title: 'Inicio' },
+      },
+    ],
   },
-  routes: [
-    { path: '/', name: 'cronograma', component: ScheduleView },
-    { path: '/login', name: 'login', component: LoginView },
-    {
-      path: '/pacientes',
-      name: 'pacientes',
-      component: PatientsView,
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/pacientes/nuevo',
-      name: 'registrar-paciente',
-      component: RegisterPatientView,
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/usuarios',
-      name: 'usuarios',
-      component: UsersView,
-      meta: { requiresAuth: true, adminOnly: true },
-    },
-    {
-      path: '/bitacora',
-      name: 'bitacora',
-      component: AuditView,
-      meta: { requiresAuth: true, adminOnly: true },
-    },
-    {
-      path: '/inventario',
-      name: 'inventario',
-      component: InventoryView,
-      meta: { requiresAuth: true },
-    },
-    {
-      // RF-04 (SCRUM-74): publicar y actualizar el cronograma
-      path: '/cronograma/gestion',
-      name: 'gestion-cronograma',
-      component: ScheduleManagementView,
-      meta: { requiresAuth: true, roles: ['Administrador', 'Coordinador'] },
-    },
-    {
-      path: '/asistencia',
-      name: 'asistencia',
-      component: AttendanceView,
-      meta: { requiresAuth: true },
-    },
-  ],
-})
+  {
+    path: '/ingresar',
+    name: 'ingresar',
+    component: () => import('../views/auth/LoginView.vue'),
+    meta: { access: 'guest', title: 'Acceso del equipo' },
+  },
+  { path: '/login', redirect: { name: 'ingresar' } },
+  {
+    path: '/cambiar-contrasena',
+    name: 'cambiar-contrasena',
+    component: () => import('../views/auth/ChangePasswordView.vue'),
+    meta: { access: 'account', title: 'Crea tu contraseña' },
+  },
+  {
+    path: '/cuenta-pendiente',
+    name: 'cuenta-pendiente',
+    component: () => import('../views/auth/PendingApprovalView.vue'),
+    meta: { access: 'account', title: 'Cuenta en espera' },
+  },
+  {
+    path: '/equipo',
+    component: () => import('../layouts/TeamLayout.vue'),
+    meta: { access: 'team' },
+    children: [
+      {
+        path: '',
+        name: 'resumen',
+        component: () => import('../views/team/SummaryView.vue'),
+        meta: { access: 'team', title: 'Resumen', breadcrumb: ['Resumen'] },
+      },
+      ...TEAM_SECTIONS.map((section): RouteRecordRaw => ({
+        path: section.path,
+        name: section.name,
+        component: () => import('../views/team/SectionPreparingView.vue'),
+        meta: {
+          access: 'team',
+          permissions: section.permissions,
+          title: section.title,
+          description: section.description,
+          breadcrumb: section.group
+            ? [ADMIN_GROUP_TITLE, section.title]
+            : [section.title],
+        },
+      })),
+    ],
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'no-encontrada',
+    component: () => import('../views/NotFoundView.vue'),
+    meta: { access: 'public', title: 'Página no encontrada' },
+  },
+]
 
-router.beforeEach((to) => {
-  const session = getSession()
+export function createAppRouter(
+  context: ApiContext = defaultApiContext,
+  history: RouterHistory = createWebHistory(),
+) {
+  const router = createRouter({
+    history,
+    routes,
+    scrollBehavior(to, _from, saved) {
+      if (saved) return saved
+      if (to.hash) return { el: to.hash, behavior: 'smooth' }
+      return { top: 0 }
+    },
+  })
+  const toast = useToast()
+  const { session } = context
 
-  if (to.meta.requiresAuth && !session) {
-    return { name: 'login', query: { redirect: to.fullPath } }
-  }
-
-  const allowedRoles = to.meta.adminOnly
-    ? ['Administrador']
-    : (to.meta.roles as string[] | undefined)
-  if (allowedRoles && (!session || !allowedRoles.includes(session.role))) {
-    if (session) {
-      addAudit(
-        'Intento de acceso restringido bloqueado',
-        `El rol ${session.role} (${session.email}) intentó acceder a ${to.fullPath}`,
-        'SISTEMA',
-        'WARNING',
-      )
-      return { path: panelHomeFor(session.role) }
+  router.beforeEach(async (to) => {
+    // Al cargar la página se pregunta a la API si la cookie de sesión sigue vigente
+    let offline = false
+    if (session.state.status === 'unknown') {
+      try {
+        await session.restore()
+      } catch {
+        offline = true
+      }
     }
-    return { name: 'cronograma' }
-  }
 
-  if (to.name === 'login' && session) {
-    return { path: panelHomeFor(session.role) }
-  }
-})
+    const decision = checkAccess(to, snapshotOf(session))
+    if (decision.allow) return true
+    if (offline && to.meta.access !== 'guest')
+      return { name: 'ingresar', query: { motivo: 'sin-conexion' } }
+    if (decision.notice) toast.info(decision.notice)
+    return decision.redirect
+  })
 
-export default router
+  router.afterEach((to) => {
+    document.title = to.meta.title ? `${to.meta.title} · ASPAR` : 'ASPAR'
+  })
+
+  return router
+}
