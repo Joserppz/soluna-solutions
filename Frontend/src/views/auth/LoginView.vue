@@ -174,8 +174,20 @@ function withGoogle(credential: string) {
     </div>
 
     <p class="login__note">
-      Usa un equipo de confianza y cierra sesión al terminar. Por tu
-      tranquilidad, la sesión se cierra sola tras 15 minutos sin uso.
+      <svg
+        class="login__lock"
+        viewBox="0 0 16 16"
+        width="14"
+        height="14"
+        aria-hidden="true"
+      >
+        <path
+          d="M4.5 7V5a3.5 3.5 0 0 1 7 0v2h.5A1.5 1.5 0 0 1 13.5 8.5v5A1.5 1.5 0 0 1 12 15H4a1.5 1.5 0 0 1-1.5-1.5v-5A1.5 1.5 0 0 1 4 7h.5Zm1.5 0h4V5a2 2 0 1 0-4 0v2Z"
+          fill="currentColor"
+        />
+      </svg>
+      Usa un equipo de confianza y cierra sesión al terminar. La sesión se
+      cierra sola tras 15 minutos sin uso.
     </p>
   </AuthLayout>
 </template>
@@ -183,16 +195,16 @@ function withGoogle(credential: string) {
 <style scoped>
 .login__header {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--auth-header-gap, var(--space-3));
 }
 
 .login__title {
-  font-size: var(--text-4xl);
+  font-size: var(--auth-title-size, var(--text-4xl));
 }
 
 .login__lead {
   color: var(--color-text-muted);
-  font-size: var(--text-lg);
+  font-size: var(--auth-lead-size, var(--text-lg));
 }
 
 .login__divider {
@@ -217,16 +229,27 @@ function withGoogle(credential: string) {
 }
 
 .login__links {
-  display: grid;
-  gap: var(--space-2);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-6);
   font-size: var(--text-md);
 }
 
 .login__note {
-  padding: var(--space-4) var(--space-5);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-sunken);
-  color: var(--color-text);
-  font-size: var(--text-md);
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+}
+
+.login__lock {
+  flex: none;
+  align-self: center;
+  color: var(--aspar-verde);
 }
 </style>

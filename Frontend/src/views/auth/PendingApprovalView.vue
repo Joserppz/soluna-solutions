@@ -109,16 +109,16 @@ async function logout() {
 <style scoped>
 .pending__header {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--auth-header-gap, var(--space-3));
 }
 
 .pending__title {
-  font-size: var(--text-4xl);
+  font-size: var(--auth-title-size, var(--text-4xl));
 }
 
 .pending__lead {
   color: var(--color-text-muted);
-  font-size: var(--text-lg);
+  font-size: var(--auth-lead-size, var(--text-lg));
 }
 
 .steps {

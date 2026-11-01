@@ -42,7 +42,7 @@ const describedBy = computed(() =>
 <style scoped>
 .field {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--field-gap, var(--space-2));
 }
 
 .field__label {

@@ -63,10 +63,30 @@ withDefaults(
 </template>
 
 <style scoped>
+/*
+ * Escritorio y laptops (>= 900 px): la pantalla de acceso ocupa exactamente la
+ * ventana, sin barra de desplazamiento. Los tamaños usan clamp(…vh…) para que el
+ * formulario entre completo desde unos 680 px de alto útil; la foto de la columna
+ * verde se estira o se achica con el alto disponible. Si una vista larga (crear
+ * cuenta) no entra, solo se desplaza la columna del formulario.
+ */
 .auth {
-  min-height: 100vh;
+  --auth-title-size: clamp(1.75rem, 4.6vh, 3.25rem);
+  --auth-lead-size: clamp(0.95rem, 2.1vh, 1.125rem);
+  --auth-header-gap: clamp(0.25rem, 1vh, 0.75rem);
+  --control-height: clamp(2.5rem, 5.6vh, 3rem);
+  --button-height-lg: clamp(2.6rem, 5.8vh, 3.25rem);
+  --form-gap: clamp(0.6rem, 1.8vh, 1.25rem);
+  --field-gap: clamp(0.3rem, 0.8vh, 0.5rem);
+
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
+  overflow: hidden;
   background: var(--crema-50);
 }
 
@@ -74,8 +94,9 @@ withDefaults(
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--space-10);
-  padding: var(--space-12) clamp(var(--space-6), 5vw, var(--space-16));
+  gap: clamp(1rem, 3.5vh, 2.5rem);
+  min-height: 0;
+  padding: clamp(1.25rem, 5vh, 3rem) clamp(var(--space-6), 5vw, var(--space-16));
   overflow: hidden;
   background:
     radial-gradient(
@@ -88,6 +109,7 @@ withDefaults(
 }
 
 .auth__brand {
+  flex: none;
   align-self: flex-start;
   text-decoration: none;
   border-radius: var(--radius-sm);
@@ -98,9 +120,10 @@ withDefaults(
 }
 
 .auth__message {
+  flex: none;
   display: grid;
-  gap: var(--space-4);
-  margin-top: var(--space-8);
+  gap: clamp(0.5rem, 1.6vh, 1rem);
+  margin-top: clamp(0rem, 3vh, 2rem);
 }
 
 .auth__eyebrow {
@@ -109,7 +132,7 @@ withDefaults(
 
 .auth__headline {
   font-family: var(--font-serif);
-  font-size: clamp(2.25rem, 1.5rem + 2.4vw, 3.75rem);
+  font-size: clamp(2rem, min(1.5rem + 2.4vw, 6.2vh), 3.75rem);
   line-height: 1.08;
   letter-spacing: -0.01em;
 }
@@ -122,29 +145,39 @@ withDefaults(
 .auth__intro {
   max-width: 34rem;
   color: rgb(255 255 255 / 0.85);
-  font-size: var(--text-lg);
+  font-size: clamp(0.95rem, 2.2vh, 1.125rem);
 }
 
+/* La foto toma el alto que sobra: nunca empuja la página ni queda cortada */
 .auth__photo {
+  flex: 1 1 0;
+  min-height: 0;
   width: 100%;
   max-width: 36rem;
-  aspect-ratio: 900 / 517;
+  height: auto;
   object-fit: cover;
-  border-radius: var(--radius-xl) 6rem var(--radius-xl) var(--radius-xl);
+  border-radius: var(--radius-xl) clamp(2.5rem, 9vh, 6rem) var(--radius-xl)
+    var(--radius-xl);
   box-shadow: 0 24px 48px -24px rgb(0 0 0 / 0.55);
 }
 
+/* Columna del formulario: centrada; si no entra, se desplaza solo ella */
 .auth__main {
-  display: grid;
-  place-items: center;
-  padding: var(--space-12) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  padding: clamp(1rem, 4vh, 3rem) clamp(var(--space-6), 4vw, var(--space-16));
 }
 
 .auth__card {
   width: 100%;
   max-width: 34rem;
+  margin: auto;
   display: grid;
-  gap: var(--space-6);
+  gap: clamp(0.65rem, 2.1vh, 1.5rem);
   animation: auth-in var(--duration-slow) var(--ease-out);
 }
 
@@ -171,9 +204,23 @@ withDefaults(
   }
 }
 
-@media (max-width: 960px) {
+/* Celulares y ventanas angostas: una columna con el desplazamiento natural del
+   navegador, para que el teclado virtual no tape los campos */
+@media (max-width: 899.98px) {
   .auth {
+    --auth-title-size: var(--text-3xl);
+    --auth-lead-size: var(--text-lg);
+    --control-height: 3rem;
+    --button-height-lg: 3.25rem;
+    --form-gap: var(--space-5);
+
     grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    height: auto;
+    max-height: none;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-y: auto;
   }
 
   .auth__panel {
@@ -195,8 +242,12 @@ withDefaults(
   }
 
   .auth__main {
-    place-items: start center;
+    overflow: visible;
     padding: var(--space-8) var(--space-4) var(--space-12);
+  }
+
+  .auth__card {
+    margin: 0 auto;
   }
 }
 </style>

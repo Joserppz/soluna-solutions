@@ -121,7 +121,7 @@ const inactive = computed(() => props.disabled || props.loading)
 }
 
 .btn--lg {
-  min-height: 3.25rem;
+  min-height: var(--button-height-lg, 3.25rem);
   padding: 0 var(--space-6);
   font-size: var(--text-lg);
 }

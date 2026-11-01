@@ -104,15 +104,15 @@ onMounted(async () => {
 .verify__header,
 .verify__checking {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--auth-header-gap, var(--space-3));
 }
 
 .verify__title {
-  font-size: var(--text-4xl);
+  font-size: var(--auth-title-size, var(--text-4xl));
 }
 
 .verify__lead {
   color: var(--color-text-muted);
-  font-size: var(--text-lg);
+  font-size: var(--auth-lead-size, var(--text-lg));
 }
 </style>

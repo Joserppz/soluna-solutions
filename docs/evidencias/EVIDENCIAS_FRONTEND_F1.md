@@ -18,8 +18,8 @@ Requisitos que cubre:
 
 | Verificación | Resultado |
 | :--- | :--- |
-| Vitest (`npm run test:coverage`) | 166 pruebas en 18 archivos, 91,34 % de líneas |
-| Playwright (`npm run e2e`) contra la API de Docker con `seed_demo` | 12 recorridos sobre el build de producción (`vite preview`) |
+| Vitest (`npm run test:coverage`) | 167 pruebas en 18 archivos, 91,35 % de líneas |
+| Playwright (`npm run e2e`) contra la API de Docker con `seed_demo` | 23 recorridos sobre el build de producción (`vite preview`) |
 | ESLint, Prettier, `vue-tsc` (app, pruebas y E2E) y `vite build` | Sin errores |
 | Backend (pytest) | 413 pruebas |
 
@@ -46,6 +46,18 @@ Los enlaces reales de los correos también se probaron a mano. En desarrollo, la
 | Recuperar contraseña | Responde igual exista o no la cuenta |
 | Enlace de recuperación inválido | No cambia nada y ofrece pedir otro enlace |
 | Google | El botón entrega la credencial a la API; sin `GOOGLE_CLIENT_ID` la API responde 503 y la pantalla lo explica |
+
+### Pantallas de acceso sin barra de desplazamiento
+
+En escritorio y laptops (900 px de ancho o más), el acceso ocupa exactamente la ventana (`100dvh`, sin desplazamiento de la página):
+
+- La columna verde ajusta la foto al alto disponible.
+- El formulario usa tamaños fluidos (`clamp(…vh…)`).
+- Si una vista larga, como «Crear cuenta», no entra, solo se desplaza la columna del formulario.
+
+En el celular la página se desplaza con normalidad, para que el teclado virtual no tape los campos.
+
+`e2e/pantallas-de-acceso.spec.ts` comprueba que `document.documentElement.scrollHeight <= clientHeight` y que cada elemento del ingreso queda a la vista. Lo hace en 1366×680, 1366×900, 1536×730 (1080p con zoom al 125 %), 1920×680 y 1920×900, y además en recuperar contraseña, cuenta pendiente y cambio de contraseña. Con el diseño anterior esos recorridos fallaban, también a 1920×900.
 
 ## 3. Capturas
 
