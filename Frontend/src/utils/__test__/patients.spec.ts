@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { pageItems, rangeLabel } from '../pagination'
+import { pageItems, rangeLabel, rowsThatFit } from '../pagination'
 import {
   activitiesLabel,
   ageOn,
@@ -94,6 +94,13 @@ describe('Paginación', () => {
     expect(pageItems(8, 14)).toEqual([1, 'gap', 7, 8, 9, 'gap', 14])
     expect(pageItems(13, 14)).toEqual([1, 'gap', 12, 13, 14])
     expect(pageItems(14, 14)).toEqual([1, 'gap', 12, 13, 14])
+  })
+
+  it('calcula cuántas filas entran en el alto disponible', () => {
+    expect(rowsThatFit(400, 56)).toBe(7)
+    expect(rowsThatFit(560, 56)).toBe(10)
+    // Nunca menos de tres, aunque la ventana sea muy baja
+    expect(rowsThatFit(80, 56)).toBe(3)
   })
 
   it('dice qué filas se ven', () => {

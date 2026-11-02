@@ -6,6 +6,7 @@ import AppAlert from '../../components/ui/AppAlert.vue'
 import PageHeader from '../../components/ui/PageHeader.vue'
 import StickyHeader from '../../components/ui/StickyHeader.vue'
 import { useApi } from '../../composables/useApi'
+import { useFitLayout } from '../../composables/useFitLayout'
 import { TEAM_SECTIONS } from '../../router/sections'
 import { firstName, greeting } from '../../utils/format'
 
@@ -19,11 +20,13 @@ const sections = computed(() =>
   TEAM_SECTIONS.filter((section) => session.canAny(...section.permissions)),
 )
 const seesClinical = computed(() => session.can('patients:read_clinical'))
+// En escritorio todo el resumen entra en la ventana: las tarjetas se reparten el alto
+const fit = useFitLayout()
 </script>
 
 <template>
-  <div class="summary">
-    <StickyHeader v-slot="{ stuck }">
+  <div class="summary" :class="{ 'summary--fit': fit }">
+    <StickyHeader v-slot="{ stuck }" :disabled="fit">
       <div class="summary__head" :class="{ 'is-stuck': stuck }">
         <PageHeader
           :title="title"
@@ -154,5 +157,66 @@ const seesClinical = computed(() => session.can('patients:read_clinical'))
   padding: var(--space-4) var(--space-5);
   border-radius: var(--radius-md);
   background: var(--color-surface-sunken);
+}
+
+/* Ventana completa: saludo, tarjetas y nota entran sin desplazar la página. Las
+   filas de tarjetas se reparten el alto que queda */
+.summary--fit {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.summary--fit .summary__head :deep(.page-header) {
+  margin-bottom: clamp(var(--space-3), 2.4vh, var(--space-8));
+}
+
+.summary--fit .summary__head :deep(.page-header__title) {
+  font-size: clamp(2rem, 5vh, 3.25rem);
+}
+
+.summary--fit .summary__grid {
+  flex: 1;
+  min-height: 0;
+  grid-template-columns: repeat(auto-fill, minmax(14.5rem, 1fr));
+  grid-auto-rows: minmax(0, 1fr);
+  gap: clamp(var(--space-2), 1.6vh, var(--space-4));
+}
+
+.summary--fit .summary__grid > li {
+  min-height: 0;
+}
+
+.summary--fit .section-card {
+  align-content: start;
+  gap: clamp(0.15rem, 0.6vh, var(--space-2));
+  overflow: hidden;
+  padding: clamp(var(--space-3), 2.2vh, var(--space-6))
+    clamp(var(--space-4), 1.6vw, var(--space-6));
+}
+
+.summary--fit .section-card__title {
+  font-size: clamp(1.1rem, 2.6vh, var(--text-xl));
+}
+
+.summary--fit .section-card__text {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  font-size: clamp(0.875rem, 1.9vh, 1rem);
+  line-height: var(--leading-snug);
+}
+
+.summary--fit .section-card__go {
+  bottom: clamp(var(--space-2), 1.4vh, var(--space-4));
+}
+
+.summary--fit .summary__privacy {
+  flex: none;
+  max-width: none;
+  margin-top: clamp(var(--space-2), 1.8vh, var(--space-8));
+  padding: clamp(var(--space-2), 1.2vh, var(--space-4)) var(--space-5);
+  font-size: var(--text-sm);
 }
 </style>

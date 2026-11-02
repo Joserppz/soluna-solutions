@@ -86,46 +86,50 @@ Los cambios de la API van en el primer commit del bloque. El Frontend no simula 
 - Subir, abrir (enlace firmado de 5 minutos) y quitar documentos con el bucket privado real de Supabase.
 - Rendimiento del listado con el volumen real de afiliados (RNF-01).
 
-## 7. Ajuste: encabezados fijos
+## 7. Ajuste: pantallas completas y quitar evaluaciones
 
-Pedido después de revisar el bloque: al desplazar la página, el encabezado de cada pantalla queda fijo y solo pasan por debajo las listas. La página sigue con una sola barra de desplazamiento; no hay zonas con su propia barra.
+Pedido después de revisar el bloque.
 
-| Pantalla | Queda fijo | Pasa por debajo |
-| :--- | :--- | :--- |
-| Resumen | El saludo, más chico | Las tarjetas de las secciones |
-| Afiliados | Título y «+ Registrar afiliado», pestañas con contadores, búsqueda, filtros y los títulos de las columnas | Las filas y la paginación |
-| Ficha del afiliado | Nombre, estados y pestañas, en una sola línea | El contenido de cada pestaña (datos, listas de evaluaciones, asistencia y documentos) |
-| Celular | Solo las pestañas, debajo de la barra superior | Todo lo demás |
+### Cada pantalla entra completa en la ventana
 
-Piezas reutilizables para los bloques siguientes:
+En escritorio y laptops (1024 px de ancho y 560 px de alto o más), la página no se desplaza: cada pantalla reparte el alto disponible y achica tamaños con medidas fluidas (`clamp(…vh…)`), sin quedar apretada.
 
-- **`StickyHeader`:** deja fijo lo que va adentro y avisa cuándo está fijo, para que cada vista lo achique. Al achicarse deja un margen igual a lo que perdió, así la página no cambia de alto ni el contenido salta.
-- **`DataTable` con `sticky-head`:** los títulos de las columnas quedan justo debajo del encabezado fijo.
-- Al cambiar de pestaña, filtro o página, la lista empieza justo debajo del encabezado.
-- Lo que llega después de abrir la ficha (el resumen de asistencia) reserva su alto mientras carga, para que la página no crezca de golpe.
+| Pantalla | Cómo entra |
+| :--- | :--- |
+| Resumen | Las tarjetas de las secciones se reparten el alto; el saludo y la nota de privacidad, más chicos |
+| Afiliados | El listado muestra **tantas filas como caben** (por ejemplo, 6 a 1366×768 y 10 a 1920×1080) y la paginación siempre queda a la vista. Si la ventana cambia de tamaño, se recalcula y se mantiene a la vista la primera persona que se estaba viendo. Los recuadros «Una persona, una ficha» y «Nada se borra» quedan en los formularios de alta y de baja |
+| Ficha | Encabezado más compacto. «Afiliados» de las migas de pan vuelve al listado con sus filtros, en lugar del enlace «‹ Afiliados». Datos en tres columnas: datos personales; familiares y asistencia; consentimiento. «Marcar como inactiva…» pasa a la barra de guardar. Historia clínica en dos columnas |
 
-Cambios relacionados:
+Si una pestaña tiene más de lo que entra (muchas evaluaciones, o una ventana angosta como 1024×768), solo se desplaza el contenido de esa pestaña: el nombre y las pestañas quedan arriba y sigue habiendo una sola barra.
 
-- **Router:** si solo cambia la pestaña, la búsqueda o la página de la misma pantalla, ya no se vuelve al inicio de la página (antes saltaba arriba con cada letra de la búsqueda).
-- **Fecha de la firma:** si no se indica, la API usaba la fecha del servidor (UTC), que de noche en Bolivia ya es «mañana». Ahora usa la fecha de La Paz. La ficha, además, ya no bloquea guardar por una fecha guardada antes: solo revisa las fechas que la persona cambia.
+En el celular y en ventanas muy bajas, la página se desplaza con normalidad y las pestañas quedan fijas arriba (`StickyHeader`).
+
+Piezas reutilizables para F3 a F6:
+
+- **`useFitLayout()`:** dice si la pantalla está en «ventana completa»; `TeamLayout` aplica el mismo criterio en CSS.
+- **`rowsThatFit()`:** calcula cuántas filas entran en el alto disponible.
+- **`DataTable`:** pasa a tarjetas según su propio ancho (`stack-below`).
+- **`StickyHeader`:** se apaga en ventana completa (`disabled`).
+
+### Quitar una evaluación registrada por error
+
+En el detalle de una evaluación, el personal clínico tiene **«Quitar…»**: pide el motivo (por ejemplo, «se registró en la ficha de otra persona») y la evaluación deja de aparecer.
+
+Es una baja lógica, como la de las fichas: se conserva en la base con quién, cuándo y por qué (migración 004), y queda en la bitácora. Los datos clínicos no se borran.
+
+### Verificación
 
 | Verificación | Resultado |
 | :--- | :--- |
-| Vitest | 239 pruebas en 22 archivos, 94,18 % de líneas |
-| Playwright | 39 recorridos: los 34 anteriores y 5 de `e2e/encabezados-fijos.spec.ts` |
-| Backend (pytest) | 432 pruebas (fecha de la firma en hora de Bolivia) |
+| Vitest | 247 pruebas en 23 archivos, 93,97 % de líneas |
+| Playwright | 41 recorridos. `e2e/pantallas-completas.spec.ts` (7) reemplaza a la prueba de encabezados fijos |
+| Backend (pytest) | 433 pruebas (quitar una evaluación: motivo, permiso, ya no aparece, se conserva) |
 
-`e2e/encabezados-fijos.spec.ts` comprueba en el listado y en la ficha, a 1366×768 y 1920×1080, que al bajar hasta el final:
+`e2e/pantallas-completas.spec.ts` revisa a 1366×768, 1280×720 y 1920×1080 que el Resumen, el listado y las cinco pestañas de la ficha no tengan barra de desplazamiento: ni la página, ni una zona interna, ni lateral. También revisa que el listado muestre su última fila y la paginación, y que en el celular las pestañas queden fijas sin que la página cambie de alto.
 
-- el título o el nombre y las pestañas siguen a la vista;
-- los títulos de las columnas quedan pegados al encabezado;
-- la página no cambia de alto y no hay desplazamiento lateral ni zonas con su propia barra.
-
-También comprueba que otra página o pestaña empieza justo debajo del encabezado y que en el celular solo quedan fijas las pestañas.
-
-Antes de medir, la prueba espera a que la ficha termine de cargar. Se corrió también con cada respuesta de la API demorada entre 0,2 y 1,2 s: la versión anterior fallaba como en una PC lenta y esta pasa.
+Se corrió también con cada respuesta de la API demorada entre 0,2 y 1,2 s.
 
 | | |
 | :---: | :---: |
-| ![Listado con encabezado fijo](frontend-f2/F2-11-listado-encabezado-fijo.webp) Listado desplazado a 1366×768 | ![Ficha con encabezado fijo](frontend-f2/F2-12-ficha-encabezado-fijo.webp) Ficha desplazada a 1366×768 |
-| ![Celular](frontend-f2/F2-13-ficha-celular-pestanas-fijas.webp) Celular: solo las pestañas | |
+| ![Resumen](frontend-f2/F2-14-resumen-ventana-completa.webp) Resumen a 1366×768 | ![Listado](frontend-f2/F2-11-listado-ventana-completa.webp) Listado a 1366×768: las filas que caben |
+| ![Ficha](frontend-f2/F2-12-ficha-ventana-completa.webp) Ficha a 1366×768, en tres columnas | ![Celular](frontend-f2/F2-13-ficha-celular-pestanas-fijas.webp) Celular: las pestañas quedan fijas |

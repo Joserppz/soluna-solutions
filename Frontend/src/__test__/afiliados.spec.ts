@@ -1,5 +1,5 @@
 import { DOMWrapper } from '@vue/test-utils'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import type {
   PatientCounts,
@@ -455,6 +455,39 @@ describe('Listado de afiliados', () => {
     expect(router.currentRoute.value.name).toBe('afiliado')
     expect(router.currentRoute.value.params.id).toBe('p-1')
     expect(wrapper.get('.nav-item.is-active').text()).toBe('Afiliados')
+  })
+})
+
+describe('Listado en ventana completa (escritorio)', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  it('pide tantas filas como entran en el alto de la tabla', async () => {
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn(() => ({
+        matches: true,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    )
+    vi.spyOn(Element.prototype, 'clientHeight', 'get').mockImplementation(
+      function (this: Element) {
+        return this.classList.contains('patients__table') ? 420 : 0
+      },
+    )
+    const fake = fakeApi()
+    const { wrapper } = await mountApp('/equipo/afiliados', fake)
+
+    // 420 px sin títulos de columna: 7 filas de 56 px
+    expect(fake.callsTo('GET /patients')).toHaveLength(1)
+    expect(lastQuery(fake, 'GET /patients').limit).toBe('7')
+    expect(wrapper.text()).toContain('Mostrando 1–7 de 25')
+    expect(wrapper.find('.patients--fit').exists()).toBe(true)
+    // Los principios del diseño quedan en los formularios, no ocupan la pantalla
+    expect(wrapper.find('.principles').exists()).toBe(false)
   })
 })
 

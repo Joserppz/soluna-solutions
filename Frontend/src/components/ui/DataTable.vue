@@ -1,4 +1,6 @@
 <script setup lang="ts" generic="Row">
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+
 import SkeletonBlock from './SkeletonBlock.vue'
 
 export interface Column {
@@ -9,7 +11,7 @@ export interface Column {
   hideLabel?: boolean
 }
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     columns: Column[]
     rows: Row[]
@@ -22,10 +24,32 @@ withDefaults(
      * del encabezado fijo de la vista (StickyHeader).
      */
     stickyHead?: boolean
+    /** Con menos ancho que esto (px), cada fila se muestra como una tarjeta. */
+    stackBelow?: number
     caption: string
   }>(),
-  { loading: false, skeletonRows: 5, stickyHead: false },
+  { loading: false, skeletonRows: 5, stickyHead: false, stackBelow: 800 },
 )
+
+const wrap = ref<HTMLElement | null>(null)
+const stacked = ref(false)
+let resize: ResizeObserver | null = null
+
+function measure() {
+  const width = wrap.value?.clientWidth ?? 0
+  // Sin medida (por ejemplo, oculta) se queda como tabla
+  stacked.value = width > 0 && width < props.stackBelow
+}
+
+onMounted(() => {
+  measure()
+  if (typeof ResizeObserver !== 'undefined' && wrap.value) {
+    resize = new ResizeObserver(measure)
+    resize.observe(wrap.value)
+  }
+})
+
+onBeforeUnmount(() => resize?.disconnect())
 
 function cellValue(row: Row, key: string): unknown {
   return (row as Record<string, unknown>)[key]
@@ -39,7 +63,11 @@ defineSlots<
 </script>
 
 <template>
-  <div class="table-wrap" :class="{ 'table-wrap--sticky': stickyHead }">
+  <div
+    ref="wrap"
+    class="table-wrap"
+    :class="{ 'table-wrap--sticky': stickyHead, 'is-stacked': stacked }"
+  >
     <table class="table" :aria-busy="loading || undefined">
       <caption class="visually-hidden">
         {{
@@ -99,7 +127,7 @@ defineSlots<
 .table-wrap {
   width: 100%;
   overflow-x: auto;
-  /* Las filas se vuelven tarjetas según el ancho de la tabla, no de la pantalla */
+  /* Las columnas pueden adaptarse al ancho de la tabla (@container en cada vista) */
   container-type: inline-size;
 }
 
@@ -164,48 +192,47 @@ tbody tr:not(.is-skeleton):hover {
 }
 
 /* Si la tabla no entra a lo ancho (celular, tableta o menú abierto), cada fila se
-   vuelve una tarjeta: nunca aparece una barra de desplazamiento horizontal */
-@container (max-width: 50rem) {
-  .table thead {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-  }
+   vuelve una tarjeta: nunca aparece una barra de desplazamiento horizontal. Lo decide
+   el ancho de la propia tabla (prop stackBelow), no el de la pantalla */
+.is-stacked .table thead {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
 
-  .table,
-  .table tbody,
-  .table tr,
-  .table td {
-    display: block;
-    width: 100%;
-  }
+.is-stacked .table,
+.is-stacked .table tbody,
+.is-stacked .table tr,
+.is-stacked .table td {
+  display: block;
+  width: 100%;
+}
 
-  .table tr {
-    padding: var(--space-3) 0;
-    border-bottom: 1px solid var(--color-border);
-  }
+.is-stacked .table tr {
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
 
-  .table td {
-    display: flex;
-    justify-content: space-between;
-    gap: var(--space-4);
-    padding: var(--space-2) var(--space-1);
-    border: 0;
-    text-align: right;
-  }
+.is-stacked .table td {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-1);
+  border: 0;
+  text-align: right;
+}
 
-  .table td[data-label]::before {
-    content: attr(data-label);
-    color: var(--color-text-muted);
-    font-size: var(--text-sm);
-    font-weight: 600;
-    text-align: left;
-  }
+.is-stacked .table td[data-label]::before {
+  content: attr(data-label);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-align: left;
+}
 
-  .table__empty {
-    justify-content: center !important;
-  }
+.is-stacked .table__empty {
+  justify-content: center !important;
 }
 </style>

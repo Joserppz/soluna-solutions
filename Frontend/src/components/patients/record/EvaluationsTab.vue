@@ -83,6 +83,15 @@ function onSaved(saved: EvaluationOut) {
   )
 }
 
+function onRemoved(evaluationId: string) {
+  emit(
+    'update:evaluations',
+    (props.evaluations ?? []).filter((item) => item.id !== evaluationId),
+  )
+  opened.value = null
+  toast.success('Quitamos la evaluación. Queda guardada con su motivo.')
+}
+
 if (!props.notice && props.evaluations === null) void load()
 </script>
 
@@ -161,6 +170,7 @@ if (!props.notice && props.evaluations === null) void load()
       :can-write="canWrite"
       @close="opened = null"
       @saved="onSaved"
+      @removed="onRemoved"
     />
   </section>
 </template>

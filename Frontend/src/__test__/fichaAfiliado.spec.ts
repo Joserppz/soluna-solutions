@@ -876,6 +876,62 @@ describe('Evaluaciones de seguimiento', () => {
     expect(body().find('[role="dialog"]').exists()).toBe(false)
   })
 
+  it('una evaluación registrada por error se quita con su motivo', async () => {
+    const fake = fakeApi()
+    fake.on('POST /patients/p-1/evaluations/e-1/remove', [
+      { status: 403, body: { detail: 'No tienes permiso.' } },
+      { body: { message: 'Quitamos la evaluación.' } },
+    ])
+    const { wrapper } = await mountApp(`${URL}?seccion=evaluaciones`, fake)
+
+    await body()
+      .get('[aria-label="Ver la evaluación física del 14 oct 2026"]')
+      .trigger('click')
+    await settle()
+    await button('Quitar…').trigger('click')
+    const dialog = () => body().get('[role="dialog"]')
+    expect(dialog().text()).toContain('¿Quitar esta evaluación?')
+    expect(dialog().text()).toContain('deja de aparecer en la ficha')
+
+    await body().get('#quitar-evaluacion').trigger('submit')
+    await settle()
+    expect(dialog().text()).toContain('Escribe el motivo (al menos 3 letras).')
+    expect(
+      fake.callsTo('POST /patients/p-1/evaluations/e-1/remove'),
+    ).toHaveLength(0)
+
+    await field('Motivo', dialog()).setValue(' Era de otra persona ')
+    await body().get('#quitar-evaluacion').trigger('submit')
+    await settle()
+    expect(dialog().get('[role="alert"]').text()).toContain(
+      'No tienes permiso.',
+    )
+
+    await body().get('#quitar-evaluacion').trigger('submit')
+    await settle()
+    expect(
+      fake.callsTo('POST /patients/p-1/evaluations/e-1/remove')[1]!.body,
+    ).toEqual({ reason: 'Era de otra persona' })
+    expect(body().find('[role="dialog"]').exists()).toBe(false)
+    expect(panel().findAll('.evaluation')).toHaveLength(1)
+    expect(wrapper.findAll('[role="tab"]')[2]!.text()).toContain('1')
+    expect(toasts()).toContain(
+      'Quitamos la evaluación. Queda guardada con su motivo.',
+    )
+  })
+
+  it('quitar se puede cancelar sin cambiar nada', async () => {
+    const fake = fakeApi()
+    await mountApp(`${URL}?seccion=evaluaciones`, fake)
+
+    await button('Ver', panel()).trigger('click')
+    await settle()
+    await button('Quitar…').trigger('click')
+    await button('Cancelar', body().get('[role="dialog"]')).trigger('click')
+    expect(body().get('[role="dialog"]').text()).toContain('Observaciones')
+    expect(fake.calls.some((call) => call.path.endsWith('/remove'))).toBe(false)
+  })
+
   it('sin permiso clínico de escritura solo se consultan', async () => {
     const reader = sessionFor({ role: 'coordination' }, [
       'patients:read',
@@ -892,6 +948,7 @@ describe('Evaluaciones de seguimiento', () => {
     await button('Ver', panel()).trigger('click')
     await settle()
     expect(hasButton('Corregir')).toBe(false)
+    expect(hasButton('Quitar…')).toBe(false)
   })
 
   it('si no cargan, permite reintentar', async () => {

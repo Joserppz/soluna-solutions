@@ -14,7 +14,18 @@
  * Debe ser hijo directo del contenedor de toda la vista: solo se queda fijo mientras
  * su contenedor sigue en pantalla.
  */
-import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+
+const props = withDefaults(
+  defineProps<{
+    /**
+     * Apagado: un encabezado común. Se usa en «ventana completa» (useFitLayout), donde
+     * la página no se desplaza y no hace falta fijarlo.
+     */
+    disabled?: boolean
+  }>(),
+  { disabled: false },
+)
 
 const root = ref<HTMLElement | null>(null)
 const stuck = ref(false)
@@ -35,6 +46,12 @@ async function update() {
   frame = 0
   const element = root.value
   if (!element) return
+  if (props.disabled) {
+    stuck.value = false
+    compensation.value = 0
+    document.documentElement.style.removeProperty('--sticky-header-bottom')
+    return
+  }
   const top = stickyTop()
   const rect = element.getBoundingClientRect()
   const nowStuck = window.scrollY > 0 && rect.top <= top + 0.5
@@ -91,6 +108,11 @@ onBeforeUnmount(() => {
   document.documentElement.style.removeProperty('--sticky-header-bottom')
 })
 
+watch(
+  () => props.disabled,
+  () => void update(),
+)
+
 defineExpose({ scrollToStart, stuck })
 </script>
 
@@ -98,7 +120,7 @@ defineExpose({ scrollToStart, stuck })
   <div
     ref="root"
     class="sticky-header"
-    :class="{ 'is-stuck': stuck }"
+    :class="{ 'is-stuck': stuck, 'is-disabled': disabled }"
     :style="compensation ? { marginBottom: `${compensation}px` } : undefined"
   >
     <slot :stuck="stuck" />
@@ -111,6 +133,11 @@ defineExpose({ scrollToStart, stuck })
   top: var(--team-sticky-top, 0px);
   z-index: var(--z-sticky);
   background: var(--color-bg);
+}
+
+.sticky-header.is-disabled {
+  position: static;
+  background: transparent;
 }
 
 .sticky-header.is-stuck {

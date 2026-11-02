@@ -10,7 +10,11 @@ import type {
 } from '../../../api/types'
 import { useApi } from '../../../composables/useApi'
 import { longDay, todayIso } from '../../../utils/format'
-import { EVALUATION_AREAS, pastDateError } from '../../../utils/patients'
+import {
+  EVALUATION_AREAS,
+  pastDateError,
+  reasonError,
+} from '../../../utils/patients'
 import AppAlert from '../../ui/AppAlert.vue'
 import AppButton from '../../ui/AppButton.vue'
 import AppModal from '../../ui/AppModal.vue'
@@ -25,11 +29,15 @@ const props = defineProps<{
 const emit = defineEmits<{
   close: []
   saved: [evaluation: EvaluationOut]
+  /** Se quitó por error: deja de mostrarse (la API la conserva con su motivo). */
+  removed: [evaluationId: string]
 }>()
 
 const { api, session } = useApi()
 
 const editing = ref(false)
+const removing = ref(false)
+const reason = ref('')
 const submitted = ref(false)
 const saving = ref(false)
 const error = ref<string | null>(null)
@@ -45,9 +53,13 @@ const current = computed(() =>
 )
 const isNew = computed(() => props.evaluation === 'nueva')
 const showForm = computed(() => isNew.value || editing.value)
+const reasonMessage = computed(() =>
+  submitted.value ? reasonError(reason.value) : null,
+)
 const title = computed(() => {
   if (isNew.value) return 'Nueva evaluación'
   if (!current.value) return ''
+  if (removing.value) return '¿Quitar esta evaluación?'
   return `Evaluación ${current.value.areaLabel.toLocaleLowerCase('es')}`
 })
 
@@ -55,6 +67,8 @@ watch(
   () => props.evaluation,
   (evaluation) => {
     editing.value = false
+    removing.value = false
+    reason.value = ''
     submitted.value = false
     error.value = null
     if (evaluation === 'nueva')
@@ -130,6 +144,33 @@ async function save() {
   }
 }
 
+function startRemove() {
+  removing.value = true
+  submitted.value = false
+  error.value = null
+  reason.value = ''
+}
+
+async function remove() {
+  submitted.value = true
+  error.value = null
+  const evaluation = current.value
+  if (!evaluation || reasonError(reason.value)) return
+  saving.value = true
+  try {
+    await api.evaluations.remove(props.patientId, evaluation.id, {
+      reason: reason.value.trim(),
+    })
+    emit('removed', evaluation.id)
+  } catch (failure) {
+    error.value = isApiError(failure)
+      ? failure.message
+      : 'No pudimos quitar la evaluación. Intenta de nuevo.'
+  } finally {
+    saving.value = false
+  }
+}
+
 function shown(message: string | null) {
   return submitted.value ? message : null
 }
@@ -143,7 +184,40 @@ function shown(message: string | null) {
     :dismissible="!saving"
     @update:open="emit('close')"
   >
-    <dl v-if="current && !showForm" class="details">
+    <form
+      v-if="current && removing"
+      id="quitar-evaluacion"
+      class="evaluation-form"
+      novalidate
+      @submit.prevent="remove"
+    >
+      <p class="remove-note">
+        La evaluación {{ current.areaLabel.toLocaleLowerCase('es') }} del
+        {{ longDay(current.evaluatedOn) }} deja de aparecer en la ficha. Se
+        conserva con el motivo, para que quede constancia.
+      </p>
+      <AppAlert v-if="error" tone="error">{{ error }}</AppAlert>
+      <FormField
+        v-slot="{ id, describedBy, invalid }"
+        label="Motivo"
+        required
+        hint="Por ejemplo: se registró en la ficha de otra persona."
+        :error="reasonMessage"
+      >
+        <textarea
+          :id="id"
+          v-model="reason"
+          class="textarea"
+          rows="3"
+          maxlength="300"
+          autofocus
+          :aria-describedby="describedBy"
+          :aria-invalid="invalid"
+        />
+      </FormField>
+    </form>
+
+    <dl v-else-if="current && !showForm" class="details">
       <div>
         <dt>Fecha</dt>
         <dd>{{ longDay(current.evaluatedOn) }}</dd>
@@ -250,7 +324,33 @@ function shown(message: string | null) {
           {{ isNew ? 'Registrar evaluación' : 'Guardar cambios' }}
         </AppButton>
       </template>
+      <template v-else-if="removing">
+        <AppButton
+          variant="secondary"
+          :disabled="saving"
+          @click="removing = false"
+        >
+          Cancelar
+        </AppButton>
+        <AppButton
+          type="submit"
+          form="quitar-evaluacion"
+          variant="danger"
+          :loading="saving"
+          loading-label="Quitando la evaluación…"
+        >
+          Quitar evaluación
+        </AppButton>
+      </template>
       <template v-else>
+        <AppButton
+          v-if="canWrite"
+          variant="link"
+          class="details__remove"
+          @click="startRemove"
+        >
+          Quitar…
+        </AppButton>
         <AppButton v-if="canWrite" variant="secondary" @click="startEdit">
           Corregir
         </AppButton>
@@ -261,6 +361,14 @@ function shown(message: string | null) {
 </template>
 
 <style scoped>
+.remove-note {
+  color: var(--color-text-muted);
+}
+
+.details__remove {
+  margin-right: auto;
+}
+
 .details {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

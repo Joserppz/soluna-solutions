@@ -75,7 +75,8 @@ test.describe('con la sesión de Administración', () => {
       counts.consentPending,
     )
     expect(await tabCount(page, 'Inactivos')).toBe(counts.inactive)
-    await expect(page.locator('tbody tr')).toHaveCount(10)
+    // En escritorio se muestran las filas que entran en la ventana
+    await expect(page.getByText(/^Mostrando 1–\d+ de /)).toBeVisible()
     await evidence(page, 'F2-01-listado')
 
     // Buscar por carnet, aunque se escriba con espacios
@@ -90,15 +91,21 @@ test.describe('con la sesión de Administración', () => {
     await page
       .getByLabel('Buscar por nombre o carnet')
       .fill('Prueba Paginación')
-    await expect(page.getByText('Mostrando 1–10 de 12')).toBeVisible()
+    await expect(page.getByText(/^Mostrando 1–\d+ de 12$/)).toBeVisible()
+    const perPage = await page.locator('tbody tr').count()
+    expect(perPage).toBeLessThan(12)
     await expect(page.locator('tbody tr').first()).toContainText(
       'Prueba Paginación 01',
     )
     await page.getByRole('button', { name: 'Página 2' }).click()
-    await expect(page.getByText('Mostrando 11–12 de 12')).toBeVisible()
+    await expect(
+      page.getByText(
+        `Mostrando ${perPage + 1}–${Math.min(2 * perPage, 12)} de 12`,
+      ),
+    ).toBeVisible()
     await expect(page).toHaveURL(/pagina=2/)
     await page.getByLabel('Orden').selectOption('-name')
-    await expect(page.getByText('Mostrando 1–10 de 12')).toBeVisible()
+    await expect(page.getByText(`Mostrando 1–${perPage} de 12`)).toBeVisible()
     await expect(page.locator('tbody tr').first()).toContainText(
       'Prueba Paginación 12',
     )
@@ -120,6 +127,7 @@ test.describe('con la sesión de Administración', () => {
     // La pestaña Inactivos solo muestra fichas dadas de baja
     await page.getByRole('tab', { name: /^Inactivos/ }).click()
     await expect(page).toHaveURL(/pestana=inactivos/)
+    await expect(page.locator('.patients__table.is-refreshing')).toHaveCount(0)
     for (const row of await page.locator('tbody tr').all())
       await expect(row).toContainText('Inactivo')
 
@@ -146,24 +154,32 @@ test.describe('con la sesión de Administración', () => {
     { width: 1366, height: 768 },
     { width: 1920, height: 1080 },
   ]) {
-    test(`a ${size.width}×${size.height} el listado tiene una sola barra de desplazamiento`, async ({
+    test(`a ${size.width}×${size.height} el listado entra completo, sin barra de desplazamiento`, async ({
       page,
     }) => {
       await ensurePaginationPatients()
       await page.setViewportSize(size)
       await page.goto('/equipo/afiliados')
-      await expect(page.locator('tbody tr')).toHaveCount(10)
+      await expect(page.getByText(/^Mostrando 1–\d+ de /)).toBeVisible()
+      expect(await page.locator('tbody tr').count()).toBeGreaterThanOrEqual(5)
 
-      // Ni la tabla ni el menú lateral tienen su propia barra, ni hay desplazamiento lateral
+      // Ni la página, ni la tabla, ni el menú lateral se desplazan
       expect(await scrollState(page)).toEqual({ sideways: false, inner: [] })
+      expect(
+        await page.evaluate(
+          () =>
+            document.documentElement.scrollHeight <=
+            document.documentElement.clientHeight,
+        ),
+      ).toBe(true)
       await expect(page.locator('.sidebar__user')).toBeInViewport()
       await expect(
         page.getByRole('button', { name: '+ Registrar afiliado' }),
       ).toBeInViewport()
-      if (size.width === 1920)
-        await expect(
-          page.getByRole('navigation', { name: 'Páginas de afiliados' }),
-        ).toBeInViewport()
+      await expect(
+        page.getByRole('navigation', { name: 'Páginas de afiliados' }),
+      ).toBeInViewport()
+      await expect(page.locator('tbody tr').last()).toBeInViewport()
     })
   }
 

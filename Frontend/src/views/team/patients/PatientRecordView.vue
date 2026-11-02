@@ -23,6 +23,7 @@ import SkeletonBlock from '../../../components/ui/SkeletonBlock.vue'
 import StatusBadge from '../../../components/ui/StatusBadge.vue'
 import StickyHeader from '../../../components/ui/StickyHeader.vue'
 import { useApi } from '../../../composables/useApi'
+import { useFitLayout } from '../../../composables/useFitLayout'
 import { usePageCrumb } from '../../../composables/usePageCrumb'
 import { patientsListLocation } from '../../../composables/usePatientsListLocation'
 import { longDay, monthYear, todayIso } from '../../../utils/format'
@@ -42,6 +43,8 @@ const { api, session } = useApi()
 const route = useRoute()
 const router = useRouter()
 const crumb = usePageCrumb()
+// En escritorio la ficha entra en la ventana: solo se desplaza el contenido de la pestaña
+const fit = useFitLayout()
 
 const patientId = computed(() => String(route.params.id))
 const patient = ref<PatientOut | null>(null)
@@ -155,8 +158,9 @@ void load()
 </script>
 
 <template>
-  <div class="record">
-    <button type="button" class="record__back" @click="backToList">
+  <div class="record" :class="{ 'record--fit': fit }">
+    <!-- En escritorio se vuelve desde las migas de pan («Afiliados») -->
+    <button v-if="!fit" type="button" class="record__back" @click="backToList">
       <span aria-hidden="true">‹</span> Afiliados
     </button>
 
@@ -198,7 +202,7 @@ void load()
 
     <template v-else-if="patient">
       <!-- Nombre, estados y pestañas quedan fijos; el contenido de cada pestaña pasa por debajo -->
-      <StickyHeader ref="sticky" v-slot="{ stuck }">
+      <StickyHeader ref="sticky" v-slot="{ stuck }" :disabled="fit">
         <div class="record__top" :class="{ 'is-stuck': stuck }">
           <header class="record__header">
             <InitialsAvatar :name="patient.name" :size="stuck ? 'md' : 'xl'" />
@@ -446,5 +450,53 @@ void load()
   .record__top.is-stuck {
     padding-top: 0;
   }
+}
+
+/* Ventana completa: encabezado y pestañas arriba; el panel ocupa el resto y, si su
+   contenido no entra, solo él se desplaza (una sola barra) */
+.record--fit {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(var(--space-2), 1.6vh, var(--space-5));
+  min-height: 0;
+}
+
+.record--fit > * {
+  flex: none;
+}
+
+.record--fit .record__back {
+  margin-bottom: calc(-1 * clamp(var(--space-1), 1vh, var(--space-3)));
+}
+
+.record--fit .record__top {
+  gap: clamp(var(--space-2), 1.6vh, var(--space-5));
+}
+
+.record--fit .record__header {
+  gap: var(--space-2) clamp(var(--space-3), 1.6vw, var(--space-6));
+}
+
+.record--fit .record__header :deep(.avatar--xl) {
+  width: clamp(3.25rem, 8vh, 4.75rem);
+  height: clamp(3.25rem, 8vh, 4.75rem);
+  font-size: clamp(1.25rem, 3vh, var(--text-2xl));
+}
+
+.record--fit .record__identity h1 {
+  font-size: clamp(1.75rem, 4.6vh, 3.25rem);
+}
+
+.record--fit .record__meta {
+  font-size: clamp(0.95rem, 2vh, var(--text-lg));
+}
+
+.record--fit .record__panel {
+  flex: 1;
+  min-height: 0;
+  /* Espacio para que los anillos de foco no se corten en los bordes */
+  padding: 3px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 </style>

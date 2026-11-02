@@ -8,6 +8,7 @@ import SessionTimeoutDialog from '../components/session/SessionTimeoutDialog.vue
 import { useApi } from '../composables/useApi'
 import { useIdleSession } from '../composables/useIdleSession'
 import { pageCrumb } from '../composables/usePageCrumb'
+import { patientsListLocation } from '../composables/usePatientsListLocation'
 import { useToast } from '../composables/useToast'
 import {
   ADMIN_GROUP_TITLE,
@@ -41,6 +42,12 @@ const adminSections = computed(() =>
 )
 const inAdmin = computed(() =>
   adminSections.value.some((section) => section.name === route.name),
+)
+/** La sección de una página interna; el listado de afiliados vuelve con sus filtros. */
+const sectionLocation = computed(() =>
+  route.meta.section === 'afiliados'
+    ? patientsListLocation()
+    : { name: route.meta.section! },
 )
 const breadcrumb = computed(() => {
   const crumbs = route.meta.breadcrumb ?? []
@@ -263,7 +270,17 @@ onBeforeUnmount(() => topbarResize?.disconnect())
                 index === breadcrumb.length - 1 ? 'page' : undefined
               "
             >
-              {{ crumb }}
+              <!-- En una página interna (una ficha), su sección lleva de vuelta -->
+              <RouterLink
+                v-if="
+                  index === 0 && breadcrumb.length > 1 && route.meta.section
+                "
+                :to="sectionLocation"
+                class="breadcrumb__link"
+              >
+                {{ crumb }}
+              </RouterLink>
+              <template v-else>{{ crumb }}</template>
             </li>
           </ol>
         </nav>
@@ -529,6 +546,18 @@ onBeforeUnmount(() => topbarResize?.disconnect())
   color: var(--color-text-subtle);
 }
 
+.breadcrumb__link {
+  color: var(--color-link);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: rgb(109 22 25 / 0.3);
+  text-underline-offset: 0.2em;
+}
+
+.breadcrumb__link:hover {
+  text-decoration-color: currentColor;
+}
+
 .breadcrumb [aria-current='page'] {
   color: var(--color-text);
 }
@@ -543,6 +572,56 @@ onBeforeUnmount(() => topbarResize?.disconnect())
 }
 
 /* Tabletas y celulares: el menú se abre como panel lateral */
+/* Ventana completa (escritorio y laptops): la página no se desplaza. Cada vista ocupa
+   el alto que queda y reparte su espacio; si algo no entra, solo se desplaza su
+   contenido (una sola barra). Mismo criterio que useFitLayout(). */
+@media (min-width: 1024px) and (min-height: 560px) {
+  .team {
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .team-main {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+    padding-block: clamp(var(--space-3), 2.6vh, var(--space-8))
+      clamp(var(--space-3), 2.2vh, var(--space-6));
+  }
+
+  .team-header {
+    flex: none;
+    width: 100%;
+    margin-bottom: clamp(var(--space-2), 1.6vh, var(--space-5));
+  }
+
+  .team-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .team-content > :deep(*) {
+    flex: 1;
+    min-height: 0;
+  }
+}
+
+/* Laptops (alto útil de ~600 a ~800 px): campos y botones un poco más bajos */
+@media (min-width: 1024px) and (min-height: 560px) and (max-height: 860px) {
+  .team {
+    --control-height: 2.6rem;
+    --field-gap: 0.35rem;
+    --form-gap: var(--space-3);
+  }
+}
+
 /* Ventanas bajas (1366×768): el menú entra completo y no tiene su propia barra */
 @media (min-width: 1024px) and (max-height: 860px) {
   .sidebar {

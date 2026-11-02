@@ -124,6 +124,27 @@ test.describe('con la sesión de Administración', () => {
     await expect(tab(page, 'Evaluaciones')).toContainText('1')
     await evidence(page, 'F2-07-evaluaciones')
 
+    // Una evaluación cargada por error se quita con su motivo
+    await page
+      .getByRole('button', { name: /^Ver la evaluación física/ })
+      .click()
+    const view = page.getByRole('dialog', { name: 'Evaluación física' })
+    await view.getByRole('button', { name: 'Quitar…' }).click()
+    const remove = page.getByRole('dialog', {
+      name: '¿Quitar esta evaluación?',
+    })
+    await remove
+      .getByLabel('Motivo')
+      .fill('Se registró en la ficha de otra persona')
+    await remove.getByRole('button', { name: 'Quitar evaluación' }).click()
+    await expect(remove).toBeHidden()
+    await expect(
+      page.getByText('Quitamos la evaluación. Queda guardada con su motivo.'),
+    ).toBeVisible()
+    await expect(panel(page)).toContainText(
+      'Todavía no hay evaluaciones registradas.',
+    )
+
     // Asistencia y documentos
     await tab(page, 'Asistencia').click()
     await expect(panel(page)).toContainText(/\d+ de \d+ sábados?/)

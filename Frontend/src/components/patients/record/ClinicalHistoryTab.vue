@@ -9,6 +9,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { isApiError } from '../../../api/errors'
 import type { PatientOut } from '../../../api/types'
 import { useApi } from '../../../composables/useApi'
+import { useFitLayout } from '../../../composables/useFitLayout'
 import { useToast } from '../../../composables/useToast'
 import { PARKINSON_STAGES } from '../../../utils/patients'
 import AppAlert from '../../ui/AppAlert.vue'
@@ -23,6 +24,7 @@ const emit = defineEmits<{
 }>()
 
 const { api, session } = useApi()
+const fit = useFitLayout()
 const toast = useToast()
 
 type Anamnesis = PatientOut['anamnesis']
@@ -83,15 +85,20 @@ async function save() {
 <template>
   <PrivacyNotice v-if="notice" :message="notice" />
 
-  <form v-else class="history surface-card" novalidate @submit.prevent="save">
+  <form
+    v-else
+    class="history surface-card"
+    :class="{ 'history--fit': fit }"
+    novalidate
+    @submit.prevent="save"
+  >
     <div class="history__head">
       <h2 id="historia-titulo">Diagnóstico</h2>
       <p>
         Cada consulta de la historia clínica queda en el registro de actividad.
       </p>
+      <AppAlert v-if="error" tone="error">{{ error }}</AppAlert>
     </div>
-
-    <AppAlert v-if="error" tone="error">{{ error }}</AppAlert>
 
     <fieldset :disabled="!canEditBase" class="history__grid">
       <FormField
@@ -247,6 +254,52 @@ async function save() {
 
   .span-2 {
     grid-column: auto;
+  }
+}
+
+/* Ventana completa en pantallas anchas: diagnóstico a la izquierda, síntomas y
+   medicación a la derecha, para que todo entre sin desplazar */
+.history--fit {
+  gap: clamp(var(--space-3), 2vh, var(--space-5));
+  padding: clamp(var(--space-3), 2vh, var(--space-5)) var(--space-6);
+}
+
+@media (min-width: 1280px) {
+  .history--fit {
+    max-width: none;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--space-8);
+    align-items: start;
+  }
+
+  .history--fit .history__head {
+    grid-column: 1 / -1;
+  }
+
+  /* Los botones quedan bajo el diagnóstico: no suman una fila más */
+  .history--fit .history__grid:first-of-type {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .history--fit .history__grid:last-of-type {
+    grid-column: 2;
+    grid-row: 2 / span 2;
+  }
+
+  .history--fit .history__actions {
+    grid-column: 1;
+    grid-row: 3;
+    align-self: end;
+  }
+
+  .history--fit .history__grid:first-of-type > :deep(.field) {
+    grid-column: 1 / -1;
+  }
+
+  .history--fit .textarea {
+    min-height: 0;
+    height: clamp(4.5rem, 13vh, 8rem);
   }
 }
 </style>

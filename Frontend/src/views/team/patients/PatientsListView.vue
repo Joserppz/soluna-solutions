@@ -4,7 +4,7 @@
  * filtro por actividad, orden y paginación real. Pestaña, filtros y página viven en la
  * dirección, así que «Atrás» y recargar no pierden la búsqueda.
  */
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter, type LocationQuery } from 'vue-router'
 
 import { isApiError } from '../../../api/errors'
@@ -28,6 +28,7 @@ import PageHeader from '../../../components/ui/PageHeader.vue'
 import StatusBadge from '../../../components/ui/StatusBadge.vue'
 import StickyHeader from '../../../components/ui/StickyHeader.vue'
 import { useApi } from '../../../composables/useApi'
+import { useFitLayout } from '../../../composables/useFitLayout'
 import { rememberPatientsList } from '../../../composables/usePatientsListLocation'
 import { useToast } from '../../../composables/useToast'
 import {
@@ -36,10 +37,14 @@ import {
   normalizeSearch,
   sinceLabel,
 } from '../../../utils/patients'
+import { rowsThatFit } from '../../../utils/pagination'
 
 type Category = ActivityTag['category']
 
-const PAGE_SIZE = 10
+/** Filas por página en el celular (la página se desplaza). */
+const SCROLL_PAGE_SIZE = 10
+/** Alto de cada fila en «ventana completa» (px): fijo para calcular cuántas entran. */
+const ROW_HEIGHT = 56
 const SEARCH_DELAY = 300
 
 const { api, session } = useApi()
@@ -92,6 +97,12 @@ const loadError = ref<string | null>(null)
 const registerOpen = ref(false)
 
 const canRegister = computed(() => session.can('patients:write'))
+
+// En escritorio la página no se desplaza: entran tantas filas como permita el alto
+const fit = useFitLayout()
+const tableArea = ref<HTMLElement | null>(null)
+const fitRows = ref(SCROLL_PAGE_SIZE)
+const pageSize = computed(() => (fit.value ? fitRows.value : SCROLL_PAGE_SIZE))
 
 const tabs = computed<TabItem<PatientGroup>[]>(() => [
   { key: 'all', label: 'Todos', count: counts.value?.all },
@@ -150,14 +161,14 @@ async function load() {
         ...filters,
         group: group.value,
         order: order.value,
-        limit: PAGE_SIZE,
-        offset: (page.value - 1) * PAGE_SIZE,
+        limit: pageSize.value,
+        offset: (page.value - 1) * pageSize.value,
       }),
       api.patients.summary(filters),
     ])
     if (current !== request) return
     // Si la página pedida quedó vacía (por ejemplo, tras una baja), vuelve a la última
-    const lastPage = Math.max(1, Math.ceil(pageResult.total / PAGE_SIZE))
+    const lastPage = Math.max(1, Math.ceil(pageResult.total / pageSize.value))
     if (!pageResult.items.length && page.value > lastPage) {
       page.value = lastPage
       return
@@ -243,14 +254,60 @@ function contactLabel(row: PatientSummary): string | null {
     : null
 }
 
+/** Cuántas filas entran en el espacio de la tabla (sin contar sus títulos). */
+function measureRows() {
+  const area = tableArea.value
+  if (!fit.value || !area) return
+  const head = area.querySelector('thead')?.getBoundingClientRect().height ?? 44
+  // El alto real de una fila (con su borde); si todavía no hay filas, el previsto
+  const row =
+    area.querySelector('tbody tr')?.getBoundingClientRect().height || ROW_HEIGHT
+  fitRows.value = rowsThatFit(area.clientHeight - head, row)
+}
+
+// Si cambia cuántas filas entran (ventana más alta o más baja), se mantiene a la vista
+// la primera persona que se estaba viendo
+let ready = false
+watch(pageSize, (size, before) => {
+  if (!ready) return
+  const first = (page.value - 1) * before
+  const next = Math.floor(first / size) + 1
+  if (next !== page.value) page.value = next
+  else refresh()
+})
+
+let resizeTimer: ReturnType<typeof setTimeout> | undefined
+let areaResize: ResizeObserver | null = null
+
+onMounted(async () => {
+  await nextTick()
+  measureRows()
+  if (typeof ResizeObserver !== 'undefined' && tableArea.value) {
+    areaResize = new ResizeObserver(() => {
+      clearTimeout(resizeTimer)
+      resizeTimer = setTimeout(measureRows, 120)
+    })
+    areaResize.observe(tableArea.value)
+  }
+  // Lo que cambió al medir ya se aplicó: recién ahora un cambio de tamaño recarga
+  await nextTick()
+  ready = true
+  void load()
+})
+
+onBeforeUnmount(() => {
+  areaResize?.disconnect()
+  clearTimeout(resizeTimer)
+})
+
 rememberPatientsList(route.fullPath)
-void load()
 </script>
 
 <template>
-  <div class="patients">
-    <!-- Título, pestañas y filtros quedan fijos; las filas pasan por debajo -->
-    <StickyHeader ref="sticky" v-slot="{ stuck }">
+  <div class="patients" :class="{ 'patients--fit': fit }">
+    <!-- En el celular, título, pestañas y filtros quedan fijos al bajar. En escritorio
+         todo entra en la ventana: la tabla muestra las filas que caben -->
+    <StickyHeader ref="sticky" v-slot="{ stuck }" :disabled="fit">
       <div class="patients__head" :class="{ 'is-stuck': stuck }">
         <PageHeader
           title="Afiliados"
@@ -331,15 +388,20 @@ void load()
           </AppButton>
         </AppAlert>
 
-        <div class="patients__table" :class="{ 'is-refreshing': loading }">
+        <div
+          ref="tableArea"
+          class="patients__table"
+          :class="{ 'is-refreshing': loading }"
+        >
           <DataTable
             :columns="columns"
             :rows="rows"
             :row-key="(row) => row.id"
             :loading="loading && !list"
-            :skeleton-rows="PAGE_SIZE"
+            :skeleton-rows="pageSize"
             caption="Afiliados de ASPAR"
-            sticky-head
+            :sticky-head="!fit"
+            :stack-below="fit ? 520 : 800"
           >
             <template #cell-person="{ row }">
               <span class="person">
@@ -403,16 +465,16 @@ void load()
         <AppPagination
           v-if="list"
           :total="list.total"
-          :limit="PAGE_SIZE"
+          :limit="pageSize"
           :offset="list.offset"
           :count="list.items.length"
           label="Páginas de afiliados"
-          @change="page = $event / PAGE_SIZE + 1"
+          @change="page = Math.floor($event / pageSize) + 1"
         />
       </div>
     </section>
 
-    <ol class="principles">
+    <ol v-if="!fit" class="principles">
       <li class="principles__item surface-card">
         <span class="principles__number" aria-hidden="true">1</span>
         <div>
@@ -668,10 +730,119 @@ void load()
   }
 }
 
-@container (max-width: 50rem) {
-  .person {
-    min-width: 0;
-    text-align: left;
+.patients__table :deep(.is-stacked) .person {
+  min-width: 0;
+  text-align: left;
+}
+
+/* Ventana completa: la página no se desplaza. La tabla ocupa el alto que queda y
+   muestra tantas filas como entran (todas del mismo alto) */
+.patients--fit {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.patients--fit .patients__head {
+  gap: clamp(var(--space-2), 2vh, var(--space-6));
+}
+
+.patients--fit :deep(.page-header__title) {
+  font-size: clamp(1.9rem, 4.6vh, 3.25rem);
+}
+
+.patients--fit :deep(.page-header__subtitle) {
+  font-size: var(--text-md);
+}
+
+.patients--fit .patients__card-top {
+  gap: clamp(var(--space-2), 1.6vh, var(--space-4));
+  padding: clamp(var(--space-2), 1.6vh, var(--space-5)) var(--space-6)
+    clamp(var(--space-2), 1.4vh, var(--space-4));
+}
+
+.patients--fit .patients__card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding-bottom: clamp(var(--space-3), 1.8vh, var(--space-6));
+}
+
+.patients--fit .patients__panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 0;
+}
+
+.patients--fit .patients__table {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.patients--fit .patients__table :deep(.table) {
+  table-layout: fixed;
+}
+
+.patients--fit .patients__table :deep(td) {
+  height: 3.5rem;
+  padding-block: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.patients--fit .patients__table :deep(th:nth-child(1)) {
+  width: 23%;
+}
+.patients--fit .patients__table :deep(th:nth-child(2)) {
+  width: 10%;
+}
+.patients--fit .patients__table :deep(th:nth-child(3)) {
+  width: 18%;
+}
+.patients--fit .patients__table :deep(th:nth-child(4)) {
+  width: 16%;
+}
+.patients--fit .patients__table :deep(th:nth-child(5)) {
+  width: 10%;
+}
+.patients--fit .patients__table :deep(th:nth-child(6)) {
+  width: 12%;
+}
+.patients--fit .patients__table :deep(th:nth-child(7)) {
+  width: 11%;
+}
+
+.patients--fit .person {
+  min-width: 0;
+}
+
+.patients--fit .person__text {
+  min-width: 0;
+}
+
+.patients--fit .person__text strong,
+.patients--fit .person__text small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Tabla angosta (laptop chica o ventana a medias): se esconden familiar y actividades */
+@container (max-width: 56rem) {
+  .patients--fit .patients__table :deep(th:nth-child(3)),
+  .patients--fit .patients__table :deep(td:nth-child(3)),
+  .patients--fit .patients__table :deep(th:nth-child(4)),
+  .patients--fit .patients__table :deep(td:nth-child(4)) {
+    display: none;
+  }
+
+  .patients--fit .patients__table :deep(th:nth-child(1)) {
+    width: 40%;
   }
 }
 </style>

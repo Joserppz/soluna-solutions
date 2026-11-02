@@ -28,3 +28,8 @@ export function rangeLabel(offset: number, count: number, total: number) {
   if (total === 0 || count === 0) return 'Sin resultados'
   return `Mostrando ${offset + 1}–${offset + count} de ${total}`
 }
+
+/** Cuántas filas de `rowHeight` entran en `available` px (al menos `min`). */
+export function rowsThatFit(available: number, rowHeight: number, min = 3) {
+  return Math.max(min, Math.floor(available / rowHeight))
+}

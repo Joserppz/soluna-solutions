@@ -13,6 +13,7 @@ import type {
   PatientUpdate,
 } from '../../../api/types'
 import { useApi } from '../../../composables/useApi'
+import { useFitLayout } from '../../../composables/useFitLayout'
 import { useToast } from '../../../composables/useToast'
 import {
   firstName as firstNameOf,
@@ -42,12 +43,13 @@ const emit = defineEmits<{
 }>()
 
 const { api, session } = useApi()
+const fit = useFitLayout()
 const toast = useToast()
 
 const ACCESS_OPTIONS = [
-  { value: 'Activo', label: 'Habilitado para el personal clínico' },
-  { value: 'Pendiente', label: 'Todavía no habilitado' },
-  { value: 'Revocado', label: 'Suspendido a pedido de la familia' },
+  { value: 'Activo', label: 'Habilitada' },
+  { value: 'Pendiente', label: 'Todavía no habilitada' },
+  { value: 'Revocado', label: 'Suspendida por la familia' },
 ]
 
 interface Draft {
@@ -217,7 +219,7 @@ void loadAttendance()
 </script>
 
 <template>
-  <div ref="root" class="data">
+  <div ref="root" class="data" :class="{ 'data--fit': fit }">
     <div class="data__main">
       <form
         id="ficha-datos"
@@ -391,7 +393,10 @@ void loadAttendance()
         </fieldset>
       </section>
 
-      <section class="card surface-card" aria-labelledby="asistencia-resumen">
+      <section
+        class="card card--attendance surface-card"
+        aria-labelledby="asistencia-resumen"
+      >
         <h2 id="asistencia-resumen">Asistencia</h2>
         <!-- Mientras llega el dato ocupa el mismo alto: la página no salta -->
         <p v-if="attendance" class="attendance">
@@ -410,7 +415,7 @@ void loadAttendance()
       </section>
 
       <section
-        v-if="canDeactivate"
+        v-if="canDeactivate && !(fit && canEdit)"
         class="card card--quiet"
         aria-label="Marcar como inactiva"
       >
@@ -425,12 +430,23 @@ void loadAttendance()
     </aside>
 
     <div v-if="canEdit" class="savebar surface-card">
-      <p class="savebar__status" aria-live="polite">
-        <template v-if="dirty">Hay cambios sin guardar.</template>
-        <template v-else>
-          Último cambio: {{ whenLabel(patient.updatedAt) }}
-        </template>
-      </p>
+      <div class="savebar__info">
+        <p class="savebar__status" aria-live="polite">
+          <template v-if="dirty">Hay cambios sin guardar.</template>
+          <template v-else>
+            Último cambio: {{ whenLabel(patient.updatedAt) }}
+          </template>
+        </p>
+        <!-- En escritorio la baja va aquí, para que la ficha entre en la ventana -->
+        <AppButton
+          v-if="fit && canDeactivate"
+          variant="link"
+          size="sm"
+          @click="emit('deactivate')"
+        >
+          Marcar como inactiva…
+        </AppButton>
+      </div>
       <div class="savebar__actions">
         <AppButton
           variant="secondary"
@@ -559,6 +575,13 @@ void loadAttendance()
   box-shadow: var(--shadow-md);
 }
 
+.savebar__info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-5);
+}
+
 .savebar__status {
   color: var(--color-text-muted);
   font-size: var(--text-sm);
@@ -586,6 +609,101 @@ void loadAttendance()
 
   .span-2 {
     grid-column: auto;
+  }
+}
+
+/* Ventana completa: tarjetas más compactas y, en pantallas anchas, tres columnas
+   (datos personales · familiares y asistencia · consentimiento y baja) para que
+   todo entre sin desplazar */
+.data--fit {
+  gap: clamp(var(--space-3), 1.8vh, var(--space-5));
+}
+
+.data--fit .data__main,
+.data--fit .data__form,
+.data--fit .data__side {
+  gap: clamp(var(--space-3), 1.8vh, var(--space-5));
+}
+
+.data--fit .card,
+.data--fit :deep(.contacts) {
+  gap: clamp(var(--space-2), 1.6vh, var(--space-4));
+  padding: clamp(var(--space-3), 2vh, var(--space-5))
+    clamp(var(--space-4), 1.4vw, var(--space-6));
+}
+
+.data--fit .card h2,
+.data--fit :deep(.contacts h2) {
+  font-size: clamp(var(--text-md), 2.4vh, var(--text-xl));
+}
+
+.data--fit .card__grid {
+  gap: clamp(var(--space-2), 1.4vh, var(--space-4)) var(--space-4);
+}
+
+.data--fit .attendance strong {
+  font-size: clamp(var(--text-2xl), 4.4vh, var(--text-3xl));
+}
+
+.data--fit .savebar {
+  bottom: 0;
+  padding-block: var(--space-2);
+}
+
+/* Asistencia en dos líneas: título con su enlace, y el número */
+.data--fit .card--attendance {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  row-gap: var(--space-1);
+}
+
+.data--fit .card--attendance .attendance {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  font-size: var(--text-md);
+}
+
+@media (min-width: 1280px) {
+  .data--fit {
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .data--fit .data__main,
+  .data--fit .data__side {
+    display: contents;
+  }
+
+  .data--fit .data__form {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+
+  .data--fit :deep(.contacts) {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .data--fit .card--attendance {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .data--fit .card--consent {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+  }
+
+  .data--fit .card {
+    align-self: start;
+  }
+
+  .data--fit .card--quiet {
+    grid-column: 3;
+    grid-row: 2;
+  }
+
+  .data--fit .savebar {
+    grid-row: 3;
   }
 }
 </style>

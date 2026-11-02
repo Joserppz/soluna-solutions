@@ -97,6 +97,52 @@ describe('Encabezado fijo', () => {
     ).toBe('')
   })
 
+  it('apagado (ventana completa) es un encabezado común', async () => {
+    const wrapper = mount(StickyHeader, {
+      props: { disabled: true },
+      slots: { default: '<h1>Afiliados</h1>' },
+      attachTo: document.body,
+    })
+    const header = wrapper.get('.sticky-header').element as HTMLElement
+    place(header, 0, 200)
+    await scrollTo(500)
+
+    expect(wrapper.get('.sticky-header').classes()).toEqual([
+      'sticky-header',
+      'is-disabled',
+    ])
+    expect(
+      document.documentElement.style.getPropertyValue('--sticky-header-bottom'),
+    ).toBe('')
+
+    // Si la ventana pasa al tamaño del celular, vuelve a fijarse al bajar
+    await wrapper.setProps({ disabled: false })
+    await scrollTo(600)
+    expect(wrapper.get('.sticky-header').classes()).toContain('is-stuck')
+  })
+
+  it('la tabla pasa a tarjetas solo si su propio ancho no alcanza', async () => {
+    const width = vi
+      .spyOn(Element.prototype, 'clientWidth', 'get')
+      .mockReturnValue(600)
+    const props = {
+      columns: [{ key: 'id', label: 'Número' }],
+      rows: [{ id: 1 }],
+      rowKey: (row: { id: number }) => row.id,
+      caption: 'Prueba',
+    }
+
+    const narrow = mount(DataTable<{ id: number }>, { props })
+    const roomy = mount(DataTable<{ id: number }>, {
+      props: { ...props, stackBelow: 520 },
+    })
+
+    await flushPromises()
+    expect(narrow.get('.table-wrap').classes()).toContain('is-stacked')
+    expect(roomy.get('.table-wrap').classes()).not.toContain('is-stacked')
+    width.mockRestore()
+  })
+
   it('sin estar fijo, «volver al inicio» no mueve la página', async () => {
     const wrapper = mount(host(), { attachTo: document.body })
     const scroll = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
