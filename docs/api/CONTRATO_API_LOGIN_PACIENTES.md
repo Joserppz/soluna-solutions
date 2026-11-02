@@ -131,7 +131,7 @@ Todos los listados que pueden crecer (afiliados, equipo, bitácora, inventario, 
 | `PATCH /patients/{id}` | `patients:write` (y `patients:write_clinical` para síntomas y medicación) | `200 PatientOut` |
 | `POST /patients/{id}/deactivate` · `/reactivate` | `patients:deactivate` | `200 PatientOut`. Las dos piden `{ "reason" }` (3 a 300 letras): el motivo de la baja queda en la ficha y el de la reactivación, en la bitácora |
 | `GET/POST /patients/{id}/contacts`, `PATCH/DELETE …/contacts/{contactId}` | `patients:read` / `patients:write` | Familiares y cuidadores |
-| `GET/POST /patients/{id}/evaluations`, `GET/PATCH …/{evaluationId}` | `patients:read_clinical` / `patients:write_clinical` | Evaluaciones física, fonoaudiológica y psicológica |
+| `GET/POST /patients/{id}/evaluations`, `GET/PATCH …/{evaluationId}`, `POST …/{evaluationId}/remove` | `patients:read_clinical` / `patients:write_clinical` | Evaluaciones física, fonoaudiológica y psicológica. `remove` pide `{ "reason" }` y quita una evaluación registrada por error: deja de mostrarse, pero se conserva con quién, cuándo y por qué |
 | `GET/POST /patients/{id}/documents`, `DELETE …/{documentId}`, `GET …/{documentId}/url` | `patients:read_clinical`, `documents:upload`, `documents:delete` | Documentos privados (PDF o imagen hasta 10 MB), URL firmada de 300 s |
 
 ### Listado: pestañas, actividad y orden (diseño pág. 8)

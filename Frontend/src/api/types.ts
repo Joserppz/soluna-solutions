@@ -48,6 +48,7 @@ export type ContactUpdate = Schemas['ContactUpdate']
 export type EvaluationIn = Schemas['EvaluationIn']
 export type EvaluationOut = Schemas['EvaluationOut']
 export type EvaluationUpdate = Schemas['EvaluationUpdate']
+export type EvaluationRemove = Schemas['EvaluationRemove']
 export type EvaluationArea = EvaluationOut['area']
 
 // Equipo

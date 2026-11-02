@@ -1147,6 +1147,27 @@ export interface paths {
     patch: operations['update_evaluation_api_v1_patients__patient_id__evaluations__evaluation_id__patch']
     trace?: never
   }
+  '/api/v1/patients/{patient_id}/evaluations/{evaluation_id}/remove': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /**
+     * Remove Evaluation
+     * @description Quita una evaluación registrada por error (por ejemplo, en la ficha de otra
+     *     persona). Es una baja lógica: deja de mostrarse y se conserva con su motivo.
+     */
+    post: operations['remove_evaluation_api_v1_patients__patient_id__evaluations__evaluation_id__remove_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/patients/{patient_id}/reactivate': {
     parameters: {
       query?: never
@@ -2411,6 +2432,14 @@ export interface components {
        * Format: date-time
        */
       updatedAt: string
+    }
+    /**
+     * EvaluationRemove
+     * @description Quitar una evaluación registrada por error: el motivo queda guardado.
+     */
+    EvaluationRemove: {
+      /** Reason */
+      reason: string
     }
     /** EvaluationUpdate */
     EvaluationUpdate: {
@@ -6661,6 +6690,42 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['EvaluationOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  remove_evaluation_api_v1_patients__patient_id__evaluations__evaluation_id__remove_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        patient_id: string
+        evaluation_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['EvaluationRemove']
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['MessageResponse']
         }
       }
       /** @description Validation Error */

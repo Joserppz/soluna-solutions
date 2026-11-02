@@ -1916,6 +1916,22 @@
         "title": "EvaluationOut",
         "type": "object"
       },
+      "EvaluationRemove": {
+        "description": "Quitar una evaluación registrada por error: el motivo queda guardado.",
+        "properties": {
+          "reason": {
+            "maxLength": 300,
+            "minLength": 3,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "EvaluationRemove",
+        "type": "object"
+      },
       "EvaluationUpdate": {
         "properties": {
           "area": {
@@ -10313,6 +10329,70 @@
           }
         },
         "summary": "Update Evaluation",
+        "tags": [
+          "Afiliados"
+        ]
+      }
+    },
+    "/api/v1/patients/{patient_id}/evaluations/{evaluation_id}/remove": {
+      "post": {
+        "description": "Quita una evaluación registrada por error (por ejemplo, en la ficha de otra\npersona). Es una baja lógica: deja de mostrarse y se conserva con su motivo.",
+        "operationId": "remove_evaluation_api_v1_patients__patient_id__evaluations__evaluation_id__remove_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "patient_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Patient Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "evaluation_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Evaluation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvaluationRemove"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Remove Evaluation",
         "tags": [
           "Afiliados"
         ]

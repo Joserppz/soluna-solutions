@@ -37,3 +37,9 @@ class PatientEvaluation(Base):
     )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    # Quitada por error (migración 004): deja de mostrarse, pero se conserva con su motivo
+    removed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    removed_by: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL")
+    )
+    removal_reason: Mapped[str | None] = mapped_column(Text)

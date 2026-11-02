@@ -2,11 +2,12 @@
 
 Son datos clínicos: verlas exige el permiso clínico Y la regla de consentimiento
 (RNF-06), igual que la anamnesis y los documentos. Las evaluaciones no se borran:
-una corrección queda en la bitácora con los campos que cambiaron.
+una corrección queda en la bitácora con los campos que cambiaron, y una registrada por
+error se quita con su motivo (deja de mostrarse, pero se conserva).
 """
 
 import uuid
-from datetime import date
+from datetime import UTC, date, datetime
 
 from sqlalchemy.orm import Session
 
@@ -177,3 +178,33 @@ def update_evaluation(
     db.flush()
     db.refresh(evaluation)
     return evaluation
+
+
+def remove_evaluation(
+    db: Session,
+    patient_id: uuid.UUID,
+    evaluation_id: uuid.UUID,
+    reason: str,
+    current: CurrentUser,
+) -> None:
+    """Baja lógica de una evaluación registrada por error: se conserva con su motivo."""
+    patient = _patient(db, patient_id, current)
+    evaluation = evaluation_repository.get(db, patient.id, evaluation_id)
+    if evaluation is None:
+        raise NotFound(NOT_FOUND)
+    evaluation.removed_at = datetime.now(UTC)
+    evaluation.removed_by = current.user.id
+    evaluation.removal_reason = reason
+    audit_service.audit(
+        db,
+        current,
+        category="PACIENTES",
+        severity="WARNING",
+        action="Evaluación quitada",
+        detail=(
+            f"Quitó la evaluación {AREA_LABELS[evaluation.area]} del "
+            f"{evaluation.evaluated_on:%d/%m/%Y} de {patient.name} ({patient.id}). "
+            f"Motivo: {reason}"
+        ),
+    )
+    db.flush()

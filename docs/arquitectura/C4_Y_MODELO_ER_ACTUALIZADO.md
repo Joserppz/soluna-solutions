@@ -13,7 +13,7 @@ Los diagramas originales (`modelos/c4/C1.jpeg`, `C2.jpeg`, `C3.jpeg` y [`DOCUMEN
 | C1 | Personal, público y sistema web; almacenamiento y pasarela de pagos | Sin pasarela: las donaciones por QR bancario se **confirman a mano contra el extracto**. Se suman Google (inicio de sesión), Cloudflare Turnstile (CAPTCHA) y Resend (correos) | ADR-012, ADR-014 |
 | C2 | SPA Vue 3, API FastAPI, PostgreSQL y Cloud Storage | SPA en **Cloudflare Pages**, API en **Cloud Run**, migraciones en un **Cloud Run Job**, secretos en **Secret Manager**. PostgreSQL y documentos privados en **Supabase**; galería en **Cloudinary**. Respaldos cifrados con **GitHub Actions** | ADR-002, ADR-007, ADR-010, ADR-014 |
 | C3 | JWT Auth Middleware, Routers, Services, Repositories, Adapters | **16 módulos de dominio** con la misma estructura interna, un **núcleo** común y **5 adaptadores**. La sesión va en **cookies HttpOnly con CSRF** y los permisos están en la base | ADR-011, ADR-012 |
-| Datos | E-R a cargo de la arquitecta | **25 tablas** en 3 migraciones SQL versionadas (`001` a `003`) | ADR-002 |
+| Datos | E-R a cargo de la arquitecta | **25 tablas** en 4 migraciones SQL versionadas (`001` a `004`) | ADR-002 |
 
 ## 2. Nivel C1 — Contexto
 
@@ -61,7 +61,7 @@ flowchart TB
     end
 
     subgraph supabase["Supabase · sa-east-1"]
-        db[("PostgreSQL 17<br/>25 tablas · RLS sin políticas<br/>migraciones 001 a 003")]
+        db[("PostgreSQL 17<br/>25 tablas · RLS sin políticas<br/>migraciones 001 a 004")]
         bucket[["Storage privado<br/>documentos-pacientes"]]
     end
 
@@ -266,7 +266,7 @@ erDiagram
         timestamptz last_occurred_at
     }
     schema_migrations {
-        text version PK "001, 002, 003"
+        text version PK "001 a 004"
         text name
         text checksum "SHA-256 del archivo aplicado"
         timestamptz applied_at
@@ -331,6 +331,8 @@ erDiagram
         text professional_name
         text notes
         uuid created_by FK
+        timestamptz removed_at "quitada por error (004)"
+        text removal_reason "obligatorio si se quitó"
     }
     patient_documents {
         uuid id PK
@@ -526,6 +528,7 @@ erDiagram
 | [`001_base.sql`](../../Backend/migrations/001_base.sql) | Las 25 tablas, `CHECK`, índices, triggers, RLS activo **sin políticas**, los 5 roles iniciales, las 17 claves de permiso y las 7 secciones del sitio |
 | [`002_busqueda_trigram.sql`](../../Backend/migrations/002_busqueda_trigram.sql) | Extensión `pg_trgm` en el esquema `extensions` e índices de búsqueda parcial por nombre y CI de afiliados, nombre y correo del equipo y actor de la bitácora |
 | [`003_referencia_bancaria_unica.sql`](../../Backend/migrations/003_referencia_bancaria_unica.sql) | Índice único `donations_referencia_extracto_unica` sobre `lower(bank_reference)` cuando `status = 'confirmado'`: un movimiento del extracto no puede confirmar dos aportes |
+| [`004_evaluaciones_quitadas.sql`](../../Backend/migrations/004_evaluaciones_quitadas.sql) | `removed_at`, `removed_by` y `removal_reason` en `patient_evaluations`: una evaluación registrada por error se quita con su motivo y se conserva; `CHECK` de que toda evaluación quitada tiene motivo |
 
 - **Bitácora inmutable:** `audit_logs` no admite `UPDATE` ni `DELETE` (trigger, ADR-006).
 - **Rol de Administración protegido:** triggers impiden borrar un rol del sistema o quitarle permisos (`roles_proteger`, `role_permissions_proteger_sistema`).

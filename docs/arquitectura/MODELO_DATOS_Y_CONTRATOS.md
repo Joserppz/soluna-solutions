@@ -135,5 +135,6 @@ Las vistas todavía usan `src/services/` (modo demo, ADR-008). Pasarlas a `src/a
 | `001_base.sql` | 25 tablas, reglas `CHECK`, triggers (bitácora inmutable, rol del sistema), roles, permisos y secciones iniciales |
 | `002_busqueda_trigram.sql` | `pg_trgm` e índices de búsqueda parcial |
 | `003_referencia_bancaria_unica.sql` | Una referencia del extracto confirma un solo aporte |
+| `004_evaluaciones_quitadas.sql` | Una evaluación registrada por error se quita con su motivo y se conserva |
 
 **Concurrencia:** las reglas de unicidad están en la base. Si dos personas hacen lo mismo a la vez (registrar la misma CI, confirmar dos aportes con la misma referencia, subir el mismo archivo), la segunda recibe **409** con un mensaje claro; nunca un 500.

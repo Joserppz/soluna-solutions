@@ -192,6 +192,12 @@ function requestsFor(api: ReturnType<typeof createEndpoints>): Request[] {
       '/patients/p1/evaluations/e1',
     ],
     [
+      () =>
+        api.evaluations.remove('p1', 'e1', { reason: 'No es de esta persona' }),
+      'POST',
+      '/patients/p1/evaluations/e1/remove',
+    ],
+    [
       () => api.documents.signedUrl('p1', 'd1'),
       'GET',
       '/patients/p1/documents/d1/url',

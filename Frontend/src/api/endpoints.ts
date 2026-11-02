@@ -34,6 +34,7 @@ import type {
   EvaluationArea,
   EvaluationIn,
   EvaluationOut,
+  EvaluationRemove,
   EvaluationUpdate,
   GoalIn,
   GoalOut,
@@ -210,6 +211,16 @@ export function createEndpoints(http: HttpClient) {
       ) =>
         http.patch<EvaluationOut>(
           `/patients/${id(patientId)}/evaluations/${id(evaluationId)}`,
+          { body },
+        ),
+      /** Quita una evaluación registrada por error (se conserva con su motivo). */
+      remove: (
+        patientId: string,
+        evaluationId: string,
+        body: EvaluationRemove,
+      ) =>
+        http.post<MessageResponse>(
+          `/patients/${id(patientId)}/evaluations/${id(evaluationId)}/remove`,
           { body },
         ),
     },

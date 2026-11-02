@@ -8,6 +8,7 @@ from pydantic import Field
 
 from app.core.schemas import CamelModel
 from app.modules.evaluations.models import AREA_LABELS, AREAS, PatientEvaluation
+from app.modules.patients.schemas import Reason
 
 EvaluationArea = Literal[AREAS]
 
@@ -27,6 +28,12 @@ class EvaluationUpdate(CamelModel):
     professional_id: uuid.UUID | None = None
     professional_name: str | None = Field(default=None, max_length=120)
     notes: str | None = Field(default=None, max_length=4000)
+
+
+class EvaluationRemove(CamelModel):
+    """Quitar una evaluación registrada por error: el motivo queda guardado."""
+
+    reason: Reason
 
 
 class EvaluationOut(CamelModel):

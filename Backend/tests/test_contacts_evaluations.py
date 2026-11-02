@@ -6,7 +6,7 @@ import pytest
 from sqlalchemy import select
 
 from app.core import clock
-from app.models import AuditLog, PatientContact
+from app.models import AuditLog, PatientContact, PatientEvaluation
 from tests.conftest import requires_db
 
 pytestmark = requires_db
@@ -258,6 +258,48 @@ class TestEvaluaciones:
             evaluations_url(patient, evaluation["id"]), json={"area": None}, headers=headers
         )
         assert cleared.status_code == 422
+
+    def test_quitar_una_evaluacion_cargada_por_error(
+        self, client, auth_headers, patient_ids, db_session
+    ):
+        headers = auth_headers("professional")
+        patient = patient_ids["consent"]
+        created = client.post(
+            evaluations_url(patient),
+            json={
+                "area": "fisica",
+                "evaluatedOn": clock.today().isoformat(),
+                "notes": "Cargada en la ficha equivocada.",
+            },
+            headers=headers,
+        ).json()
+        remove = f"{evaluations_url(patient, created['id'])}/remove"
+
+        assert client.post(remove, json={"reason": "  "}, headers=headers).status_code == 422
+        assert (
+            client.post(
+                remove, json={"reason": "No es de esta persona"}, headers=auth_headers("reception")
+            ).status_code
+            == 403
+        )
+        response = client.post(
+            remove, json={"reason": "  No es de esta persona  "}, headers=headers
+        )
+
+        assert response.status_code == 200, response.text
+        listed = client.get(evaluations_url(patient), headers=headers).json()
+        assert created["id"] not in {item["id"] for item in listed}
+        assert (
+            client.get(evaluations_url(patient, created["id"]), headers=headers).status_code == 404
+        )
+        assert client.post(remove, json={"reason": "Otra vez"}, headers=headers).status_code == 404
+        # Nada se borra: queda en la base con quién, cuándo y por qué
+        kept = db_session.get(PatientEvaluation, created["id"])
+        assert kept.removal_reason == "No es de esta persona"
+        assert kept.removed_at is not None and kept.removed_by is not None
+        log = db_session.scalar(select(AuditLog).where(AuditLog.action == "Evaluación quitada"))
+        assert log.severity == "WARNING"
+        assert log.detail.endswith("Motivo: No es de esta persona")
 
     def test_sin_consentimiento_nadie_ve_las_evaluaciones(self, client, auth_headers, patient_ids):
         for key in ("no_consent", "revoked"):

@@ -3,12 +3,14 @@ import uuid
 from fastapi import APIRouter, Depends, Query, status
 
 from app.core.database import DbSession
+from app.core.schemas import MessageResponse
 from app.modules.auth.dependencies import CurrentUser, require_permission
 from app.modules.evaluations import service as evaluation_service
 from app.modules.evaluations.schemas import (
     EvaluationArea,
     EvaluationIn,
     EvaluationOut,
+    EvaluationRemove,
     EvaluationUpdate,
     to_evaluation_out,
 )
@@ -71,3 +73,17 @@ def update_evaluation(
     return to_evaluation_out(
         evaluation_service.update_evaluation(db, patient_id, evaluation_id, payload, current)
     )
+
+
+@router.post("/{evaluation_id}/remove", response_model=MessageResponse)
+def remove_evaluation(
+    patient_id: uuid.UUID,
+    evaluation_id: uuid.UUID,
+    payload: EvaluationRemove,
+    db: DbSession,
+    current: CurrentUser = Depends(writers),
+):
+    """Quita una evaluación registrada por error (por ejemplo, en la ficha de otra
+    persona). Es una baja lógica: deja de mostrarse y se conserva con su motivo."""
+    evaluation_service.remove_evaluation(db, patient_id, evaluation_id, payload.reason, current)
+    return MessageResponse(message="Quitamos la evaluación. Queda guardada con su motivo.")

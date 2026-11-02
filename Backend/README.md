@@ -62,6 +62,7 @@ Las migraciones son archivos `migrations/NNN_nombre.sql` que se aplican en orden
 | `001_base.sql` | Esquema completo del Sprint 2 (25 tablas con UUID, límites de largo, baja lógica, RLS) y catálogos: roles, permisos y secciones del contenido. **No crea usuarios.** |
 | `002_busqueda_trigram.sql` | Extensión `pg_trgm` (esquema `extensions`) e índices GIN de trigramas para buscar por fragmentos: afiliados por nombre y CI, equipo por nombre y correo, bitácora por actor. |
 | `003_referencia_bancaria_unica.sql` | Índice único parcial: una referencia del extracto confirma un solo aporte, aunque dos personas confirmen a la vez. |
+| `004_evaluaciones_quitadas.sql` | Quitar una evaluación registrada por error es una baja lógica: `removed_at`, `removed_by` y `removal_reason` (obligatorio si se quitó). |
 
 ```bash
 python -m scripts.migrate            # aplica las pendientes

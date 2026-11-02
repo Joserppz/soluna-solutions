@@ -11,7 +11,7 @@ def list_for_patient(
 ) -> list[PatientEvaluation]:
     query = (
         select(PatientEvaluation)
-        .where(PatientEvaluation.patient_id == patient_id)
+        .where(PatientEvaluation.patient_id == patient_id, PatientEvaluation.removed_at.is_(None))
         .order_by(
             PatientEvaluation.evaluated_on.desc(),
             PatientEvaluation.created_at.desc(),
@@ -26,7 +26,9 @@ def list_for_patient(
 def get(db: Session, patient_id: uuid.UUID, evaluation_id: uuid.UUID) -> PatientEvaluation | None:
     return db.scalar(
         select(PatientEvaluation).where(
-            PatientEvaluation.id == evaluation_id, PatientEvaluation.patient_id == patient_id
+            PatientEvaluation.id == evaluation_id,
+            PatientEvaluation.patient_id == patient_id,
+            PatientEvaluation.removed_at.is_(None),
         )
     )
 
