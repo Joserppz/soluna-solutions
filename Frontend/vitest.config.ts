@@ -6,6 +6,9 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     include: ['src/**/*.spec.ts'],
+    // La primera prueba de cada archivo monta la app completa y transforma todas las
+    // vistas: en una PC más lenta (o con Windows) puede pasar los 5 s por defecto
+    testTimeout: 20_000,
     // SCRUM-61 / SCRUM-97: cobertura real registrada en cada ejecución del CI
     coverage: {
       provider: 'v8',

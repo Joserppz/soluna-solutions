@@ -174,4 +174,6 @@ Frontend/
 
 **Secciones en preparación:** las pantallas que aún no se conectan a la API muestran «Estamos preparando esta sección» en lugar de datos de ejemplo. Cada bloque las reemplaza por la vista real; F2 ya conectó Afiliados.
 
+**Encabezados fijos:** la página tiene una sola barra de desplazamiento. Cada pantalla pone su encabezado (título, pestañas, filtros) dentro de `StickyHeader`, que queda fijo al bajar y avisa con `stuck` para achicarlo; las tablas usan `DataTable` con `sticky-head` para que los títulos de las columnas queden justo debajo. `StickyHeader` debe ser hijo directo del contenedor de toda la vista. Al cambiar de pestaña o de página, `scrollToStart()` deja la lista justo bajo el encabezado.
+
 **Afiliados (F2):** pestaña, búsqueda, filtro, orden y página quedan en la dirección (`?pestana=activos&buscar=…&pagina=2`), así «‹ Afiliados» desde una ficha vuelve al mismo lugar. La ficha guarda los datos personales y el consentimiento con «Guardar ficha»; cada familiar, evaluación o documento se guarda al momento. Lo clínico (historia, evaluaciones y documentos) solo aparece si la API lo envía: si no, la ficha explica el motivo real (rol, consentimiento o acceso suspendido). Las tablas pasan a tarjetas según su propio ancho, para que nunca haya desplazamiento lateral.

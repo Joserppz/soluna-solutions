@@ -145,9 +145,12 @@ export function createAppRouter(
   const router = createRouter({
     history,
     routes,
-    scrollBehavior(to, _from, saved) {
+    scrollBehavior(to, from, saved) {
       if (saved) return saved
       if (to.hash) return { el: to.hash, behavior: 'smooth' }
+      // Solo cambió la pestaña, la búsqueda o la página de la misma pantalla: la vista
+      // decide (por ejemplo, volver justo debajo de su encabezado fijo)
+      if (to.path === from.path) return false
       return { top: 0 }
     },
   })

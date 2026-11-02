@@ -26,6 +26,7 @@ import DataTable, { type Column } from '../../../components/ui/DataTable.vue'
 import InitialsAvatar from '../../../components/ui/InitialsAvatar.vue'
 import PageHeader from '../../../components/ui/PageHeader.vue'
 import StatusBadge from '../../../components/ui/StatusBadge.vue'
+import StickyHeader from '../../../components/ui/StickyHeader.vue'
 import { useApi } from '../../../composables/useApi'
 import { rememberPatientsList } from '../../../composables/usePatientsListLocation'
 import { useToast } from '../../../composables/useToast'
@@ -185,9 +186,13 @@ function syncQuery() {
     .then(() => rememberPatientsList(route.fullPath))
 }
 
+const sticky = ref<InstanceType<typeof StickyHeader> | null>(null)
+
 function refresh() {
   syncQuery()
   void load()
+  // Otra pestaña, filtro o página: la lista empieza de nuevo justo bajo el encabezado
+  sticky.value?.scrollToStart()
 }
 
 // Un filtro nuevo vuelve a la primera página (y esa carga es la única)
@@ -244,73 +249,77 @@ void load()
 
 <template>
   <div class="patients">
-    <PageHeader
-      title="Afiliados"
-      subtitle="Las personas que acompañamos y quienes las cuidan."
-    >
-      <template v-if="canRegister" #actions>
-        <AppButton size="lg" @click="registerOpen = true">
-          + Registrar afiliado
-        </AppButton>
-      </template>
-    </PageHeader>
+    <!-- Título, pestañas y filtros quedan fijos; las filas pasan por debajo -->
+    <StickyHeader ref="sticky" v-slot="{ stuck }">
+      <div class="patients__head" :class="{ 'is-stuck': stuck }">
+        <PageHeader
+          title="Afiliados"
+          subtitle="Las personas que acompañamos y quienes las cuidan."
+        >
+          <template v-if="canRegister" #actions>
+            <AppButton :size="stuck ? 'md' : 'lg'" @click="registerOpen = true">
+              + Registrar afiliado
+            </AppButton>
+          </template>
+        </PageHeader>
 
-    <section
-      class="patients__card surface-card"
-      aria-label="Listado de afiliados"
-    >
-      <AppTabs
-        v-model="group"
-        :items="tabs"
-        label="Fichas por estado"
-        id-prefix="afiliados"
-      />
+        <div class="patients__card-top">
+          <AppTabs
+            v-model="group"
+            :items="tabs"
+            label="Fichas por estado"
+            id-prefix="afiliados"
+          />
+          <form class="toolbar" role="search" @submit.prevent="searchNow">
+            <label class="visually-hidden" for="buscar-afiliado">
+              Buscar por nombre o carnet
+            </label>
+            <span class="toolbar__search">
+              <span class="toolbar__icon" aria-hidden="true">⌕</span>
+              <input
+                id="buscar-afiliado"
+                v-model="searchInput"
+                class="input"
+                type="search"
+                placeholder="Buscar por nombre o carnet"
+                autocomplete="off"
+              />
+            </span>
+            <label class="visually-hidden" for="filtro-actividad">
+              Actividad
+            </label>
+            <select id="filtro-actividad" v-model="activity" class="select">
+              <option value="">Todas las actividades</option>
+              <option
+                v-for="option in counts?.activities ?? []"
+                :key="option.category"
+                :value="option.category"
+              >
+                {{ option.label }} ({{ option.patients }})
+              </option>
+            </select>
+            <label class="visually-hidden" for="orden-afiliados">Orden</label>
+            <select id="orden-afiliados" v-model="order" class="select">
+              <option
+                v-for="(label, value) in ORDER_LABELS"
+                :key="value"
+                :value="value"
+              >
+                {{ label }}
+              </option>
+            </select>
+          </form>
+        </div>
+      </div>
+    </StickyHeader>
 
+    <section class="patients__card" aria-label="Listado de afiliados">
       <div
         id="afiliados-panel"
         role="tabpanel"
         :aria-labelledby="`afiliados-tab-${group}`"
         class="patients__panel"
       >
-        <form class="toolbar" role="search" @submit.prevent="searchNow">
-          <label class="visually-hidden" for="buscar-afiliado">
-            Buscar por nombre o carnet
-          </label>
-          <span class="toolbar__search">
-            <span class="toolbar__icon" aria-hidden="true">⌕</span>
-            <input
-              id="buscar-afiliado"
-              v-model="searchInput"
-              class="input"
-              type="search"
-              placeholder="Buscar por nombre o carnet"
-              autocomplete="off"
-            />
-          </span>
-          <label class="visually-hidden" for="filtro-actividad">
-            Actividad
-          </label>
-          <select id="filtro-actividad" v-model="activity" class="select">
-            <option value="">Todas las actividades</option>
-            <option
-              v-for="option in counts?.activities ?? []"
-              :key="option.category"
-              :value="option.category"
-            >
-              {{ option.label }} ({{ option.patients }})
-            </option>
-          </select>
-          <label class="visually-hidden" for="orden-afiliados">Orden</label>
-          <select id="orden-afiliados" v-model="order" class="select">
-            <option
-              v-for="(label, value) in ORDER_LABELS"
-              :key="value"
-              :value="value"
-            >
-              {{ label }}
-            </option>
-          </select>
-        </form>
         <p v-if="activity" class="patients__hint">
           Personas que vinieron al menos una vez en los últimos seis meses.
         </p>
@@ -330,6 +339,7 @@ void load()
             :loading="loading && !list"
             :skeleton-rows="PAGE_SIZE"
             caption="Afiliados de ASPAR"
+            sticky-head
           >
             <template #cell-person="{ row }">
               <span class="person">
@@ -436,20 +446,53 @@ void load()
 
 <style scoped>
 .patients {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-6);
+  min-width: 0;
 }
 
 .patients :deep(.page-header) {
   margin-bottom: 0;
 }
 
+/* Encabezado fijo: título, pestañas y filtros. Al quedar fijo se achica */
+.patients__head {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.patients__head.is-stuck {
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+}
+
+.patients__head.is-stuck :deep(.page-header__subtitle) {
+  display: none;
+}
+
+.patients__head.is-stuck :deep(.page-header__title) {
+  font-size: var(--text-2xl);
+}
+
+/* La tarjeta del diseño, partida en dos: arriba (fija) y las filas */
+.patients__card-top {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-6) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-bottom: 0;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: var(--color-surface);
+}
+
 .patients__card {
   display: grid;
   gap: var(--space-4);
   min-width: 0;
-  padding: var(--space-5) var(--space-6) var(--space-6);
+  padding: 0 var(--space-6) var(--space-6);
+  border: 1px solid var(--color-border);
+  border-top: 0;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
 }
 
 .patients__panel {
@@ -556,6 +599,7 @@ void load()
 }
 
 .principles {
+  margin-top: var(--space-6);
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-5);
@@ -600,8 +644,18 @@ void load()
 }
 
 @media (max-width: 640px) {
+  .patients__card-top {
+    padding: var(--space-4) var(--space-4) var(--space-3);
+  }
+
   .patients__card {
-    padding: var(--space-4);
+    padding: 0 var(--space-4) var(--space-4);
+  }
+
+  /* En el celular, al quedar fijo solo se ven las pestañas (salvo mientras se escribe) */
+  .patients__head.is-stuck:not(:focus-within) :deep(.page-header),
+  .patients__head.is-stuck:not(:focus-within) .toolbar {
+    display: none;
   }
 
   .toolbar,

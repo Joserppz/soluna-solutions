@@ -21,6 +21,7 @@ import AppTabs, { type TabItem } from '../../../components/ui/AppTabs.vue'
 import InitialsAvatar from '../../../components/ui/InitialsAvatar.vue'
 import SkeletonBlock from '../../../components/ui/SkeletonBlock.vue'
 import StatusBadge from '../../../components/ui/StatusBadge.vue'
+import StickyHeader from '../../../components/ui/StickyHeader.vue'
 import { useApi } from '../../../composables/useApi'
 import { usePageCrumb } from '../../../composables/usePageCrumb'
 import { patientsListLocation } from '../../../composables/usePatientsListLocation'
@@ -134,11 +135,15 @@ const UNSAVED =
   'Hay cambios sin guardar en la ficha. ¿Quieres salir sin guardarlos?'
 
 /** Cambiar de pestaña con cambios sin guardar los perdería: se pregunta antes. */
+const sticky = ref<InstanceType<typeof StickyHeader> | null>(null)
+
 function changeSection(next: Section) {
   if (next === section.value) return
   if (dirty.value && !window.confirm(UNSAVED)) return
   dirty.value = false
   section.value = next
+  // La pestaña nueva empieza justo debajo del encabezado fijo
+  sticky.value?.scrollToStart()
 }
 
 onBeforeRouteLeave((to) => {
@@ -192,38 +197,51 @@ void load()
     </section>
 
     <template v-else-if="patient">
-      <header class="record__header">
-        <InitialsAvatar :name="patient.name" size="xl" />
-        <div class="record__identity">
-          <h1>{{ patient.name }}</h1>
-          <p class="record__meta">{{ meta }}</p>
-          <p class="record__consent">
-            <template v-if="patient.consent && patient.consentDate">
-              Consentimiento firmado el {{ longDay(patient.consentDate) }} · Uso
-              de imagen:
-              <strong>{{
-                patient.imageConsent ? 'autorizado' : 'no autorizado'
-              }}</strong>
-            </template>
-            <template v-else>Sin consentimiento firmado todavía.</template>
-          </p>
+      <!-- Nombre, estados y pestañas quedan fijos; el contenido de cada pestaña pasa por debajo -->
+      <StickyHeader ref="sticky" v-slot="{ stuck }">
+        <div class="record__top" :class="{ 'is-stuck': stuck }">
+          <header class="record__header">
+            <InitialsAvatar :name="patient.name" :size="stuck ? 'md' : 'xl'" />
+            <div class="record__identity">
+              <h1>{{ patient.name }}</h1>
+              <p class="record__meta">{{ meta }}</p>
+              <p class="record__consent">
+                <template v-if="patient.consent && patient.consentDate">
+                  Consentimiento firmado el {{ longDay(patient.consentDate) }} ·
+                  Uso de imagen:
+                  <strong>{{
+                    patient.imageConsent ? 'autorizado' : 'no autorizado'
+                  }}</strong>
+                </template>
+                <template v-else>Sin consentimiento firmado todavía.</template>
+              </p>
+            </div>
+            <div class="record__badges">
+              <StatusBadge :tone="patient.active ? 'success' : 'neutral'">
+                {{ patient.active ? 'Activo' : 'Inactivo' }}
+              </StatusBadge>
+              <StatusBadge
+                :tone="patient.consent ? 'success' : 'warning'"
+                :dot="false"
+              >
+                {{
+                  patient.consent
+                    ? 'Consentimiento firmado'
+                    : 'Consentimiento pendiente'
+                }}
+              </StatusBadge>
+            </div>
+          </header>
+
+          <AppTabs
+            :model-value="section"
+            :items="tabs"
+            label="Secciones de la ficha"
+            id-prefix="ficha"
+            @update:model-value="changeSection"
+          />
         </div>
-        <div class="record__badges">
-          <StatusBadge :tone="patient.active ? 'success' : 'neutral'">
-            {{ patient.active ? 'Activo' : 'Inactivo' }}
-          </StatusBadge>
-          <StatusBadge
-            :tone="patient.consent ? 'success' : 'warning'"
-            :dot="false"
-          >
-            {{
-              patient.consent
-                ? 'Consentimiento firmado'
-                : 'Consentimiento pendiente'
-            }}
-          </StatusBadge>
-        </div>
-      </header>
+      </StickyHeader>
 
       <AppAlert
         v-if="!patient.active"
@@ -244,14 +262,6 @@ void load()
           Reactivar ficha…
         </AppButton>
       </AppAlert>
-
-      <AppTabs
-        :model-value="section"
-        :items="tabs"
-        label="Secciones de la ficha"
-        id-prefix="ficha"
-        @update:model-value="changeSection"
-      />
 
       <div
         id="ficha-panel"
@@ -357,6 +367,26 @@ void load()
   margin-top: var(--space-2);
 }
 
+/* Encabezado fijo: al quedar fijo se achica a una línea con el nombre y los estados */
+.record__top {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.record__top.is-stuck {
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+}
+
+.record__top.is-stuck .record__meta,
+.record__top.is-stuck .record__consent {
+  display: none;
+}
+
+.record__top.is-stuck .record__identity h1 {
+  font-size: var(--text-2xl);
+}
+
 .record__header {
   display: flex;
   flex-wrap: wrap;
@@ -405,5 +435,16 @@ void load()
 
 .record__panel {
   min-width: 0;
+}
+
+/* En el celular, al quedar fijo solo se ven las pestañas */
+@media (max-width: 640px) {
+  .record__top.is-stuck .record__header {
+    display: none;
+  }
+
+  .record__top.is-stuck {
+    padding-top: 0;
+  }
 }
 </style>

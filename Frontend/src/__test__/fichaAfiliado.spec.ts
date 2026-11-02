@@ -387,6 +387,25 @@ describe('Pestaña Datos', () => {
     expect(wrapper.get('.savebar').text()).toContain('Último cambio:')
   })
 
+  it('una fecha ya guardada no impide guardar otros cambios', async () => {
+    // La API guardó la firma con la fecha de mañana (de noche en Bolivia ya es otro día en UTC)
+    const fake = fakeApi(ADMIN_SESSION, patient({ consentDate: '2999-01-01' }))
+    fake.on('PATCH /patients/p-1', { body: patient() })
+    const { wrapper } = await mountApp(URL, fake)
+
+    await field('Zona').setValue('Obrajes')
+    await wrapper.get('#ficha-datos').trigger('submit')
+    await settle()
+    expect(fake.callsTo('PATCH /patients/p-1')).toHaveLength(1)
+
+    // Pero si la persona escribe una fecha futura, se le avisa
+    await field('Fecha de la firma').setValue('2999-02-01')
+    await wrapper.get('#ficha-datos').trigger('submit')
+    await settle()
+    expect(panel().text()).toContain('La fecha no puede ser posterior a hoy.')
+    expect(fake.callsTo('PATCH /patients/p-1')).toHaveLength(1)
+  })
+
   it('cancelar vuelve a lo guardado', async () => {
     const fake = fakeApi()
     const { wrapper } = await mountApp(URL, fake)

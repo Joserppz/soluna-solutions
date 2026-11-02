@@ -85,3 +85,47 @@ Los cambios de la API van en el primer commit del bloque. El Frontend no simula 
 
 - Subir, abrir (enlace firmado de 5 minutos) y quitar documentos con el bucket privado real de Supabase.
 - Rendimiento del listado con el volumen real de afiliados (RNF-01).
+
+## 7. Ajuste: encabezados fijos
+
+Pedido después de revisar el bloque: al desplazar la página, el encabezado de cada pantalla queda fijo y solo pasan por debajo las listas. La página sigue con una sola barra de desplazamiento; no hay zonas con su propia barra.
+
+| Pantalla | Queda fijo | Pasa por debajo |
+| :--- | :--- | :--- |
+| Resumen | El saludo, más chico | Las tarjetas de las secciones |
+| Afiliados | Título y «+ Registrar afiliado», pestañas con contadores, búsqueda, filtros y los títulos de las columnas | Las filas y la paginación |
+| Ficha del afiliado | Nombre, estados y pestañas, en una sola línea | El contenido de cada pestaña (datos, listas de evaluaciones, asistencia y documentos) |
+| Celular | Solo las pestañas, debajo de la barra superior | Todo lo demás |
+
+Piezas reutilizables para los bloques siguientes:
+
+- **`StickyHeader`:** deja fijo lo que va adentro y avisa cuándo está fijo, para que cada vista lo achique. Al achicarse deja un margen igual a lo que perdió, así la página no cambia de alto ni el contenido salta.
+- **`DataTable` con `sticky-head`:** los títulos de las columnas quedan justo debajo del encabezado fijo.
+- Al cambiar de pestaña, filtro o página, la lista empieza justo debajo del encabezado.
+- Lo que llega después de abrir la ficha (el resumen de asistencia) reserva su alto mientras carga, para que la página no crezca de golpe.
+
+Cambios relacionados:
+
+- **Router:** si solo cambia la pestaña, la búsqueda o la página de la misma pantalla, ya no se vuelve al inicio de la página (antes saltaba arriba con cada letra de la búsqueda).
+- **Fecha de la firma:** si no se indica, la API usaba la fecha del servidor (UTC), que de noche en Bolivia ya es «mañana». Ahora usa la fecha de La Paz. La ficha, además, ya no bloquea guardar por una fecha guardada antes: solo revisa las fechas que la persona cambia.
+
+| Verificación | Resultado |
+| :--- | :--- |
+| Vitest | 239 pruebas en 22 archivos, 94,18 % de líneas |
+| Playwright | 39 recorridos: los 34 anteriores y 5 de `e2e/encabezados-fijos.spec.ts` |
+| Backend (pytest) | 432 pruebas (fecha de la firma en hora de Bolivia) |
+
+`e2e/encabezados-fijos.spec.ts` comprueba en el listado y en la ficha, a 1366×768 y 1920×1080, que al bajar hasta el final:
+
+- el título o el nombre y las pestañas siguen a la vista;
+- los títulos de las columnas quedan pegados al encabezado;
+- la página no cambia de alto y no hay desplazamiento lateral ni zonas con su propia barra.
+
+También comprueba que otra página o pestaña empieza justo debajo del encabezado y que en el celular solo quedan fijas las pestañas.
+
+Antes de medir, la prueba espera a que la ficha termine de cargar. Se corrió también con cada respuesta de la API demorada entre 0,2 y 1,2 s: la versión anterior fallaba como en una PC lenta y esta pasa.
+
+| | |
+| :---: | :---: |
+| ![Listado con encabezado fijo](frontend-f2/F2-11-listado-encabezado-fijo.webp) Listado desplazado a 1366×768 | ![Ficha con encabezado fijo](frontend-f2/F2-12-ficha-encabezado-fijo.webp) Ficha desplazada a 1366×768 |
+| ![Celular](frontend-f2/F2-13-ficha-celular-pestanas-fijas.webp) Celular: solo las pestañas | |

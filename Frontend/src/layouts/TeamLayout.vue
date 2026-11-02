@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 
 import type { DashboardSummary } from '../api/types'
@@ -25,6 +25,10 @@ const user = computed(() => session.state.user)
 const today = longDate()
 const menuOpen = ref(false)
 const sidebar = ref<HTMLElement | null>(null)
+const topbar = ref<HTMLElement | null>(null)
+/** Alto de la barra superior (solo en pantallas angostas): ahí empiezan los encabezados fijos. */
+const topbarHeight = ref(0)
+let topbarResize: ResizeObserver | null = null
 const counters = ref<DashboardSummary['toReview'] | null>(null)
 const loggingOut = ref(false)
 
@@ -94,14 +98,31 @@ watch(
   },
 )
 
-onMounted(loadCounters)
+function measureTopbar() {
+  topbarHeight.value = topbar.value?.offsetHeight ?? 0
+}
+
+onMounted(() => {
+  void loadCounters()
+  measureTopbar()
+  if (typeof ResizeObserver !== 'undefined' && topbar.value) {
+    topbarResize = new ResizeObserver(measureTopbar)
+    topbarResize.observe(topbar.value)
+  }
+})
+
+onBeforeUnmount(() => topbarResize?.disconnect())
 </script>
 
 <template>
-  <div class="team" :class="{ 'menu-open': menuOpen }">
+  <div
+    class="team"
+    :class="{ 'menu-open': menuOpen }"
+    :style="{ '--team-sticky-top': `${topbarHeight}px` }"
+  >
     <a class="skip-link" href="#contenido">Saltar al contenido</a>
 
-    <header class="team-topbar">
+    <header ref="topbar" class="team-topbar">
       <RouterLink :to="{ name: 'resumen' }" class="team-topbar__brand">
         <AsparBrand tone="dark" subtitle="Espacio del equipo" />
       </RouterLink>

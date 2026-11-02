@@ -212,7 +212,7 @@ def create_patient(db: Session, data: PatientIn, current: CurrentUser) -> Patien
             address=data.address.strip(),
             zone=data.zone.strip(),
             consent=data.consent,
-            consent_date=(data.consent_date or date.today()) if data.consent else None,
+            consent_date=(data.consent_date or clock.today()) if data.consent else None,
             image_consent=data.image_consent,
             access_status=data.access_status,
             created_by=current.user.id,
@@ -257,7 +257,7 @@ def update_patient(
         if patient.access_status == "Activo":
             patient.access_status = "Pendiente"
     elif patient.consent_date is None:
-        patient.consent_date = date.today()
+        patient.consent_date = clock.today()
 
     validate_fields(
         name=patient.name,

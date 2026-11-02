@@ -169,6 +169,27 @@ def test_otorgar_consentimiento_registra_la_fecha(client, auth_headers, patient_
     assert response.json()["consentDate"] is not None
 
 
+def test_la_fecha_de_firma_por_defecto_es_la_de_bolivia(
+    client, auth_headers, patient_ids, monkeypatch
+):
+    """A las 23:30 del 1 de noviembre en La Paz ya es 2 de noviembre en UTC."""
+    import datetime as dt
+
+    from app.core import clock
+
+    monkeypatch.setattr(clock, "today", lambda: dt.date(2026, 11, 1))
+    headers = auth_headers()
+    created = create(client, headers, ci="8800991", consentDate=None)
+    updated = client.patch(
+        f"/api/v1/patients/{patient_ids['no_consent']}",
+        json={"consent": True, "accessStatus": "Activo"},
+        headers=headers,
+    )
+
+    assert created.json()["consentDate"] == "2026-11-01"
+    assert updated.json()["consentDate"] == "2026-11-01"
+
+
 def test_voluntariado_no_puede_registrar_ni_editar(client, auth_headers, patient_ids):
     headers = auth_headers("volunteer")
 

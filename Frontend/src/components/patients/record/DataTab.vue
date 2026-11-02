@@ -110,19 +110,29 @@ watch(
   },
 )
 
+/**
+ * Una fecha ya guardada no se vuelve a revisar: si la API la guardó con otro «hoy»
+ * (por ejemplo, de noche en Bolivia), no debe impedir guardar otros cambios.
+ */
+function newDateError(field: 'birthDate' | 'consentDate'): string | null {
+  return draft[field] === saved.value[field]
+    ? null
+    : pastDateError(draft[field], today)
+}
+
 const errors = computed(() => ({
   name: personNameError(draft.name),
   ci:
     duplicateCi.value && cleanCi(draft.ci) === duplicateCi.value
       ? DUPLICATE_CI_MESSAGE
       : ciError(draft.ci),
-  birthDate: pastDateError(draft.birthDate, today),
+  birthDate: newDateError('birthDate'),
   phone: phoneError(draft.phone),
   consentDate:
     draft.consent && !draft.consentDate
       ? 'Indica la fecha en que se firmó.'
       : draft.consent
-        ? pastDateError(draft.consentDate, today)
+        ? newDateError('consentDate')
         : null,
 }))
 
@@ -383,13 +393,17 @@ void loadAttendance()
 
       <section class="card surface-card" aria-labelledby="asistencia-resumen">
         <h2 id="asistencia-resumen">Asistencia</h2>
+        <!-- Mientras llega el dato ocupa el mismo alto: la página no salta -->
         <p v-if="attendance" class="attendance">
           <strong>{{ attendance.saturdaysAttended }}</strong>
           de {{ attendance.saturdaysHeld }}
           {{ attendance.saturdaysHeld === 1 ? 'sábado' : 'sábados' }} este
           trimestre
         </p>
-        <p v-else class="card__note">Calculando…</p>
+        <p v-else class="attendance" aria-busy="true">
+          <strong aria-hidden="true">–</strong>
+          Calculando los sábados del trimestre…
+        </p>
         <AppButton variant="link" size="sm" @click="emit('showAttendance')">
           Ver el historial
         </AppButton>

@@ -85,6 +85,7 @@ void load()
         :loading="loading && !page"
         :skeleton-rows="4"
         caption="Historial de asistencia"
+        sticky-head
       >
         <template #cell-date="{ row }">
           <span class="nowrap">{{ shortDay(row.date) }}</span>

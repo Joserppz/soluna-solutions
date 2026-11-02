@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 
 import AppAlert from '../../components/ui/AppAlert.vue'
 import PageHeader from '../../components/ui/PageHeader.vue'
+import StickyHeader from '../../components/ui/StickyHeader.vue'
 import { useApi } from '../../composables/useApi'
 import { TEAM_SECTIONS } from '../../router/sections'
 import { firstName, greeting } from '../../utils/format'
@@ -22,10 +23,14 @@ const seesClinical = computed(() => session.can('patients:read_clinical'))
 
 <template>
   <div class="summary">
-    <PageHeader
-      :title="title"
-      subtitle="Desde aquí llegas a todo lo que tu rol permite."
-    />
+    <StickyHeader v-slot="{ stuck }">
+      <div class="summary__head" :class="{ 'is-stuck': stuck }">
+        <PageHeader
+          :title="title"
+          subtitle="Desde aquí llegas a todo lo que tu rol permite."
+        />
+      </div>
+    </StickyHeader>
 
     <AppAlert v-if="!sections.length" tone="neutral">
       Tu rol todavía no tiene secciones asignadas. Pídele a Administración que
@@ -56,6 +61,32 @@ const seesClinical = computed(() => session.can('patients:read_clinical'))
 </template>
 
 <style scoped>
+/* El saludo queda fijo y se achica; las secciones pasan por debajo */
+.summary__head {
+  /* El margen del título queda dentro: así se mide el alto completo */
+  display: flow-root;
+}
+
+.summary__head :deep(.page-header) {
+  margin-bottom: var(--space-8);
+}
+
+.summary__head.is-stuck {
+  padding-top: var(--space-3);
+}
+
+.summary__head.is-stuck :deep(.page-header) {
+  margin-bottom: var(--space-4);
+}
+
+.summary__head.is-stuck :deep(.page-header__title) {
+  font-size: var(--text-2xl);
+}
+
+.summary__head.is-stuck :deep(.page-header__subtitle) {
+  display: none;
+}
+
 .summary__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));

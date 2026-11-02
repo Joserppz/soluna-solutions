@@ -17,9 +17,14 @@ withDefaults(
     loading?: boolean
     /** Filas de esqueleto mientras carga. */
     skeletonRows?: number
+    /**
+     * Los títulos de las columnas quedan fijos al desplazar la página, justo debajo
+     * del encabezado fijo de la vista (StickyHeader).
+     */
+    stickyHead?: boolean
     caption: string
   }>(),
-  { loading: false, skeletonRows: 5 },
+  { loading: false, skeletonRows: 5, stickyHead: false },
 )
 
 function cellValue(row: Row, key: string): unknown {
@@ -34,7 +39,7 @@ defineSlots<
 </script>
 
 <template>
-  <div class="table-wrap">
+  <div class="table-wrap" :class="{ 'table-wrap--sticky': stickyHead }">
     <table class="table" :aria-busy="loading || undefined">
       <caption class="visually-hidden">
         {{
@@ -121,6 +126,19 @@ td {
   padding: var(--space-4);
   border-bottom: 1px solid var(--color-border);
   vertical-align: middle;
+}
+
+/* Con títulos fijos la tabla no puede tener su propia zona de desplazamiento: «clip»
+   recorta igual que «auto», pero deja que los títulos se peguen a la página */
+.table-wrap--sticky {
+  overflow-x: clip;
+}
+
+.table-wrap--sticky th {
+  position: sticky;
+  top: var(--sticky-header-bottom, var(--team-sticky-top, 0px));
+  z-index: 1;
+  background: var(--color-surface);
 }
 
 tbody tr {
