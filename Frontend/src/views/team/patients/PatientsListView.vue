@@ -462,15 +462,19 @@ rememberPatientsList(route.fullPath)
           </DataTable>
         </div>
 
-        <AppPagination
-          v-if="list"
-          :total="list.total"
-          :limit="pageSize"
-          :offset="list.offset"
-          :count="list.items.length"
-          label="Páginas de afiliados"
-          @change="page = Math.floor($event / pageSize) + 1"
-        />
+        <!-- Su lugar está reservado desde el inicio: al llegar los datos, la tabla no
+             cambia de alto ni vuelve a calcular las filas -->
+        <div class="patients__pages">
+          <AppPagination
+            v-if="list"
+            :total="list.total"
+            :limit="pageSize"
+            :offset="list.offset"
+            :count="list.items.length"
+            label="Páginas de afiliados"
+            @change="page = Math.floor($event / pageSize) + 1"
+          />
+        </div>
       </div>
     </section>
 
@@ -781,6 +785,11 @@ rememberPatientsList(route.fullPath)
   flex: 1;
   min-height: 0;
   overflow: hidden;
+}
+
+.patients--fit .patients__pages {
+  flex: none;
+  height: 2.5rem;
 }
 
 .patients--fit .patients__table :deep(.table) {

@@ -651,6 +651,21 @@ onBeforeUnmount(() => topbarResize?.disconnect())
   }
 }
 
+/* Ventanas aún más bajas (1280×720) con Administración abierta: el menú sigue entero */
+@media (min-width: 1024px) and (max-height: 740px) {
+  .sidebar {
+    gap: var(--space-2);
+  }
+
+  .nav-item {
+    min-height: 2.15rem;
+  }
+
+  .nav-item--sub {
+    min-height: 1.95rem;
+  }
+}
+
 @media (max-width: 1023px) {
   .team {
     grid-template-columns: minmax(0, 1fr);

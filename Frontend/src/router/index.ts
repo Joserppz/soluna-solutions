@@ -30,6 +30,8 @@ const preparingView = () => import('../views/team/SectionPreparingView.vue')
 /** Vista de cada sección ya conectada a la API; el resto muestra el aviso. */
 const SECTION_VIEWS: Partial<Record<string, RouteRecordRaw['component']>> = {
   afiliados: () => import('../views/team/patients/PatientsListView.vue'),
+  'equipo-permisos': () =>
+    import('../views/team/admin/TeamPermissionsView.vue'),
 }
 
 export const routes: RouteRecordRaw[] = [

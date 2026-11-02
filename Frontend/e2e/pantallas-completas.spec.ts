@@ -4,9 +4,9 @@
  * muestra tantas filas como entran. En el celular la página se desplaza y las
  * pestañas de la ficha quedan fijas arriba.
  */
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
-import { ADMIN_STATE, adminApi } from './support'
+import { ADMIN_STATE, FITS, adminApi, fitsWindow } from './support'
 
 test.use({ storageState: ADMIN_STATE })
 
@@ -35,31 +35,6 @@ async function newPatient() {
   await admin.dispose()
   return id
 }
-
-/** Nada se desplaza: ni la página, ni una zona interna, ni a los costados. */
-async function fitsWindow(page: Page) {
-  return page.evaluate(() => {
-    const doc = document.documentElement
-    const inner = [...document.querySelectorAll<HTMLElement>('body *')]
-      .filter((element) => {
-        const style = getComputedStyle(element)
-        return (
-          (['auto', 'scroll'].includes(style.overflowY) &&
-            element.scrollHeight > element.clientHeight + 1) ||
-          (['auto', 'scroll'].includes(style.overflowX) &&
-            element.scrollWidth > element.clientWidth + 1)
-        )
-      })
-      .map((element) => element.className)
-    return {
-      pageScrolls: doc.scrollHeight > doc.clientHeight,
-      sideways: doc.scrollWidth > doc.clientWidth,
-      inner,
-    }
-  })
-}
-
-const FITS = { pageScrolls: false, sideways: false, inner: [] }
 
 for (const size of SIZES) {
   test(`a ${size.width}×${size.height} el resumen y el listado entran completos`, async ({
@@ -153,3 +128,36 @@ test('en el celular la página se desplaza y las pestañas de la ficha quedan fi
     page.getByRole('heading', { level: 1, name: 'Ramiro Prueba Pantalla' }),
   ).toBeHidden()
 })
+
+for (const size of [
+  { width: 1440, height: 900 },
+  { width: 1366, height: 768 },
+]) {
+  test(`a ${size.width}×${size.height} cada lista se pide una sola vez al abrirla`, async ({
+    page,
+  }) => {
+    // Si la tabla cambiara de alto al llegar los datos, recalcularía las filas y
+    // volvería a pedir la lista (y un clic podría caer sobre filas que se reemplazan)
+    await page.setViewportSize(size)
+    const lists: string[] = []
+    page.on('request', (request) => {
+      const url = new URL(request.url())
+      if (
+        /\/api\/v1\/(patients|users)$/.test(url.pathname) &&
+        url.searchParams.get('limit') !== '1'
+      )
+        lists.push(url.pathname)
+    })
+    for (const path of [
+      '/equipo/afiliados?buscar=4821557',
+      '/equipo/administracion/equipo',
+      '/equipo/administracion/equipo?pestana=pendientes',
+    ]) {
+      lists.length = 0
+      await page.goto(path)
+      await expect(page.getByRole('row').nth(1)).toBeVisible()
+      await page.waitForTimeout(800)
+      expect(lists, path).toHaveLength(1)
+    }
+  })
+}

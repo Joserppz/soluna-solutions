@@ -47,14 +47,6 @@ export const SESSION_MAX_AGE = 30 * 60 * 1000
 export const SESSION_IDLE_LIMIT = 15 * 60 * 1000
 export const SESSION_WARNING_THRESHOLD = 2 * 60 * 1000
 
-export const USER_ROLES: UserRole[] = [
-  'Administrador',
-  'Coordinador',
-  'Profesional',
-  'Recepción',
-  'Voluntario',
-]
-
 export const PARKINSON_STAGES: ParkinsonStage[] = [
   'Estadio I (Leve unilateral)',
   'Estadio II (Bilateral sin alteración del equilibrio)',
@@ -254,16 +246,6 @@ export function addAudit(
 
 export function getUsers(): User[] {
   return readStorage('aspar_users', DEMO_USERS)
-}
-
-export async function syncUsersFromApi(): Promise<User[]> {
-  try {
-    const remoteUsers = await asparApiClient.fetchUsers()
-    writeStorage('aspar_users', remoteUsers)
-    return remoteUsers
-  } catch {
-    return getUsers()
-  }
 }
 
 export function getPatients(): Patient[] {
@@ -538,147 +520,6 @@ export function signOut(reason = 'Cierre manual de sesión'): void {
   }
 
   localStorage.removeItem('aspar_session')
-}
-
-// Contraseña que reciben los usuarios creados o restablecidos en el modo local de demostración
-const LOCAL_TEMPORARY_PASSWORD = 'Aspar2026!'
-
-export function createUser(
-  name: string,
-  email: string,
-  role: UserRole,
-  department = 'General',
-): User {
-  const users = getUsers()
-  const cleanName = name.trim()
-  const cleanEmail = email.trim().toLowerCase()
-
-  if (cleanName.length < 3) {
-    throw new Error('El nombre del usuario debe tener al menos 3 caracteres.')
-  }
-
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
-    throw new Error('Ingresa un correo electrónico institucional válido.')
-  }
-
-  if (users.some((user) => user.email.toLowerCase() === cleanEmail)) {
-    throw new Error('Ya existe un usuario con ese correo.')
-  }
-
-  const user: User = {
-    id: crypto.randomUUID(),
-    name: cleanName,
-    email: cleanEmail,
-    role,
-    department: department.trim() || 'General',
-    active: true,
-    createdAt: new Date().toISOString(),
-  }
-
-  DEMO_PASSWORDS[cleanEmail] = LOCAL_TEMPORARY_PASSWORD
-  writeStorage('aspar_users', [...users, user])
-  addAudit(
-    'Creación de usuario',
-    `Creó ${user.email} con rol ${role} (${user.department})`,
-    'USUARIOS_ROLES',
-    'WARNING',
-  )
-
-  asparApiClient
-    .createUser({
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      department: user.department,
-    })
-    .catch(() => undefined)
-
-  return user
-}
-
-export type UserCredentialResult = {
-  user: User
-  temporaryPassword: string | null
-}
-
-/**
- * RF-11 (SCRUM-161): crea el usuario en la API y devuelve la contraseña temporal
- * que genera el Backend, para mostrarla una sola vez al Administrador.
- */
-export async function createUserWithApi(
-  name: string,
-  email: string,
-  role: UserRole,
-  department = 'General',
-): Promise<UserCredentialResult> {
-  try {
-    const { temporaryPassword, ...user } = await asparApiClient.createUser({
-      name: name.trim(),
-      email: email.trim().toLowerCase(),
-      role,
-      department: department.trim() || 'General',
-    })
-    writeStorage('aspar_users', [
-      ...getUsers().filter((item) => item.id !== user.id),
-      user,
-    ])
-    return { user, temporaryPassword: temporaryPassword ?? null }
-  } catch (cause) {
-    if (cause instanceof ApiError) throw new Error(cause.message, { cause })
-    if (!isLocalModeAllowed()) {
-      throw new Error(
-        'No se pudo conectar con el servidor. El usuario no se creó.',
-        { cause },
-      )
-    }
-    const user = createUser(name, email, role, department)
-    return { user, temporaryPassword: LOCAL_TEMPORARY_PASSWORD }
-  }
-}
-
-/** RF-11: restablece la contraseña de un usuario y devuelve la temporal nueva. */
-export async function resetUserPassword(user: User): Promise<string | null> {
-  try {
-    const response = await asparApiClient.resetPassword(user.id)
-    return response.temporaryPassword ?? null
-  } catch (cause) {
-    if (cause instanceof ApiError) throw new Error(cause.message, { cause })
-    if (!isLocalModeAllowed()) {
-      throw new Error(
-        'No se pudo conectar con el servidor. La contraseña no se cambió.',
-        { cause },
-      )
-    }
-    DEMO_PASSWORDS[user.email.toLowerCase()] = LOCAL_TEMPORARY_PASSWORD
-    addAudit(
-      'Restablecimiento de contraseña',
-      `Restableció la contraseña de ${user.email}`,
-      'USUARIOS_ROLES',
-      'WARNING',
-    )
-    return LOCAL_TEMPORARY_PASSWORD
-  }
-}
-
-export function updateUser(
-  id: string,
-  changes: Partial<Pick<User, 'role' | 'active' | 'department'>>,
-): void {
-  const users = getUsers()
-  const updatedUsers = users.map((user) =>
-    user.id === id ? { ...user, ...changes } : user,
-  )
-
-  writeStorage('aspar_users', updatedUsers)
-  const target = updatedUsers.find((u) => u.id === id)
-  addAudit(
-    'Actualización de usuario y rol',
-    `Actualizó el usuario ${target?.email ?? id} (rol=${target?.role}, activo=${target?.active})`,
-    'USUARIOS_ROLES',
-    target?.active === false ? 'CRITICAL' : 'WARNING',
-  )
-
-  asparApiClient.patchUser(id, changes).catch(() => undefined)
 }
 
 const ATTENDANCE_STORAGE_KEY = 'aspar_attendance'

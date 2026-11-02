@@ -9,7 +9,6 @@ import type {
   LoginResponseDto,
   RefreshResponseDto,
   Session,
-  User,
 } from '../types/aspar'
 
 const DEFAULT_API_BASE_URL = 'http://localhost:8000/api/v1'
@@ -107,41 +106,6 @@ export const asparApiClient = {
     return apiRequest<{ message: string }>('/auth/logout', {
       method: 'POST',
     })
-  },
-
-  fetchUsers(): Promise<User[]> {
-    return apiRequest<User[]>('/users', { method: 'GET' })
-  },
-
-  createUser(payload: {
-    name: string
-    email: string
-    role: string
-    department?: string
-  }): Promise<User & { temporaryPassword?: string | null }> {
-    return apiRequest<User & { temporaryPassword?: string | null }>('/users', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    })
-  },
-
-  patchUser(
-    id: string,
-    changes: Partial<Pick<User, 'role' | 'active' | 'department'>>,
-  ): Promise<User> {
-    return apiRequest<User>(`/users/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify(changes),
-    })
-  },
-
-  resetPassword(
-    id: string,
-  ): Promise<{ message: string; temporaryPassword?: string | null }> {
-    return apiRequest<{ message: string; temporaryPassword?: string | null }>(
-      `/users/${id}/reset-password`,
-      { method: 'POST', body: JSON.stringify({}) },
-    )
   },
 
   fetchAuditLogs(params?: {

@@ -87,3 +87,28 @@ export async function fakeExternalWidgets(page: Page) {
     }),
   )
 }
+
+/** Nada se desplaza: ni la página, ni una zona interna, ni a los costados. */
+export async function fitsWindow(page: Page) {
+  return page.evaluate(() => {
+    const doc = document.documentElement
+    const inner = [...document.querySelectorAll<HTMLElement>('body *')]
+      .filter((element) => {
+        const style = getComputedStyle(element)
+        return (
+          (['auto', 'scroll'].includes(style.overflowY) &&
+            element.scrollHeight > element.clientHeight + 1) ||
+          (['auto', 'scroll'].includes(style.overflowX) &&
+            element.scrollWidth > element.clientWidth + 1)
+        )
+      })
+      .map((element) => element.className)
+    return {
+      pageScrolls: doc.scrollHeight > doc.clientHeight,
+      sideways: doc.scrollWidth > doc.clientWidth,
+      inner,
+    }
+  })
+}
+
+export const FITS = { pageScrolls: false, sideways: false, inner: [] }

@@ -11,15 +11,20 @@ import { onBeforeUnmount, ref, type Ref } from 'vue'
 export const FIT_LAYOUT_QUERY = '(min-width: 1024px) and (min-height: 560px)'
 
 export function useFitLayout(): Ref<boolean> {
-  const fit = ref(false)
-  if (typeof window === 'undefined' || !window.matchMedia) return fit
+  return useMediaQuery(FIT_LAYOUT_QUERY)
+}
 
-  const query = window.matchMedia(FIT_LAYOUT_QUERY)
-  fit.value = query.matches
+/** Si la ventana cumple una media query, y se actualiza cuando cambia de tamaño. */
+export function useMediaQuery(media: string): Ref<boolean> {
+  const matches = ref(false)
+  if (typeof window === 'undefined' || !window.matchMedia) return matches
+
+  const query = window.matchMedia(media)
+  matches.value = query.matches
   const onChange = (event: MediaQueryListEvent) => {
-    fit.value = event.matches
+    matches.value = event.matches
   }
   query.addEventListener('change', onChange)
   onBeforeUnmount(() => query.removeEventListener('change', onChange))
-  return fit
+  return matches
 }
