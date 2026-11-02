@@ -149,3 +149,7 @@ export type DashboardSummary = Schemas['DashboardSummary']
 export type AuditPage = Schemas['AuditPage']
 export type AuditEvent = Schemas['AuditEventOut']
 export type AuditListQuery = QueryOf<'list_audit_events_api_v1_audit_get'>
+export type AuditExportQuery = QueryOf<'export_audit_api_v1_audit_export_get'>
+export type AuditSummary = Schemas['AuditSummary']
+export type AuditArea = NonNullable<AuditEvent['area']>
+export type AuditReviewKind = NonNullable<AuditEvent['review']>

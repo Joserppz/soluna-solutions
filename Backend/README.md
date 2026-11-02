@@ -133,7 +133,7 @@ Con Docker: `docker compose exec api python -m scripts.seed_demo` (o `make seed`
 | Sitio público: galería y contenido | `GET /public/media/albums`, `GET /public/media/albums/{id}`, `GET /public/content`, `GET /public/content/{clave}` | **Sin sesión**: solo álbumes publicados (sin etiquetas) y secciones publicadas |
 | Sitio público: solicitudes | `POST /public/inquiries` (Turnstile) | **Sin sesión**: orientación, voluntariado, donación en especie, «Quiero participar» (con una actividad publicada y futura) u otro motivo; exige `contactConsent` |
 | Sitio público: donar | `GET /public/donations/goal`, `POST /public/donations/notice` (Turnstile), `GET /public/donations/notice/{id}` | **Sin sesión**. La meta suma solo los aportes confirmados más su ajuste manual |
-| Bitácora | `GET /audit?category=&severity=&actor=&from=&to=&limit=&offset=` | admin |
+| Bitácora | `GET /audit?area=&search=&days=&review=&category=&severity=&actor=&from=&to=&limit=&offset=` (cada fila trae el nombre de la persona, su área y si es una situación para revisar), `GET /audit/summary?days=7` (movimientos por área y situaciones para revisar), `GET /audit/export?format=csv\|xlsx` (lo filtrado, hasta 5000; la descarga queda registrada) | admin |
 
 **Listados paginados.** `GET /patients`, `GET /users` y `GET /audit` responden siempre con el mismo sobre:
 

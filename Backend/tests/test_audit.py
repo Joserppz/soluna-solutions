@@ -32,8 +32,14 @@ def test_consultar_bitacora_con_formato_del_frontend(client, auth_headers):
         "ipAddress",
         "occurrences",
         "lastOccurredAt",
+        "actorName",
+        "area",
+        "areaLabel",
+        "review",
     }
     assert event["action"] == "Inicio de sesión"
+    assert (event["area"], event["areaLabel"], event["review"]) == ("accesos", "Accesos", None)
+    assert event["actorName"] == "Lucía Choque (demo)"
 
 
 def test_filtros_por_categoria_severidad_y_actor(client, auth_headers):

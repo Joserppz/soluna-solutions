@@ -531,6 +531,23 @@ function requestsFor(api: ReturnType<typeof createEndpoints>): Request[] {
       'GET',
       '/audit?severity=CRITICAL&from=2026-10-01',
     ],
+    [
+      () =>
+        api.audit.list({
+          area: 'accesos',
+          search: 'Ana',
+          days: 7,
+          review: true,
+        }),
+      'GET',
+      '/audit?area=accesos&search=Ana&days=7&review=true',
+    ],
+    [() => api.audit.summary(), 'GET', '/audit/summary?days=7'],
+    [
+      () => api.audit.download({ format: 'csv', area: 'donaciones' }),
+      'GET',
+      '/audit/export?format=csv&area=donaciones',
+    ],
   ]
 }
 

@@ -324,6 +324,39 @@
         "title": "AlbumUpdate",
         "type": "object"
       },
+      "AreaCount": {
+        "properties": {
+          "area": {
+            "enum": [
+              "afiliados",
+              "accesos",
+              "donaciones",
+              "solicitudes",
+              "equipo",
+              "actividades",
+              "inventario",
+              "sitio"
+            ],
+            "title": "Area",
+            "type": "string"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "area",
+          "label",
+          "count"
+        ],
+        "title": "AreaCount",
+        "type": "object"
+      },
       "AssetIn": {
         "description": "Lo que devolvió Cloudinary al terminar la subida.",
         "properties": {
@@ -689,9 +722,52 @@
             "title": "Actor",
             "type": "string"
           },
+          "actorName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actorname"
+          },
           "actorRole": {
             "title": "Actorrole",
             "type": "string"
+          },
+          "area": {
+            "anyOf": [
+              {
+                "enum": [
+                  "afiliados",
+                  "accesos",
+                  "donaciones",
+                  "solicitudes",
+                  "equipo",
+                  "actividades",
+                  "inventario",
+                  "sitio"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area"
+          },
+          "areaLabel": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Arealabel"
           },
           "category": {
             "title": "Category",
@@ -731,6 +807,21 @@
             "title": "Occurrences",
             "type": "integer"
           },
+          "review": {
+            "anyOf": [
+              {
+                "enum": [
+                  "acceso_bloqueado",
+                  "aporte_anulado"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review"
+          },
           "severity": {
             "title": "Severity",
             "type": "string"
@@ -740,14 +831,18 @@
           "id",
           "date",
           "actor",
+          "actorName",
           "actorRole",
           "category",
+          "area",
+          "areaLabel",
           "severity",
           "action",
           "detail",
           "ipAddress",
           "occurrences",
-          "lastOccurredAt"
+          "lastOccurredAt",
+          "review"
         ],
         "title": "AuditEventOut",
         "type": "object"
@@ -783,6 +878,38 @@
           "offset"
         ],
         "title": "AuditPage",
+        "type": "object"
+      },
+      "AuditSummary": {
+        "description": "Resumen del período: movimientos por área y situaciones para revisar.",
+        "properties": {
+          "areas": {
+            "items": {
+              "$ref": "#/components/schemas/AreaCount"
+            },
+            "title": "Areas",
+            "type": "array"
+          },
+          "dateFrom": {
+            "format": "date-time",
+            "title": "Datefrom",
+            "type": "string"
+          },
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "review": {
+            "$ref": "#/components/schemas/ReviewCounts"
+          }
+        },
+        "required": [
+          "days",
+          "dateFrom",
+          "areas",
+          "review"
+        ],
+        "title": "AuditSummary",
         "type": "object"
       },
       "Body_upload_document_api_v1_patients__patient_id__documents_post": {
@@ -4928,6 +5055,29 @@
         "title": "ResetPasswordRequest",
         "type": "object"
       },
+      "ReviewCounts": {
+        "properties": {
+          "blockedAccess": {
+            "title": "Blockedaccess",
+            "type": "integer"
+          },
+          "cancelledDonations": {
+            "title": "Cancelleddonations",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "blockedAccess",
+          "cancelledDonations",
+          "total"
+        ],
+        "title": "ReviewCounts",
+        "type": "object"
+      },
       "RoleMatrixOut": {
         "description": "«Qué puede ver cada rol»: columnas = roles, filas = permisos.",
         "properties": {
@@ -6475,6 +6625,29 @@
         "parameters": [
           {
             "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
             "name": "category",
             "required": false,
             "schema": {
@@ -6524,6 +6697,83 @@
           },
           {
             "in": "query",
+            "name": "area",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "afiliados",
+                    "accesos",
+                    "donaciones",
+                    "solicitudes",
+                    "equipo",
+                    "actividades",
+                    "inventario",
+                    "sitio"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Area"
+            }
+          },
+          {
+            "description": "Persona del equipo (nombre o correo) o afiliado (en el detalle)",
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Persona del equipo (nombre o correo) o afiliado (en el detalle)",
+              "title": "Search"
+            }
+          },
+          {
+            "description": "Últimos N días (si no se indica «from»)",
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 366,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Últimos N días (si no se indica «from»)",
+              "title": "Days"
+            }
+          },
+          {
+            "description": "Solo situaciones para revisar (accesos bloqueados y aportes anulados)",
+            "in": "query",
+            "name": "review",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "Solo situaciones para revisar (accesos bloqueados y aportes anulados)",
+              "title": "Review",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
             "name": "from",
             "required": false,
             "schema": {
@@ -6555,29 +6805,6 @@
               ],
               "title": "To"
             }
-          },
-          {
-            "in": "query",
-            "name": "limit",
-            "required": false,
-            "schema": {
-              "default": 50,
-              "maximum": 200,
-              "minimum": 1,
-              "title": "Limit",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "offset",
-            "required": false,
-            "schema": {
-              "default": 0,
-              "minimum": 0,
-              "title": "Offset",
-              "type": "integer"
-            }
           }
         ],
         "responses": {
@@ -6603,6 +6830,257 @@
           }
         },
         "summary": "List Audit Events",
+        "tags": [
+          "Bitácora de auditoría"
+        ]
+      }
+    },
+    "/api/v1/audit/export": {
+      "get": {
+        "description": "«Descargar registro»: lo que muestra el filtro (hasta 5000 movimientos).",
+        "operationId": "export_audit_api_v1_audit_export_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "default": "xlsx",
+              "enum": [
+                "csv",
+                "xlsx"
+              ],
+              "title": "Format",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          },
+          {
+            "in": "query",
+            "name": "severity",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Severity"
+            }
+          },
+          {
+            "in": "query",
+            "name": "actor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 150,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Actor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "area",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "afiliados",
+                    "accesos",
+                    "donaciones",
+                    "solicitudes",
+                    "equipo",
+                    "actividades",
+                    "inventario",
+                    "sitio"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Area"
+            }
+          },
+          {
+            "description": "Persona del equipo (nombre o correo) o afiliado (en el detalle)",
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Persona del equipo (nombre o correo) o afiliado (en el detalle)",
+              "title": "Search"
+            }
+          },
+          {
+            "description": "Últimos N días (si no se indica «from»)",
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 366,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Últimos N días (si no se indica «from»)",
+              "title": "Days"
+            }
+          },
+          {
+            "description": "Solo situaciones para revisar (accesos bloqueados y aportes anulados)",
+            "in": "query",
+            "name": "review",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "Solo situaciones para revisar (accesos bloqueados y aportes anulados)",
+              "title": "Review",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
+              "text/csv; charset=utf-8": {}
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Audit",
+        "tags": [
+          "Bitácora de auditoría"
+        ]
+      }
+    },
+    "/api/v1/audit/summary": {
+      "get": {
+        "description": "Esta semana (o los últimos N días): movimientos por área y situaciones para revisar.",
+        "operationId": "audit_summary_api_v1_audit_summary_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 7,
+              "maximum": 366,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Audit Summary",
         "tags": [
           "Bitácora de auditoría"
         ]

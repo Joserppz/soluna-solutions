@@ -21,6 +21,31 @@ AUDIT_CATEGORIES = (
     "SISTEMA",
 )
 AUDIT_SEVERITIES = ("INFO", "WARNING", "CRITICAL")
+
+# Áreas del registro de actividad (diseño pág. 19): agrupan las categorías técnicas en
+# lo que reconoce el equipo. El orden es el del filtro y del resumen semanal.
+AUDIT_AREAS: dict[str, tuple[str, tuple[str, ...]]] = {
+    "afiliados": ("Afiliados", ("PACIENTES", "CONSENTIMIENTO")),
+    "accesos": ("Accesos", ("AUTENTICACION", "SISTEMA")),
+    "donaciones": ("Donaciones", ("DONACIONES",)),
+    "solicitudes": ("Solicitudes", ("SOLICITUDES",)),
+    "equipo": ("Equipo", ("USUARIOS_ROLES",)),
+    "actividades": ("Actividades y asistencia", ("CRONOGRAMA", "ASISTENCIA")),
+    "inventario": ("Inventario", ("INVENTARIO",)),
+    "sitio": ("Galería y contenido", ("GALERIA", "CONTENIDO")),
+}
+CATEGORY_AREA = {
+    category: area for area, (_, categories) in AUDIT_AREAS.items() for category in categories
+}
+
+# Situaciones para revisar: intentos de acceso bloqueados y aportes anulados
+REVIEW_ACTIONS = {
+    "Intento de acceso restringido bloqueado": "acceso_bloqueado",
+    "Intento de acceso a cuenta bloqueada": "acceso_bloqueado",
+    "Cuenta bloqueada por intentos fallidos": "acceso_bloqueado",
+    "Intento de registrar datos clínicos sin permiso": "acceso_bloqueado",
+    "Anulación de aviso de aporte": "aporte_anulado",
+}
 SYSTEM_ACTOR_ROLE = "Sistema"
 
 

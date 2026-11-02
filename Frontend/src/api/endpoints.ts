@@ -14,7 +14,9 @@ import type {
   AttendanceEntry,
   AttendanceMark,
   AttendanceSheet,
+  AuditExportQuery,
   AuditListQuery,
+  AuditSummary,
   AuditPage,
   ChangePasswordRequest,
   DonationCancel,
@@ -492,8 +494,15 @@ export function createEndpoints(http: HttpClient) {
     },
 
     audit: {
+      /** Registro de actividad: área, persona o afiliado, días y situaciones para revisar. */
       list: (query: AuditListQuery = {}) =>
         http.get<AuditPage>('/audit', { query }),
+      /** Movimientos por área y situaciones para revisar de los últimos días. */
+      summary: (days = 7) =>
+        http.get<AuditSummary>('/audit/summary', { query: { days } }),
+      /** «Descargar registro»: lo filtrado, en CSV o Excel (queda registrado). */
+      download: (query: AuditExportQuery = {}) =>
+        http.get<Blob>('/audit/export', { query, blob: true }),
     },
   }
 }

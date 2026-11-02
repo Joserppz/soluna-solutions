@@ -8,7 +8,13 @@ from sqlalchemy.orm import Session
 from app.core.errors import ValidationError
 from app.core.pagination import PageParams, PageResult
 from app.modules.audit import repository as audit_repository
-from app.modules.audit.models import AUDIT_CATEGORIES, AUDIT_SEVERITIES, AuditLog
+from app.modules.audit.models import (
+    AUDIT_AREAS,
+    AUDIT_CATEGORIES,
+    AUDIT_SEVERITIES,
+    REVIEW_ACTIONS,
+    AuditLog,
+)
 
 if TYPE_CHECKING:
     from app.modules.auth.dependencies import CurrentUser
@@ -102,26 +108,98 @@ def audit(
     )
 
 
-def list_entries(
-    db: Session,
-    *,
-    category: str | None,
-    severity: str | None,
-    actor: str | None,
-    date_from: datetime | None,
-    date_to: datetime | None,
-    page: PageParams,
-) -> PageResult:
+# Tope de filas de una descarga: el registro se filtra por área, persona o días
+EXPORT_LIMIT = 5000
+
+
+def _validate(category: str | None, severity: str | None) -> None:
     if category and category not in AUDIT_CATEGORIES:
         raise ValidationError("Categoría inválida. Usa: " + ", ".join(AUDIT_CATEGORIES) + ".")
     if severity and severity not in AUDIT_SEVERITIES:
         raise ValidationError("Severidad inválida. Usa: " + ", ".join(AUDIT_SEVERITIES) + ".")
-    return audit_repository.list_entries(
+
+
+def since(days: int | None, date_from: datetime | None) -> datetime | None:
+    """«Últimos N días» cuenta desde ahora; una fecha «from» explícita tiene prioridad."""
+    if date_from or not days:
+        return date_from
+    return datetime.now(UTC) - timedelta(days=days)
+
+
+def list_entries(
+    db: Session,
+    *,
+    page: PageParams,
+    category: str | None = None,
+    severity: str | None = None,
+    actor: str | None = None,
+    area: str | None = None,
+    search: str | None = None,
+    review: bool = False,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+) -> tuple[PageResult, dict[str, str]]:
+    """Página del registro y el nombre de cada persona del equipo que aparece en ella."""
+    _validate(category, severity)
+    result = audit_repository.list_entries(
         db,
+        page=page,
         category=category,
         severity=severity,
         actor=actor,
+        area=area,
+        search=search,
+        review=review,
         date_from=date_from,
         date_to=date_to,
-        page=page,
     )
+    names = audit_repository.names_by_email(db, {entry.actor for entry in result.items})
+    return result, names
+
+
+def summary(db: Session, days: int) -> dict:
+    """Movimientos por área y situaciones para revisar de los últimos ``days`` días."""
+    date_from = datetime.now(UTC) - timedelta(days=days)
+    by_category = audit_repository.counts_by_category(db, date_from)
+    by_action = audit_repository.counts_by_review(db, date_from)
+    blocked = sum(
+        n for action, n in by_action.items() if REVIEW_ACTIONS[action] == "acceso_bloqueado"
+    )
+    cancelled = sum(
+        n for action, n in by_action.items() if REVIEW_ACTIONS[action] == "aporte_anulado"
+    )
+    return {
+        "days": days,
+        "date_from": date_from,
+        "areas": [
+            {
+                "area": area,
+                "label": label,
+                "count": sum(by_category.get(category, 0) for category in categories),
+            }
+            for area, (label, categories) in AUDIT_AREAS.items()
+        ],
+        "review": {
+            "blocked_access": blocked,
+            "cancelled_donations": cancelled,
+            "total": blocked + cancelled,
+        },
+    }
+
+
+def export_entries(
+    db: Session, current: "CurrentUser", **filters
+) -> tuple[list[AuditLog], dict[str, str]]:
+    """Filas para descargar el registro (con el mismo filtro de la pantalla). La descarga
+    también queda registrada: el registro de actividad es información sensible."""
+    _validate(filters.get("category"), filters.get("severity"))
+    entries = audit_repository.all_entries(db, EXPORT_LIMIT, **filters)
+    audit(
+        db,
+        current,
+        category="SISTEMA",
+        action="Descarga del registro de actividad",
+        detail=f"Descargó {len(entries)} movimientos del registro de actividad",
+    )
+    names = audit_repository.names_by_email(db, {entry.actor for entry in entries})
+    return entries, names

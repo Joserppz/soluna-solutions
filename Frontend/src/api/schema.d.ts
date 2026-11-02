@@ -41,6 +41,46 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/audit/export': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Export Audit
+     * @description «Descargar registro»: lo que muestra el filtro (hasta 5000 movimientos).
+     */
+    get: operations['export_audit_api_v1_audit_export_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/audit/summary': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Audit Summary
+     * @description Esta semana (o los últimos N días): movimientos por área y situaciones para revisar.
+     */
+    get: operations['audit_summary_api_v1_audit_summary_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/auth/change-password': {
     parameters: {
       query?: never
@@ -1837,6 +1877,26 @@ export interface components {
       /** Title */
       title?: string | null
     }
+    /** AreaCount */
+    AreaCount: {
+      /**
+       * Area
+       * @enum {string}
+       */
+      area:
+        | 'afiliados'
+        | 'accesos'
+        | 'donaciones'
+        | 'solicitudes'
+        | 'equipo'
+        | 'actividades'
+        | 'inventario'
+        | 'sitio'
+      /** Count */
+      count: number
+      /** Label */
+      label: string
+    }
     /**
      * AssetIn
      * @description Lo que devolvió Cloudinary al terminar la subida.
@@ -1981,8 +2041,25 @@ export interface components {
       action: string
       /** Actor */
       actor: string
+      /** Actorname */
+      actorName: string | null
       /** Actorrole */
       actorRole: string
+      /** Area */
+      area:
+        | (
+            | 'afiliados'
+            | 'accesos'
+            | 'donaciones'
+            | 'solicitudes'
+            | 'equipo'
+            | 'actividades'
+            | 'inventario'
+            | 'sitio'
+          )
+        | null
+      /** Arealabel */
+      areaLabel: string | null
       /** Category */
       category: string
       /**
@@ -2006,6 +2083,8 @@ export interface components {
       lastOccurredAt: string
       /** Occurrences */
       occurrences: number
+      /** Review */
+      review: ('acceso_bloqueado' | 'aporte_anulado') | null
       /** Severity */
       severity: string
     }
@@ -2025,6 +2104,22 @@ export interface components {
        * @description Filas que cumplen los filtros (todas las páginas)
        */
       total: number
+    }
+    /**
+     * AuditSummary
+     * @description Resumen del período: movimientos por área y situaciones para revisar.
+     */
+    AuditSummary: {
+      /** Areas */
+      areas: components['schemas']['AreaCount'][]
+      /**
+       * Datefrom
+       * Format: date-time
+       */
+      dateFrom: string
+      /** Days */
+      days: number
+      review: components['schemas']['ReviewCounts']
     }
     /** Body_upload_document_api_v1_patients__patient_id__documents_post */
     Body_upload_document_api_v1_patients__patient_id__documents_post: {
@@ -3667,6 +3762,15 @@ export interface components {
       /** Token */
       token: string
     }
+    /** ReviewCounts */
+    ReviewCounts: {
+      /** Blockedaccess */
+      blockedAccess: number
+      /** Cancelleddonations */
+      cancelledDonations: number
+      /** Total */
+      total: number
+    }
     /**
      * RoleMatrixOut
      * @description «Qué puede ver cada rol»: columnas = roles, filas = permisos.
@@ -4323,13 +4427,31 @@ export interface operations {
   list_audit_events_api_v1_audit_get: {
     parameters: {
       query?: {
+        limit?: number
+        offset?: number
         category?: string | null
         severity?: string | null
         actor?: string | null
+        area?:
+          | (
+              | 'afiliados'
+              | 'accesos'
+              | 'donaciones'
+              | 'solicitudes'
+              | 'equipo'
+              | 'actividades'
+              | 'inventario'
+              | 'sitio'
+            )
+          | null
+        /** @description Persona del equipo (nombre o correo) o afiliado (en el detalle) */
+        search?: string | null
+        /** @description Últimos N días (si no se indica «from») */
+        days?: number | null
+        /** @description Solo situaciones para revisar (accesos bloqueados y aportes anulados) */
+        review?: boolean
         from?: string | null
         to?: string | null
-        limit?: number
-        offset?: number
       }
       header?: never
       path?: never
@@ -4344,6 +4466,92 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['AuditPage']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  export_audit_api_v1_audit_export_get: {
+    parameters: {
+      query?: {
+        format?: 'csv' | 'xlsx'
+        category?: string | null
+        severity?: string | null
+        actor?: string | null
+        area?:
+          | (
+              | 'afiliados'
+              | 'accesos'
+              | 'donaciones'
+              | 'solicitudes'
+              | 'equipo'
+              | 'actividades'
+              | 'inventario'
+              | 'sitio'
+            )
+          | null
+        /** @description Persona del equipo (nombre o correo) o afiliado (en el detalle) */
+        search?: string | null
+        /** @description Últimos N días (si no se indica «from») */
+        days?: number | null
+        /** @description Solo situaciones para revisar (accesos bloqueados y aportes anulados) */
+        review?: boolean
+        from?: string | null
+        to?: string | null
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': unknown
+          'text/csv; charset=utf-8': unknown
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  audit_summary_api_v1_audit_summary_get: {
+    parameters: {
+      query?: {
+        days?: number
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['AuditSummary']
         }
       }
       /** @description Validation Error */
