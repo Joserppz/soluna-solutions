@@ -4,7 +4,6 @@
  */
 
 import type {
-  AuditEvent,
   LoginRequestDto,
   LoginResponseDto,
   RefreshResponseDto,
@@ -106,16 +105,5 @@ export const asparApiClient = {
     return apiRequest<{ message: string }>('/auth/logout', {
       method: 'POST',
     })
-  },
-
-  fetchAuditLogs(params?: {
-    category?: string
-    severity?: string
-  }): Promise<AuditEvent[]> {
-    const query = new URLSearchParams()
-    if (params?.category) query.set('category', params.category)
-    if (params?.severity) query.set('severity', params.severity)
-    const suffix = query.toString() ? `?${query.toString()}` : ''
-    return apiRequest<AuditEvent[]>(`/audit${suffix}`, { method: 'GET' })
   },
 }

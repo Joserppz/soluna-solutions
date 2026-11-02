@@ -158,13 +158,13 @@ Frontend/
 │   │   ├── auth/                # Turnstile, Google, reglas de contraseña, formulario de correo
 │   │   ├── patients/            # Alta de afiliados, campos de contacto y pestañas de la ficha (record/)
 │   │   └── session/             # Aviso de inactividad
-│   ├── composables/             # useApi, useToast, useIdleSession, usePageCrumb
+│   ├── composables/             # useApi, useToast, useIdleSession, usePageCrumb, useFitLayout, useFitRows
 │   ├── layouts/                 # TeamLayout (barra lateral), AuthLayout (acceso), PublicLayout
 │   ├── router/                  # Rutas, secciones del equipo y reglas de acceso (guards.ts)
-│   ├── utils/                   # Fechas en hora de Bolivia, validaciones, afiliados, paginación
+│   ├── utils/                   # Fechas en hora de Bolivia, validaciones, afiliados, equipo, registro, paginación
 │   ├── views/
 │   │   ├── auth/                # Ingreso, registro, correo, contraseñas, cuenta pendiente
-│   │   ├── team/                # Resumen, afiliados (patients/) y secciones en preparación
+│   │   ├── team/                # Resumen, afiliados (patients/), equipo y registro (admin/) y secciones en preparación
 │   │   └── *.vue                # Pantallas antiguas (modo demo), sin ruta: se reemplazan bloque a bloque
 │   └── services/, types/        # Capa antigua del modo demo; se elimina en F6
 └── src/**/__test__/             # Pruebas de Vitest junto a cada parte
@@ -172,8 +172,12 @@ Frontend/
 
 **Sesión:** la cookie HttpOnly y el token CSRF los maneja `src/api`. `useIdleSession` avisa a los 13 minutos sin uso («¿Sigues ahí?»), renueva la sesión mientras la persona trabaja y la cierra a los 15. La actividad se comparte entre pestañas.
 
-**Secciones en preparación:** las pantallas que aún no se conectan a la API muestran «Estamos preparando esta sección» en lugar de datos de ejemplo. Cada bloque las reemplaza por la vista real; F2 ya conectó Afiliados.
+**Secciones en preparación:** las pantallas que aún no se conectan a la API muestran «Estamos preparando esta sección» en lugar de datos de ejemplo. Cada bloque las reemplaza por la vista real; F2 conectó Afiliados y F3, Equipo y permisos y Registro de actividad.
 
-**Ventana completa:** en escritorio y laptops (`useFitLayout()`: 1024 px de ancho y 560 px de alto o más), la página del equipo no se desplaza. Cada vista es una columna que ocupa el alto disponible: el encabezado arriba y el contenido debajo (`flex: 1; min-height: 0`). Las listas muestran tantas filas como entran (`rowsThatFit()`); si algo igual no entra, solo se desplaza esa zona. Tamaños fluidos con `clamp(…vh…)`. En el celular la página se desplaza: el encabezado va dentro de `StickyHeader` (con `:disabled="fit"` en escritorio), que queda fijo al bajar y avisa con `stuck` para achicarlo; `DataTable` con `sticky-head` deja los títulos de las columnas debajo y pasa a tarjetas según su propio ancho (`stack-below`).
+**Ventana completa:** en escritorio y laptops (`useFitLayout()`: 1024 px de ancho y 560 px de alto o más), la página del equipo no se desplaza. Cada vista es una columna que ocupa el alto disponible: el encabezado arriba y el contenido debajo (`flex: 1; min-height: 0`). Las listas muestran tantas filas como entran (`rowsThatFit()`, o `useFitRows()` para una tabla); el lugar de la paginación queda reservado desde el inicio para que la lista se pida una sola vez. Si algo igual no entra, solo se desplaza esa zona. Tamaños fluidos con `clamp(…vh…)`. En el celular la página se desplaza: el encabezado va dentro de `StickyHeader` (con `:disabled="fit"` en escritorio), que queda fijo al bajar y avisa con `stuck` para achicarlo; `DataTable` con `sticky-head` deja los títulos de las columnas debajo y pasa a tarjetas según su propio ancho (`stack-below`).
 
 **Afiliados (F2):** pestaña, búsqueda, filtro, orden y página quedan en la dirección (`?pestana=activos&buscar=…&pagina=2`), así «‹ Afiliados» desde una ficha vuelve al mismo lugar. La ficha guarda los datos personales y el consentimiento con «Guardar ficha»; cada familiar, evaluación o documento se guarda al momento. Lo clínico (historia, evaluaciones y documentos) solo aparece si la API lo envía: si no, la ficha explica el motivo real (rol, consentimiento o acceso suspendido). Las tablas pasan a tarjetas según su propio ancho, para que nunca haya desplazamiento lateral.
+
+**Equipo y permisos (F3):** tres pestañas: Equipo (búsqueda, rol y «Gestionar»), Pendientes de aprobación y «Qué puede ver cada rol». La contraseña temporal de una invitación o de un restablecimiento la genera el servidor y se muestra una sola vez (`TemporaryPassword`). La invitación queda fija al costado desde 1500 px de ancho; en pantallas menores se abre con «+ Invitar a una persona». Administración no se edita en la tabla de permisos, y dar un permiso sensible pide confirmación antes de enviar `confirmSensitive: true`.
+
+**Registro de actividad (F3):** filtros en la dirección (`?buscar=…&area=donaciones&revisar=1&dias=30`). En ventana completa se piden los movimientos que entran y se muestran los que caben junto con sus encabezados de día; «Ver días anteriores» sigue desde el último que se vio. «Descargar registro» baja lo filtrado en Excel y la descarga queda en el propio registro.

@@ -143,7 +143,7 @@ for (const size of [
     page.on('request', (request) => {
       const url = new URL(request.url())
       if (
-        /\/api\/v1\/(patients|users)$/.test(url.pathname) &&
+        /\/api\/v1\/(patients|users|audit)$/.test(url.pathname) &&
         url.searchParams.get('limit') !== '1'
       )
         lists.push(url.pathname)
@@ -152,10 +152,11 @@ for (const size of [
       '/equipo/afiliados?buscar=4821557',
       '/equipo/administracion/equipo',
       '/equipo/administracion/equipo?pestana=pendientes',
+      '/equipo/administracion/registro',
     ]) {
       lists.length = 0
       await page.goto(path)
-      await expect(page.getByRole('row').nth(1)).toBeVisible()
+      await expect(page.locator('tbody tr, .entry').first()).toBeVisible()
       await page.waitForTimeout(800)
       expect(lists, path).toHaveLength(1)
     }

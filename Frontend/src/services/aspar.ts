@@ -272,19 +272,6 @@ export function getAuditEvents(): AuditEvent[] {
   }))
 }
 
-export async function syncAuditFromApi(filters?: {
-  category?: string
-  severity?: string
-}): Promise<AuditEvent[]> {
-  try {
-    const remoteEvents = await asparApiClient.fetchAuditLogs(filters)
-    writeStorage('aspar_audit', remoteEvents)
-    return remoteEvents
-  } catch {
-    return getAuditEvents()
-  }
-}
-
 export function getSession(): Session | null {
   const raw = localStorage.getItem('aspar_session')
 
