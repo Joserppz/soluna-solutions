@@ -1,7 +1,8 @@
 /**
- * Bloque F4 (diseño págs. 3, 10 y 12) contra la API de Docker: actividades y
- * asistencia (también en el celular de 360 px). Cada recorrido crea sus propios datos
- * y no depende de los de demostración; al terminar se borran (global-teardown.ts).
+ * Bloque F4 (diseño págs. 3, 10, 11 y 12) contra la API de Docker: actividades,
+ * asistencia (también en el celular de 360 px) e inventario. Cada recorrido crea sus
+ * propios datos y no depende de los de demostración; al terminar se borran
+ * (global-teardown.ts).
  */
 import { expect, test } from '@playwright/test'
 
@@ -216,6 +217,11 @@ test('en el celular (360 px) la asistencia se marca con botones grandes y sin de
     )
   expect(await sideways()).toBe(false)
   await evidence(page, 'F4-03-asistencia-celular')
+
+  // El inventario tampoco se desplaza de lado en el celular
+  await page.goto('/equipo/inventario')
+  await expect(page.locator('.inv__table tbody tr').first()).toBeVisible()
+  expect(await sideways()).toBe(false)
 })
 
 test('el voluntariado marca asistencia, pero no ve el resumen del mes', async ({
@@ -234,11 +240,111 @@ test('el voluntariado marca asistencia, pero no ve el resumen del mes', async ({
   await context.close()
 })
 
+test('inventario: alta, cambio de cantidad con motivo, movimiento, baja y exportación', async ({
+  page,
+}) => {
+  const name = `Silla de prueba ${Date.now().toString().slice(-6)}`
+  await page.goto('/equipo/inventario')
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Inventario')
+
+  // «+ Añadir material» abre una ventana
+  await page.getByRole('button', { name: '+ Añadir material' }).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await page
+    .locator('#material')
+    .getByLabel(/^Nombre/)
+    .fill(name)
+  await page
+    .locator('#material')
+    .getByLabel(/^Cantidad/)
+    .fill('4')
+  await page
+    .locator('#material')
+    .getByLabel(/^Origen/)
+    .selectOption('donado')
+  await page
+    .locator('#material')
+    .getByLabel(/^Quién lo donó/)
+    .fill('Grupo de exalumnos')
+  await page
+    .getByRole('button', { name: 'Añadir material', exact: true })
+    .click()
+  // Al guardarlo se cierra la ventana y el panel muestra el material
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(page.locator('#material').getByLabel(/^Nombre/)).toHaveValue(
+    name,
+  )
+
+  // La lista está paginada: se busca el material por su nombre
+  await page.getByLabel('Nombre del material').fill(name)
+  const row = page.locator('tbody tr', { hasText: name })
+  await expect(row).toContainText('Donado')
+  await expect(row).toContainText('Grupo de exalumnos')
+  await row.getByRole('button', { name: `Editar ${name}` }).click()
+
+  // Cambiar la cantidad sin motivo no se guarda
+  await page
+    .locator('#material')
+    .getByLabel(/^Cantidad/)
+    .fill('6')
+  await page.getByRole('button', { name: 'Guardar cambios' }).click()
+  await expect(
+    page.getByText(/Cambiar la cantidad necesita un motivo/),
+  ).toBeVisible()
+  await page.getByLabel('Motivo del cambio').fill('Se compraron 2 más')
+  await page.getByRole('button', { name: 'Guardar cambios' }).click()
+  await expect(
+    page.getByText(`Guardamos los cambios de ${name}.`),
+  ).toBeVisible()
+  await expect(page.locator('tbody tr', { hasText: name })).toContainText('6')
+
+  // Un préstamo queda en el historial (pestaña Historial)
+  await page.getByRole('tab', { name: 'Historial' }).click()
+  await page
+    .locator('form.movement')
+    .getByLabel(/^Tipo/)
+    .selectOption('prestamo')
+  await page
+    .locator('form.movement')
+    .getByLabel(/^Unidades/)
+    .fill('2')
+  await page
+    .locator('form.movement')
+    .getByLabel(/^Persona o familia/)
+    .fill('Familia Apaza')
+  await page.getByRole('button', { name: 'Anotar movimiento' }).click()
+  await expect(page.getByText('Anotamos el movimiento.')).toBeVisible()
+  await expect(page.locator('.history')).toContainText('Familia Apaza')
+  await evidence(page, 'F4-04-inventario-historial')
+
+  // Baja lógica con motivo (en la pestaña Datos)
+  await page.getByRole('tab', { name: 'Datos' }).click()
+  await page.getByRole('button', { name: 'Dar de baja con motivo…' }).click()
+  await page
+    .getByRole('dialog')
+    .getByRole('textbox')
+    .fill('Se llevó la familia')
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: 'Dar de baja' })
+    .click()
+  await expect(page.getByText(/Dimos de baja/)).toBeVisible()
+
+  // La exportación arranca una descarga de Excel con la Alcaldía aparte
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: 'Exportar Excel' }).click(),
+  ])
+  expect(download.suggestedFilename()).toMatch(
+    /^inventario-\d{4}-\d{2}-\d{2}\.xlsx$/,
+  )
+})
+
 for (const size of [
   { width: 1366, height: 768 },
   { width: 1920, height: 1080 },
 ]) {
-  test(`a ${size.width}×${size.height} actividades y asistencia entran completas`, async ({
+  test(`a ${size.width}×${size.height} actividades, asistencia e inventario entran completos`, async ({
     page,
   }) => {
     await page.setViewportSize(size)
@@ -252,6 +358,7 @@ for (const size of [
       'F4-09-actividades-mes',
       'F4-10-actividad-ventana',
       'F4-07-asistencia',
+      'F4-08-inventario',
     ]
     let index = 0
     for (const path of [
@@ -259,6 +366,7 @@ for (const size of [
       '/equipo/actividades?vista=mes',
       `/equipo/actividades?actividad=${activity.id}`,
       `/equipo/asistencia?actividad=${activity.id}`,
+      '/equipo/inventario',
     ]) {
       await page.goto(path)
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible()

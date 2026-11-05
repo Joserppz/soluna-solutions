@@ -509,8 +509,6 @@ export function signOut(reason = 'Cierre manual de sesión'): void {
   localStorage.removeItem('aspar_session')
 }
 
-const ATTENDANCE_STORAGE_KEY = 'aspar_attendance'
-
 function dateInDays(offset: number): string {
   const date = new Date()
   date.setHours(12, 0, 0, 0)
@@ -521,47 +519,6 @@ function dateInDays(offset: number): string {
   const day = String(date.getDate()).padStart(2, '0')
 
   return `${year}-${month}-${day}`
-}
-
-function getDefaultAttendance(): AttendanceEntry[] {
-  return [
-    {
-      id: 'a-1',
-      patientId: 'p-1',
-      patientName: 'Elena Rojas',
-      date: dateInDays(1),
-      time: '09:00',
-      activity: 'Terapia física grupal',
-      status: 'Pendiente',
-    },
-    {
-      id: 'a-2',
-      patientId: 'p-2',
-      patientName: 'Miguel Fernández',
-      date: dateInDays(1),
-      time: '09:00',
-      activity: 'Terapia física grupal',
-      status: 'Pendiente',
-    },
-  ]
-}
-
-export function getAttendance(): AttendanceEntry[] {
-  return readStorage(ATTENDANCE_STORAGE_KEY, getDefaultAttendance())
-}
-
-export function updateAttendance(id: string, status: AttendanceStatus): void {
-  const updatedEntries = getAttendance().map((entry) =>
-    entry.id === id ? { ...entry, status } : entry,
-  )
-
-  writeStorage(ATTENDANCE_STORAGE_KEY, updatedEntries)
-  addAudit(
-    'Marcación de asistencia',
-    `Registro ${id} marcado como ${status}`,
-    'CRONOGRAMA',
-    'INFO',
-  )
 }
 
 const DEFAULT_SCHEDULE: ScheduleItem[] = [
@@ -603,16 +560,6 @@ const DEFAULT_SCHEDULE: ScheduleItem[] = [
 // RF-04 / RF-10 (SCRUM-16 / SCRUM-74): gestión del cronograma de actividades
 const SCHEDULE_STORAGE_KEY = 'aspar_schedule'
 
-export const SCHEDULE_CATEGORIES: ScheduleItem['category'][] = [
-  'Fisioterapia',
-  'Arteterapia',
-  'Fonoaudiología',
-  'Psicología',
-  'Bienestar',
-]
-
-export type ScheduleInput = Omit<ScheduleItem, 'id'>
-
 function byDateAndTime(a: ScheduleItem, b: ScheduleItem): number {
   return `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`)
 }
@@ -627,188 +574,6 @@ export function getSchedule(): ScheduleItem[] {
 /** RF-10: lo que ve el público en el portal. */
 export function getPublicSchedule(): ScheduleItem[] {
   return getSchedule().filter((item) => item.published)
-}
-
-/** RF-04: publican y actualizan el cronograma el Administrador y el Coordinador. */
-export function canManageSchedule(): boolean {
-  const role = getSession()?.role
-  return role === 'Administrador' || role === 'Coordinador'
-}
-
-export function validateScheduleInput(
-  input: ScheduleInput,
-  { isNew }: { isNew: boolean },
-): string | null {
-  if (input.title.trim().length < 3) {
-    return 'El título de la actividad debe tener al menos 3 caracteres.'
-  }
-  if (!SCHEDULE_CATEGORIES.includes(input.category)) {
-    return 'Selecciona una categoría válida.'
-  }
-  if (
-    !/^\d{4}-\d{2}-\d{2}$/.test(input.date) ||
-    Number.isNaN(new Date(`${input.date}T12:00:00`).getTime())
-  ) {
-    return 'Ingresa una fecha válida.'
-  }
-  if (isNew && input.date < dateInDays(0)) {
-    return 'La fecha de la actividad no puede ser anterior a hoy.'
-  }
-  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(input.time)) {
-    return 'Ingresa una hora válida (HH:MM).'
-  }
-  if (input.professional.trim().length < 3) {
-    return 'Indica el profesional a cargo (al menos 3 caracteres).'
-  }
-  if (input.location.trim().length < 3) {
-    return 'Indica el lugar de la actividad (al menos 3 caracteres).'
-  }
-  if (!Number.isInteger(input.spots) || input.spots < 0 || input.spots > 200) {
-    return 'Los cupos deben ser un número entero entre 0 y 200.'
-  }
-  return null
-}
-
-function assertCanManageSchedule(): void {
-  if (!canManageSchedule()) {
-    throw new Error(
-      'Solo el Administrador y el Coordinador pueden gestionar el cronograma.',
-    )
-  }
-}
-
-/** Crea una actividad o, si recibe `id`, actualiza la existente. */
-export function saveScheduleItem(
-  input: ScheduleInput,
-  id?: string,
-): ScheduleItem {
-  assertCanManageSchedule()
-  const validationError = validateScheduleInput(input, { isNew: !id })
-  if (validationError) throw new Error(validationError)
-
-  const list = getSchedule()
-  const item: ScheduleItem = {
-    id: id ?? crypto.randomUUID(),
-    date: input.date,
-    time: input.time,
-    title: input.title.trim(),
-    category: input.category,
-    professional: input.professional.trim(),
-    location: input.location.trim(),
-    spots: input.spots,
-    published: input.published ?? true,
-  }
-  if (id && !list.some((existing) => existing.id === id)) {
-    throw new Error('No se encontró la actividad.')
-  }
-  writeStorage(
-    SCHEDULE_STORAGE_KEY,
-    id
-      ? list.map((existing) => (existing.id === id ? item : existing))
-      : [...list, item],
-  )
-  addAudit(
-    id
-      ? 'Actualización de actividad del cronograma'
-      : 'Nueva actividad en el cronograma',
-    `${item.title} el ${item.date} a las ${item.time} (${item.published ? 'publicada' : 'oculta'})`,
-    'CRONOGRAMA',
-    'INFO',
-  )
-  return item
-}
-
-export function setSchedulePublished(id: string, published: boolean): void {
-  assertCanManageSchedule()
-  const list = getSchedule()
-  const target = list.find((item) => item.id === id)
-  if (!target) throw new Error('No se encontró la actividad.')
-  writeStorage(
-    SCHEDULE_STORAGE_KEY,
-    list.map((item) => (item.id === id ? { ...item, published } : item)),
-  )
-  addAudit(
-    published ? 'Publicación de actividad' : 'Actividad ocultada del portal',
-    `${target.title} el ${target.date}`,
-    'CRONOGRAMA',
-    'INFO',
-  )
-}
-
-export function deleteScheduleItem(id: string): void {
-  assertCanManageSchedule()
-  const list = getSchedule()
-  const target = list.find((item) => item.id === id)
-  if (!target) throw new Error('No se encontró la actividad.')
-  writeStorage(
-    SCHEDULE_STORAGE_KEY,
-    list.filter((item) => item.id !== id),
-  )
-  addAudit(
-    'Eliminación de actividad del cronograma',
-    `${target.title} el ${target.date}`,
-    'CRONOGRAMA',
-    'WARNING',
-  )
-}
-
-const DEFAULT_INVENTORY: InventoryItem[] = [
-  {
-    id: 'inv-1',
-    code: 'ASP-MAT-001',
-    name: 'Colchonetas de rehabilitación de alta densidad',
-    category: 'Fisioterapia',
-    quantity: 14,
-    origin: 'Préstamo Alcaldía',
-    condition: 'Óptimo',
-    location: 'Sala de rehabilitación',
-    updatedAt: '2026-08-20',
-  },
-  {
-    id: 'inv-2',
-    code: 'ASP-MAT-002',
-    name: 'Balones terapéuticos Bobath (65 cm)',
-    category: 'Fisioterapia',
-    quantity: 8,
-    origin: 'Donación',
-    condition: 'Bueno',
-    location: 'Depósito de fisioterapia',
-    updatedAt: '2026-08-22',
-  },
-  {
-    id: 'inv-3',
-    code: 'ASP-AYU-003',
-    name: 'Bastones de apoyo de cuatro puntas',
-    category: 'Ayuda Técnica',
-    quantity: 10,
-    origin: 'Propio ASPAR',
-    condition: 'Óptimo',
-    location: 'Recepción / Préstamo a pacientes',
-    updatedAt: '2026-08-24',
-  },
-]
-
-export function getInventory(): InventoryItem[] {
-  return readStorage('aspar_inventory', DEFAULT_INVENTORY)
-}
-
-export function saveInventoryItem(
-  item: Omit<InventoryItem, 'id' | 'updatedAt'>,
-): InventoryItem {
-  const list = getInventory()
-  const created: InventoryItem = {
-    ...item,
-    id: crypto.randomUUID(),
-    updatedAt: new Date().toISOString().slice(0, 10),
-  }
-  writeStorage('aspar_inventory', [created, ...list])
-  addAudit(
-    'Alta de ítem en inventario',
-    `Registró ${created.name} (${created.code}) origen: ${created.origin}`,
-    'INVENTARIO',
-    'INFO',
-  )
-  return created
 }
 
 const DEFAULT_MEDIA: MediaAsset[] = [

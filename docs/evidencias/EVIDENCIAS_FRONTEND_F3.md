@@ -56,7 +56,7 @@ Pruebas nuevas: `test_audit_activity.py` (8).
 
 | | |
 | :---: | :---: |
-| ![Equipo](frontend-f3/F3-01-equipo.webp) Equipo a 1366×768 | ![Invitar](frontend-f3/F3-02-invitar.webp) «+ Invitar a una persona» |
+| ![Equipo](frontend-f3/F3-01-equipo.webp) Equipo a 1366×768 | ![Invitar](frontend-f3/F3-02-invitar.webp) «+ Nuevo rol» |
 | ![Contraseña temporal](frontend-f3/F3-03-contrasena-temporal.webp) Contraseña temporal, una sola vez | ![Gestionar](frontend-f3/F3-04-gestionar-desactivar.webp) Gestionar: contraseña nueva y desactivar |
 | ![Pendientes](frontend-f3/F3-05-pendientes.webp) Pendientes de aprobación | ![Permisos](frontend-f3/F3-06-permisos-por-rol.webp) Qué puede ver cada rol |
 | ![Datos clínicos](frontend-f3/F3-07-confirmar-datos-clinicos.webp) Confirmar acceso a datos clínicos | ![Registro](frontend-f3/F3-08-registro-de-actividad.webp) Registro de actividad |
@@ -64,9 +64,7 @@ Pruebas nuevas: `test_audit_activity.py` (8).
 
 ## 5. Decisiones del bloque
 
-- **La invitación al costado, cuando hay lugar:**
-  - Desde 1500 px de ancho queda fija al costado, como en el diseño.
-  - A 1366×768 se abre con «+ Invitar a una persona» y se cierra con «×» o «Listo». Así la tabla del equipo conserva sus columnas.
+- **La invitación en una ventana:** se abre con «+ Nuevo rol» y se cierra con «×» o «Listo». Así la tabla del equipo usa todo el ancho y conserva sus columnas. (En la primera entrega quedaba fija al costado desde 1500 px; se cambió en F4, a pedido.)
 - **Pestañas en Equipo y permisos:** en el diseño las secciones van una debajo de otra y la página se desplaza. Las tres pestañas (Equipo, Pendientes de aprobación, Qué puede ver cada rol) permiten que cada una entre completa.
 - **La tabla de permisos usa los 17 permisos reales:** el diseño muestra 6 filas resumidas. Los permisos se agrupan por área y los sensibles llevan «!». A 1366×768 las filas se compactan y cada permiso va en una línea.
 - **Última persona de Administración:**

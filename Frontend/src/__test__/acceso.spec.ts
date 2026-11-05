@@ -42,10 +42,10 @@ describe('Ingreso al espacio del equipo', () => {
       'POST /auth/login': { body: ADMIN_SESSION },
       'GET /dashboard/summary': { body: DASHBOARD },
     })
-    const { wrapper, router } = await mountApp('/equipo/inventario', fake)
+    const { wrapper, router } = await mountApp('/equipo/donaciones', fake)
 
     expect(router.currentRoute.value.name).toBe('ingresar')
-    expect(router.currentRoute.value.query.redirect).toBe('/equipo/inventario')
+    expect(router.currentRoute.value.query.redirect).toBe('/equipo/donaciones')
     expect(wrapper.get('h1').text()).toBe('Hola de nuevo.')
     expect(document.title).toBe('Acceso del equipo · ASPAR')
 
@@ -55,7 +55,7 @@ describe('Ingreso al espacio del equipo', () => {
       email: 'lucia@aspar.org',
       password: 'Ceibo4821',
     })
-    expect(router.currentRoute.value.fullPath).toBe('/equipo/inventario')
+    expect(router.currentRoute.value.fullPath).toBe('/equipo/donaciones')
     expect(wrapper.text()).toContain('Estamos preparando esta sección.')
   })
 

@@ -164,7 +164,7 @@ Frontend/
 │   ├── utils/                   # Fechas en hora de Bolivia, validaciones, afiliados, equipo, registro, paginación
 │   ├── views/
 │   │   ├── auth/                # Ingreso, registro, correo, contraseñas, cuenta pendiente
-│   │   ├── team/                # Resumen, afiliados (patients/), equipo y registro (admin/) y secciones en preparación
+│   │   ├── team/                # Resumen, afiliados (patients/), equipo y registro (admin/), operación de la sede (ops/) y secciones en preparación
 │   │   └── *.vue                # Pantallas antiguas (modo demo), sin ruta: se reemplazan bloque a bloque
 │   └── services/, types/        # Capa antigua del modo demo; se elimina en F6
 └── src/**/__test__/             # Pruebas de Vitest junto a cada parte
@@ -172,12 +172,19 @@ Frontend/
 
 **Sesión:** la cookie HttpOnly y el token CSRF los maneja `src/api`. `useIdleSession` avisa a los 13 minutos sin uso («¿Sigues ahí?»), renueva la sesión mientras la persona trabaja y la cierra a los 15. La actividad se comparte entre pestañas.
 
-**Secciones en preparación:** las pantallas que aún no se conectan a la API muestran «Estamos preparando esta sección» en lugar de datos de ejemplo. Cada bloque las reemplaza por la vista real; F2 conectó Afiliados y F3, Equipo y permisos y Registro de actividad.
+**Secciones en preparación:** las pantallas que aún no se conectan a la API muestran «Estamos preparando esta sección» en lugar de datos de ejemplo. Cada bloque las reemplaza por la vista real; F2 conectó Afiliados, F3 Equipo y permisos y Registro de actividad, y F4 Actividades, Asistencia e Inventario.
 
 **Ventana completa:** en escritorio y laptops (`useFitLayout()`: 1024 px de ancho y 560 px de alto o más), la página del equipo no se desplaza. Cada vista es una columna que ocupa el alto disponible: el encabezado arriba y el contenido debajo (`flex: 1; min-height: 0`). Las listas muestran tantas filas como entran (`rowsThatFit()`, o `useFitRows()` para una tabla); el lugar de la paginación queda reservado desde el inicio para que la lista se pida una sola vez. Si algo igual no entra, solo se desplaza esa zona. Tamaños fluidos con `clamp(…vh…)`. En el celular la página se desplaza: el encabezado va dentro de `StickyHeader` (con `:disabled="fit"` en escritorio), que queda fijo al bajar y avisa con `stuck` para achicarlo; `DataTable` con `sticky-head` deja los títulos de las columnas debajo y pasa a tarjetas según su propio ancho (`stack-below`).
 
 **Afiliados (F2):** pestaña, búsqueda, filtro, orden y página quedan en la dirección (`?pestana=activos&buscar=…&pagina=2`), así «‹ Afiliados» desde una ficha vuelve al mismo lugar. La ficha guarda los datos personales y el consentimiento con «Guardar ficha»; cada familiar, evaluación o documento se guarda al momento. Lo clínico (historia, evaluaciones y documentos) solo aparece si la API lo envía: si no, la ficha explica el motivo real (rol, consentimiento o acceso suspendido). Las tablas pasan a tarjetas según su propio ancho, para que nunca haya desplazamiento lateral.
 
-**Equipo y permisos (F3):** tres pestañas: Equipo (búsqueda, rol y «Gestionar»), Pendientes de aprobación y «Qué puede ver cada rol». La contraseña temporal de una invitación o de un restablecimiento la genera el servidor y se muestra una sola vez (`TemporaryPassword`). La invitación queda fija al costado desde 1500 px de ancho; en pantallas menores se abre con «+ Invitar a una persona». Administración no se edita en la tabla de permisos, y dar un permiso sensible pide confirmación antes de enviar `confirmSensitive: true`.
+**Equipo y permisos (F3):** tres pestañas: Equipo (búsqueda, rol y «Gestionar»), Pendientes de aprobación y «Qué puede ver cada rol». La contraseña temporal de una invitación o de un restablecimiento la genera el servidor y se muestra una sola vez (`TemporaryPassword`). La invitación se abre en una ventana con «+ Nuevo rol», así la lista usa todo el ancho. Administración no se edita en la tabla de permisos, y dar un permiso sensible pide confirmación antes de enviar `confirmSensitive: true`.
 
 **Registro de actividad (F3):** filtros en la dirección (`?buscar=…&area=donaciones&revisar=1&dias=30`). En ventana completa se piden los movimientos que entran y se muestran los que caben junto con sus encabezados de día; «Ver días anteriores» sigue desde el último que se vio. «Descargar registro» baja lo filtrado en Excel y la descarga queda en el propio registro.
+
+**Operación de la sede (F4):** `components/ops/` y `views/team/ops/`.
+- **Actividades:** la agenda del mes en lista o en mes (`?vista=mes`) ocupa todo el alto; «Lo que ya pasó» va a la derecha, con su propia barra si es larga. Crear o editar abre una ventana (`ActivityDialog`), como «Registrar afiliado»: datos a la izquierda y vista previa y publicación a la derecha. `?actividad=…` abre esa ventana. Cancelar pide el aviso para las familias (`ScheduleCancel`).
+- **Asistencia:** arriba se elige el día (`?dia=AAAA-MM-DD`); ‹ y › saltan al día con actividad. Si ese día hay varias, el título del recuadro deja elegir cuál (`?actividad=…`). Cada marca se guarda al tocarla y se puede marcar a otra persona sin esperar. Se marca desde el día de la actividad hasta cerrarla, como exige la API. En el celular (360 px) el nombre y los botones «Vino» y «No vino» (44 px o más) van en la misma fila, y «Cerrar asistencia del día» queda fijo al pie. El resumen mensual se descarga en CSV o Excel.
+- **Inventario:** contadores, aviso de dañados y filtros en la dirección; `?material=…` abre ese material aunque esté en otra página. «+ Añadir material» se abre en una ventana. El panel de cada material tiene dos pestañas, Datos e Historial; el historial se pagina y el formulario de movimiento queda a la vista. Cambiar la cantidad pide el motivo (genera un ajuste). Un préstamo pide a quién se presta (`counterpart`).
+- **Pruebas E2E:** las actividades y materiales que crean se llaman «… de prueba 123456» y se borran al terminar (`e2e/global-teardown.ts`; `E2E_LIMPIAR=0` lo evita).
+- Las fechas que se envían a la API son de La Paz (`todayIso()`), no del día en UTC.

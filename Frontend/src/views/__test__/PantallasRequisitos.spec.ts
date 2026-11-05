@@ -1,11 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import InventoryView from '../InventoryView.vue'
 import ScheduleView from '../ScheduleView.vue'
 import {
   getDonationSummary,
   getDonations,
-  getInventory,
   institutionalInfo,
   signIn,
 } from '../../services/aspar'
@@ -94,48 +92,5 @@ describe('Portal público (/) — RF-04, RF-06, RF-07, RF-08, RF-10', () => {
     expect(mount(ScheduleView).find('.donation-counter').text()).toContain(
       `${summary.confirmedCount} aportes confirmados`,
     )
-  })
-})
-
-describe('Inventario (/inventario) — RF-03, RF-09', () => {
-  it('registra un material y lo filtra por origen', async () => {
-    signIn('coordinacion@aspar.org', 'Coord2026!')
-    const wrapper = mount(InventoryView)
-
-    await wrapper.find('#inv-code').setValue('FIS-900')
-    await wrapper.find('#inv-name').setValue('Banda elástica de resistencia')
-    await wrapper.find('#inv-origin').setValue('Donación')
-    await wrapper.find('form').trigger('submit.prevent')
-
-    expect(getInventory().some((item) => item.code === 'FIS-900')).toBe(true)
-
-    await wrapper
-      .find('select[aria-label="Filtrar por origen"]')
-      .setValue('Donación')
-    const rows = wrapper.findAll('article.patient-row')
-    expect(rows.length).toBeGreaterThan(0)
-    expect(rows.every((row) => row.text().includes('Donación'))).toBe(true)
-  })
-
-  it('exporta el reporte CSV para la Alcaldía (RF-09)', async () => {
-    vi.stubGlobal('URL', {
-      ...URL,
-      createObjectURL: vi.fn(() => 'blob:reporte'),
-      revokeObjectURL: vi.fn(),
-    })
-    const click = vi
-      .spyOn(HTMLAnchorElement.prototype, 'click')
-      .mockImplementation(() => undefined)
-    signIn('coordinacion@aspar.org', 'Coord2026!')
-    const wrapper = mount(InventoryView)
-
-    const csvButton = wrapper
-      .findAll('button')
-      .find((button) => button.text().includes('CSV'))!
-    await csvButton.trigger('click')
-
-    expect(click).toHaveBeenCalled()
-    expect(wrapper.find('[role="status"]').text()).toContain('formato CSV')
-    click.mockRestore()
   })
 })
