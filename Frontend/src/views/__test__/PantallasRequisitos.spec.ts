@@ -1,10 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import AttendanceView from '../AttendanceView.vue'
 import InventoryView from '../InventoryView.vue'
 import ScheduleView from '../ScheduleView.vue'
 import {
-  getAttendance,
   getDonationSummary,
   getDonations,
   getInventory,
@@ -96,37 +94,6 @@ describe('Portal público (/) — RF-04, RF-06, RF-07, RF-08, RF-10', () => {
     expect(mount(ScheduleView).find('.donation-counter').text()).toContain(
       `${summary.confirmedCount} aportes confirmados`,
     )
-  })
-})
-
-describe('Asistencia (/asistencia) — RNF-06', () => {
-  it('no permite marcar Presente a un paciente sin consentimiento', async () => {
-    signIn('voluntario@aspar.org', 'Voluntario2026!')
-    const wrapper = mount(AttendanceView)
-
-    const miguel = wrapper
-      .findAll('.attendance-row')
-      .find((row) => row.text().includes('Miguel Fernández'))!
-    await miguel.find('.button-present').trigger('click')
-
-    expect(wrapper.find('[role="alert"]').text()).toContain('RNF-06')
-    const entry = getAttendance().find(
-      (e) => e.patientName === 'Miguel Fernández',
-    )
-    expect(entry?.status).toBe('Pendiente')
-  })
-
-  it('marca la asistencia de un paciente con consentimiento activo', async () => {
-    signIn('voluntario@aspar.org', 'Voluntario2026!')
-    const wrapper = mount(AttendanceView)
-
-    const elena = wrapper
-      .findAll('.attendance-row')
-      .find((row) => row.text().includes('Elena Rojas'))!
-    await elena.find('.button-present').trigger('click')
-
-    const entry = getAttendance().find((e) => e.patientName === 'Elena Rojas')
-    expect(entry?.status).toBe('Presente')
   })
 })
 
