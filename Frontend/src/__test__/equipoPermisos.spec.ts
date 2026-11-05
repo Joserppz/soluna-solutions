@@ -421,13 +421,13 @@ describe('Invitar a una persona', () => {
         temporaryPassword: 'Ceibo-4821-Sol',
       },
     })
-    const { wrapper } = await mountApp(PATH, fake)
+    await mountApp(PATH, fake)
 
-    // En una ventana común la invitación se abre a pedido
-    expect(wrapper.find('[data-testid="panel-invitar"]').exists()).toBe(false)
-    await button('+ Invitar a una persona').trigger('click')
+    // «+ Nuevo rol» abre la invitación en una ventana
+    expect(body().find('[data-testid="panel-invitar"]').exists()).toBe(false)
+    await button('+ Nuevo rol').trigger('click')
     await settle()
-    const panel = wrapper.get('[data-testid="panel-invitar"]')
+    const panel = body().get('[data-testid="panel-invitar"]')
     expect(document.activeElement).toBe(field('Nombre completo', panel).element)
     expect(panel.findAll('.role-choice strong').map((r) => r.text())).toEqual([
       'Administración',
@@ -488,7 +488,7 @@ describe('Invitar a una persona', () => {
 
     await panel.get('[aria-label="Cerrar la invitación"]').trigger('click')
     await settle()
-    expect(wrapper.find('[data-testid="panel-invitar"]').exists()).toBe(false)
+    expect(body().find('[data-testid="panel-invitar"]').exists()).toBe(false)
   })
 
   it('copia la contraseña y muestra el error de la API (correo repetido)', async () => {
@@ -505,10 +505,10 @@ describe('Invitar a una persona', () => {
         },
       },
     ])
-    const { wrapper } = await mountApp(PATH, fake)
-    await button('+ Invitar a una persona').trigger('click')
+    await mountApp(PATH, fake)
+    await button('+ Nuevo rol').trigger('click')
     await settle()
-    const panel = wrapper.get('[data-testid="panel-invitar"]')
+    const panel = body().get('[data-testid="panel-invitar"]')
 
     await field('Nombre completo', panel).setValue('Ana Pérez')
     await field('Correo', panel).setValue('ana@aspar.org')
@@ -532,16 +532,24 @@ describe('Invitar a una persona', () => {
     )
   })
 
-  it('desde «Qué puede ver cada rol» vuelve al equipo para invitar', async () => {
+  it('desde «Qué puede ver cada rol» también se invita, sin cambiar de pestaña', async () => {
     const fake = fakeApi()
     const { wrapper, router } = await mountApp(`${PATH}?pestana=permisos`, fake)
     expect(wrapper.find('[data-testid="tabla-permisos"]').exists()).toBe(true)
 
-    await button('+ Invitar a una persona').trigger('click')
+    await button('+ Nuevo rol').trigger('click')
     await settle()
 
-    expect(router.currentRoute.value.query.pestana).toBeUndefined()
-    expect(wrapper.find('[data-testid="panel-invitar"]').exists()).toBe(true)
+    expect(router.currentRoute.value.query.pestana).toBe('permisos')
+    expect(body().get('[role="dialog"]').attributes('aria-labelledby')).toBe(
+      'invitar-titulo',
+    )
+    expect(body().find('[data-testid="panel-invitar"]').exists()).toBe(true)
+    // Se cierra con su botón y la tabla sigue a la vista
+    await body().get('[aria-label="Cerrar la invitación"]').trigger('click')
+    await settle()
+    expect(body().find('[data-testid="panel-invitar"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="tabla-permisos"]').exists()).toBe(true)
   })
 })
 
@@ -952,7 +960,7 @@ describe('Qué puede ver cada rol', () => {
 })
 
 describe('Equipo en ventana completa (escritorio)', () => {
-  it('pide tantas filas como entran y deja la invitación fija al costado', async () => {
+  it('pide tantas filas como entran; la lista usa todo el ancho y la invitación espera al botón', async () => {
     vi.stubGlobal(
       'matchMedia',
       vi.fn(() => ({
@@ -972,9 +980,7 @@ describe('Equipo en ventana completa (escritorio)', () => {
     // 380 px sin títulos de columna: 6 filas de 56 px
     expect(teamQueries(fake)).toEqual([{ limit: '6', offset: '0' }])
     expect(wrapper.find('.access--fit').exists()).toBe(true)
-    const panel = wrapper.get('[data-testid="panel-invitar"]')
-    expect(panel.find('[aria-label="Cerrar la invitación"]').exists()).toBe(
-      false,
-    )
+    expect(body().find('[data-testid="panel-invitar"]').exists()).toBe(false)
+    expect(wrapper.find('.access__side').exists()).toBe(false)
   })
 })

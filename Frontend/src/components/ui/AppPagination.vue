@@ -146,4 +146,18 @@ function go(page: number) {
   color: var(--color-text-muted);
   cursor: default;
 }
+
+/* Celular: los botones de página caben en una sola fila */
+@media (max-width: 480px) {
+  .pagination__pages {
+    flex-wrap: nowrap;
+    gap: var(--space-1);
+  }
+
+  .page {
+    min-width: 2.25rem;
+    height: 2.25rem;
+    padding: 0 var(--space-1);
+  }
+}
 </style>

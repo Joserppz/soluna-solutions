@@ -28,6 +28,7 @@ afterEach(() => {
   vi.useRealTimers()
   document.body.innerHTML = ''
   useToast().clear()
+  vi.unstubAllGlobals()
   vi.restoreAllMocks()
 })
 
@@ -155,22 +156,34 @@ describe('Actividades', () => {
       'Cancelada',
     )
     expect(wrapper.find('.is-struck strong').text()).toBe('Teatro y expresión')
-    expect(wrapper.text()).toContain(
-      'Los borradores no aparecen en el sitio. Una actividad cancelada se sigue mostrando, tachada, para que nadie llegue en vano.',
+    // La cancelada muestra el aviso que ven las familias, no el responsable
+    expect(wrapper.findAll('.row')[1]!.text()).toContain(
+      'Teatro · Se reprogramará en diciembre.',
     )
-    // El mes pasado queda en «Lo que ya pasó» con su asistencia
-    expect(wrapper.text()).not.toContain('Movimiento del 30 de octubre')
+    // Sin notas al pie: la agenda usa todo el alto
+    expect(wrapper.text()).not.toContain('Los borradores no aparecen')
+    // Lo que ya pasó va a la derecha, con los últimos encuentros
+    expect(wrapper.get('#pasado-titulo').text()).toBe('Lo que ya pasó')
+    expect(wrapper.get('.past').text()).toContain(
+      'Movimiento del 30 de octubre',
+    )
+    // El editor no ocupa la pantalla: se abre en una ventana al elegir
+    expect(body().find('[role="dialog"]').exists()).toBe(false)
+    expect(wrapper.get('.agenda').text()).not.toContain(
+      'Movimiento del 30 de octubre',
+    )
   })
 
-  it('«Lo que ya pasó» lista los encuentros del mes con su asistencia y el enlace', async () => {
-    vi.setSystemTime(new Date('2026-10-31T20:00:00Z'))
+  it('«Lo que ya pasó» lista los encuentros hechos con su asistencia y el enlace', async () => {
     const fake = fakeApi()
-    const { wrapper } = await mountApp(`${PATH}?mes=2026-10`, fake)
+    const { wrapper } = await mountApp(PATH, fake)
 
-    const row = wrapper.get('.past tbody tr')
-    expect(row.text()).toContain('30 oct')
+    // Solo los encuentros hechos: ni canceladas ni borradores
+    const rows = wrapper.findAll('.past li')
+    expect(rows).toHaveLength(1)
+    const row = rows[0]!
+    expect(row.text()).toContain('Vie 30 oct · 29 vinieron')
     expect(row.text()).toContain('Movimiento del 30 de octubre')
-    expect(row.text()).toContain('29')
     expect(row.get('a').attributes('href')).toBe(
       '/equipo/asistencia?actividad=s-4',
     )
@@ -194,7 +207,7 @@ describe('Actividades', () => {
     expect(wrapper.find('.cell.is-today').exists()).toBe(true)
   })
 
-  it('al elegir una actividad muestra sus datos y la vista previa del sitio', async () => {
+  it('al elegir una actividad se abre una ventana con sus datos y la vista previa', async () => {
     const fake = fakeApi()
     const { wrapper, router } = await mountApp(PATH, fake)
 
@@ -202,6 +215,9 @@ describe('Actividades', () => {
     await settle()
 
     expect(router.currentRoute.value.query.actividad).toBe('s-1')
+    expect(body().get('[role="dialog"] h2').text()).toBe(
+      'Movimiento en compañía',
+    )
     expect(field('Título').element).toHaveProperty(
       'value',
       'Movimiento en compañía',
@@ -253,7 +269,11 @@ describe('Actividades', () => {
     expect(lastBody(fake, 'PATCH /schedules/s-1')).toEqual({
       title: 'Movimiento de noviembre',
     })
+    // Al guardar se cierra la ventana y la agenda se vuelve a leer
+    expect(body().find('[role="dialog"]').exists()).toBe(false)
 
+    await wrapper.findAll('.row')[0]!.trigger('click')
+    await settle()
     await body().get('.switch').setValue(false)
     await body().get('form#editor-actividad').trigger('submit')
     await settle()
@@ -342,6 +362,23 @@ describe('Actividades', () => {
         .some((b) => b.text() === 'Guardar cambios'),
     ).toBe(false)
     expect(wrapper.find('.cancel-link').exists()).toBe(false)
+  })
+
+  it('en el calendario cada día muestra dos actividades y «+N más» lleva a la lista', async () => {
+    const fake = fakeApi()
+    const sameDay = [1, 2, 3].map((n) =>
+      schedule({ id: `d-${n}`, title: `Encuentro ${n}`, date: '2026-11-12' }),
+    )
+    fake.on('GET /schedules', (call) => list(call, [...ACTIVITIES, ...sameDay]))
+    const { wrapper } = await mountApp(`${PATH}?vista=mes`, fake)
+
+    expect(wrapper.findAll('.chip')).toHaveLength(5)
+    const more = wrapper.get('.cell__more')
+    expect(more.text()).toBe('+1 más')
+    await more.trigger('click')
+    await settle()
+    expect(wrapper.find('.calendar').exists()).toBe(false)
+    expect(wrapper.text()).toContain('Encuentro 3')
   })
 
   it('sin permiso de actividades no entra a la pantalla', async () => {

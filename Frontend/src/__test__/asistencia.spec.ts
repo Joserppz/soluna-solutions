@@ -139,12 +139,13 @@ const MONTHLY: MonthlySummary = {
   totalCame: 48,
 }
 
-function list(call: RecordedCall): { body: SchedulePage } {
+function list(
+  call: RecordedCall,
+  items: ScheduleOut[] = ACTIVITIES,
+): { body: SchedulePage } {
   const from = call.query.get('from') ?? ''
   const to = call.query.get('to') ?? ''
-  const filtered = ACTIVITIES.filter(
-    (item) => item.date >= from && item.date <= to,
-  )
+  const filtered = items.filter((item) => item.date >= from && item.date <= to)
   return {
     body: { items: filtered, total: filtered.length, limit: 100, offset: 0 },
   }
@@ -197,8 +198,8 @@ describe('Asistencia', () => {
     expect(fake.callsTo('GET /schedules/s-1/attendance')).toHaveLength(1)
     expect(wrapper.get('.banner__title').text()).toBe('Movimiento en compañía')
     expect(wrapper.get('.banner__count').text()).toContain('de 3 marcados')
-    expect(wrapper.get('.tally').text()).toContain('1 vinieron')
-    expect(wrapper.get('.tally').text()).toContain('1 no vinieron')
+    expect(wrapper.get('.tally').text()).toContain('1 vino')
+    expect(wrapper.get('.tally').text()).toContain('1 no vino')
     expect(wrapper.get('.tally').text()).toContain('1 sin marcar')
     expect(wrapper.findAll('.person')).toHaveLength(3)
     expect(wrapper.text()).toContain('Se guarda solo al marcar.')
@@ -241,6 +242,151 @@ describe('Asistencia', () => {
     expect(row.findAll('button')[1]!.attributes('aria-pressed')).toBe('false')
     expect(wrapper.get('.tally').text()).toContain('1 sin marcar')
     expect(wrapper.text()).toContain('Error interno')
+  })
+
+  it('se puede marcar a otra persona sin esperar a que se guarde la anterior', async () => {
+    const fake = fakeApi()
+    let release = () => {}
+    const pending = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    fake.on('PUT /schedules/s-1/attendance/p-1', async () => {
+      await pending
+      return { body: entry('p-1', 'Alba Gutiérrez Mamani', 'vino') }
+    })
+    fake.on('PUT /schedules/s-1/attendance/p-3', {
+      body: entry('p-3', 'Celia Flores Ticona', 'vino'),
+    })
+    const { wrapper } = await mountApp(PATH, fake)
+
+    await personRow('Alba Gutiérrez').findAll('button')[0]!.trigger('click')
+    await personRow('Celia Flores').findAll('button')[0]!.trigger('click')
+    await settle()
+
+    // La de Alba sigue guardándose; la de Celia ya se guardó
+    expect(fake.callsTo('PUT /schedules/s-1/attendance/p-3')).toHaveLength(1)
+    expect(
+      personRow('Alba Gutiérrez').findAll('button')[0]!.attributes('disabled'),
+    ).toBeDefined()
+    expect(
+      button('Cerrar asistencia del día').attributes('disabled'),
+    ).toBeDefined()
+
+    release()
+    await settle()
+    expect(wrapper.get('.tally').text()).toContain('3 vinieron')
+    expect(
+      button('Cerrar asistencia del día').attributes('disabled'),
+    ).toBeUndefined()
+  })
+
+  it('una actividad que ya pasó y sigue abierta todavía se puede marcar', async () => {
+    const fake = fakeApi()
+    fake.on('GET /schedules/s-2/attendance', { body: sheet(PEOPLE) })
+    fake.on('PUT /schedules/s-2/attendance/p-1', {
+      body: entry('p-1', 'Alba Gutiérrez Mamani', 'vino'),
+    })
+    await mountApp(`${PATH}?actividad=s-2`, fake)
+
+    const row = personRow('Alba Gutiérrez')
+    expect(row.findAll('button')[0]!.attributes('disabled')).toBeUndefined()
+    await row.findAll('button')[0]!.trigger('click')
+    await settle()
+    expect(fake.callsTo('PUT /schedules/s-2/attendance/p-1')).toHaveLength(1)
+    expect(body().text()).not.toContain('Se marca el día de la actividad')
+  })
+
+  it('una actividad futura no se marca ni se cierra todavía', async () => {
+    const fake = fakeApi()
+    const upcoming = schedule({
+      id: 's-4',
+      title: 'Arteterapia: crear juntos',
+      date: '2026-11-14',
+    })
+    fake.on('GET /schedules', (call) => list(call, [...ACTIVITIES, upcoming]))
+    fake.on('GET /schedules/s-4/attendance', { body: sheet(PEOPLE) })
+    const { wrapper } = await mountApp(`${PATH}?dia=2026-11-14`, fake)
+
+    expect(wrapper.get('.banner__title').text()).toBe(
+      'Arteterapia: crear juntos',
+    )
+    expect(
+      personRow('Alba Gutiérrez').findAll('button')[0]!.attributes('disabled'),
+    ).toBeDefined()
+    expect(wrapper.text()).toContain(
+      'Se marca el día de la actividad: Sábado, 14 de noviembre.',
+    )
+    expect(() => button('Cerrar asistencia del día')).toThrow()
+    expect(() => button('Marcar a todos como presentes')).toThrow()
+  })
+
+  it('arriba se elige el día; ‹ y › saltan a los días con actividad y un borrador no cuenta', async () => {
+    const fake = fakeApi()
+    const upcoming = schedule({
+      id: 's-4',
+      title: 'Arteterapia: crear juntos',
+      date: '2026-11-14',
+    })
+    const draft = schedule({
+      id: 's-5',
+      title: 'Preparación de diciembre',
+      date: '2026-11-12',
+      status: 'borrador',
+    })
+    fake.on('GET /schedules', (call) =>
+      list(call, [...ACTIVITIES, draft, upcoming]),
+    )
+    fake.on('GET /schedules/s-4/attendance', { body: sheet(PEOPLE) })
+    const { wrapper, router } = await mountApp(PATH, fake)
+
+    // Hoy hay actividad: se abre esa, y arriba solo está la fecha
+    const dayInput = wrapper.get('#dia-asistencia')
+    expect(dayInput.element).toHaveProperty('value', '2026-11-07')
+    expect(wrapper.find('#actividad-asistencia').exists()).toBe(false)
+
+    // › salta el borrador del 12 y va al 14
+    await wrapper
+      .get('[aria-label="Día siguiente con actividad"]')
+      .trigger('click')
+    await settle()
+    expect(dayInput.element).toHaveProperty('value', '2026-11-14')
+    expect(router.currentRoute.value.query.dia).toBe('2026-11-14')
+    expect(wrapper.get('.banner__title').text()).toBe(
+      'Arteterapia: crear juntos',
+    )
+
+    // Un día sin actividad publicada lo dice y ofrece los días cercanos
+    await dayInput.setValue('2026-11-12')
+    await dayInput.trigger('change')
+    await settle()
+    expect(wrapper.text()).toContain(
+      'No hay actividades publicadas el jueves, 12 de noviembre.',
+    )
+    await button('Sábado, 14 de noviembre ›', wrapper).trigger('click')
+    await settle()
+    expect(dayInput.element).toHaveProperty('value', '2026-11-14')
+  })
+
+  it('si un día tiene dos actividades, se elige cuál', async () => {
+    const fake = fakeApi()
+    const second = schedule({ id: 's-6', title: 'Teatro de la tarde' })
+    fake.on('GET /schedules', (call) => list(call, [...ACTIVITIES, second]))
+    fake.on('GET /schedules/s-6/attendance', { body: sheet(PEOPLE) })
+    const { wrapper } = await mountApp(PATH, fake)
+
+    const select = wrapper.get('#actividad-asistencia')
+    expect(select.findAll('option').map((o) => o.text())).toEqual([
+      'Movimiento en compañía',
+      'Teatro de la tarde',
+    ])
+    await select.setValue('s-6')
+    await settle()
+    expect(fake.callsTo('GET /schedules/s-6/attendance')).toHaveLength(1)
+    // La lista está en el título del recuadro: el alto de la pantalla no cambia
+    expect(wrapper.get('.banner #actividad-asistencia').element).toHaveProperty(
+      'value',
+      's-6',
+    )
   })
 
   it('busca por nombre sin distinguir tildes', async () => {
@@ -360,16 +506,17 @@ describe('Asistencia', () => {
     )
   })
 
-  it('descarga el resumen mensual en Excel', async () => {
+  it('descarga el resumen mensual en CSV o en Excel', async () => {
     const createObjectURL = vi.fn(() => 'blob:asistencia')
     vi.stubGlobal(
       'URL',
       Object.assign(URL, { createObjectURL, revokeObjectURL: vi.fn() }),
     )
+    const names: string[] = []
     const click = vi
       .spyOn(HTMLAnchorElement.prototype, 'click')
       .mockImplementation(function (this: HTMLAnchorElement) {
-        expect(this.download).toBe('resumen-mensual-asistencia-2026-11.xlsx')
+        names.push(this.download)
       })
     const fake = fakeApi()
     fake.on('GET /attendance/monthly', (call) =>
@@ -377,10 +524,25 @@ describe('Asistencia', () => {
     )
     const { wrapper } = await mountApp(PATH, fake)
 
-    await button('Descargar resumen mensual →', wrapper).trigger('click')
+    await wrapper
+      .get('[aria-label="Descargar resumen mensual en CSV"]')
+      .trigger('click')
+    await settle()
+    await wrapper
+      .get('[aria-label="Descargar resumen mensual en Excel"]')
+      .trigger('click')
     await settle()
 
-    expect(click).toHaveBeenCalledTimes(1)
+    expect(click).toHaveBeenCalledTimes(2)
+    expect(names).toEqual([
+      'resumen-mensual-asistencia-2026-11.csv',
+      'resumen-mensual-asistencia-2026-11.xlsx',
+    ])
+    const formats = fake
+      .callsTo('GET /attendance/monthly')
+      .map((call) => call.query.get('format'))
+      .filter(Boolean)
+    expect(formats).toEqual(['csv', 'xlsx'])
     expect(wrapper.text()).toContain('Fisioterapia')
     expect(wrapper.text()).toContain('Arteterapia')
   })
@@ -399,14 +561,16 @@ describe('Asistencia', () => {
     expect(fake.callsTo('GET /attendance/monthly')).toHaveLength(0)
   })
 
-  it('sin actividades para marcar lo explica', async () => {
+  it('un día sin actividades lo explica', async () => {
     const fake = fakeApi()
     fake.on('GET /schedules', {
       body: { items: [], total: 0, limit: 100, offset: 0 },
     })
     const { wrapper } = await mountApp(PATH, fake)
 
-    expect(wrapper.text()).toContain('Todavía no hay actividades para marcar.')
+    expect(wrapper.text()).toContain(
+      'No hay actividades publicadas el sábado, 7 de noviembre.',
+    )
     expect(fake.callsTo('GET /schedules/s-1/attendance')).toHaveLength(0)
   })
 })

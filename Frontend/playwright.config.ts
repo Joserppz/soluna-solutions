@@ -10,6 +10,7 @@
  * Los scripts de Google y de Cloudflare se reemplazan por dobles en el navegador;
  * todo lo demás va contra la API real.
  * Con E2E_EVIDENCIAS=<carpeta> se guardan capturas para docs/evidencias.
+ * Al terminar se borran las actividades y materiales «de prueba» (E2E_LIMPIAR=0 lo evita).
  */
 import { defineConfig, devices } from '@playwright/test'
 
@@ -18,6 +19,7 @@ const baseURL = process.env.E2E_BASE_URL ?? 'http://localhost:4173'
 export default defineConfig({
   testDir: './e2e',
   globalSetup: './e2e/global-setup.ts',
+  globalTeardown: './e2e/global-teardown.ts',
   outputDir: './e2e-resultados',
   fullyParallel: false,
   workers: 1,

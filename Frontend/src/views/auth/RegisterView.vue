@@ -118,85 +118,92 @@ async function submit() {
       </header>
 
       <form class="form-stack" novalidate @submit.prevent="submit">
-        <FormField
-          v-slot="field"
-          label="Nombre completo"
-          :error="errors.name"
-          required
-        >
-          <input
-            :id="field.id"
-            v-model="form.name"
-            class="input"
-            :class="{ 'is-valid': touched.name && !errors.name }"
-            name="name"
-            autocomplete="name"
-            :aria-invalid="field.invalid || undefined"
-            :aria-describedby="field.describedBy"
+        <!-- En escritorio los campos van de a dos para que todo entre sin desplazarse -->
+        <div class="register__pair register__pair--short">
+          <FormField
+            v-slot="field"
+            label="Nombre completo"
+            :error="errors.name"
             required
-            @blur="touched.name = true"
-          />
-        </FormField>
+          >
+            <input
+              :id="field.id"
+              v-model="form.name"
+              class="input"
+              :class="{ 'is-valid': touched.name && !errors.name }"
+              name="name"
+              autocomplete="name"
+              :aria-invalid="field.invalid || undefined"
+              :aria-describedby="field.describedBy"
+              required
+              @blur="touched.name = true"
+            />
+          </FormField>
 
-        <FormField
-          v-slot="field"
-          label="Correo electrónico"
-          hint="Te enviaremos un enlace para confirmarlo."
-          :error="errors.email"
-          required
-        >
-          <input
-            :id="field.id"
-            v-model="form.email"
-            class="input"
-            :class="{ 'is-valid': touched.email && !errors.email }"
-            type="email"
-            name="email"
-            autocomplete="email"
-            inputmode="email"
-            autocapitalize="off"
-            spellcheck="false"
-            :aria-invalid="field.invalid || undefined"
-            :aria-describedby="field.describedBy"
+          <FormField
+            v-slot="field"
+            label="Correo electrónico"
+            hint="Te enviaremos un enlace para confirmarlo."
+            :error="errors.email"
             required
-            @blur="touched.email = true"
-          />
-        </FormField>
+          >
+            <input
+              :id="field.id"
+              v-model="form.email"
+              class="input"
+              :class="{ 'is-valid': touched.email && !errors.email }"
+              type="email"
+              name="email"
+              autocomplete="email"
+              inputmode="email"
+              autocapitalize="off"
+              spellcheck="false"
+              :aria-invalid="field.invalid || undefined"
+              :aria-describedby="field.describedBy"
+              required
+              @blur="touched.email = true"
+            />
+          </FormField>
+        </div>
 
-        <FormField
-          v-slot="field"
-          label="Contraseña"
-          :error="errors.password"
-          required
-        >
-          <PasswordInput
-            :id="field.id"
-            v-model="form.password"
-            autocomplete="new-password"
-            :invalid="field.invalid"
-            :described-by="`${field.describedBy ?? ''} reglas-registro`.trim()"
+        <div class="register__pair">
+          <FormField
+            v-slot="field"
+            label="Contraseña"
+            :error="errors.password"
             required
-            @blur="touched.password = true"
-          />
-        </FormField>
+          >
+            <PasswordInput
+              :id="field.id"
+              v-model="form.password"
+              autocomplete="new-password"
+              :invalid="field.invalid"
+              :described-by="
+                `${field.describedBy ?? ''} reglas-registro`.trim()
+              "
+              required
+              @blur="touched.password = true"
+            />
+          </FormField>
+
+          <FormField
+            v-slot="field"
+            label="Repite la contraseña"
+            :error="errors.confirmation"
+            required
+          >
+            <PasswordInput
+              :id="field.id"
+              v-model="form.confirmation"
+              autocomplete="new-password"
+              :invalid="field.invalid"
+              :described-by="field.describedBy"
+              required
+              @blur="touched.confirmation = true"
+            />
+          </FormField>
+        </div>
         <PasswordChecklist id="reglas-registro" :password="form.password" />
-
-        <FormField
-          v-slot="field"
-          label="Repite la contraseña"
-          :error="errors.confirmation"
-          required
-        >
-          <PasswordInput
-            :id="field.id"
-            v-model="form.confirmation"
-            autocomplete="new-password"
-            :invalid="field.invalid"
-            :described-by="field.describedBy"
-            required
-            @blur="touched.confirmation = true"
-          />
-        </FormField>
 
         <div class="register__captcha">
           <TurnstileWidget
@@ -254,6 +261,31 @@ async function submit() {
   border-radius: var(--radius-lg);
   background: var(--color-surface);
   box-shadow: var(--shadow-sm);
+}
+
+/* Escritorio: las dos contraseñas lado a lado; en ventanas bajas también el nombre y
+   el correo. Así el formulario entra completo, sin barra de desplazamiento */
+.register__pair {
+  display: grid;
+  gap: var(--form-gap, var(--space-4));
+}
+
+@media (min-width: 900px) {
+  .register__pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    column-gap: var(--space-4);
+  }
+
+  .register__pair--short {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 900px) and (max-height: 820px) {
+  .register__pair--short {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .register__captcha {

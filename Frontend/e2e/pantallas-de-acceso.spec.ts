@@ -135,27 +135,28 @@ test('cambiar la contraseña temporal a 1366×680 entra sin barra de desplazamie
   ).toBeInViewport({ ratio: 1 })
 })
 
-test('crear cuenta en una ventana baja: solo se desplaza la columna del formulario', async ({
-  page,
-}) => {
-  await page.setViewportSize({ width: 1366, height: 680 })
-  await page.goto('/crear-cuenta')
-  await expect(
-    page.getByRole('button', { name: 'Crear cuenta' }),
-  ).toBeAttached()
-
-  expect(await pageScrolls(page)).toBe(false)
-  const brand = page.locator('.auth__brand')
-  const before = await brand.boundingBox()
-  await page.locator('.auth__main').evaluate((column) => {
-    column.scrollTop = column.scrollHeight
+for (const size of [
+  { width: 1366, height: 680 },
+  { width: 1024, height: 600 },
+]) {
+  test(`crear cuenta a ${size.width}×${size.height} entra completa, sin barra de desplazamiento`, async ({
+    page,
+  }) => {
+    await fakeExternalWidgets(page)
+    await page.setViewportSize(size)
+    await page.goto('/crear-cuenta')
+    await expect(
+      page.getByRole('button', { name: 'Crear cuenta' }),
+    ).toBeInViewport({ ratio: 1 })
+    expect(await pageScrolls(page)).toBe(false)
+    // Tampoco se desplaza la columna del formulario
+    const column = await page
+      .locator('.auth__main')
+      .evaluate((element) => element.scrollHeight > element.clientHeight + 1)
+    expect(column).toBe(false)
+    await expect(page.getByText('¿Ya tienes cuenta?')).toBeInViewport()
   })
-  await expect(
-    page.getByRole('button', { name: 'Crear cuenta' }),
-  ).toBeInViewport()
-  // La columna verde queda fija
-  expect(await brand.boundingBox()).toEqual(before)
-})
+}
 
 test('en el celular la página se desplaza con normalidad', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })

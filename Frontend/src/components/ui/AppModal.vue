@@ -6,11 +6,23 @@ const props = withDefaults(
     open: boolean
     title: string
     description?: string
-    size?: 'sm' | 'md' | 'lg'
+    size?: 'sm' | 'md' | 'lg' | 'xl'
     /** false: solo se cierra con los botones del propio modal (decisiones importantes). */
     dismissible?: boolean
+    /**
+     * Sin encabezado ni márgenes: el contenido trae su propio título (por ejemplo, un
+     * panel que en otras pantallas va al costado). `labelledBy` es el id de ese título.
+     */
+    bare?: boolean
+    labelledBy?: string
   }>(),
-  { description: undefined, size: 'md', dismissible: true },
+  {
+    description: undefined,
+    size: 'md',
+    dismissible: true,
+    bare: false,
+    labelledBy: undefined,
+  },
 )
 
 const emit = defineEmits<{
@@ -98,12 +110,12 @@ onBeforeUnmount(() => {
           :class="`modal--${size}`"
           role="dialog"
           aria-modal="true"
-          :aria-labelledby="titleId"
-          :aria-describedby="description ? descriptionId : undefined"
+          :aria-labelledby="bare ? labelledBy : titleId"
+          :aria-describedby="description && !bare ? descriptionId : undefined"
           tabindex="-1"
           @keydown="onKeydown"
         >
-          <header class="modal__header">
+          <header v-if="!bare" class="modal__header">
             <div>
               <h2 :id="titleId" class="modal__title">{{ title }}</h2>
               <p
@@ -124,7 +136,9 @@ onBeforeUnmount(() => {
               ×
             </button>
           </header>
-          <div class="modal__body"><slot /></div>
+          <div class="modal__body" :class="{ 'modal__body--bare': bare }">
+            <slot />
+          </div>
           <footer v-if="$slots.actions" class="modal__actions">
             <slot name="actions" />
           </footer>
@@ -175,6 +189,11 @@ onBeforeUnmount(() => {
   max-width: 46rem;
 }
 
+/* Formularios con dos columnas (por ejemplo, datos y vista previa) */
+.modal--xl {
+  max-width: 60rem;
+}
+
 .modal__header {
   flex: none;
   display: flex;
@@ -219,6 +238,17 @@ onBeforeUnmount(() => {
   min-height: 0;
   overflow-y: auto;
   padding: var(--space-4) var(--space-6);
+}
+
+.modal__body--bare {
+  padding: 0;
+}
+
+/* El panel de adentro ya tiene su fondo: sin borde ni sombra repetidos */
+.modal__body--bare > :slotted(.surface-card) {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .modal__actions {

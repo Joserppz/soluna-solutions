@@ -38,7 +38,9 @@ test('invitar a una persona: la contraseña temporal sirve una vez y obliga a ca
 }) => {
   const email = `invitada.f3.${Date.now()}@aspar.org`
   await openTeam(page)
-  await page.getByRole('button', { name: '+ Invitar a una persona' }).click()
+  // «+ Nuevo rol» abre la invitación en una ventana
+  await page.getByRole('button', { name: '+ Nuevo rol' }).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
 
   const panel = page.getByTestId('panel-invitar')
   await expect(panel.getByLabel(/^Nombre completo/)).toBeFocused()
@@ -255,7 +257,7 @@ test('el Voluntariado no entra a Equipo y permisos', async ({ browser }) => {
 
 for (const size of [
   { width: 1366, height: 768 },
-  // La ventana de la captura del equipo (1567×907): el panel de invitar entra sin barra
+  // La ventana de la captura del equipo (1567×907)
   { width: 1567, height: 907 },
   { width: 1920, height: 1080 },
 ]) {
@@ -269,14 +271,13 @@ for (const size of [
     ).toBeVisible()
     await expect.poll(() => fitsWindow(page)).toEqual(FITS)
     if (size.width === 1366) await evidence(page, 'F3-01-equipo')
-    // En la ventana grande la invitación queda fija al costado, como en el diseño
-    await expect(page.getByTestId('panel-invitar')).toHaveCount(
-      size.width >= 1500 ? 1 : 0,
-    )
-
-    await page.getByRole('button', { name: '+ Invitar a una persona' }).click()
+    // La lista usa todo el ancho; la invitación se abre en una ventana que entra completa
+    await expect(page.getByTestId('panel-invitar')).toHaveCount(0)
+    await page.getByRole('button', { name: '+ Nuevo rol' }).click()
     await expect(page.getByTestId('panel-invitar')).toBeVisible()
     await expect.poll(() => fitsWindow(page)).toEqual(FITS)
+    await page.getByRole('button', { name: 'Cerrar la invitación' }).click()
+    await expect(page.getByTestId('panel-invitar')).toHaveCount(0)
 
     await page.getByRole('tab', { name: /^Pendientes de aprobación/ }).click()
     await expect(page.getByRole('row').nth(1)).toBeVisible()

@@ -16,11 +16,12 @@ import RolePermissionsMatrix from '../../../components/team/RolePermissionsMatri
 import TeamMembersPanel from '../../../components/team/TeamMembersPanel.vue'
 import AppAlert from '../../../components/ui/AppAlert.vue'
 import AppButton from '../../../components/ui/AppButton.vue'
+import AppModal from '../../../components/ui/AppModal.vue'
 import AppTabs, { type TabItem } from '../../../components/ui/AppTabs.vue'
 import PageHeader from '../../../components/ui/PageHeader.vue'
 import SkeletonBlock from '../../../components/ui/SkeletonBlock.vue'
 import { useApi } from '../../../composables/useApi'
-import { useFitLayout, useMediaQuery } from '../../../composables/useFitLayout'
+import { useFitLayout } from '../../../composables/useFitLayout'
 import { ADMIN_ROLE, sortRoles } from '../../../utils/team'
 
 type Tab = 'equipo' | 'pendientes' | 'permisos'
@@ -31,7 +32,6 @@ const route = useRoute()
 const router = useRouter()
 const fit = useFitLayout()
 /** Con ancho de sobra la invitación queda fija al costado, como en el diseño. */
-const wide = useMediaQuery('(min-width: 1500px)')
 const inviteOpen = ref(false)
 
 const canManageUsers = computed(() => session.can('users:manage'))
@@ -65,17 +65,6 @@ const tabs = computed<TabItem<Tab>[]>(() => [
   },
   { key: 'permisos', label: 'Qué puede ver cada rol' },
 ])
-
-/**
- * La invitación va al lado de las listas: fija si sobra ancho y, si no, se abre con
- * «+ Invitar a una persona». La tabla de permisos usa todo el ancho.
- */
-const showInvite = computed(
-  () =>
-    canManageUsers.value &&
-    tab.value !== 'permisos' &&
-    (wide.value || inviteOpen.value),
-)
 
 async function loadMatrix() {
   matrixError.value = null
@@ -112,8 +101,8 @@ watch(tab, (value) => {
   void router.replace({ query })
 })
 
+/** «+ Nuevo rol» abre la invitación en una ventana: las listas usan todo el ancho. */
 async function startInvite() {
-  if (tab.value === 'permisos') tab.value = 'equipo'
   inviteOpen.value = true
   await nextTick()
   await invite.value?.focus()
@@ -133,9 +122,7 @@ onMounted(() => {
       subtitle="Quién entra al espacio del equipo y qué puede ver cada persona."
     >
       <template v-if="canManageUsers" #actions>
-        <AppButton size="lg" @click="startInvite">
-          + Invitar a una persona
-        </AppButton>
+        <AppButton size="lg" @click="startInvite"> + Nuevo rol </AppButton>
       </template>
     </PageHeader>
 
@@ -144,7 +131,7 @@ onMounted(() => {
       gestionar el equipo. Pídeselo a Administración.
     </AppAlert>
 
-    <div v-else class="access__body" :class="{ 'has-side': showInvite }">
+    <div v-else class="access__body">
       <section class="access__card surface-card" aria-label="Equipo">
         <AppTabs
           v-model="tab"
@@ -189,18 +176,23 @@ onMounted(() => {
           </template>
         </div>
       </section>
-
-      <aside v-if="showInvite" class="access__side">
-        <InvitePanel
-          ref="invite"
-          :roles="roles"
-          :closable="!wide"
-          :compact="fit"
-          @created="onChanged"
-          @close="inviteOpen = false"
-        />
-      </aside>
     </div>
+
+    <AppModal
+      v-if="canManageUsers"
+      v-model:open="inviteOpen"
+      title="Invitar a una persona"
+      labelled-by="invitar-titulo"
+      bare
+    >
+      <InvitePanel
+        ref="invite"
+        :roles="roles"
+        closable
+        @created="onChanged"
+        @close="inviteOpen = false"
+      />
+    </AppModal>
 
     <ManageMemberDialog
       :member="managing"
@@ -229,11 +221,6 @@ onMounted(() => {
   min-width: 0;
 }
 
-.access__body.has-side {
-  grid-template-columns: minmax(0, 1fr) minmax(17rem, 21rem);
-  align-items: start;
-}
-
 .access__card {
   display: grid;
   gap: var(--space-4);
@@ -245,12 +232,6 @@ onMounted(() => {
   min-width: 0;
 }
 
-@media (max-width: 1100px) {
-  .access__body.has-side {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
 @media (max-width: 640px) {
   .access__card {
     padding: var(--space-4);
@@ -258,7 +239,7 @@ onMounted(() => {
 }
 
 /* Ventana completa: la página no se desplaza. La tarjeta ocupa el alto que queda y
-   cada lista muestra las filas que entran; la invitación va al costado */
+   cada lista muestra las filas que entran */
 .access--fit {
   display: flex;
   flex-direction: column;
@@ -280,7 +261,7 @@ onMounted(() => {
   min-height: 0;
 }
 
-/* Pestañas más juntas: entran aunque la invitación esté abierta */
+/* Pestañas más juntas en ventanas bajas */
 .access--fit .access__card :deep(.tabs__tab) {
   padding-inline: var(--space-3);
 }
@@ -289,11 +270,6 @@ onMounted(() => {
   .access--fit .access__card :deep(.tabs__tab) {
     min-height: 2.5rem;
   }
-}
-
-.access--fit .access__body.has-side {
-  grid-template-columns: minmax(0, 1fr) clamp(17rem, 24vw, 22rem);
-  align-items: stretch;
 }
 
 .access--fit .access__card {
@@ -315,11 +291,5 @@ onMounted(() => {
 .access--fit .access__panel > * {
   flex: 1;
   min-height: 0;
-}
-
-/* Si la ventana es baja, la invitación se desplaza dentro de su columna */
-.access--fit .access__side {
-  min-height: 0;
-  overflow-y: auto;
 }
 </style>

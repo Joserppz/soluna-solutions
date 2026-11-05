@@ -66,21 +66,38 @@ const canClose = computed(() =>
 )
 const canDownload = computed(() => session.can('schedules:manage'))
 
-/* Actividad elegida: se toma de la dirección, o la de hoy, o la más reciente */
-const activities = ref<ScheduleOut[]>([])
-const activityId = ref<string | null>(
-  typeof route.query.actividad === 'string' ? route.query.actividad : null,
-)
+/*
+ * La asistencia se toma por día: arriba se elige la fecha (se puede escribir o
+ * elegir en el calendario). Si ese día hay más de una actividad, se elige cuál.
+ */
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/
+/** Actividades publicadas de unos dos meses alrededor de hoy: para elegir y saltar. */
+const nearby = ref<ScheduleOut[]>([])
+const day = ref('')
+const dayActivities = ref<ScheduleOut[]>([])
+const activityId = ref<string | null>(null)
 const loadingActivities = ref(true)
 
 const activity = computed(
-  () => activities.value.find((item) => item.id === activityId.value) ?? null,
+  () =>
+    dayActivities.value.find((item) => item.id === activityId.value) ?? null,
+)
+/** El día con actividad anterior y el siguiente, para los botones ‹ y ›. */
+const previousDay = computed(
+  () =>
+    [...nearby.value].reverse().find((item) => item.date < day.value)?.date ??
+    null,
+)
+const nextDay = computed(
+  () => nearby.value.find((item) => item.date > day.value)?.date ?? null,
 )
 
 const sheet = ref<AttendanceSheet | null>(null)
 const loadingSheet = ref(false)
 const sheetError = ref<string | null>(null)
-const busy = ref<string | null>(null)
+/* Personas cuya marca se está guardando: se puede marcar a otra sin esperar */
+const saving = reactive(new Set<string>())
+const markingAll = ref(false)
 const closing = ref(false)
 
 const search = ref('')
@@ -135,49 +152,132 @@ watch(pageSize, () => {
 })
 
 const closed = computed(() => sheet.value?.closed === true)
-/* La asistencia se toma el día de la actividad */
-const isActivityDay = computed(() => activity.value?.date === today())
+/* La API toma asistencia desde el día de la actividad (no antes) hasta cerrarla */
+const dayReached = computed(
+  () => !!activity.value && activity.value.date <= today(),
+)
 const canMarkNow = computed(
-  () => canMark.value && !closed.value && !!sheet.value && isActivityDay.value,
+  () => canMark.value && !closed.value && !!sheet.value && dayReached.value,
+)
+const progress = computed(() =>
+  counts.value.total
+    ? Math.round(
+        ((counts.value.came + counts.value.notCame) / counts.value.total) * 100,
+      )
+    : 0,
 )
 
 /* Resumen mensual para la tarjeta de la derecha */
 const month = ref(monthOf(today()))
 const monthly = ref<MonthlySummary | null>(null)
 
-async function loadActivities() {
-  loadingActivities.value = true
+/** Solo publicadas: la API no toma asistencia en borradores ni canceladas. */
+function published(items: ScheduleOut[]) {
+  return items.filter((item) => item.status === 'publicada')
+}
+
+async function loadNearby() {
   try {
     const result = await api.schedules.list({
-      from: daysFromToday(-45),
-      to: daysFromToday(14),
+      from: daysFromToday(-60),
+      to: daysFromToday(60),
       limit: 100,
       offset: 0,
     })
-    // Sin borradores ni canceladas: la lista de asistencia es de lo que se hace
-    activities.value = result.items.filter(
-      (item) => item.status !== 'cancelada',
-    )
-    if (
-      !activityId.value ||
-      !activities.value.some((item) => item.id === activityId.value)
-    )
-      activityId.value = defaultActivity(activities.value)
+    nearby.value = published(result.items)
   } catch {
-    activities.value = []
-  } finally {
-    loadingActivities.value = false
+    nearby.value = []
   }
 }
 
-/** Hoy, o la siguiente, o la más reciente. */
-function defaultActivity(items: ScheduleOut[]): string | null {
-  const day = today()
-  const todayItem = items.find((item) => item.date === day)
-  if (todayItem) return todayItem.id
-  const upcoming = items.find((item) => item.date > day)
-  if (upcoming) return upcoming.id
-  return items.length ? items[items.length - 1]!.id : null
+/** Hoy, o el próximo día con actividad, o el último que hubo. */
+function defaultDay(): string {
+  const todayDay = today()
+  if (nearby.value.some((item) => item.date === todayDay)) return todayDay
+  return (
+    nearby.value.find((item) => item.date > todayDay)?.date ??
+    nearby.value[nearby.value.length - 1]?.date ??
+    todayDay
+  )
+}
+
+/** Las actividades del día elegido; queda elegida la primera (o la de la dirección). */
+async function loadDay(preferred: string | null = null) {
+  loadingActivities.value = true
+  try {
+    const known = nearby.value.filter((item) => item.date === day.value)
+    dayActivities.value = known.length
+      ? known
+      : published(
+          (
+            await api.schedules.list({
+              from: day.value,
+              to: day.value,
+              limit: 100,
+              offset: 0,
+            })
+          ).items,
+        )
+  } catch {
+    dayActivities.value = []
+  } finally {
+    loadingActivities.value = false
+  }
+  activityId.value =
+    dayActivities.value.find((item) => item.id === preferred)?.id ??
+    dayActivities.value[0]?.id ??
+    null
+}
+
+function syncQuery() {
+  const query: Record<string, string> = {}
+  if (day.value) query.dia = day.value
+  if (activityId.value && dayActivities.value.length > 1)
+    query.actividad = activityId.value
+  void router.replace({ query })
+}
+
+/** Elegir otro día: se cargan sus actividades y la lista de la primera. */
+async function pickDay(value: string) {
+  if (!ISO_DAY.test(value) || value === day.value) return
+  day.value = value
+  await loadDay()
+  syncQuery()
+  void loadSheet()
+  // El resumen de la derecha es del mes del día elegido
+  if (monthOf(value) !== month.value) {
+    month.value = monthOf(value)
+    void loadMonthly()
+  }
+}
+
+/** Elegir otra actividad del mismo día. */
+function pickActivity(value: string) {
+  activityId.value = value
+  syncQuery()
+  void loadSheet()
+}
+
+/** Abre lo que pide la dirección: ?actividad= (desde «Lo que ya pasó») o ?dia=. */
+async function start() {
+  await loadNearby()
+  const linked =
+    typeof route.query.actividad === 'string' ? route.query.actividad : null
+  let preferred: string | null = null
+  if (linked) {
+    const found =
+      nearby.value.find((item) => item.id === linked) ??
+      (await api.schedules.get(linked).catch(() => null))
+    if (found?.status === 'publicada') {
+      day.value = found.date
+      preferred = found.id
+    }
+  }
+  if (!day.value) {
+    const asked = String(route.query.dia ?? '')
+    day.value = ISO_DAY.test(asked) ? asked : defaultDay()
+  }
+  await loadDay(preferred)
 }
 
 let request = 0
@@ -215,26 +315,16 @@ async function loadMonthly() {
   }
 }
 
-/** Solo cuando la persona elige otra actividad (la carga inicial lo hace onMounted). */
-function pick(value: string | null) {
-  activityId.value = value
-  const query = { ...route.query }
-  if (value) query.actividad = value
-  else delete query.actividad
-  void router.replace({ query })
-  void loadSheet()
-}
-
 /** Marca una persona: se guarda en ese momento. */
 async function mark(entry: AttendanceEntry, status: 'vino' | 'no_vino') {
-  if (!sheet.value || !canMarkNow.value || busy.value) return
+  if (!sheet.value || !canMarkNow.value || markingAll.value) return
   const item = sheet.value.items.find(
     (row) => row.patientId === entry.patientId,
   )
-  if (!item || item.status === status) return
+  if (!item || item.status === status || saving.has(item.patientId)) return
   const previous = item.status
   item.status = status
-  busy.value = item.patientId
+  saving.add(item.patientId)
   try {
     const saved = await api.attendance.mark(activityId.value!, item.patientId, {
       status,
@@ -252,13 +342,13 @@ async function mark(entry: AttendanceEntry, status: 'vino' | 'no_vino') {
         : `No guardamos la marca de ${firstName(item.name)}. Intenta de nuevo.`,
     )
   } finally {
-    busy.value = null
+    saving.delete(item.patientId)
   }
 }
 
 async function markAll() {
-  if (!activityId.value || !canMarkNow.value) return
-  busy.value = 'todos'
+  if (!activityId.value || !canMarkNow.value || saving.size) return
+  markingAll.value = true
   try {
     sheet.value = await api.attendance.markAllPresent(activityId.value)
     toast.success('Marcamos a todas las personas como presentes.')
@@ -269,7 +359,7 @@ async function markAll() {
         : 'No pudimos marcar a todas. Intenta de nuevo.',
     )
   } finally {
-    busy.value = null
+    markingAll.value = false
   }
 }
 
@@ -372,10 +462,10 @@ async function saveNewcomer() {
   }
 }
 
-async function download() {
+async function download(format: 'csv' | 'xlsx') {
   try {
-    const blob = await api.attendance.downloadMonthly('xlsx', month.value)
-    saveBlob(blob, `resumen-mensual-asistencia-${month.value}.xlsx`)
+    const blob = await api.attendance.downloadMonthly(format, month.value)
+    saveBlob(blob, `resumen-mensual-asistencia-${month.value}.${format}`)
   } catch (failure) {
     toast.error(
       isApiError(failure)
@@ -385,17 +475,22 @@ async function download() {
   }
 }
 
-function activityLabel(item: ScheduleOut) {
-  return `${dayLabel(item.date)} · ${item.title}`
+/** Ancho de cada barra del mes: la actividad con más gente llena la barra; sin nadie, vacía. */
+function barWidth(came: number): number {
+  const top = Math.max(
+    1,
+    ...(monthly.value?.byCategory ?? []).map((r) => r.came),
+  )
+  return came ? Math.max(4, (came / top) * 100) : 0
 }
 
-const shownOptions = computed(() => activities.value)
 const headerDate = computed(() =>
   activity.value ? dayLabel(activity.value.date) : '',
 )
 
 onMounted(async () => {
-  await loadActivities()
+  await start()
+  if (day.value) month.value = monthOf(day.value)
   await loadSheet()
   void loadMonthly()
 })
@@ -408,23 +503,34 @@ onMounted(async () => {
       subtitle="Marca quién vino al encuentro. Toma menos de dos minutos."
     >
       <template #actions>
-        <label class="visually-hidden" for="actividad-asistencia"
-          >Actividad</label
-        >
-        <select
-          id="actividad-asistencia"
-          :value="activityId"
-          class="select att__pick"
-          :disabled="loadingActivities || !shownOptions.length"
-          @change="pick(($event.target as HTMLSelectElement).value || null)"
-        >
-          <option v-if="!shownOptions.length" :value="null">
-            Sin actividades para marcar
-          </option>
-          <option v-for="item in shownOptions" :key="item.id" :value="item.id">
-            {{ activityLabel(item) }}
-          </option>
-        </select>
+        <div class="when">
+          <button
+            type="button"
+            class="when__step"
+            aria-label="Día anterior con actividad"
+            :disabled="!previousDay"
+            @click="previousDay && pickDay(previousDay)"
+          >
+            ‹
+          </button>
+          <label class="visually-hidden" for="dia-asistencia">Día</label>
+          <input
+            id="dia-asistencia"
+            :value="day"
+            class="input when__day"
+            type="date"
+            @change="pickDay(($event.target as HTMLInputElement).value)"
+          />
+          <button
+            type="button"
+            class="when__step"
+            aria-label="Día siguiente con actividad"
+            :disabled="!nextDay"
+            @click="nextDay && pickDay(nextDay)"
+          >
+            ›
+          </button>
+        </div>
       </template>
     </PageHeader>
 
@@ -437,16 +543,60 @@ onMounted(async () => {
           >
         </AppAlert>
 
-        <p v-if="!activity && !loadingActivities && !sheetError" class="empty">
-          Todavía no hay actividades para marcar. Cuando haya una publicada o en
-          borrador de estas fechas, aparecerá aquí.
-        </p>
+        <div
+          v-if="!activity && !loadingActivities && !sheetError"
+          class="empty"
+        >
+          <p v-if="day">
+            No hay actividades publicadas el {{ dayLabel(day).toLowerCase() }}.
+          </p>
+          <div v-if="previousDay || nextDay" class="empty__jumps">
+            <AppButton
+              v-if="previousDay"
+              variant="secondary"
+              size="sm"
+              @click="pickDay(previousDay)"
+            >
+              ‹ {{ dayLabel(previousDay) }}
+            </AppButton>
+            <AppButton
+              v-if="nextDay"
+              variant="secondary"
+              size="sm"
+              @click="pickDay(nextDay)"
+            >
+              {{ dayLabel(nextDay) }} ›
+            </AppButton>
+          </div>
+        </div>
 
         <template v-else-if="activity">
           <header class="banner">
             <div class="banner__text">
               <p class="banner__day">{{ headerDate }}</p>
-              <h2 class="banner__title">{{ activity.title }}</h2>
+              <!-- Si ese día hay más de una actividad, el título deja elegir cuál -->
+              <template v-if="dayActivities.length > 1">
+                <label class="visually-hidden" for="actividad-asistencia"
+                  >Actividad del día</label
+                >
+                <select
+                  id="actividad-asistencia"
+                  :value="activityId"
+                  class="banner__title banner__pick"
+                  @change="
+                    pickActivity(($event.target as HTMLSelectElement).value)
+                  "
+                >
+                  <option
+                    v-for="item in dayActivities"
+                    :key="item.id"
+                    :value="item.id"
+                  >
+                    {{ item.title }}
+                  </option>
+                </select>
+              </template>
+              <h2 v-else class="banner__title">{{ activity.title }}</h2>
               <p class="banner__meta">
                 {{ timeRange(activity.startTime, activity.endTime) }} ·
                 {{ activity.location }}
@@ -459,6 +609,16 @@ onMounted(async () => {
               <strong>{{ counts.came + counts.notCame }}</strong>
               <span>de {{ counts.total }} marcados</span>
             </p>
+            <span
+              v-if="sheet"
+              class="banner__progress"
+              role="progressbar"
+              aria-label="Personas marcadas"
+              :aria-valuenow="progress"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              ><span :style="{ width: `${progress}%` }"
+            /></span>
           </header>
 
           <SkeletonBlock
@@ -487,8 +647,8 @@ onMounted(async () => {
                 v-if="canMarkNow"
                 variant="secondary"
                 size="md"
-                :disabled="!counts.unmarked || busy !== null"
-                :loading="busy === 'todos'"
+                :disabled="!counts.unmarked || saving.size > 0"
+                :loading="markingAll"
                 loading-label="Marcando a todas…"
                 @click="markAll"
               >
@@ -497,8 +657,14 @@ onMounted(async () => {
             </div>
 
             <p class="tally" aria-live="polite">
-              <span>{{ counts.came }} vinieron</span>
-              <span>{{ counts.notCame }} no vinieron</span>
+              <span
+                >{{ counts.came }}
+                {{ counts.came === 1 ? 'vino' : 'vinieron' }}</span
+              >
+              <span
+                >{{ counts.notCame }} no
+                {{ counts.notCame === 1 ? 'vino' : 'vinieron' }}</span
+              >
               <span>{{ counts.unmarked }} sin marcar</span>
             </p>
 
@@ -508,7 +674,7 @@ onMounted(async () => {
                   v-for="item in pageItems"
                   :key="item.patientId"
                   class="person"
-                  :class="{ 'is-busy': busy === item.patientId }"
+                  :class="{ 'is-busy': saving.has(item.patientId) }"
                 >
                   <InitialsAvatar :name="item.name" size="md" />
                   <div class="person__text">
@@ -532,7 +698,9 @@ onMounted(async () => {
                       class="choice__btn"
                       :class="{ 'is-on': item.status === 'vino' }"
                       :aria-pressed="item.status === 'vino'"
-                      :disabled="!canMarkNow || busy === item.patientId"
+                      :disabled="
+                        !canMarkNow || markingAll || saving.has(item.patientId)
+                      "
                       @click="mark(item, 'vino')"
                     >
                       Vino
@@ -542,7 +710,9 @@ onMounted(async () => {
                       class="choice__btn choice__btn--no"
                       :class="{ 'is-on': item.status === 'no_vino' }"
                       :aria-pressed="item.status === 'no_vino'"
-                      :disabled="!canMarkNow || busy === item.patientId"
+                      :disabled="
+                        !canMarkNow || markingAll || saving.has(item.patientId)
+                      "
                       @click="mark(item, 'no_vino')"
                     >
                       No vino
@@ -569,13 +739,10 @@ onMounted(async () => {
             />
 
             <footer class="foot">
-              <p
-                v-if="!closed && !isActivityDay && activity"
-                class="foot__note"
-              >
+              <p v-if="!closed && !dayReached && activity" class="foot__note">
                 Se marca el día de la actividad: {{ dayLabel(activity.date) }}.
               </p>
-              <p v-else-if="!closed" class="foot__note">
+              <p v-else-if="!closed" class="foot__note foot__note--hint">
                 Se guarda solo al marcar.
               </p>
               <p v-else class="foot__note">
@@ -591,7 +758,9 @@ onMounted(async () => {
                   Reabrir
                 </button>
                 <AppButton
-                  v-if="!closed && canClose"
+                  v-if="!closed && canClose && dayReached"
+                  class="foot__close"
+                  :disabled="saving.size > 0 || markingAll"
                   :loading="closing"
                   loading-label="Cerrando la asistencia…"
                   @click="closeDay"
@@ -623,14 +792,14 @@ onMounted(async () => {
         <section v-if="canDownload" class="card" aria-labelledby="mes-titulo">
           <h2 id="mes-titulo" class="card__title">{{ monthTitle(month) }}</h2>
           <p class="card__text">Personas por actividad</p>
-          <ul v-if="monthly?.byCategory?.length" class="bars">
+          <ul v-if="monthly?.totalCame" class="bars">
             <li v-for="row in monthly.byCategory" :key="row.category">
               <span class="bars__label">{{ row.label }}</span>
               <span class="bars__track" aria-hidden="true">
                 <span
                   class="bars__bar"
                   :style="{
-                    width: `${Math.max(4, (row.came / Math.max(1, ...monthly.byCategory.map((r) => r.came))) * 100)}%`,
+                    width: `${barWidth(row.came)}%`,
                   }"
                 />
               </span>
@@ -638,9 +807,26 @@ onMounted(async () => {
             </li>
           </ul>
           <p v-else class="card__text">Todavía no hay asistencias este mes.</p>
-          <button type="button" class="link" @click="download">
-            Descargar resumen mensual →
-          </button>
+          <p class="downloads">
+            <span>Descargar resumen mensual:</span>
+            <button
+              type="button"
+              class="link"
+              aria-label="Descargar resumen mensual en CSV"
+              @click="download('csv')"
+            >
+              CSV
+            </button>
+            <span aria-hidden="true">·</span>
+            <button
+              type="button"
+              class="link"
+              aria-label="Descargar resumen mensual en Excel"
+              @click="download('xlsx')"
+            >
+              Excel
+            </button>
+          </p>
         </section>
 
         <p class="volunteer-note">
@@ -753,9 +939,67 @@ onMounted(async () => {
   margin-bottom: 0;
 }
 
-.att__pick {
-  min-width: 18rem;
-  max-width: 26rem;
+/* Día de la asistencia: se escribe o se elige; ‹ y › saltan al día con actividad */
+.when {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.when__day {
+  width: 11rem;
+}
+
+.when__step {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--text-lg);
+  cursor: pointer;
+}
+
+.when__step:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.empty {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--space-4);
+  min-height: 12rem;
+  text-align: center;
+}
+
+.empty p {
+  font-size: var(--text-lg);
+}
+
+.empty__jumps {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.att--fit .empty {
+  flex: 1;
+}
+
+.downloads {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
 }
 
 .att__body {
@@ -835,6 +1079,33 @@ onMounted(async () => {
   line-height: 1.15;
 }
 
+/* El título como lista: mismo tamaño que el título, con una flecha clara */
+.banner__text {
+  min-width: 0;
+}
+
+.banner__pick {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 1.75rem 0 0;
+  border: 0;
+  border-bottom: 1px dashed rgb(255 255 255 / 0.5);
+  background: transparent
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23fff' stroke-width='2' fill='none'/%3E%3C/svg%3E")
+    no-repeat right 0.25rem center;
+  appearance: none;
+  cursor: pointer;
+}
+
+.banner__pick option {
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: var(--text-md);
+}
+
 .banner__meta {
   color: rgb(255 255 255 / 0.8);
   font-size: var(--text-sm);
@@ -855,6 +1126,11 @@ onMounted(async () => {
 .banner__count span {
   color: rgb(255 255 255 / 0.8);
   font-size: var(--text-sm);
+}
+
+/* Barra de avance: solo en el celular (diseño pág. 3) */
+.banner__progress {
+  display: none;
 }
 
 .toolbar {
@@ -965,13 +1241,15 @@ onMounted(async () => {
 }
 
 .choice__btn.is-on {
-  background: var(--aspar-verde);
-  color: #fff;
+  background: var(--verde-100);
+  color: var(--verde-900);
+  box-shadow: inset 0 0 0 2px var(--verde-700);
 }
 
 .choice__btn--no.is-on {
   background: var(--rosa-200);
   color: var(--guindo-900);
+  box-shadow: inset 0 0 0 2px var(--guindo-700);
 }
 
 .choice__btn:disabled {
@@ -1058,24 +1336,57 @@ onMounted(async () => {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .att__pick {
-    min-width: 0;
-    width: 100%;
+  .when {
+    justify-content: flex-start;
+  }
+
+  .when__day {
+    flex: 1;
+    width: auto;
   }
 }
 
+/* Celular (diseño pág. 3): nombre y botones en la misma fila, avance arriba y el
+   botón de cerrar siempre a mano al pie de la pantalla */
 @media (max-width: 520px) {
   .att__main {
     padding: var(--space-4);
   }
 
   .banner {
-    flex-direction: column;
-    align-items: flex-start;
+    display: grid;
+    gap: var(--space-2);
+    padding: var(--space-4);
+  }
+
+  .banner__title {
+    font-size: var(--text-lg);
   }
 
   .banner__count {
-    justify-items: start;
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+  }
+
+  .banner__count strong {
+    font-size: var(--text-2xl);
+  }
+
+  .banner__progress {
+    display: block;
+    height: 0.4rem;
+    border-radius: var(--radius-pill);
+    background: rgb(255 255 255 / 0.2);
+    overflow: hidden;
+  }
+
+  .banner__progress > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--rosa-200);
+    transition: width var(--duration-base) var(--ease-out);
   }
 
   .toolbar {
@@ -1083,12 +1394,46 @@ onMounted(async () => {
   }
 
   .person {
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-2);
+  }
+
+  .person :deep(.avatar) {
+    display: none;
   }
 
   .choice {
-    grid-column: 1 / -1;
+    width: 8.5rem;
+  }
+
+  .choice__btn {
+    padding: 0 var(--space-2);
+    font-size: var(--text-sm);
+  }
+
+  .foot {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    margin: 0 calc(-1 * var(--space-4)) calc(-1 * var(--space-4));
+    padding: var(--space-3) var(--space-4);
+    border-top: 1px solid var(--color-border);
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    background: var(--color-surface);
+  }
+
+  .foot__actions,
+  .foot__close {
     width: 100%;
+  }
+
+  /* Al pie solo queda el botón; el aviso de cerrada o del día sí se muestra */
+  .foot__note--hint {
+    display: none;
+  }
+
+  .foot__actions {
+    justify-content: center;
   }
 }
 
@@ -1133,6 +1478,7 @@ onMounted(async () => {
 }
 
 .att--fit .att__side {
+  gap: clamp(var(--space-2), 1.6vh, var(--space-4));
   min-height: 0;
   overflow-y: auto;
   align-content: start;
