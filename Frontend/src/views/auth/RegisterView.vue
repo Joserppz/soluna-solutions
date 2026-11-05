@@ -258,6 +258,7 @@ async function submit() {
 
 .register__captcha {
   display: grid;
+  justify-items: center;
   gap: var(--space-2);
 }
 

@@ -89,6 +89,8 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .turnstile {
+  display: grid;
+  justify-items: center;
   min-height: 4.1rem;
 }
 </style>

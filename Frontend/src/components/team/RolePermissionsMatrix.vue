@@ -458,7 +458,7 @@ function cellLabel(roleName: string, item: PermissionInfo): string {
 
 /* Laptops (1366×768): filas densas y cada permiso en una línea, para que la tabla
    entre completa sin su propia barra */
-@media (min-width: 1024px) and (max-height: 860px) {
+@media (min-width: 1024px) and (max-height: 940px) {
   .matrix__table {
     font-size: 0.8125rem;
   }
@@ -469,7 +469,7 @@ function cellLabel(roleName: string, item: PermissionInfo): string {
 
   .matrix__table tbody th,
   .matrix__table tbody td {
-    height: clamp(1.5rem, 3.2vh, 2.4rem);
+    height: clamp(1.25rem, 3vh, 2.4rem);
   }
 
   .matrix__group {

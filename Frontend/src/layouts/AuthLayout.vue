@@ -250,4 +250,49 @@ withDefaults(
     margin: 0 auto;
   }
 }
+
+/* Tabletas y ventanas angostas pero altas (600 px de ancho o más, 640 px de alto o
+   más): la pantalla también entra completa, sin barra de desplazamiento de la página.
+   Solo se achica el encabezado de marca; el formulario se reparte el alto que queda.
+   Celulares y ventanas más bajas siguen desplazándose con normalidad. */
+@media (max-width: 899.98px) and (min-width: 600px) and (min-height: 640px) {
+  .auth {
+    --form-gap: clamp(0.45rem, 1.4vh, 1rem);
+    --field-gap: clamp(0.25rem, 0.6vh, 0.4rem);
+    --control-height: clamp(2.25rem, 4.6vh, 2.75rem);
+    --button-height-lg: clamp(2.4rem, 5vh, 2.9rem);
+    --auth-title-size: clamp(1.6rem, 4.2vh, 2.25rem);
+    --auth-lead-size: clamp(0.9rem, 2vh, 1rem);
+    --auth-header-gap: clamp(0.2rem, 0.8vh, 0.5rem);
+
+    grid-template-rows: auto minmax(0, 1fr);
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .auth__panel {
+    gap: 0;
+    padding: clamp(0.75rem, 2.4vh, 1.5rem) var(--space-6);
+  }
+
+  /* Solo queda la marca: el título ya lo dice cada pantalla */
+  .auth__message {
+    display: none;
+  }
+
+  .auth__main {
+    min-height: 0;
+    overflow-y: auto;
+    padding: clamp(0.4rem, 1.5vh, 1.25rem) var(--space-6);
+  }
+
+  .auth__card {
+    gap: clamp(0.4rem, 1.3vh, 0.9rem);
+    margin: auto;
+  }
+}
 </style>

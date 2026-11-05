@@ -623,7 +623,7 @@ onBeforeUnmount(() => topbarResize?.disconnect())
 }
 
 /* Ventanas bajas (1366×768): el menú entra completo y no tiene su propia barra */
-@media (min-width: 1024px) and (max-height: 860px) {
+@media (min-width: 1024px) and (max-height: 940px) {
   .sidebar {
     gap: var(--space-3);
     padding-block: var(--space-4);

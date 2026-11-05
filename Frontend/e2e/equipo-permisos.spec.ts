@@ -255,6 +255,8 @@ test('el Voluntariado no entra a Equipo y permisos', async ({ browser }) => {
 
 for (const size of [
   { width: 1366, height: 768 },
+  // La ventana de la captura del equipo (1567×907): el panel de invitar entra sin barra
+  { width: 1567, height: 907 },
   { width: 1920, height: 1080 },
 ]) {
   test(`a ${size.width}×${size.height} las tres pestañas entran completas`, async ({

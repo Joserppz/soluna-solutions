@@ -20,8 +20,10 @@ const props = withDefaults(
     roles: RoleOut[]
     /** Se puede cerrar (en pantallas donde no queda fijo al costado). */
     closable?: boolean
+    /** Ventana completa: cada rol en una sola línea, para que nada se desplace. */
+    compact?: boolean
   }>(),
-  { closable: false },
+  { closable: false, compact: false },
 )
 const emit = defineEmits<{ created: [user: UserCreated]; close: [] }>()
 
@@ -101,6 +103,7 @@ defineExpose({ focus })
 <template>
   <section
     class="invite surface-card"
+    :class="{ 'invite--compact': compact }"
     aria-labelledby="invitar-titulo"
     data-testid="panel-invitar"
   >
@@ -338,31 +341,28 @@ defineExpose({ focus })
   font-size: var(--text-sm);
 }
 
-/* Laptops: cada rol en dos líneas cortas para que la invitación entre completa */
-@media (min-width: 1024px) and (max-height: 860px) {
-  .invite {
-    gap: var(--space-3);
-    padding-block: var(--space-4);
-  }
+.invite--compact {
+  gap: clamp(0.5rem, 1.6vh, 1rem);
+  padding: clamp(0.75rem, 2vh, 1.5rem);
+}
 
-  .invite__roles {
-    gap: 0.35rem;
-  }
+.invite--compact .invite__roles {
+  gap: 0.3rem;
+}
 
-  .invite__roles legend {
-    margin-bottom: var(--space-1);
-  }
+.invite--compact .invite__roles legend {
+  margin-bottom: 0.2rem;
+}
 
-  .role-choice {
-    padding-block: 0.3rem;
-  }
+.invite--compact .role-choice {
+  padding: 0.3rem 0.6rem;
+}
 
-  .role-choice__text small {
-    overflow: hidden;
-    font-size: var(--text-xs);
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+.invite--compact .role-choice__text small {
+  overflow: hidden;
+  font-size: var(--text-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .invite__summary {

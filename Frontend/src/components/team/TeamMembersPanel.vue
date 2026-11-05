@@ -226,6 +226,11 @@ defineExpose({ reload: load })
       <AppButton variant="link" size="sm" @click="load">Reintentar</AppButton>
     </AppAlert>
 
+    <p class="members__note">
+      Siempre queda al menos una persona con rol de Administración. Las cuentas
+      se desactivan, no se borran.
+    </p>
+
     <div
       ref="tableArea"
       class="members__table"
@@ -313,10 +318,6 @@ defineExpose({ reload: load })
     </div>
 
     <footer class="members__footer">
-      <p class="members__note">
-        Siempre queda al menos una persona con rol de Administración. Las
-        cuentas se desactivan, no se borran.
-      </p>
       <AppPagination
         v-if="list"
         :total="list.total"
@@ -442,6 +443,12 @@ defineExpose({ reload: load })
   overflow: hidden;
 }
 
+/* Las filas reparten el alto sobrante: no queda un hueco antes de la paginación */
+.members--fit .members__table :deep(.table-wrap),
+.members--fit .members__table :deep(.table) {
+  height: 100%;
+}
+
 .members--fit .members__table :deep(.table) {
   table-layout: fixed;
 }
@@ -455,19 +462,19 @@ defineExpose({ reload: load })
 }
 
 .members--fit .members__table :deep(th:nth-child(1)) {
-  width: 36%;
+  width: 34%;
 }
 .members--fit .members__table :deep(th:nth-child(2)) {
-  width: 20%;
+  width: 17%;
 }
 .members--fit .members__table :deep(th:nth-child(3)) {
   width: 16%;
 }
 .members--fit .members__table :deep(th:nth-child(4)) {
-  width: 15%;
+  width: 17%;
 }
 .members--fit .members__table :deep(th:nth-child(5)) {
-  width: 13%;
+  width: 16%;
 }
 
 .members--fit .person__text strong,
@@ -486,27 +493,16 @@ defineExpose({ reload: load })
 /* Alto fijo: al llegar los datos (y la paginación) la tabla no cambia de alto */
 .members--fit .members__footer {
   flex: none;
-  flex-wrap: nowrap;
-  height: 2.75rem;
+  height: 2.5rem;
 }
 
 .members--fit .members__note {
-  display: -webkit-box;
+  flex: none;
+  display: block;
   overflow: hidden;
   font-size: var(--text-xs);
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-
-/* Con la invitación abierta en una laptop, la nota queda en la ayuda de «Gestionar» */
-@container (max-width: 44rem) {
-  .members--fit .members__note {
-    display: none;
-  }
-
-  .members--fit .members__footer {
-    justify-content: flex-end;
-  }
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .members--fit .members__table :deep(td:last-child) {

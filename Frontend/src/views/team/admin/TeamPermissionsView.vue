@@ -195,6 +195,7 @@ onMounted(() => {
           ref="invite"
           :roles="roles"
           :closable="!wide"
+          :compact="fit"
           @created="onChanged"
           @close="inviteOpen = false"
         />
