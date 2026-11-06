@@ -187,7 +187,8 @@ def get_donation(donation_id: uuid.UUID, db: DbSession, current: CurrentUser = D
 def register_manual(
     payload: DonationManualIn, db: DbSession, current: CurrentUser = Depends(managers)
 ):
-    """«Registrar aporte recibido»: efectivo (confirmado) o en especie (recibido + inventario)."""
+    """«Registrar aporte recibido»: efectivo (confirmado), QR bancario (pendiente hasta
+    confirmarlo con el extracto) o en especie (recibido + inventario)."""
     return to_donation_out(donation_service.register_manual(db, payload, current))
 
 

@@ -360,7 +360,7 @@ export function createEndpoints(http: HttpClient) {
         }),
       get: (donationId: string) =>
         http.get<DonationOut>(`/donations/${id(donationId)}`),
-      /** Aporte recibido en la sede: efectivo o en especie. */
+      /** Aporte recibido en la sede: efectivo, QR bancario o en especie. */
       registerReceived: (body: DonationManualIn) =>
         http.post<DonationOut>('/donations', { body }),
       confirm: (donationId: string, body: DonationConfirm) =>

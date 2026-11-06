@@ -1341,7 +1341,7 @@
         "type": "object"
       },
       "DonationManualIn": {
-        "description": "«Registrar un aporte recibido» en la sede (diseño pág. 16).",
+        "description": "«Registrar un aporte recibido» en la sede (diseño pág. 16).\n\nEfectivo entra confirmado; QR bancario (la persona transfiere en la sede) entra\npendiente y se confirma con el extracto, como un aviso del sitio; en especie entra\nrecibido.",
         "properties": {
           "addToInventory": {
             "default": true,
@@ -1380,6 +1380,7 @@
           "channel": {
             "enum": [
               "efectivo",
+              "qr_bancario",
               "especie"
             ],
             "title": "Channel",
@@ -7858,7 +7859,7 @@
         ]
       },
       "post": {
-        "description": "«Registrar aporte recibido»: efectivo (confirmado) o en especie (recibido + inventario).",
+        "description": "«Registrar aporte recibido»: efectivo (confirmado), QR bancario (pendiente hasta\nconfirmarlo con el extracto) o en especie (recibido + inventario).",
         "operationId": "register_manual_api_v1_donations_post",
         "requestBody": {
           "content": {

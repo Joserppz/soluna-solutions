@@ -106,14 +106,19 @@ class DonationCancel(CamelModel):
 
 
 class DonationManualIn(CamelModel):
-    """«Registrar un aporte recibido» en la sede (diseño pág. 16)."""
+    """«Registrar un aporte recibido» en la sede (diseño pág. 16).
 
-    channel: Literal["efectivo", "especie"]
+    Efectivo entra confirmado; QR bancario (la persona transfiere en la sede) entra
+    pendiente y se confirma con el extracto, como un aviso del sitio; en especie entra
+    recibido.
+    """
+
+    channel: Literal["efectivo", "qr_bancario", "especie"]
     donor_name: str | None = Field(default=None, max_length=120)
     donor_contact: str | None = Field(default=None, max_length=120)
     date: dt.date | None = None
     purpose: str = Field(default=DEFAULT_PURPOSE, max_length=120)
-    # Efectivo
+    # Efectivo o QR bancario: el monto; el recibo de la sede o el comprobante del banco
     amount_bs: Amount | None = Field(default=None, gt=0, le=100000, max_digits=8, decimal_places=2)
     receipt_number: str | None = Field(default=None, max_length=60)
     # En especie

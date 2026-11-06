@@ -2,8 +2,10 @@
 
 - QR bancario: la persona dona desde su banco y avisa en el sitio (nace «pendiente»).
   El equipo lo confirma con la referencia del extracto o lo anula con un motivo.
-- Efectivo en la sede: entra «confirmado». En especie: entra «recibido» y, si se pide,
-  crea el material en el inventario con origen «donado».
+- Efectivo en la sede: entra «confirmado». QR bancario en la sede (la persona transfiere
+  ahí mismo): entra «pendiente» con su comprobante y se confirma con el extracto, igual
+  que un aviso del sitio. En especie: entra «recibido» y, si se pide, crea el material en
+  el inventario con origen «donado».
 - La meta pública suma solo lo confirmado (más su ajuste manual). Nada se borra.
 """
 
@@ -181,7 +183,7 @@ def cancel(db: Session, donation_id: uuid.UUID, reason: str, current: CurrentUse
 
 
 def register_manual(db: Session, data: DonationManualIn, current: CurrentUser) -> Donation:
-    """Aporte recibido en la sede: efectivo (confirmado) o en especie (recibido)."""
+    """Aporte recibido en la sede: efectivo (confirmado), QR (pendiente) o especie (recibido)."""
     received_on = data.date or clock.today()
     if received_on > clock.today():
         raise ValidationError("La fecha de recepción no puede ser futura.")
@@ -197,14 +199,24 @@ def register_manual(db: Session, data: DonationManualIn, current: CurrentUser) -
         reviewed_at=clock.now(),
         date=received_on,
     )
-    if data.channel == "efectivo":
+    if data.channel in ("efectivo", "qr_bancario"):
         if data.amount_bs is None:
-            raise ValidationError("Indica el monto recibido en efectivo.")
+            raise ValidationError(
+                "Indica el monto recibido en efectivo."
+                if data.channel == "efectivo"
+                else "Indica el monto de la transferencia."
+            )
         goal = donation_repository.visible_goal(db)
         donation.amount_bs = data.amount_bs
         donation.declared_reference = _clean(data.receipt_number)
-        donation.status = "confirmado"
         donation.goal_id = goal.id if goal else None
+        if data.channel == "efectivo":
+            donation.status = "confirmado"
+        else:
+            # Se confirma con el extracto del banco, como cualquier aviso por QR
+            donation.status = "pendiente"
+            donation.reviewed_by = None
+            donation.reviewed_at = None
     else:
         description = (data.in_kind_description or "").strip()
         if len(description) < 3:

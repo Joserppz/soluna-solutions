@@ -396,7 +396,8 @@ export interface paths {
     put?: never
     /**
      * Register Manual
-     * @description «Registrar aporte recibido»: efectivo (confirmado) o en especie (recibido + inventario).
+     * @description «Registrar aporte recibido»: efectivo (confirmado), QR bancario (pendiente hasta
+     *     confirmarlo con el extracto) o en especie (recibido + inventario).
      */
     post: operations['register_manual_api_v1_donations_post']
     delete?: never
@@ -2267,6 +2268,10 @@ export interface components {
     /**
      * DonationManualIn
      * @description «Registrar un aporte recibido» en la sede (diseño pág. 16).
+     *
+     *     Efectivo entra confirmado; QR bancario (la persona transfiere en la sede) entra
+     *     pendiente y se confirma con el extracto, como un aviso del sitio; en especie entra
+     *     recibido.
      */
     DonationManualIn: {
       /**
@@ -2287,7 +2292,7 @@ export interface components {
        * Channel
        * @enum {string}
        */
-      channel: 'efectivo' | 'especie'
+      channel: 'efectivo' | 'qr_bancario' | 'especie'
       /**
        * Condition
        * @default bueno

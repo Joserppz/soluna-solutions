@@ -15,6 +15,7 @@ import {
   TEAM_SECTIONS,
   type ReviewCounter,
 } from '../router/sections'
+import { COUNTERS_EVENT } from '../utils/counters'
 import { initials, longDate } from '../utils/format'
 
 const { api, session } = useApi()
@@ -109,8 +110,12 @@ function measureTopbar() {
   topbarHeight.value = topbar.value?.offsetHeight ?? 0
 }
 
+/* Una pantalla avisa cuando cambió un pendiente (por ejemplo, al confirmar un aporte) */
+const reloadCounters = () => void loadCounters()
+
 onMounted(() => {
   void loadCounters()
+  window.addEventListener(COUNTERS_EVENT, reloadCounters)
   measureTopbar()
   if (typeof ResizeObserver !== 'undefined' && topbar.value) {
     topbarResize = new ResizeObserver(measureTopbar)
@@ -118,7 +123,10 @@ onMounted(() => {
   }
 })
 
-onBeforeUnmount(() => topbarResize?.disconnect())
+onBeforeUnmount(() => {
+  topbarResize?.disconnect()
+  window.removeEventListener(COUNTERS_EVENT, reloadCounters)
+})
 </script>
 
 <template>

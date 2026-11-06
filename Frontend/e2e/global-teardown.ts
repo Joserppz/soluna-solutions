@@ -1,10 +1,11 @@
 /**
- * Al terminar, borra lo que crearon los recorridos de operación: las actividades y
- * los materiales «… de prueba 123456». Así no quedan mezclados con los datos de
- * demostración (la agenda, la asistencia y el inventario se ven como en uso real).
+ * Al terminar, borra lo que crearon los recorridos: las actividades, los materiales y
+ * los aportes «… de prueba 123456». Así no quedan mezclados con los datos de
+ * demostración (la agenda, la asistencia, el inventario y las donaciones se ven como en
+ * uso real).
  *
- * La API no permite borrar una actividad publicada ni una con asistencia (se cancela
- * con aviso), así que se borra directo en la base de Docker. Si Docker no está a mano,
+ * La API no borra una actividad publicada ni un aporte (se cancelan o anulan con un
+ * motivo), así que se borra directo en la base de Docker. Si Docker no está a mano,
  * solo avisa. Con E2E_LIMPIAR=0 no borra nada.
  */
 import { spawnSync } from 'node:child_process'
@@ -18,6 +19,8 @@ create temp table e2e_schedules on commit drop as
   select id from schedules where title ~ '${TEST_TITLE}';
 create temp table e2e_items on commit drop as
   select id from inventory_items where name ~ '${TEST_TITLE}';
+delete from donations
+  where donor_name ~ '${TEST_TITLE}' or in_kind_description ~ '${TEST_TITLE}';
 delete from attendance where schedule_id in (select id from e2e_schedules);
 update inquiries set schedule_id = null where schedule_id in (select id from e2e_schedules);
 update media_albums set schedule_id = null where schedule_id in (select id from e2e_schedules);

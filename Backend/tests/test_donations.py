@@ -241,6 +241,44 @@ class TestAporteEnLaSede:
         # El valor estimado no suma a la meta
         assert goal(client)["raisedBs"] == 18500
 
+    def test_qr_en_la_sede_queda_pendiente_y_se_confirma_con_el_extracto(
+        self, client, auth_headers
+    ):
+        headers = auth_headers("reception")
+        response = client.post(
+            URL,
+            json={
+                "channel": "qr_bancario",
+                "donorName": "Jorge Arce",
+                "amountBs": 150,
+                "receiptNumber": "48213999",
+            },
+            headers=headers,
+        )
+
+        assert response.status_code == 201, response.text
+        body = response.json()
+        assert (body["status"], body["source"], body["channelLabel"]) == (
+            "pendiente",
+            "sede",
+            "QR bancario",
+        )
+        assert body["declaredReference"] == "48213999"
+        assert body["reviewedAt"] is None
+        # No suma a la meta hasta confirmarlo con el extracto
+        assert goal(client)["raisedBs"] == 18500
+        # El seguimiento público es solo para los avisos del sitio
+        assert client.get(f"{PUBLIC}/notice/{body['id']}").status_code == 404
+
+        confirmed = client.post(
+            f"{URL}/{body['id']}/confirm",
+            json={"bankReference": "48213999", "creditedOn": str(clock.today())},
+            headers=auth_headers("coordination"),
+        )
+        assert confirmed.status_code == 200, confirmed.text
+        assert confirmed.json()["status"] == "confirmado"
+        assert goal(client)["raisedBs"] == 18650
+
     def test_especie_sin_agregar_al_inventario(self, client, auth_headers):
         body = client.post(
             URL,
@@ -255,7 +293,8 @@ class TestAporteEnLaSede:
         [
             {"channel": "efectivo"},
             {"channel": "especie", "inKindDescription": "x"},
-            {"channel": "qr_bancario", "amountBs": 10},
+            {"channel": "qr_bancario"},
+            {"channel": "libelula", "amountBs": 10},
             {"channel": "efectivo", "amountBs": 10, "date": "2999-01-01"},
         ],
     )
