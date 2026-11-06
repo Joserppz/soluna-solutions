@@ -157,6 +157,8 @@ Frontend/
 │   │   ├── ui/                  # Botón, modal, aviso, insignia, tabla, esqueleto, campos, toasts
 │   │   ├── auth/                # Turnstile, Google, reglas de contraseña, formulario de correo
 │   │   ├── patients/            # Alta de afiliados, campos de contacto y pestañas de la ficha (record/)
+│   │   ├── donations/           # Registrar un aporte, panel «Confirmar aporte» y meta del sitio
+│   │   ├── media/               # Álbum nuevo, panel del álbum y personas en la foto
 │   │   └── session/             # Aviso de inactividad
 │   ├── composables/             # useApi, useToast, useIdleSession, usePageCrumb, useFitLayout, useFitRows
 │   ├── layouts/                 # TeamLayout (barra lateral), AuthLayout (acceso), PublicLayout
@@ -164,7 +166,7 @@ Frontend/
 │   ├── utils/                   # Fechas en hora de Bolivia, validaciones, afiliados, equipo, registro, paginación
 │   ├── views/
 │   │   ├── auth/                # Ingreso, registro, correo, contraseñas, cuenta pendiente
-│   │   ├── team/                # Resumen, afiliados (patients/), equipo y registro (admin/), operación de la sede (ops/) y secciones en preparación
+│   │   ├── team/                # Resumen, afiliados (patients/), equipo y registro (admin/), operación de la sede (ops/), donaciones (donations/), galería (media/), contenido (content/) y secciones en preparación
 │   │   └── *.vue                # Pantallas antiguas (modo demo), sin ruta: se reemplazan bloque a bloque
 │   └── services/, types/        # Capa antigua del modo demo; se elimina en F6
 └── src/**/__test__/             # Pruebas de Vitest junto a cada parte
@@ -172,7 +174,7 @@ Frontend/
 
 **Sesión:** la cookie HttpOnly y el token CSRF los maneja `src/api`. `useIdleSession` avisa a los 13 minutos sin uso («¿Sigues ahí?»), renueva la sesión mientras la persona trabaja y la cierra a los 15. La actividad se comparte entre pestañas.
 
-**Secciones en preparación:** las pantallas que aún no se conectan a la API muestran «Estamos preparando esta sección» en lugar de datos de ejemplo. Cada bloque las reemplaza por la vista real; F2 conectó Afiliados, F3 Equipo y permisos y Registro de actividad, y F4 Actividades, Asistencia e Inventario.
+**Secciones en preparación:** las pantallas que aún no se conectan a la API muestran «Estamos preparando esta sección» en lugar de datos de ejemplo. Cada bloque las reemplaza por la vista real; F2 conectó Afiliados, F3 Equipo y permisos y Registro de actividad, F4 Actividades, Asistencia e Inventario, y F5a Donaciones, Galería y Contenido.
 
 **Ventana completa:** en escritorio y laptops (`useFitLayout()`: 1024 px de ancho y 560 px de alto o más), la página del equipo no se desplaza. Cada vista es una columna que ocupa el alto disponible: el encabezado arriba y el contenido debajo (`flex: 1; min-height: 0`). Las listas muestran tantas filas como entran (`rowsThatFit()`, o `useFitRows()` para una tabla); el lugar de la paginación queda reservado desde el inicio para que la lista se pida una sola vez. Si algo igual no entra, solo se desplaza esa zona. Tamaños fluidos con `clamp(…vh…)`. En el celular la página se desplaza: el encabezado va dentro de `StickyHeader` (con `:disabled="fit"` en escritorio), que queda fijo al bajar y avisa con `stuck` para achicarlo; `DataTable` con `sticky-head` deja los títulos de las columnas debajo y pasa a tarjetas según su propio ancho (`stack-below`).
 
@@ -188,3 +190,9 @@ Frontend/
 - **Inventario:** contadores, aviso de dañados y filtros en la dirección; `?material=…` abre ese material aunque esté en otra página. «+ Añadir material» se abre en una ventana. El panel de cada material tiene dos pestañas, Datos e Historial; el historial se pagina y el formulario de movimiento queda a la vista. Cambiar la cantidad pide el motivo (genera un ajuste). Un préstamo pide a quién se presta (`counterpart`).
 - **Pruebas E2E:** las actividades y materiales que crean se llaman «… de prueba 123456» y se borran al terminar (`e2e/global-teardown.ts`; `E2E_LIMPIAR=0` lo evita).
 - Las fechas que se envían a la API son de La Paz (`todayIso()`), no del día en UTC.
+
+**Donaciones, galería y contenido (F5a):** `components/donations/`, `components/media/` y `views/team/{donations,media,content}/`.
+- **Donaciones:** tres canales (QR bancario, Efectivo en la sede, En especie; sin Libélula). Mes, estado, canal, búsqueda, página y aporte quedan en la dirección (`?mes=2026-11&estado=pendiente&aporte=…`). Desde 1200 px el aporte se abre en un panel al lado de la lista; más angosto, en una ventana. «Confirmar aporte» pide la referencia del extracto y la fecha; «anular con motivo» abre otra ventana. «+ Registrar aporte recibido» registra efectivo (confirmado), QR mostrado en la sede (por confirmar) o en especie (recibido; con «Agregar al inventario como material donado» crea el material). La meta y sus hitos se editan en una ventana. Al cambiar un aporte se actualizan los contadores del menú (`refreshTeamCounters()`).
+- **Galería:** álbumes en pestañas (`?ver=publicados`) y el álbum abierto al lado (`?album=…`). Cada archivo se sube con la firma de la API directo a Cloudinary (`utils/media.ts`) y luego se registra en la API. Sin claves de Cloudinary (`CLOUDINARY_*` en `Backend/.env`), la pantalla lo avisa. Una foto con alguien sin permiso de imagen bloquea la publicación, y publicar pide marcar la revisión de permisos.
+- **Contenido:** cada sección (`?seccion=mision_vision`) tiene sus campos en `utils/content.ts`. La vista previa resalta lo que cambió desde lo publicado (`changedSegments`). «Guardar borrador» no publica; «Publicar cambios» guarda y publica. Las redes sociales se guardan aparte con «Guardar enlaces».
+- **Pruebas E2E:** los aportes y álbumes «… de prueba 123456» se borran al terminar. Cloudinary se simula en el navegador.

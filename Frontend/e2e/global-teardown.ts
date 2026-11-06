@@ -1,6 +1,6 @@
 /**
- * Al terminar, borra lo que crearon los recorridos: las actividades, los materiales y
- * los aportes «… de prueba 123456». Así no quedan mezclados con los datos de
+ * Al terminar, borra lo que crearon los recorridos: las actividades, los materiales,
+ * los aportes y los álbumes «… de prueba 123456». Así no quedan mezclados con los datos de
  * demostración (la agenda, la asistencia, el inventario y las donaciones se ven como en
  * uso real).
  *
@@ -21,6 +21,12 @@ create temp table e2e_items on commit drop as
   select id from inventory_items where name ~ '${TEST_TITLE}';
 delete from donations
   where donor_name ~ '${TEST_TITLE}' or in_kind_description ~ '${TEST_TITLE}';
+delete from media_patient_tags where asset_id in (
+  select m.id from media_assets m join media_albums a on a.id = m.album_id
+  where a.title ~ '${TEST_TITLE}');
+delete from media_assets where album_id in (
+  select id from media_albums where title ~ '${TEST_TITLE}');
+delete from media_albums where title ~ '${TEST_TITLE}';
 delete from attendance where schedule_id in (select id from e2e_schedules);
 update inquiries set schedule_id = null where schedule_id in (select id from e2e_schedules);
 update media_albums set schedule_id = null where schedule_id in (select id from e2e_schedules);
