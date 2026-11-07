@@ -664,7 +664,7 @@ def _content(db: Session, coordinator: User) -> str:
             "facebook": "https://www.facebook.com/share/1DKFqHL1TD/",
             "instagram": "",
             "tiktok": "https://www.tiktok.com/@aspar_lapaz_bolivia",
-            "whatsapp": "",
+            "whatsapp": "59168001551",
             "telefono": "",
             "correo": "asparlapaz@gmail.com",
             "direccion": "",

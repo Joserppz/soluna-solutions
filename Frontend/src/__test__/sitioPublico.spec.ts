@@ -252,7 +252,14 @@ describe('Inicio del sitio público', () => {
     expect(footer.text()).toContain('Facebook')
     expect(footer.text()).toContain('TikTok')
     expect(footer.text()).not.toContain('Instagram')
-    expect(footer.text()).toContain('+59170000000')
+    expect(footer.text()).toContain('+591 7000 0000')
+    // WhatsApp siempre a mano, con el número publicado
+    expect(wrapper.get('.wa-fab').attributes('href')).toMatch(
+      /^https:\/\/wa\.me\/59170000000\?text=/,
+    )
+    expect(wrapper.get('.wa-fab').attributes('aria-label')).toBe(
+      'Escríbenos por WhatsApp al +591 7000 0000',
+    )
     expect(footer.find('a[href="mailto:hola@aspar.org"]').exists()).toBe(true)
     // «Cómo participar» y preguntas sin publicar: los textos del diseño
     expect(wrapper.text()).toContain('El primer paso es conversar.')
@@ -463,6 +470,12 @@ describe('Textos del sitio', () => {
     ).toEqual(['tiktok'])
     expect(contactLines({ redes_contacto: { telefono: '2 222 333' } })).toEqual(
       [
+        // Sin WhatsApp publicado, el de ASPAR
+        {
+          label: 'WhatsApp',
+          value: '+591 6800 1551',
+          href: 'https://wa.me/59168001551?text=Hola%2C%20ASPAR.%20Quisiera%20informaci%C3%B3n%20sobre%20las%20actividades.',
+        },
         { label: 'Teléfono', value: '2 222 333', href: 'tel:2222333' },
         // Sin correo publicado, el oficial de ASPAR
         {

@@ -259,11 +259,40 @@ export const ASPAR_CONTACT: Record<string, string> = {
   facebook: 'https://www.facebook.com/share/1DKFqHL1TD/',
   tiktok: 'https://www.tiktok.com/@aspar_lapaz_bolivia',
   correo: 'asparlapaz@gmail.com',
+  whatsapp: '59168001551',
+}
+
+/** «59168001551» → «+591 6800 1551» */
+export function formatWhatsapp(digits: string): string {
+  const local = digits.startsWith('591') ? digits.slice(3) : digits
+  const spaced =
+    local.length === 8 ? `${local.slice(0, 4)} ${local.slice(4)}` : local
+  return digits.startsWith('591') ? `+591 ${spaced}` : `+${spaced}`
+}
+
+/** El WhatsApp publicado (o el de ASPAR) y el enlace para escribir con un saludo. */
+export function whatsappContact(content: SiteContent) {
+  let digits = text(
+    content,
+    'redes_contacto',
+    'whatsapp',
+    ASPAR_CONTACT.whatsapp,
+  ).replace(/\D/g, '')
+  // Un número boliviano de 8 dígitos lleva el código del país
+  if (digits.length === 8) digits = `591${digits}`
+  const greeting = 'Hola, ASPAR. Quisiera información sobre las actividades.'
+  return {
+    digits,
+    display: formatWhatsapp(digits),
+    href: `https://wa.me/${digits}?text=${encodeURIComponent(greeting)}`,
+  }
 }
 
 /** Redes publicadas en «Redes y contacto» (o las oficiales), solo con enlaces https. */
+export type SocialKey = 'facebook' | 'instagram' | 'tiktok'
+
 export function socialLinks(content: SiteContent) {
-  const networks = [
+  const networks: { key: SocialKey; label: string }[] = [
     { key: 'facebook', label: 'Facebook' },
     { key: 'instagram', label: 'Instagram' },
     { key: 'tiktok', label: 'TikTok' },
@@ -281,20 +310,17 @@ export function socialLinks(content: SiteContent) {
     .filter((network) => network.url.startsWith('https://'))
 }
 
-/** WhatsApp, teléfono, correo (o el oficial) y dirección publicados. */
+/** WhatsApp y correo (publicados o los oficiales), teléfono y dirección. */
 export function contactLines(content: SiteContent) {
-  const whatsapp = text(content, 'redes_contacto', 'whatsapp').replace(
-    /\D/g,
-    '',
-  )
+  const whatsapp = whatsappContact(content)
   const phone = text(content, 'redes_contacto', 'telefono')
   const email = text(content, 'redes_contacto', 'correo', ASPAR_CONTACT.correo)
   const address = text(content, 'redes_contacto', 'direccion')
   return [
-    whatsapp && {
+    whatsapp.digits && {
       label: 'WhatsApp',
-      value: `+${whatsapp}`,
-      href: `https://wa.me/${whatsapp}`,
+      value: whatsapp.display,
+      href: whatsapp.href,
     },
     phone && {
       label: 'Teléfono',

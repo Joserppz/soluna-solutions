@@ -912,11 +912,11 @@ onMounted(() => {
 }
 
 .paths a > span {
-  color: #c9d8d1;
+  color: #dfeae5;
 }
 
 .paths a:nth-child(2) > span {
-  color: #f1cfc9;
+  color: #fbe4df;
 }
 
 /* Nosotros */
