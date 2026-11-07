@@ -1,6 +1,6 @@
 /**
  * Al terminar, borra lo que crearon los recorridos: las actividades, los materiales,
- * los aportes, los álbumes y las solicitudes del sitio «… de prueba 123456». Así no quedan mezclados con los datos de
+ * los aportes, los álbumes, las solicitudes y los afiliados «… de prueba 123456». Así no quedan mezclados con los datos de
  * demostración (la agenda, la asistencia, el inventario y las donaciones se ven como en
  * uso real).
  *
@@ -27,6 +27,13 @@ delete from media_patient_tags where asset_id in (
 delete from media_assets where album_id in (
   select id from media_albums where title ~ '${TEST_TITLE}');
 delete from media_albums where title ~ '${TEST_TITLE}';
+create temp table e2e_patients on commit drop as
+  select id from patients where name ~ '${TEST_TITLE}';
+delete from media_patient_tags where patient_id in (select id from e2e_patients);
+delete from attendance where patient_id in (select id from e2e_patients);
+delete from patient_documents where patient_id in (select id from e2e_patients);
+update inquiries set patient_id = null where patient_id in (select id from e2e_patients);
+delete from patients where id in (select id from e2e_patients);
 delete from inquiry_notes where inquiry_id in (
   select id from inquiries where name ~ '${TEST_TITLE}');
 delete from inquiries where name ~ '${TEST_TITLE}';

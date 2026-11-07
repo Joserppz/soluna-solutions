@@ -43,10 +43,10 @@ for (const size of SIZES) {
     await page.setViewportSize(size)
     await page.goto('/equipo')
     await expect(
-      page.getByRole('link', { name: /Registro de actividad/ }),
+      page.getByRole('heading', { name: 'Para revisar' }),
     ).toBeInViewport()
     await expect(
-      page.getByText('Tu rol puede ver historias clínicas'),
+      page.getByRole('heading', { name: 'Comunidad' }),
     ).toBeInViewport()
     expect(await fitsWindow(page)).toEqual(FITS)
 

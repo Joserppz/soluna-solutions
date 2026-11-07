@@ -56,7 +56,7 @@ describe('Ingreso al espacio del equipo', () => {
       password: 'Ceibo4821',
     })
     expect(router.currentRoute.value.fullPath).toBe('/equipo/solicitudes')
-    expect(wrapper.text()).toContain('Estamos preparando esta sección.')
+    expect(wrapper.get('h1').text()).toBe('Solicitudes')
   })
 
   it('valida el formulario antes de llamar a la API', async () => {
@@ -172,7 +172,17 @@ describe('Espacio del equipo según el rol', () => {
     expect(wrapper.get('h1').text()).toMatch(
       /^(Buenos días|Buenas tardes|Buenas noches), Lucía\.$/,
     )
-    expect(wrapper.findAll('.section-card')).toHaveLength(10)
+    // «Para revisar» con los cuatro contadores de la API, cada uno a su lista
+    expect(
+      wrapper
+        .findAll('.pending a')
+        .map((a) => [a.get('span').text(), a.get('b').text()]),
+    ).toEqual([
+      ['Solicitudes nuevas sin llamar', '4'],
+      ['Aportes por confirmar con el banco', '5'],
+      ['Fichas sin consentimiento firmado', '2'],
+      ['Materiales en estado dañado', '1'],
+    ])
     expect(wrapper.text()).toContain('Tu rol puede ver historias clínicas')
   })
 

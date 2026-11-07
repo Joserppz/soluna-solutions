@@ -280,6 +280,13 @@ let resizeTimer: ReturnType<typeof setTimeout> | undefined
 let areaResize: ResizeObserver | null = null
 
 onMounted(async () => {
+  // «+ Registrar afiliado» desde el resumen abre la ventana al llegar (?nuevo=1)
+  if (route.query.nuevo === '1') {
+    registerOpen.value = true
+    const query = { ...route.query }
+    delete query.nuevo
+    void router.replace({ query })
+  }
   await nextTick()
   measureRows()
   if (typeof ResizeObserver !== 'undefined' && tableArea.value) {

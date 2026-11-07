@@ -38,6 +38,7 @@ const SECTION_VIEWS: Partial<Record<string, RouteRecordRaw['component']>> = {
   galeria: () => import('../views/team/media/GalleryView.vue'),
   contenido: () => import('../views/team/content/ContentView.vue'),
   donaciones: () => import('../views/team/donations/DonationsView.vue'),
+  solicitudes: () => import('../views/team/inquiries/InquiriesView.vue'),
   'registro-actividad': () => import('../views/team/admin/ActivityLogView.vue'),
 }
 

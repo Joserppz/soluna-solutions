@@ -43,7 +43,7 @@ test('Administración ingresa, ve todo el espacio del equipo y cierra sesión', 
   await expect(menu.getByRole('link')).toHaveCount(10)
   await menu.getByRole('link', { name: 'Resumen' }).click()
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Lucía')
-  await expect(page.locator('.section-card')).toHaveCount(10)
+  await expect(page.locator('.pending a')).toHaveCount(4)
   await evidence(page, 'F1-02-resumen-administracion')
 
   await menu.getByRole('link', { name: 'Administración' }).click()
