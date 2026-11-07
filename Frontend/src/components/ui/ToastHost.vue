@@ -156,3 +156,11 @@ const ICON = { success: '✓', info: 'i', error: '!' } as const
   }
 }
 </style>
+
+<style>
+/* Con una ventana abierta, los avisos esperan detrás: no tapan sus botones ni su
+   cierre. La ventana muestra sus propios errores; al cerrarla, el aviso vuelve a verse */
+body:has([aria-modal='true']) .toast-region {
+  visibility: hidden;
+}
+</style>

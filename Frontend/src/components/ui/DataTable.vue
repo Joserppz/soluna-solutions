@@ -195,6 +195,8 @@ tbody tr:not(.is-skeleton):hover {
    vuelve una tarjeta: nunca aparece una barra de desplazamiento horizontal. Lo decide
    el ancho de la propia tabla (prop stackBelow), no el de la pantalla */
 .is-stacked .table thead {
+  /* block: un table-header-group ignora el recorte y sus títulos ensanchan la tabla */
+  display: block;
   position: absolute;
   width: 1px;
   height: 1px;
@@ -222,6 +224,12 @@ tbody tr:not(.is-skeleton):hover {
   padding: var(--space-2) var(--space-1);
   border: 0;
   text-align: right;
+}
+
+/* Un correo o un nombre largo se corta en varias líneas en vez de ensanchar la tarjeta */
+.is-stacked .table td > * {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .is-stacked .table td[data-label]::before {

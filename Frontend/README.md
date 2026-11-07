@@ -204,3 +204,9 @@ Frontend/
 - **Apoya a ASPAR (`/apoyar`):** montos, QR bancario de «Datos para donar» (`qrUrl`, con «Guardar el QR en mi teléfono») y «Avísanos de tu aporte». Después, `?aviso=…` muestra el seguimiento en tres pasos (`GET /public/donations/notice/{id}`). Sin Libélula. En el celular, «Donar con QR» queda fijo al pie.
 - **Enlaces a secciones:** `SiteLink` para `/#…`, que no se anuncia como «página actual».
 - **Pruebas E2E:** las solicitudes y avisos «… de prueba 123456» se borran al terminar. El QR y Turnstile se reemplazan en el navegador.
+
+**Solicitudes y resumen (F6):** `views/team/inquiries/`, `components/inquiries/` y `views/team/SummaryView.vue`.
+- **Solicitudes:** pestañas (`?estado=recibida|contactada|inscrita`), motivo (`?motivo=`), búsqueda y la solicitud abierta (`?solicitud=`). El detalle (`InquiryPanel`) tiene «Llamar», «Escribir por WhatsApp», la barra de seguimiento con los cambios que acepta la API (`TRANSITIONS` en `utils/inquiries.ts`), las notas con su historial e «Inscribir como afiliado →» (`EnrollDialog`, que usa `patient-draft` y `convert-to-patient`).
+- **Resumen:** `GET /dashboard/summary`. Cada bloque aparece solo si la API lo manda (según el rol). «Para revisar» lleva a cada lista ya filtrada.
+- **Revisión de pantallas:** `e2e/accesibilidad.spec.ts` recorre las 17 pantallas a siete tamaños (360 a 1920 px): sin desplazamiento lateral, sin dos barras a la vez y lo básico de accesibilidad.
+- **Avisos:** con una ventana abierta, los avisos esperan detrás para no tapar sus botones.

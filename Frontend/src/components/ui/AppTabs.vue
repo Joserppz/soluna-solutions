@@ -82,10 +82,10 @@ async function move(event: KeyboardEvent) {
 <style scoped>
 .tabs {
   display: flex;
-  gap: var(--space-2);
+  /* Si no entran en una fila, pasan a la siguiente: nunca se desplazan de lado */
+  flex-wrap: wrap;
+  gap: 0 var(--space-2);
   border-bottom: 1px solid var(--color-border);
-  overflow-x: auto;
-  scrollbar-width: none;
 }
 
 .tabs__tab {

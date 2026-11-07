@@ -787,6 +787,15 @@ onMounted(async () => {
     padding-inline: 0.35rem;
   }
 
+  /* 360 px: los títulos más juntos para que la tabla no se desplace de lado */
+  .inv__table th {
+    letter-spacing: 0.02em;
+  }
+
+  .inv__table td:first-child {
+    overflow-wrap: anywhere;
+  }
+
   /* Los tres contadores en una fila; el aviso y la exportación debajo */
   .counts {
     display: grid;
@@ -861,5 +870,12 @@ onMounted(async () => {
 .inv--fit .inv__table td {
   height: 3.5rem;
   padding-block: 0;
+}
+
+@media (max-width: 400px) {
+  .inv__table th,
+  .inv__table td {
+    padding-inline: 0.2rem;
+  }
 }
 </style>

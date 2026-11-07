@@ -30,6 +30,7 @@ withDefaults(
 
 <template>
   <div class="auth">
+    <a class="skip-link" href="#contenido">Saltar al contenido</a>
     <aside class="auth__panel">
       <RouterLink :to="{ name: 'inicio' }" class="auth__brand">
         <AsparBrand tone="dark" />
@@ -51,7 +52,7 @@ withDefaults(
       />
     </aside>
 
-    <main class="auth__main">
+    <main id="contenido" class="auth__main" tabindex="-1">
       <div class="auth__card">
         <RouterLink :to="backTo" class="auth__back">
           <span aria-hidden="true">←</span> {{ backLabel }}
@@ -63,6 +64,26 @@ withDefaults(
 </template>
 
 <style scoped>
+.skip-link {
+  position: absolute;
+  left: var(--space-4);
+  top: -4rem;
+  z-index: var(--z-toast);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+  font-weight: 600;
+}
+
+.skip-link:focus {
+  top: var(--space-4);
+}
+
+.auth__main:focus {
+  outline: none;
+}
+
 /*
  * Escritorio y laptops (>= 900 px): la pantalla de acceso ocupa exactamente la
  * ventana, sin barra de desplazamiento. Los tamaños usan clamp(…vh…) para que el

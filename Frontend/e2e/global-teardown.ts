@@ -1,7 +1,8 @@
 /**
  * Al terminar, borra lo que crearon los recorridos: las actividades, los materiales,
- * los aportes, los álbumes, las solicitudes y los afiliados «… de prueba 123456». Así no quedan mezclados con los datos de
- * demostración (la agenda, la asistencia, el inventario y las donaciones se ven como en
+ * los aportes, los álbumes, las solicitudes y los afiliados «… de prueba 123456», y los
+ * afiliados de prueba con nombre fijo de F2 y F4. Así no quedan mezclados con los datos
+ * de demostración (el resumen, la agenda, la asistencia y las donaciones se ven como en
  * uso real).
  *
  * La API no borra una actividad publicada ni un aporte (se cancelan o anulan con un
@@ -12,6 +13,8 @@ import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 
 const TEST_TITLE = String.raw`de prueba [0-9]{6}$`
+/** Los afiliados de prueba de F2 y F4, con nombre fijo (cada recorrido los vuelve a crear). */
+const FIXED_PATIENTS = String.raw`^(Hortensia Prueba Ficha|Ramiro Prueba (Pantalla|Encabezado)|Teresa Prueba Alta|Marina Asistencia Prueba|Prueba Paginación [0-9]{2})$`
 
 const CLEANUP = `
 begin;
@@ -28,15 +31,18 @@ delete from media_assets where album_id in (
   select id from media_albums where title ~ '${TEST_TITLE}');
 delete from media_albums where title ~ '${TEST_TITLE}';
 create temp table e2e_patients on commit drop as
-  select id from patients where name ~ '${TEST_TITLE}';
+  select id from patients
+  where name ~ '${TEST_TITLE}' or name ~ '${FIXED_PATIENTS}';
 delete from media_patient_tags where patient_id in (select id from e2e_patients);
 delete from attendance where patient_id in (select id from e2e_patients);
 delete from patient_documents where patient_id in (select id from e2e_patients);
 update inquiries set patient_id = null where patient_id in (select id from e2e_patients);
 delete from patients where id in (select id from e2e_patients);
 delete from inquiry_notes where inquiry_id in (
-  select id from inquiries where name ~ '${TEST_TITLE}');
-delete from inquiries where name ~ '${TEST_TITLE}';
+  select id from inquiries
+  where name ~ '${TEST_TITLE}' or name ~ '${FIXED_PATIENTS}');
+delete from inquiries
+  where name ~ '${TEST_TITLE}' or name ~ '${FIXED_PATIENTS}';
 delete from attendance where schedule_id in (select id from e2e_schedules);
 update inquiries set schedule_id = null where schedule_id in (select id from e2e_schedules);
 update media_albums set schedule_id = null where schedule_id in (select id from e2e_schedules);

@@ -7,13 +7,13 @@ Esta matriz une cada requisito funcional (**RF-01 a RF-17**) y no funcional (**R
 - sus endpoints;
 - las pruebas automáticas que lo verifican.
 
-Refleja el estado al **cerrar el Backend del Sprint 2** y al terminar los **bloques F1 a F5b del Frontend** (diseño base, sesión real y acceso; afiliados; equipo, permisos y registro de actividad; operación de la sede: actividades, asistencia e inventario; donaciones, galería y contenido del sitio; sitio público con inicio y «Apoya a ASPAR»). Los requisitos RF-11 a RF-17 y RNF-06 a RNF-11 están definidos en la [adenda del SRS](../srs/SRS_ADENDA_SPRINT1.md).
+Refleja el **cierre del Sprint 2**: el Backend completo y los **bloques F1 a F6 del Frontend** (diseño base, sesión real y acceso; afiliados; equipo, permisos y registro de actividad; operación de la sede; donaciones, galería y contenido; sitio público; solicitudes, resumen y retiro del modo demo). Todas las pantallas usan la API: no queda modo demo ([ADR-008](../arquitectura/adr/ADR-008-modo-local-de-respaldo-en-frontend.md), retirada). Los requisitos RF-11 a RF-17 y RNF-06 a RNF-11 están definidos en la [adenda del SRS](../srs/SRS_ADENDA_SPRINT1.md).
 
 | Suite | Pruebas | Cobertura | Dónde corre |
 | :--- | ---: | :--- | :--- |
 | Backend (pytest, PostgreSQL real) | **443** en 33 archivos | 98 % de sentencias (mínimo 70 %) | `.github/workflows/ci-backend.yml` |
-| Frontend (Vitest) | **360** en 32 archivos | 92,67 % de líneas (mínimo 70 %) | `.github/workflows/ci-frontend.yml` |
-| Frontend E2E (Playwright, API real de Docker) | **96** recorridos en 13 archivos | — | `npm run e2e` (local, con `docker compose`) |
+| Frontend (Vitest) | **374** en 35 archivos | 92,5 % de líneas (mínimo 70 %) | `.github/workflows/ci-frontend.yml` |
+| Frontend E2E (Playwright, API real de Docker) | **118** recorridos en 15 archivos | — | `npm run e2e` (local, con `docker compose`) |
 
 **Columnas:**
 
@@ -23,8 +23,9 @@ Refleja el estado al **cerrar el Backend del Sprint 2** y al terminar los **bloq
 
 **Estado:**
 
-- **API:** ✅ implementado y probado · ⚠️ implementado con pendientes · ❔ sin verificar.
-- **Pantalla:** ✅ conectada a la API · 🎨 existe en modo demo y falta la migración visual a `src/api/` · ⏳ sin pantalla aún.
+- **API:** ✅ implementado y probado.
+- **Pantalla:** ✅ conectada a la API y probada (Vitest y E2E).
+- **No funcionales:** ✅ verificado con pruebas automáticas o E2E · ⏳ se mide en el despliegue real (staging o producción) o necesita personas; queda en la [lista de comprobaciones manuales](#5-comprobaciones-manuales-en-staging).
 
 ## 1. Requisitos funcionales
 
@@ -40,9 +41,9 @@ Refleja el estado al **cerrar el Backend del Sprint 2** y al terminar los **bloq
 | **RF-07 / RF-08** Contenido institucional y redes | SCRUM-136 | 183 / — / — | `institutional` | `GET /content/sections*`, `PUT …/{key}`, `POST …/{key}/publish`, `PUT /content/social-links`, `GET /public/content*` | `test_content.py` (15) | `__test__/contenido.spec.ts` (9), `sitioPublico.spec.ts` (lo publicado en el sitio) · E2E `sitio.spec.ts` (contenido y redes), `portal.spec.ts` | ✅ | ✅ (F5a, sitio en F5b) |
 | **RF-11** Equipo, roles y permisos | SCRUM-129 | 161 / 160 / 162 | `users`, `roles` | `GET/POST /users`, `PATCH /users/{id}`, `…/approve`, `…/reset-password`, `GET /roles`, `PUT /roles/{key}/permissions` | `test_users_api.py` (11), `test_roles.py` (14), `test_permissions.py` (11) | `__test__/equipoPermisos.spec.ts` (25), `utils/team.spec.ts` (5), `router/guards.spec.ts` (8) · E2E `equipo-permisos.spec.ts` (8), persona invitada y cuenta pendiente (F1) | ✅ | ✅ (F3) |
 | **RF-12** Asistencia | SCRUM-130 | 164 / 163 / 165 | `attendance` | `GET /schedules/{id}/attendance`, `PUT …/{patientId}`, `…/mark-all-present`, `…/newcomers`, `…/close`, `…/reopen`, `GET /attendance/monthly` | `test_attendance.py` (25), `test_patients_listing.py` (sábados del trimestre e historial) | `__test__/asistencia.spec.ts` (15), `fichaAfiliado.spec.ts` (pestaña Asistencia) · E2E `operacion.spec.ts` (asistencia, celular de 360 px) | ✅ | ✅ (F4) · asistencia de cada ficha ✅ (F2) |
-| **RF-16** Contacto y preinscripciones | SCRUM-134 | 176 / 175 / 177 | `inquiries` | `POST /public/inquiries` (Turnstile y límite por IP), `GET /inquiries*`, `PATCH /inquiries/{id}`, `…/notes`, `…/patient-draft`, `…/convert-to-patient` | `test_inquiries.py` (21) | `sitioPublico.spec.ts` («Quiero participar» y contacto) · E2E `portal.spec.ts` | ✅ | ✅ sitio (F5b) · ⏳ panel de solicitudes (F6) |
+| **RF-16** Contacto y preinscripciones | SCRUM-134 | 176 / 175 / 177 | `inquiries` | `POST /public/inquiries` (Turnstile y límite por IP), `GET /inquiries*`, `PATCH /inquiries/{id}`, `…/notes`, `…/patient-draft`, `…/convert-to-patient` | `test_inquiries.py` (21) | `sitioPublico.spec.ts` («Quiero participar» y contacto), `solicitudes.spec.ts` (8: pestañas, motivo, seguimiento, notas, inscribir) · E2E `portal.spec.ts`, `solicitudes.spec.ts` (del mensaje del sitio a la ficha) | ✅ | ✅ (sitio F5b, bandeja F6) |
 | **RF-17** Bitácora de auditoría | SCRUM-135 | 179 / 178 / 180 | `audit` | `GET /audit` (área, persona o afiliado, días, situaciones para revisar), `GET /audit/summary`, `GET /audit/export` | `test_audit.py` (8), `test_audit_activity.py` (8) | `__test__/registroActividad.spec.ts` (13), `utils/audit.spec.ts` (6) · E2E `registro-actividad.spec.ts` (7) | ✅ | ✅ (F3) |
-| Panel de inicio | — | — | `dashboard` | `GET /dashboard/summary` | `test_dashboard.py` (5) | — | ✅ | ⏳ |
+| Panel de inicio | — | — | `dashboard` | `GET /dashboard/summary` | `test_dashboard.py` (5) | `resumen.spec.ts` (4: bloques según el rol, «Tomar asistencia», sin actividad, error) · E2E `solicitudes.spec.ts` (resumen) | ✅ | ✅ (F6) |
 
 **Qué cubre cada archivo de pruebas del Backend** (resumen):
 
@@ -59,21 +60,21 @@ Refleja el estado al **cerrar el Backend del Sprint 2** y al terminar los **bloq
 
 | Req. | Historia | Subtareas F / B / V | Dónde se cumple | Pruebas y verificación | Estado |
 | :--- | :--- | :--- | :--- | :--- | :---: |
-| **RNF-01** Rendimiento (< 3 s con 50 usuarios) | — | — | Paginación en todos los listados, índices `pg_trgm` | Falta una prueba de carga en staging | ❔ |
+| **RNF-01** Rendimiento (< 3 s con 50 usuarios) | — | — | Paginación en todos los listados (las vistas piden solo las filas que entran), índices `pg_trgm` | Se mide con una prueba de carga contra el despliegue real: en local no sirve de referencia | ⏳ staging |
 | **RNF-02** Contraseñas y sesiones | SCRUM-12 | 67 / 29 / 30 | `auth`, `core/security`, tabla `sessions`, cookies HttpOnly + CSRF | `test_sessions.py` (9), `test_hardening.py` (11), `test_security.py`, `test_auth_login.py` · `api/client.spec.ts` (14), `composables/useIdleSession.spec.ts` (7, aviso a los 13 min, renovación y cierre a los 15), `components/ui.spec.ts` (aviso «¿Sigues ahí?») · E2E: inactividad con el reloj del navegador | ✅ |
-| **RNF-03** Accesibilidad WCAG 2.1 AA | — | — | Pantallas del Frontend | Base desde F1: foco visible, modal con foco atrapado, avisos con `role=alert/status`, etiqueta en cada campo, «Saltar al contenido» e insignias legibles por lector de pantalla (`components/ui.spec.ts`). Falta la revisión completa en F6 | ❔ |
-| **RNF-04** Disponibilidad 99,5 % | — | — | Cloud Run + Supabase (ADR-014), `GET /health` y `/health/db` | `test_health.py` (2) · la medición empieza con el primer despliegue | ❔ |
-| **RNF-05** Cobertura ≥ 70 % | SCRUM-61 | 96 / 95 / 97 | CI con `--cov-fail-under=70` y umbral de Vitest | Backend 98 %, Frontend 92,67 % de líneas | ✅ |
+| **RNF-03** Accesibilidad WCAG 2.1 AA | — | — | Pantallas del Frontend | Foco visible, modal con foco atrapado, avisos con `role=alert/status`, «Saltar al contenido» e insignias legibles por lector de pantalla (`components/ui.spec.ts`). E2E `accesibilidad.spec.ts`: en las 17 pantallas, un solo `h1`, `lang="es"`, imágenes con `alt`, cada campo, botón y enlace con nombre, sin `id` repetidos y «Saltar al contenido». Botones de 44 px o más en el celular (`operacion.spec.ts`, `portal.spec.ts`, `apoyo.spec.ts`) | ✅ (automático) · la revisión con lector de pantalla está en la lista manual |
+| **RNF-04** Disponibilidad 99,5 % | — | — | Cloud Run + Supabase (ADR-014), `GET /health` y `/health/db` | `test_health.py` (2). La disponibilidad se mide con el monitoreo del despliegue real | ⏳ producción |
+| **RNF-05** Cobertura ≥ 70 % | SCRUM-61 | 96 / 95 / 97 | CI con `--cov-fail-under=70` y umbral de Vitest | Backend 98 %, Frontend 92,5 % de líneas | ✅ |
 | **RNF-06** Privacidad clínica | SCRUM-123 | 138 / 137 / 139 | `patients.can_view_clinical_record` (permiso + consentimiento + acceso Activo), `PatientSummaryOut` sin anamnesis, `evaluations`, `documents`, bucket privado, `CHECK` en la base | `test_patient_privacy.py` (20), `test_contacts_evaluations.py`, `test_storage_adapter.py` (3), `test_media.py` (consentimiento de imagen) · `fichaAfiliado.spec.ts` (aviso con el motivo real: rol, consentimiento, acceso suspendido o pendiente; sin acceso no se piden evaluaciones ni documentos), `router/guards.spec.ts` · E2E: Voluntariado ve «Información protegida» y Recepción sube documentos sin verlos | ✅ |
-| **RNF-07** Respaldo y recuperación | SCRUM-124 | ver adenda §1.1 | `scripts/backup_db.py` (pg_dump + documentos, cifrado RSA-4096 + Fernet) y `.github/workflows/backup.yml` | `test_backup.py` (9): cifrado de ida y vuelta, clave equivocada, archivo alterado, la contraseña no queda en los argumentos, `pg_restore --list` real. Restauración completa probada en una base nueva | ⚠️ El workflow corre a mano; el cron diario se activa al cargar los secretos de producción. Falta medir RPO/RTO en staging |
-| **RNF-08** Navegadores y pantallas | SCRUM-125 | ver adenda §1.1 | Frontend | Diseño adaptable desde 360 px (menú del equipo como panel en el celular, probado en el E2E con 390 px). Las pantallas de acceso entran sin barra de desplazamiento de 1366×680 a 1920×900 (`pantallas-de-acceso.spec.ts`). El listado y la ficha de afiliados tienen una sola barra a 1366×768 y 1920×1080, sin desplazamiento lateral (las tablas pasan a tarjetas según su ancho). En escritorio cada pantalla entra completa en la ventana, sin barra de desplazamiento, a 1366×768, 1280×720 y 1920×1080; en el celular la página se desplaza con las pestañas fijas (`pantallas-completas.spec.ts`). Equipo y permisos (sus tres pestañas y la ventana de invitar) y el registro de actividad entran completos a 1366×768 y 1920×1080 (`equipo-permisos.spec.ts`, `registro-actividad.spec.ts`). Actividades (lista, mes y ventana), asistencia e inventario también; la asistencia funciona a 360 px y crear cuenta entra sin barra de 1024×600 en adelante (`operacion.spec.ts`, `pantallas-de-acceso.spec.ts`). Donaciones (con el panel y sus ventanas), Galería y las secciones del contenido entran completas a 1280×720, 1366×768 y 1920×1080 (`donaciones.spec.ts`, `sitio.spec.ts`). En el sitio público, la portada y la franja de caminos entran en la primera vista a esos tres tamaños, y a 390 px el menú se despliega, los botones miden 44 px o más y nada se desplaza de lado (`portal.spec.ts`, `apoyo.spec.ts`). Falta probar Firefox, Edge y Safari en F6 | ❔ |
-| **RNF-09** Usabilidad y manual | SCRUM-126 | ver adenda §1.1 | — | Prueba con ASPAR y manual pendientes | ❔ |
-| **RNF-10** Galería en Cloudinary | SCRUM-127 | ver adenda §1.1 | `media` + `adapters/cloudinary.py`: subida firmada con formatos permitidos y carpeta por álbum; al borrar, el archivo se elimina también en Cloudinary | `test_media.py` (31) · `galeria.spec.ts` (subida firmada y aviso sin claves) · E2E `sitio.spec.ts` (Cloudinary simulado en el navegador) | ⚠️ Falta probar con las claves reales y el procedimiento de monitoreo de cuota y contingencia |
+| **RNF-07** Respaldo y recuperación | SCRUM-124 | ver adenda §1.1 | `scripts/backup_db.py` (pg_dump + documentos, cifrado RSA-4096 + Fernet) y `.github/workflows/backup.yml` | `test_backup.py` (9): cifrado de ida y vuelta, clave equivocada, archivo alterado, la contraseña no queda en los argumentos, `pg_restore --list` real. Restauración completa probada en una base nueva. RPO y RTO se miden con el cron diario y una restauración cronometrada en staging | ⏳ staging |
+| **RNF-08** Navegadores y pantallas | SCRUM-125 | ver adenda §1.1 | Frontend | E2E `accesibilidad.spec.ts`: las 17 pantallas (sitio, acceso y cada sección del equipo) a 360, 768, 1024, 1280, 1366, 1440 y 1920 px sin desplazamiento lateral ni dos barras a la vez. En escritorio cada pantalla del equipo entra completa en la ventana (`pantallas-completas.spec.ts`, `equipo-permisos.spec.ts`, `registro-actividad.spec.ts`, `operacion.spec.ts`, `donaciones.spec.ts`, `sitio.spec.ts`, `solicitudes.spec.ts`); en el celular la página se desplaza con el menú como panel. Las tablas pasan a tarjetas según su ancho. El sitio público entra en la primera vista (`portal.spec.ts`, `apoyo.spec.ts`) | ✅ Chromium (Chrome y Edge) · Firefox y Safari en la lista manual |
+| **RNF-09** Usabilidad y manual | SCRUM-126 | ver adenda §1.1 | Frontend: textos en el lenguaje de ASPAR, errores con el motivo real y qué hacer | No se puede verificar con pruebas automáticas: necesita una sesión con el equipo de ASPAR y el manual de uso | ⏳ con ASPAR |
+| **RNF-10** Galería en Cloudinary | SCRUM-127 | ver adenda §1.1 | `media` + `adapters/cloudinary.py`: subida firmada con formatos permitidos y carpeta por álbum; al borrar, el archivo se elimina también en Cloudinary | `test_media.py` (31) · `galeria.spec.ts` (subida firmada y aviso sin claves) · E2E `sitio.spec.ts` (Cloudinary simulado en el navegador) | ✅ (simulado) · claves reales y cuota en la lista manual |
 | **RNF-11** Mantenibilidad | SCRUM-128 | 153 / 152 / 154 | Módulos por dominio (ADR-011), migraciones versionadas, contrato OpenAPI → TypeScript (ADR-013), Ruff, ESLint, Prettier, Dependabot, `pip-audit`, `npm audit` | `test_migrations.py` (11), `test_openapi.py` (2), `test_scripts.py` (10), `test_core.py` (26), `test_pagination.py` (9) · `api/endpoints.spec.ts` (4, todas las operaciones de `openapi.json` cubiertas), `api/index.spec.ts` (1), `npm run api:types:check` | ✅ |
 
 **Conteo completo del Backend (443):** media 31 · donations 31 · core 26 · attendance 25 · inquiries 21 · accounts 21 · patient_privacy 20 · schedules 17 · patients_listing 17 · contacts_evaluations 18 · patients_api 16 · inventory 15 · content 15 · roles 14 · patient_model 12 · users_api 11 · permissions 11 · migrations 11 · hardening 11 · scripts 10 · auth_credentials 10 · adapters 10 · sessions 9 · pagination 9 · backup 9 · auth_login 9 · audit 8 · audit_activity 8 · security 6 · dashboard 5 · storage_adapter 3 · openapi 2 · health 2.
 
-**Conteo completo del Frontend (360):** fichaAfiliado 47 · afiliados 27 · equipoPermisos 25 · acceso 23 · cuentas 16 · asistencia 15 · ui 15 · utils/patients 15 · api/client 14 · registroActividad 13 · inventario 12 · actividades 11 · donaciones 11 · galeria 11 · api/session 10 · contenido 9 · sitioPublico 9 · widgetsExternos 8 · guards 8 · useIdleSession 7 · format 7 · apoyo 7 · utils/audit 6 · utils/ops 6 · stickyHeader 5 · utils/team 5 · validation 5 · api/endpoints 4 · useToast 4 · useFitLayout 2 · router/scroll 2 · api/index 1.
+**Conteo completo del Frontend (374):** fichaAfiliado 47 · afiliados 27 · equipoPermisos 25 · acceso 23 · cuentas 16 · asistencia 15 · ui 15 · utils/patients 15 · api/client 14 · registroActividad 13 · inventario 12 · actividades 11 · donaciones 11 · galeria 11 · api/session 10 · contenido 9 · sitioPublico 9 · solicitudes 8 · widgetsExternos 8 · guards 8 · apoyo 7 · useIdleSession 7 · format 7 · utils/audit 6 · utils/ops 6 · stickyHeader 5 · utils/team 5 · validation 5 · resumen 4 · api/endpoints 4 · useToast 4 · sinModoDemo 2 · useFitLayout 2 · router/scroll 2 · api/index 1.
 
 **Recorridos E2E de F1 (23):** `e2e/pantallas-de-acceso.spec.ts` (11: el ingreso entra completo y sin barra de desplazamiento en 5 tamaños de pantalla, con error, recuperación, cuenta pendiente, cambio de contraseña, crear cuenta con desplazamiento solo en el formulario y celular), `e2e/acceso.spec.ts` (7: ingreso fallido, Administración, Voluntariado, cuenta pendiente, persona invitada con contraseña temporal, inactividad, menú en el celular) y `e2e/cuentas.spec.ts` (5: registro y reenvío de confirmación, enlace vencido, recuperación, enlace de recuperación inválido, Google). Evidencia: [`EVIDENCIAS_FRONTEND_F1.md`](../evidencias/EVIDENCIAS_FRONTEND_F1.md).
 
@@ -88,6 +89,8 @@ Refleja el estado al **cerrar el Backend del Sprint 2** y al terminar los **bloq
 **Recorridos E2E de F5a (15):** `e2e/donaciones.spec.ts` (8: efectivo confirmado; QR recibido en la sede que queda por confirmar y se confirma con la referencia del extracto; anular con motivo; en especie que pasa al inventario; descarga del resumen en Excel; la lista, el panel, la ventana de registrar en sus tres canales y la de la meta entran completas a 1366×768, 1280×720 y 1920×1080) y `e2e/sitio.spec.ts` (7: un álbum nuevo nace privado, recibe una foto con Cloudinary simulado y no se publica sin la revisión de permisos; la foto con alguien sin permiso de imagen bloquea la publicación; un cambio del contenido se resalta en la vista previa y queda como borrador; un enlace de Instagram que no es el oficial no se guarda; la galería y las seis secciones del contenido entran completas a 1366×768, 1280×720 y 1920×1080). Al terminar, `e2e/global-teardown.ts` borra los aportes y álbumes de prueba. Evidencia: [`EVIDENCIAS_FRONTEND_F5A.md`](../evidencias/EVIDENCIAS_FRONTEND_F5A.md).
 
 **Recorridos E2E de F5b (12):** `e2e/portal.spec.ts` (7: la portada y la franja de caminos entran en la primera vista a 1366×768, 1280×720 y 1920×1080; la agenda muestra el próximo encuentro, tacha la cancelada y pide el mes siguiente; «Quiero participar» envía la solicitud con la actividad; «Ser voluntario/a» lleva al formulario con ese motivo; en el celular el menú se despliega y no hay desplazamiento lateral) y `e2e/apoyo.spec.ts` (5: solo QR bancario, con el monto elegido y la meta en vivo; el aviso queda pendiente, se sigue con su enlace y se ve confirmado cuando el equipo lo confirma; en el celular los montos van de a dos y «Donar con QR» queda a la vista; donación en especie; «Quiero ayudar» abre `/apoyar`). El QR y Turnstile se reemplazan en el navegador; las solicitudes y avisos de prueba se borran al terminar. Evidencia: [`EVIDENCIAS_FRONTEND_F5B.md`](../evidencias/EVIDENCIAS_FRONTEND_F5B.md).
+
+**Recorridos E2E de F6 (22):** `e2e/solicitudes.spec.ts` (6: del mensaje del sitio a la ficha, con seguimiento, nota de la llamada que la marca como contactada e «Inscribir como afiliado»; el resumen con sus cuatro contadores que llevan a cada lista; «Tomar asistencia» abre el día del próximo encuentro; el resumen y la bandeja entran completos a 1366×768, 1280×720 y 1920×1080) y `e2e/accesibilidad.spec.ts` (16: el sitio, el acceso y cada sección del equipo a siete tamaños, de 360 a 1920 px, sin desplazamiento lateral ni dos barras; lo básico de accesibilidad en cada pantalla). Al terminar se borran también los afiliados de prueba con nombre fijo de F2 y F4. Evidencia: [`EVIDENCIAS_FRONTEND_F6.md`](../evidencias/EVIDENCIAS_FRONTEND_F6.md).
 
 ## 3. Tareas técnicas y su evidencia
 
@@ -105,7 +108,7 @@ Refleja el estado al **cerrar el Backend del Sprint 2** y al terminar los **bloq
 
 ## 4. Qué cambió desde el Sprint 1
 
-| Tema | Sprint 1 | Cierre del Backend (Sprint 2) |
+| Tema | Sprint 1 | Cierre del Sprint 2 |
 | :--- | :--- | :--- |
 | Módulos | 5 routers (auth, patients, documents, users, audit) | 16 módulos de dominio, 104 operaciones |
 | Base de datos | 12 tablas, 2 migraciones | 25 tablas, migraciones 001 a 004 |
@@ -114,16 +117,33 @@ Refleja el estado al **cerrar el Backend del Sprint 2** y al terminar los **bloq
 | Acceso | Solo correo y contraseña | Contraseña o Google, registro con verificación y aprobación, Turnstile |
 | RNF-06 | Anamnesis oculta según el rol | Permiso + consentimiento + acceso Activo; el listado nunca lleva datos clínicos |
 | Contrato | `test_contract_frontend.py` comparaba con `src/types/aspar.ts` | OpenAPI → `schema.d.ts` generado, verificado en los dos CI |
-| Pruebas | 103 Backend y 65 Frontend (medición de cierre) | 412 Backend y 107 Frontend |
+| Pruebas | 103 Backend y 65 Frontend (medición de cierre) | 443 Backend, 374 Frontend (Vitest) y 118 recorridos E2E |
 | Respaldos | Sin definir | Respaldo cifrado con script y workflow, restauración probada |
+| Frontend | Pantallas con datos de ejemplo en `localStorage` (modo demo) | Todas las pantallas sobre `src/api/`; sin modo demo ni datos del sistema en el navegador |
 
 La versión anterior de esta matriz, con el detalle por pantalla del Sprint 1, queda en el historial de Git y en [`docs/evidencias/`](../evidencias/EVIDENCIAS_SPRINT1.md).
 
-## 5. Pendiente
+## 5. Comprobaciones manuales en staging
 
-- **Migración visual:** F1 ya conectó el acceso y el espacio del equipo (RF-01, RNF-02), F2 los afiliados (RF-02, RNF-06), F3 el equipo, los permisos y el registro de actividad (RF-11, RF-17), F4 la operación de la sede (RF-03/09/13, RF-04/10, RF-12) F5a las donaciones, la galería y el contenido (RF-05 a RF-08, RF-14, RF-15) y F5b el sitio público (inicio y «Apoya a ASPAR», RF-04/10, RF-06/15, RF-16) y el retiro del servicio del modo demo. Falta F6 (panel de solicitudes y resumen). La API de cada una ya está probada.
-- **Verificar en staging (F1):** «Continuar con Google» con un ID de cliente real y Turnstile con la clave real de Cloudflare. En local se probaron con dobles y la API respondió de verdad.
-- **Verificar en staging (F5a):** subir fotos y videos con las claves reales de Cloudinary (en local la API responde que no está configurado y el E2E simula Cloudinary en el navegador).
-- **Verificar en staging (F2):** subir, abrir y quitar documentos con el bucket privado real de Supabase (en local la API responde que el almacenamiento no está configurado).
-- **Verificar en staging:** RNF-01 (carga), RNF-04 (disponibilidad), RNF-07 (RPO/RTO) y la cuota de RNF-10.
-- **Con la migración visual:** RNF-03 (accesibilidad), RNF-08 (navegadores) y RNF-09 (usabilidad y manual).
+Todo lo que se puede probar sin credenciales reales ya está cubierto por pytest, Vitest y los recorridos E2E: en local los servicios externos se reemplazan por dobles y la API responde de verdad. Lo siguiente necesita las claves reales o el despliegue, y queda como lista para el equipo.
+
+**Con credenciales reales**
+
+- [ ] **Google OAuth:** con `GOOGLE_CLIENT_ID` (API) y `VITE_GOOGLE_CLIENT_ID` (Frontend) reales, «Continuar con Google» crea una cuenta pendiente, vincula una existente y rechaza una cuenta desactivada.
+- [ ] **Cloudflare Turnstile:** con la clave real en `TURNSTILE_SECRET_KEY` y `VITE_TURNSTILE_SITE_KEY`, el registro, la recuperación, el contacto, «Quiero participar» y «Avísanos de tu aporte» funcionan, y el aviso «Solo para pruebas» desaparece. Sin resolver el captcha, la API rechaza el envío.
+- [ ] **Resend (correo):** con `EMAIL_PROVIDER=resend` y `RESEND_API_KEY`, llegan los correos de confirmación y de recuperación, con enlaces que funcionan una sola vez y vencen.
+- [ ] **Cloudinary:** con `CLOUDINARY_*`, se suben fotos y videos a un álbum, se ven en el sitio cuando se publica, y al quitarlos se borran también en Cloudinary. Revisar la alerta de cuota (RNF-10).
+- [ ] **Supabase:** la base de producción con las migraciones aplicadas y el bucket privado de documentos: subir, abrir con enlace temporal y quitar un documento de una ficha, y comprobar que el Voluntariado no puede abrirlo (RNF-06).
+
+**Con el despliegue real**
+
+- [ ] **RNF-01 (rendimiento):** prueba de carga con 50 usuarios: el listado de afiliados, la agenda y el resumen responden en menos de 3 s.
+- [ ] **RNF-04 (disponibilidad):** monitoreo de `GET /health` y `/health/db` durante un mes, con la meta de 99,5 %.
+- [ ] **RNF-07 (RPO/RTO):** activar el cron diario del respaldo y cronometrar una restauración completa en una base nueva.
+
+**Con personas**
+
+- [ ] **RNF-03:** recorrer el sitio y el espacio del equipo con un lector de pantalla (NVDA o VoiceOver) y solo con el teclado.
+- [ ] **RNF-08:** abrir las pantallas principales en Firefox y en Safari (iPhone); los E2E corren en Chromium, que cubre Chrome y Edge.
+- [ ] **RNF-09:** una sesión con el equipo de ASPAR usando el sistema, y el manual de uso.
+- [ ] Publicar desde «Contenido del sitio» los textos reales, el QR bancario de ASPAR, el titular, el banco y la cuenta.
