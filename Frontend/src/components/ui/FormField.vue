@@ -42,6 +42,8 @@ const describedBy = computed(() =>
 <style scoped>
 .field {
   display: grid;
+  /* En una fila con otro campo más alto (con ayuda o error), este no se estira */
+  align-content: start;
   gap: var(--field-gap, var(--space-2));
 }
 

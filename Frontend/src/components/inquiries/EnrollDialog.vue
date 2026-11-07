@@ -267,7 +267,7 @@ async function submit() {
         <FormField v-slot="{ id }" label="Zona">
           <input :id="id" v-model="draft.zone" class="input" maxlength="80" />
         </FormField>
-        <FormField v-slot="{ id }" class="span-2" label="Dirección">
+        <FormField v-slot="{ id }" class="span-all" label="Dirección">
           <input
             :id="id"
             v-model="draft.address"
@@ -322,11 +322,15 @@ async function submit() {
 
 .enroll__grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-4) var(--space-5);
 }
 
 .span-2 {
+  grid-column: span 2;
+}
+
+.span-all {
   grid-column: 1 / -1;
 }
 
@@ -353,6 +357,11 @@ async function submit() {
 @media (max-width: 640px) {
   .enroll__grid {
     grid-template-columns: 1fr;
+  }
+
+  .span-2,
+  .span-all {
+    grid-column: auto;
   }
 }
 </style>

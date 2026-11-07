@@ -154,9 +154,14 @@ async function submit() {
       :id="field('para')"
       v-slot="{ id }"
       label="¿Es para otra persona?"
-      hint="Opcional. Por ejemplo: «para mi papá, Julio»."
     >
-      <input :id="id" v-model="form.onBehalfOf" class="input" maxlength="120" />
+      <input
+        :id="id"
+        v-model="form.onBehalfOf"
+        class="input"
+        maxlength="120"
+        placeholder="Opcional. Por ejemplo: «para mi papá, Julio»"
+      />
     </FormField>
     <FormField
       v-else
@@ -239,6 +244,10 @@ async function submit() {
 .inquiry__captcha {
   display: grid;
   gap: var(--space-2);
+}
+
+.inquiry__captcha :deep(.turnstile) {
+  justify-items: start;
 }
 
 .inquiry__error {

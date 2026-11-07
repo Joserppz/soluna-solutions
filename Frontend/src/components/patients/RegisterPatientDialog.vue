@@ -411,7 +411,7 @@ function searchDuplicate() {
 <style scoped>
 .register {
   display: grid;
-  gap: var(--space-6);
+  gap: clamp(var(--space-4), 2vh, var(--space-6));
 }
 
 .register__group {

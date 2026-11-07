@@ -962,6 +962,11 @@ onMounted(() => {
   gap: var(--space-2);
 }
 
+/* La verificación se alinea con los campos, a la izquierda */
+.notice__captcha :deep(.turnstile) {
+  justify-items: start;
+}
+
 .notice__error {
   margin: 0;
   color: var(--color-danger);

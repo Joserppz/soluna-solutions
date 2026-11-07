@@ -70,6 +70,13 @@ const description = computed(() =>
   color: var(--color-text-muted);
 }
 
+/* Ventanas bajas: el formulario entra completo, sin barra */
+@media (max-height: 760px) {
+  .intro {
+    display: none;
+  }
+}
+
 .sent {
   display: grid;
   gap: var(--space-3);
