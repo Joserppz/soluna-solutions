@@ -82,11 +82,7 @@ onMounted(load)
           >
             {{ link.label }}
           </SiteLink>
-          <AppButton
-            size="sm"
-            :to="{ name: 'inicio', hash: '#ayudar' }"
-            class="site-nav__cta"
-          >
+          <AppButton size="sm" :to="{ name: 'apoyar' }" class="site-nav__cta">
             Quiero ayudar
           </AppButton>
         </nav>
@@ -148,9 +144,7 @@ onMounted(load)
           <h2>Apoya</h2>
           <ul>
             <li>
-              <SiteLink :to="{ name: 'inicio', hash: '#ayudar' }"
-                >Donar</SiteLink
-              >
+              <SiteLink :to="{ name: 'apoyar' }">Donar</SiteLink>
             </li>
             <li>
               <SiteLink

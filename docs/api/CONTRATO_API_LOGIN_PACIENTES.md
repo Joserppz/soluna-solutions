@@ -231,4 +231,7 @@ Todos los listados que pueden crecer (afiliados, equipo, bitácora, inventario, 
 El contrato está completo. Avance de la migración visual (las vistas pasan de `src/services/`, modo demo, a `src/api/`):
 
 1. ✅ **Acceso y sesión (bloque F1):** ingreso con `session.login` y «Continuar con Google», registro y recuperación con Turnstile, confirmación de correo, cambio obligatorio de la contraseña temporal, cuenta pendiente y aviso de inactividad con `idleTimeout` y `session.refresh()`.
-2. ⏳ **Afiliados (bloque F2):** listado paginado (`PatientSummaryOut`) y ficha (`PatientOut`) con contactos, evaluaciones y documentos.
+2. ✅ **Afiliados (bloque F2):** listado paginado (`PatientSummaryOut`) y ficha (`PatientOut`) con contactos, evaluaciones y documentos.
+3. ✅ **Equipo, permisos y registro de actividad (F3)**, **operación de la sede (F4)** y **donaciones, galería y contenido (F5a)**.
+4. ✅ **Sitio público (F5b):** inicio y «Apoya a ASPAR» con los endpoints `/public/*` (sin sesión). Con esto se retiró `src/services/`: ya ninguna pantalla usa el modo demo.
+5. ⏳ **Panel de solicitudes y resumen (F6).**

@@ -75,7 +75,7 @@ Sube los dos archivos (`openapi.json` y `src/api/schema.d.ts`) en el mismo commi
 
 ### Capa de datos `src/api/`
 
-Es la forma de hablar con la API desde el Sprint 2. Las vistas actuales todavía usan `src/services/` y el modo demo (ADR-008); se migrarán una por una a esta capa.
+Es la forma de hablar con la API desde el Sprint 2. Todas las pantallas la usan: el servicio del modo demo (`src/services/`, ADR-008) se retiró en F5b.
 
 ```ts
 import { api, isApiError, session } from '../api'
@@ -136,7 +136,8 @@ El diseño sigue `ASPAR_diseno_completo.pdf`: paleta oficial (Verde ASPAR `#0739
 
 | Ruta                                           | Pantalla                                                              | Acceso                                     |
 | :--------------------------------------------- | :-------------------------------------------------------------------- | :----------------------------------------- |
-| `/`                                            | Sitio público (portada actual; se rehace en F5b)                      | Todos                                      |
+| `/`                                            | Sitio público: inicio, agenda, comunidad y contacto                   | Todos                                      |
+| `/apoyar`                                      | «Apoya a ASPAR»: aporte por QR bancario y seguimiento (`?aviso=…`)    | Todos                                      |
 | `/ingresar`                                    | Acceso del equipo: correo y contraseña o Google                       | Sin sesión                                 |
 | `/crear-cuenta`, `/recuperar-contrasena`       | Registro y recuperación, con Turnstile                                | Sin sesión                                 |
 | `/verificar-correo`, `/restablecer-contrasena` | Enlaces de los correos                                                | Todos                                      |
@@ -152,13 +153,14 @@ Frontend/
 ├── playwright.config.ts
 ├── src/
 │   ├── api/                     # Contrato con la API: cliente, endpoints tipados y sesión
-│   ├── styles/                  # tokens.css, base.css, forms.css (y legacy.css de la portada actual)
+│   ├── styles/                  # tokens.css, base.css, forms.css
 │   ├── components/
 │   │   ├── ui/                  # Botón, modal, aviso, insignia, tabla, esqueleto, campos, toasts
 │   │   ├── auth/                # Turnstile, Google, reglas de contraseña, formulario de correo
 │   │   ├── patients/            # Alta de afiliados, campos de contacto y pestañas de la ficha (record/)
 │   │   ├── donations/           # Registrar un aporte, panel «Confirmar aporte» y meta del sitio
 │   │   ├── media/               # Álbum nuevo, panel del álbum y personas en la foto
+│   │   ├── public/              # Sitio público: formulario de contacto, «Quiero participar», álbum y SiteLink
 │   │   └── session/             # Aviso de inactividad
 │   ├── composables/             # useApi, useToast, useIdleSession, usePageCrumb, useFitLayout, useFitRows
 │   ├── layouts/                 # TeamLayout (barra lateral), AuthLayout (acceso), PublicLayout
@@ -167,14 +169,14 @@ Frontend/
 │   ├── views/
 │   │   ├── auth/                # Ingreso, registro, correo, contraseñas, cuenta pendiente
 │   │   ├── team/                # Resumen, afiliados (patients/), equipo y registro (admin/), operación de la sede (ops/), donaciones (donations/), galería (media/), contenido (content/) y secciones en preparación
-│   │   └── *.vue                # Pantallas antiguas (modo demo), sin ruta: se reemplazan bloque a bloque
-│   └── services/, types/        # Capa antigua del modo demo; se elimina en F6
+│   │   ├── public/              # Inicio y «Apoya a ASPAR»
+│   │   └── NotFoundView.vue
 └── src/**/__test__/             # Pruebas de Vitest junto a cada parte
 ```
 
 **Sesión:** la cookie HttpOnly y el token CSRF los maneja `src/api`. `useIdleSession` avisa a los 13 minutos sin uso («¿Sigues ahí?»), renueva la sesión mientras la persona trabaja y la cierra a los 15. La actividad se comparte entre pestañas.
 
-**Secciones en preparación:** las pantallas que aún no se conectan a la API muestran «Estamos preparando esta sección» en lugar de datos de ejemplo. Cada bloque las reemplaza por la vista real; F2 conectó Afiliados, F3 Equipo y permisos y Registro de actividad, F4 Actividades, Asistencia e Inventario, y F5a Donaciones, Galería y Contenido.
+**Secciones en preparación:** las pantallas que aún no se conectan a la API muestran «Estamos preparando esta sección» en lugar de datos de ejemplo. Cada bloque las reemplaza por la vista real; F2 conectó Afiliados, F3 Equipo y permisos y Registro de actividad, F4 Actividades, Asistencia e Inventario, F5a Donaciones, Galería y Contenido, y F5b el sitio público.
 
 **Ventana completa:** en escritorio y laptops (`useFitLayout()`: 1024 px de ancho y 560 px de alto o más), la página del equipo no se desplaza. Cada vista es una columna que ocupa el alto disponible: el encabezado arriba y el contenido debajo (`flex: 1; min-height: 0`). Las listas muestran tantas filas como entran (`rowsThatFit()`, o `useFitRows()` para una tabla); el lugar de la paginación queda reservado desde el inicio para que la lista se pida una sola vez. Si algo igual no entra, solo se desplaza esa zona. Tamaños fluidos con `clamp(…vh…)`. En el celular la página se desplaza: el encabezado va dentro de `StickyHeader` (con `:disabled="fit"` en escritorio), que queda fijo al bajar y avisa con `stuck` para achicarlo; `DataTable` con `sticky-head` deja los títulos de las columnas debajo y pasa a tarjetas según su propio ancho (`stack-below`).
 
@@ -196,3 +198,10 @@ Frontend/
 - **Galería:** álbumes en pestañas (`?ver=publicados`) y el álbum abierto al lado (`?album=…`). Cada archivo se sube con la firma de la API directo a Cloudinary (`utils/media.ts`) y luego se registra en la API. Sin claves de Cloudinary (`CLOUDINARY_*` en `Backend/.env`), la pantalla lo avisa. Una foto con alguien sin permiso de imagen bloquea la publicación, y publicar pide marcar la revisión de permisos.
 - **Contenido:** cada sección (`?seccion=mision_vision`) tiene sus campos en `utils/content.ts`. La vista previa resalta lo que cambió desde lo publicado (`changedSegments`). «Guardar borrador» no publica; «Publicar cambios» guarda y publica. Las redes sociales se guardan aparte con «Guardar enlaces».
 - **Pruebas E2E:** los aportes y álbumes «… de prueba 123456» se borran al terminar. Cloudinary se simula en el navegador.
+
+**Sitio público (F5b):** `layouts/PublicLayout.vue`, `views/public/` y `components/public/`.
+- **Contenido:** `useSiteContent()` pide `GET /public/content` una sola vez para el encabezado, el pie y cada página. Si una sección no se publicó, `utils/site.ts` da el texto del diseño (`SITE_DEFAULTS`, `DEFAULT_STEPS`, `DEFAULT_QUESTIONS`).
+- **Inicio:** portada con el próximo encuentro (entra en la primera vista con la franja de caminos), agenda del mes con ‹ › (`GET /public/schedules?from=…&to=…`), álbumes, formas de ayudar y preguntas. «Quiero participar» (`ParticipateDialog`) y el contacto usan `InquiryForm`, con Turnstile. `?motivo=voluntariado|especie|orientacion|otro#contacto` elige el motivo.
+- **Apoya a ASPAR (`/apoyar`):** montos, QR bancario de «Datos para donar» (`qrUrl`, con «Guardar el QR en mi teléfono») y «Avísanos de tu aporte». Después, `?aviso=…` muestra el seguimiento en tres pasos (`GET /public/donations/notice/{id}`). Sin Libélula. En el celular, «Donar con QR» queda fijo al pie.
+- **Enlaces a secciones:** `SiteLink` para `/#…`, que no se anuncia como «página actual».
+- **Pruebas E2E:** las solicitudes y avisos «… de prueba 123456» se borran al terminar. El QR y Turnstile se reemplazan en el navegador.

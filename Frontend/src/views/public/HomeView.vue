@@ -256,7 +256,7 @@ onMounted(() => {
           <b>Quiero participar <span aria-hidden="true">→</span></b>
           <span>Encuentra una actividad para ti.</span>
         </SiteLink>
-        <SiteLink :to="{ name: 'inicio', hash: '#ayudar' }">
+        <SiteLink :to="{ name: 'apoyar' }">
           <b>Quiero ayudar <span aria-hidden="true">→</span></b>
           <span>Tu tiempo y tu apoyo suman.</span>
         </SiteLink>
@@ -608,9 +608,7 @@ onMounted(() => {
               </template>
             </p>
           </div>
-          <SiteLink :to="{ name: 'inicio', hash: '#ayudar' }"
-            >Hacer un aporte →</SiteLink
-          >
+          <SiteLink :to="{ name: 'apoyar' }">Hacer un aporte →</SiteLink>
         </li>
       </ul>
     </section>

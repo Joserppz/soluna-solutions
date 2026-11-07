@@ -52,6 +52,12 @@ export const routes: RouteRecordRaw[] = [
         component: () => import('../views/public/HomeView.vue'),
         meta: { access: 'public', title: 'Inicio' },
       },
+      {
+        path: 'apoyar',
+        name: 'apoyar',
+        component: () => import('../views/public/SupportView.vue'),
+        meta: { access: 'public', title: 'Apoya a ASPAR' },
+      },
     ],
   },
   {
