@@ -29,7 +29,7 @@ El C2 original tenía un único contenedor «Cloud Storage». En el Sprint 1 se 
 - ✅ Cada tipo de archivo queda en el servicio adecuado y RNF-06 no depende de Cloudinary.
 - ⚠️ Hay que vigilar la cuota gratuita de Cloudinary (alerta y contingencia en SCRUM-149 y SCRUM-151).
 - ✅ Implementado en el Sprint 2: `media_assets.provider` solo admite `cloudinary`; la API firma cada subida con formatos permitidos y una carpeta por álbum, y al quitar un archivo o un álbum lo borra también en Cloudinary (API `destroy`), solo después de confirmar la transacción.
-- ⏳ Los datos de ejemplo del modo demo del Frontend todavía dicen «Cloudinary / AWS S3»; se quitan con la migración visual.
+- ✅ La galería del equipo y la del sitio usan solo Cloudinary (F5a y F5b). Los datos de ejemplo del modo demo, que decían «Cloudinary / AWS S3», se retiraron con él.
 
 ## Evidencia
 

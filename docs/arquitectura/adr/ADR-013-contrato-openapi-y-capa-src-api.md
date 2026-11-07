@@ -17,7 +17,7 @@ ADR-009 verificaba el contrato con una prueba que leía `Frontend/src/types/aspa
   - `HttpClient` envía siempre las cookies (`credentials: 'include'`) y el `X-CSRF-Token`, y convierte todo error en `ApiError` con el mensaje de la API.
   - `endpoints.ts` tiene un método por endpoint.
   - `session.ts` guarda el estado de sesión y los permisos (`can('patients:read')`).
-- **Migración gradual.** La capa nueva convive con `src/services/` y el modo demo ([ADR-008](./ADR-008-modo-local-de-respaldo-en-frontend.md)) hasta que cada vista se migre. Así el CI y sus pruebas siguen en verde durante el cambio.
+- **Migración gradual.** La capa nueva convivió con `src/services/` y el modo demo ([ADR-008](./ADR-008-modo-local-de-respaldo-en-frontend.md)) mientras se migraba cada vista, así el CI siguió en verde. La migración terminó en el Sprint 2 (F6): hoy todas las vistas usan `src/api/`.
 
 ## Alternativas
 
@@ -29,7 +29,7 @@ ADR-009 verificaba el contrato con una prueba que leía `Frontend/src/types/aspa
 - ✅ Un cambio en la API que rompe al frontend aparece como error de TypeScript en el CI, no en la pantalla.
 - ✅ Las claves de permisos están tipadas: `can('patients:raed')` no compila.
 - ⚠️ Cada cambio de endpoint lleva dos archivos generados en el mismo commit (`openapi.json` y `schema.d.ts`).
-- ⚠️ Mientras dure la migración conviven dos clientes HTTP. El de `src/services/` se elimina junto con el modo demo.
+- ✅ Hay un solo cliente HTTP. El de `src/services/` se eliminó junto con el modo demo (F5b y F6).
 
 ## Evidencia
 

@@ -246,7 +246,6 @@ pg_restore --clean --if-exists --no-owner --no-privileges --dbname "$DESTINO" ba
 3. Variables del entorno (**Settings → Variables and Secrets**). Todas son públicas: Vite las copia en el JavaScript.
    - `NODE_VERSION=22` (la misma del CI)
    - `VITE_API_BASE_URL=https://api.<dominio>/api/v1`
-   - `VITE_DEMO_MODE=false`
    - `VITE_GOOGLE_CLIENT_ID` y `VITE_TURNSTILE_SITE_KEY`
 4. **Custom domains:** `aspar.com` en `aspar-web` y `staging.aspar.com` en `aspar-web-staging`.
 5. No agregues `404.html`: sin él, Pages responde `index.html` en cualquier ruta, como necesita una SPA con `vue-router`.

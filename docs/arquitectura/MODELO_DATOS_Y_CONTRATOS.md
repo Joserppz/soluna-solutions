@@ -122,7 +122,7 @@ Backend (Pydantic, camelCase)
 | `types.ts` | Alias legibles de los tipos generados (`PatientOut`, `PatientSummaryOut`…) |
 | `schema.d.ts` | Generado. No se edita a mano |
 
-Las vistas todavía usan `src/services/` (modo demo, ADR-008). Pasarlas a `src/api/` es la **migración visual** de la siguiente etapa; no cambia el contrato.
+Todas las vistas usan `src/api/`. El modo demo (`src/services/`, ADR-008) se retiró en el Sprint 2 (F5b y F6), sin cambiar el contrato.
 
 ## 5. Base de datos
 

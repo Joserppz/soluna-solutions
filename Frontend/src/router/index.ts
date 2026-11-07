@@ -25,10 +25,8 @@ declare module 'vue-router' {
   }
 }
 
-const preparingView = () => import('../views/team/SectionPreparingView.vue')
-
-/** Vista de cada sección ya conectada a la API; el resto muestra el aviso. */
-const SECTION_VIEWS: Partial<Record<string, RouteRecordRaw['component']>> = {
+/** La vista de cada sección del menú (todas conectadas a la API). */
+export const SECTION_VIEWS: Record<string, RouteRecordRaw['component']> = {
   afiliados: () => import('../views/team/patients/PatientsListView.vue'),
   'equipo-permisos': () =>
     import('../views/team/admin/TeamPermissionsView.vue'),
@@ -120,7 +118,7 @@ export const routes: RouteRecordRaw[] = [
       ...TEAM_SECTIONS.map((section): RouteRecordRaw => ({
         path: section.path,
         name: section.name,
-        component: SECTION_VIEWS[section.name] ?? preparingView,
+        component: SECTION_VIEWS[section.name]!,
         meta: {
           access: 'team',
           permissions: section.permissions,

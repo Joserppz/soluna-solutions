@@ -11,7 +11,7 @@ Cada ADR documenta una decisión técnica: el contexto, la decisión, las altern
 | [ADR-005](./ADR-005-proteccion-rnf06-en-servidor.md) | Protección de datos clínicos aplicada en el servidor | Aceptada | RNF-06 |
 | [ADR-006](./ADR-006-bitacora-inmutable.md) | Bitácora de auditoría inmutable y escrita solo por el Backend | Aceptada | RF-17 |
 | [ADR-007](./ADR-007-supabase-solo-desde-el-backend.md) | Supabase accesible solo desde el Backend (RLS sin políticas) | Aceptada | RNF-06 |
-| [ADR-008](./ADR-008-modo-local-de-respaldo-en-frontend.md) | Modo local de respaldo en el Frontend, solo si la API no responde | Aceptada (temporal) | RF-01, RF-02 |
+| [ADR-008](./ADR-008-modo-local-de-respaldo-en-frontend.md) | Modo local de respaldo en el Frontend, solo si la API no responde | Retirada (Sprint 2, F6) | RF-01, RF-02 |
 | [ADR-009](./ADR-009-contrato-verificado-por-prueba.md) | Contrato Frontend ↔ Backend verificado por una prueba automática | Reemplazada por ADR-013 | RNF-11 |
 | [ADR-010](./ADR-010-multimedia-en-cloudinary.md) | Galería multimedia en Cloudinary y documentos privados en Supabase Storage | Aceptada | RF-05, RNF-06, RNF-10 |
 | [ADR-011](./ADR-011-backend-por-modulos-de-dominio.md) | Backend organizado por módulos de dominio (`app/modules/<dominio>/`) | Aceptada | RNF-11 |

@@ -1,6 +1,6 @@
 # ADR-008: Modo local de respaldo en el Frontend, solo si la API no responde
 
-- **Estado:** Aceptada (temporal, revisar en el Sprint 2)
+- **Estado:** Retirada en el Sprint 2 (bloques F5b y F6). Se conserva como registro de la decisión.
 - **Fecha:** 2026-10-26
 - **Requisitos:** RF-01, RF-02
 
@@ -23,3 +23,16 @@ El Frontend se desarrolló antes que la API. Para poder demostrar y probar las p
 ## Evidencia
 
 `Frontend/src/services/api.ts`, `Frontend/src/services/aspar.ts` (`signInWithApi`), `Frontend/src/views/__test__/LoginView.spec.ts`, `docs/evidencias/RECORRIDO_INTEGRADO_LOGIN_PACIENTES.md` (§4).
+
+## Retiro (Sprint 2)
+
+Con la API completa, cada pantalla pasó a `src/api/` ([ADR-013](./ADR-013-contrato-openapi-y-capa-src-api.md)) y el modo local dejó de tener sentido:
+
+- **F5b:** la portada nueva reemplazó a la última pantalla que usaba el servicio del modo demo. Se borraron `src/services/aspar.ts`, `src/services/api.ts`, `src/types/aspar.ts`, `legacy.css` y su prueba (`PantallasRequisitos.spec.ts`).
+- **F6:** la bandeja de solicitudes reemplazó a la última sección «en preparación». Se borraron `SectionPreparingView.vue` y la variable `VITE_DEMO_MODE`.
+
+Hoy no hay cuentas de demostración en el Frontend ni datos del sistema guardados en el navegador. Si la API no responde, la pantalla lo dice («No pudimos…», «Intentar de nuevo») y no inventa datos. Lo único que queda en `localStorage` es la hora del último uso, que `useIdleSession` comparte entre pestañas para el aviso de inactividad (RNF-02): no es un dato del sistema.
+
+`Frontend/src/__test__/sinModoDemo.spec.ts` comprueba que cada sección tiene su vista conectada a la API y que ningún archivo vuelve a usar el servicio del modo demo, `VITE_DEMO_MODE` ni el almacenamiento del navegador.
+
+Las cuentas de demostración siguen existiendo, pero en la base, creadas por `python -m scripts.seed_demo` (Backend), y la API decide como con cualquier otra cuenta.

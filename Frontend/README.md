@@ -18,7 +18,6 @@ cp .env.example .env
 | `VITE_API_BASE_URL`       | URL de la API (por defecto `http://localhost:8000/api/v1`)                             |
 | `VITE_GOOGLE_CLIENT_ID`   | ID de cliente OAuth de Google. Vacío: no aparece «Continuar con Google»                |
 | `VITE_TURNSTILE_SITE_KEY` | Clave pública de Cloudflare Turnstile. En desarrollo, si falta, se usa la de prueba    |
-| `VITE_DEMO_MODE`          | Solo para las pantallas antiguas que todavía no se migran (se elimina en el bloque F6) |
 
 Los tiempos de sesión (30 min, 15 min sin uso, 8 h como máximo) los define la API.
 
@@ -176,7 +175,7 @@ Frontend/
 
 **Sesión:** la cookie HttpOnly y el token CSRF los maneja `src/api`. `useIdleSession` avisa a los 13 minutos sin uso («¿Sigues ahí?»), renueva la sesión mientras la persona trabaja y la cierra a los 15. La actividad se comparte entre pestañas.
 
-**Secciones en preparación:** las pantallas que aún no se conectan a la API muestran «Estamos preparando esta sección» en lugar de datos de ejemplo. Cada bloque las reemplaza por la vista real; F2 conectó Afiliados, F3 Equipo y permisos y Registro de actividad, F4 Actividades, Asistencia e Inventario, F5a Donaciones, Galería y Contenido, y F5b el sitio público.
+**Todo conectado a la API:** cada sección del menú tiene su vista (`SECTION_VIEWS` en `router/index.ts`). F2 conectó Afiliados; F3 Equipo y permisos y Registro de actividad; F4 Actividades, Asistencia e Inventario; F5a Donaciones, Galería y Contenido; F5b el sitio público, y F6 Solicitudes y el Resumen. El modo demo se retiró (ADR-008): si la API no responde, la pantalla lo dice y ofrece «Intentar de nuevo». `sinModoDemo.spec.ts` comprueba que no vuelva.
 
 **Ventana completa:** en escritorio y laptops (`useFitLayout()`: 1024 px de ancho y 560 px de alto o más), la página del equipo no se desplaza. Cada vista es una columna que ocupa el alto disponible: el encabezado arriba y el contenido debajo (`flex: 1; min-height: 0`). Las listas muestran tantas filas como entran (`rowsThatFit()`, o `useFitRows()` para una tabla); el lugar de la paginación queda reservado desde el inicio para que la lista se pida una sola vez. Si algo igual no entra, solo se desplaza esa zona. Tamaños fluidos con `clamp(…vh…)`. En el celular la página se desplaza: el encabezado va dentro de `StickyHeader` (con `:disabled="fit"` en escritorio), que queda fijo al bajar y avisa con `stuck` para achicarlo; `DataTable` con `sticky-head` deja los títulos de las columnas debajo y pasa a tarjetas según su propio ancho (`stack-below`).
 

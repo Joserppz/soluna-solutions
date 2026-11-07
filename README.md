@@ -67,7 +67,7 @@ La guía completa del Backend (variables, migraciones, permisos por rol, pruebas
 | Archivo | Variables obligatorias | Opcionales |
 | :--- | :--- | :--- |
 | [`Backend/.env.example`](./Backend/.env.example) | `DATABASE_URL`, `JWT_SECRET` (mínimo 32 caracteres aleatorios) | `MIGRATION_DATABASE_URL`, sesión (`SESSION_*`), cookies (`COOKIE_*`), `CORS_ORIGINS`, correo (`EMAIL_PROVIDER`, `RESEND_API_KEY`…), `TURNSTILE_SECRET_KEY`, `GOOGLE_CLIENT_ID`, `SUPABASE_*`, `RATE_LIMITS_ENABLED` |
-| [`Frontend/.env.example`](./Frontend/.env.example) | — | `VITE_API_BASE_URL` (por defecto `http://localhost:8000/api/v1`), `VITE_DEMO_MODE` (por defecto `false`), `VITE_GOOGLE_CLIENT_ID`, `VITE_TURNSTILE_SITE_KEY` |
+| [`Frontend/.env.example`](./Frontend/.env.example) | — | `VITE_API_BASE_URL` (por defecto `http://localhost:8000/api/v1`), `VITE_GOOGLE_CLIENT_ID`, `VITE_TURNSTILE_SITE_KEY` |
 
 - Los archivos `.env` reales **nunca** se suben al repositorio.
 - La API se niega a arrancar si `JWT_SECRET` es el valor de ejemplo. Con `ENV=prod` también se niega si falta algún ajuste de producción: correo real, Turnstile real, cookies `Secure`, límites de peticiones activos y CORS solo `https`.

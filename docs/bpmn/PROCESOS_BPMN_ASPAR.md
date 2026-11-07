@@ -39,11 +39,11 @@ El proceso **actual** sale del análisis AS-IS de la entrevista con ASPAR (`docs
 | Cualquiera con acceso a las hojas lee los datos clínicos | Login por rol y anamnesis solo con consentimiento y acceso `Activo` | RF-01, RF-11, RNF-06 | ✅ Implementado |
 | No queda registro de quién consultó o cambió una ficha | Bitácora inmutable de operaciones sensibles | RF-17 | ✅ Implementado |
 | El diagnóstico sin certificado no queda documentado | Campo «certificado neurológico» y notas de síntomas en la anamnesis | RF-02 | ✅ Implementado |
-| Asistencia anotada en papel | Marcación de asistencia con bloqueo RNF-06 y resumen mensual | RF-12, RNF-06 | ✅ API (Sprint 2) · 🎨 pantalla en modo demo hasta la migración visual |
-| Cronograma avisado solo por WhatsApp | Cronograma público en el portal sin iniciar sesión | RF-04, RF-10 | ✅ API con borrador, publicación y cancelación (Sprint 2) · 🎨 pantalla en modo demo |
+| Asistencia anotada en papel | Marcación de asistencia con bloqueo RNF-06 y resumen mensual | RF-12, RNF-06 | ✅ API y pantalla `/equipo/asistencia` (Sprint 2, F4) |
+| Cronograma avisado solo por WhatsApp | Cronograma público en el portal sin iniciar sesión | RF-04, RF-10 | ✅ API con borrador, publicación y cancelación, y pantallas `/equipo/actividades` (F4) y agenda del sitio (F5b) |
 | Fotos y videos llenan Google Drive / Gmail | Galería en Cloudinary con control de cuota | RF-05, RNF-10 | ✅ API con Cloudinary (Sprint 2) · ⚠️ falta el monitoreo de cuota |
-| Inventario en listas de papel, sin auditoría | Registro, baja, movimientos con historial y reportes para la Alcaldía | RF-03, RF-09, RF-13 | ✅ API con baja, movimientos y exportación CSV/Excel (Sprint 2) · 🎨 pantalla en modo demo |
-| Donaciones sin canal formal ni transparencia | QR oficial, registro por canal, conciliación con el extracto y meta pública de recaudación | RF-06, RF-14, RF-15 | ✅ API (Sprint 2). Sin pasarela Libélula: el aporte por QR se confirma contra el extracto bancario |
+| Inventario en listas de papel, sin auditoría | Registro, baja, movimientos con historial y reportes para la Alcaldía | RF-03, RF-09, RF-13 | ✅ API con baja, movimientos y exportación CSV/Excel, y pantalla `/equipo/inventario` (Sprint 2, F4) |
+| Donaciones sin canal formal ni transparencia | QR oficial, registro por canal, conciliación con el extracto y meta pública de recaudación | RF-06, RF-14, RF-15 | ✅ API y pantallas `/equipo/donaciones` (F5a) y `/apoyar` (F5b). Sin pasarela Libélula: el aporte por QR se confirma contra el extracto bancario |
 | Pérdida de información en WhatsApp | Toda la información queda en PostgreSQL, accesible según el rol | RF-02, RF-11 | ✅ Para pacientes y usuarios |
 
 ### 0.4 Cómo editar los diagramas
@@ -59,6 +59,8 @@ El proceso **actual** sale del análisis AS-IS de la entrevista con ASPAR (`docs
 ![Diagrama BPMN 2.0 ASPAR](./diagrama_procesos_bpmn_aspar.png)
 
 ## 1. Proceso 1: Autenticación Administrativa, Gestión de Sesión y Auditoría (RF-01, RNF-02, RF-17)
+
+> Pantallas del Sprint 1. Desde el bloque F1 del Sprint 2 el ingreso es `/ingresar` con `src/api/` (cookie HttpOnly y CSRF), y el aviso de inactividad es «¿Sigues ahí?». `services/api.ts` y `services/aspar.ts` ya no existen (ADR-008, retirada). Ver [`EVIDENCIAS_FRONTEND_F1.md`](../evidencias/EVIDENCIAS_FRONTEND_F1.md).
 
 | Paso BPMN | Actor / Rol | Acción del Usuario en la Interfaz Vue 3 | Ruta / Componente | Respuesta Visual y Validación del Sistema |
 | :--- | :--- | :--- | :--- | :--- |
@@ -79,6 +81,8 @@ El proceso **actual** sale del análisis AS-IS de la entrevista con ASPAR (`docs
 | **2.4 Marcación de Asistencia Sabatina** | Profesional / Voluntario | Marca **«Presente»** o **«Ausente»** en la actividad grupal sabatina. | `/asistencia` (`AttendanceView.vue`) | Si el paciente tiene acceso revocado o carece de consentimiento vigente, el sistema impide marcar `Presente` y notifica la restricción RNF-06. |
 
 ## 3. Proceso 3: Portal Público, Galería Cloud, Donaciones e Inventario Alcaldía (RF-03 a RF-10)
+
+> Pantallas del Sprint 1. En el Sprint 2 la portada es el inicio del sitio y el aporte se hace en `/apoyar`, solo con QR bancario y sin Libélula (F5b); el inventario está en `/equipo/inventario` (F4) y la galería en `/equipo/galeria` (F5a). `ScheduleView.vue` ya no existe. Ver [`EVIDENCIAS_FRONTEND_F5B.md`](../evidencias/EVIDENCIAS_FRONTEND_F5B.md).
 
 | Paso BPMN | Actor / Rol | Acción del Usuario en la Interfaz Vue 3 | Ruta / Componente | Respuesta Visual y Validación del Sistema |
 | :--- | :--- | :--- | :--- | :--- |
