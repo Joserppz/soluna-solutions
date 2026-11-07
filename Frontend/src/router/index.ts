@@ -49,7 +49,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: '',
         name: 'inicio',
-        component: () => import('../views/ScheduleView.vue'),
+        component: () => import('../views/public/HomeView.vue'),
         meta: { access: 'public', title: 'Inicio' },
       },
     ],

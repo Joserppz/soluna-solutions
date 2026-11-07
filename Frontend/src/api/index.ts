@@ -6,7 +6,7 @@
  *   await session.login(email, password)
  *   if (session.can('patients:read')) await api.patients.list({ search: 'rojas' })
  *
- * Convive con src/services/ (modo demo) hasta que las vistas se migren.
+ * Todas las pantallas usan esta capa: el servicio del modo demo ya se retiró.
  */
 import { HttpClient } from './client'
 import { createEndpoints } from './endpoints'

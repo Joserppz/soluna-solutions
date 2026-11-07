@@ -1,6 +1,6 @@
 /**
  * Al terminar, borra lo que crearon los recorridos: las actividades, los materiales,
- * los aportes y los álbumes «… de prueba 123456». Así no quedan mezclados con los datos de
+ * los aportes, los álbumes y las solicitudes del sitio «… de prueba 123456». Así no quedan mezclados con los datos de
  * demostración (la agenda, la asistencia, el inventario y las donaciones se ven como en
  * uso real).
  *
@@ -27,6 +27,9 @@ delete from media_patient_tags where asset_id in (
 delete from media_assets where album_id in (
   select id from media_albums where title ~ '${TEST_TITLE}');
 delete from media_albums where title ~ '${TEST_TITLE}';
+delete from inquiry_notes where inquiry_id in (
+  select id from inquiries where name ~ '${TEST_TITLE}');
+delete from inquiries where name ~ '${TEST_TITLE}';
 delete from attendance where schedule_id in (select id from e2e_schedules);
 update inquiries set schedule_id = null where schedule_id in (select id from e2e_schedules);
 update media_albums set schedule_id = null where schedule_id in (select id from e2e_schedules);

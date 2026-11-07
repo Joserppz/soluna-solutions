@@ -455,9 +455,13 @@ describe('Sitio público con y sin sesión', () => {
     const fake = createApiFake({ 'GET /auth/me': NO_SESSION })
     const { wrapper } = await mountApp('/', fake)
 
-    expect(wrapper.find('.public-session').exists()).toBe(false)
-    expect(wrapper.get('.public-footer__team').text()).toBe('Acceso del equipo')
-    expect(wrapper.find('#cronograma').exists()).toBe(true)
+    expect(wrapper.find('.site-session').exists()).toBe(false)
+    expect(wrapper.get('.site-footer a[href="/ingresar"]').text()).toBe(
+      'Acceso del equipo',
+    )
+    expect(wrapper.find('#actividades').exists()).toBe(true)
+    // Las secciones de la portada no se anuncian como «página actual»
+    expect(wrapper.find('.site-nav__link[aria-current]').exists()).toBe(false)
   })
 
   it('una cuenta pendiente navega el sitio con su sesión y puede salir', async () => {
@@ -466,7 +470,7 @@ describe('Sitio público con y sin sesión', () => {
       'POST /auth/logout': LOGOUT,
     })
     const { wrapper } = await mountApp('/', fake)
-    const bar = wrapper.get('.public-session')
+    const bar = wrapper.get('.site-session')
 
     expect(bar.text()).toContain('Hola, Gabriela.')
     expect(bar.text()).toContain(
@@ -477,14 +481,14 @@ describe('Sitio público con y sin sesión', () => {
     await bar.get('button').trigger('click')
     await settle()
     expect(fake.callsTo('POST /auth/logout')).toHaveLength(1)
-    expect(wrapper.find('.public-session').exists()).toBe(false)
+    expect(wrapper.find('.site-session').exists()).toBe(false)
   })
 
   it('el equipo tiene un atajo a su espacio', async () => {
     const fake = createApiFake({ 'GET /auth/me': { body: ADMIN_SESSION } })
     const { wrapper } = await mountApp('/', fake)
 
-    expect(wrapper.get('.public-session a').text()).toBe('Espacio del equipo')
+    expect(wrapper.get('.site-session a').text()).toBe('Espacio del equipo')
   })
 
   it('una dirección que no existe muestra una página amable', async () => {

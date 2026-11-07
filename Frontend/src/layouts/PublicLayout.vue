@@ -1,14 +1,19 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 
 import AsparBrand from '../components/AsparBrand.vue'
+import SiteLink from '../components/public/SiteLink.vue'
 import AppButton from '../components/ui/AppButton.vue'
 import { useApi } from '../composables/useApi'
+import { useSiteContent } from '../composables/useSiteContent'
 import { useToast } from '../composables/useToast'
 import { firstName } from '../utils/format'
+import { contactLines, socialLinks } from '../utils/site'
 
+/** Encabezado y pie del sitio público (diseño págs. 2 a 5), en escritorio y celular. */
 const { session } = useApi()
+const { content, load } = useSiteContent()
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
@@ -22,10 +27,15 @@ const accountLink = computed(() =>
 )
 
 const links = [
-  { label: 'Nosotros', hash: '' },
-  { label: 'Actividades', hash: '#cronograma' },
-  { label: 'Comunidad', hash: '#galeria' },
+  { label: 'Nosotros', hash: '#nosotros' },
+  { label: 'Actividades', hash: '#actividades' },
+  { label: 'Cómo participar', hash: '#participar' },
+  { label: 'Comunidad', hash: '#comunidad' },
 ]
+
+const networks = computed(() => socialLinks(content.value))
+const contacts = computed(() => contactLines(content.value))
+const year = new Date().getFullYear()
 
 async function logout() {
   await session.logout()
@@ -39,44 +49,43 @@ watch(
     menuOpen.value = false
   },
 )
+
+onMounted(load)
 </script>
 
 <template>
   <div class="public">
-    <header class="public-header">
-      <div class="public-header__inner">
-        <RouterLink :to="{ name: 'inicio' }" class="public-header__brand">
+    <a class="skip" href="#contenido">Ir al contenido</a>
+    <header class="site-header" :class="{ 'is-open': menuOpen }">
+      <div class="site-header__inner">
+        <SiteLink :to="{ name: 'inicio' }" class="site-header__brand">
           <AsparBrand />
-        </RouterLink>
+        </SiteLink>
 
         <button
           type="button"
-          class="public-header__toggle"
+          class="site-header__toggle"
           aria-controls="menu-sitio"
           :aria-expanded="menuOpen"
           @click="menuOpen = !menuOpen"
         >
+          <span aria-hidden="true">{{ menuOpen ? '✕' : '☰' }}</span>
           {{ menuOpen ? 'Cerrar' : 'Menú' }}
         </button>
 
-        <nav
-          id="menu-sitio"
-          class="public-nav"
-          :class="{ 'is-open': menuOpen }"
-          aria-label="Sitio de ASPAR"
-        >
-          <RouterLink
+        <nav id="menu-sitio" class="site-nav" aria-label="Sitio de ASPAR">
+          <SiteLink
             v-for="link in links"
-            :key="link.label"
+            :key="link.hash"
             :to="{ name: 'inicio', hash: link.hash }"
-            class="public-nav__link"
+            class="site-nav__link"
           >
             {{ link.label }}
-          </RouterLink>
+          </SiteLink>
           <AppButton
             size="sm"
-            :to="{ name: 'inicio', hash: '#donar' }"
-            class="public-nav__cta"
+            :to="{ name: 'inicio', hash: '#ayudar' }"
+            class="site-nav__cta"
           >
             Quiero ayudar
           </AppButton>
@@ -85,7 +94,7 @@ watch(
 
       <div
         v-if="user"
-        class="public-session"
+        class="site-session"
         role="region"
         aria-label="Tu sesión"
       >
@@ -95,35 +104,99 @@ watch(
             Tu cuenta espera la aprobación de Administración.
           </template>
         </span>
-        <span class="public-session__actions">
+        <span class="site-session__actions">
           <RouterLink :to="accountLink.to">{{ accountLink.label }}</RouterLink>
           <button type="button" @click="logout">Cerrar sesión</button>
         </span>
       </div>
     </header>
 
-    <!-- La portada actual conserva sus estilos hasta que se rehaga con el diseño (F5b) -->
-    <div class="legacy-scope public-content">
-      <main class="page-container">
-        <RouterView />
-      </main>
-    </div>
+    <main id="contenido" class="public-main" tabindex="-1">
+      <RouterView />
+    </main>
 
-    <footer class="public-footer">
-      <div class="public-footer__inner">
-        <div class="public-footer__about">
+    <footer class="site-footer">
+      <div class="site-footer__cols">
+        <div class="site-footer__about">
           <AsparBrand tone="dark" />
           <p>Acompañamos. Nos movemos. Seguimos.</p>
+          <ul v-if="contacts.length" class="site-footer__contact">
+            <li v-for="line in contacts" :key="line.label">
+              <span>{{ line.label }}:</span>
+              <a
+                v-if="line.href"
+                :href="line.href"
+                :target="line.href.startsWith('https') ? '_blank' : undefined"
+                rel="noopener"
+                >{{ line.value }}</a
+              >
+              <template v-else>{{ line.value }}</template>
+            </li>
+          </ul>
         </div>
-        <p class="public-footer__legal">
-          © {{ new Date().getFullYear() }} Asociación de Parkinson «Mario
-          Lagrava» · Bolivia
-        </p>
-        <RouterLink
-          v-if="!user"
-          :to="{ name: 'ingresar' }"
-          class="public-footer__team"
-        >
+        <nav aria-label="Conoce ASPAR">
+          <h2>Conoce ASPAR</h2>
+          <ul>
+            <li v-for="link in links.slice(0, 3)" :key="link.hash">
+              <SiteLink :to="{ name: 'inicio', hash: link.hash }">
+                {{ link.label }}
+              </SiteLink>
+            </li>
+          </ul>
+        </nav>
+        <nav aria-label="Apoya">
+          <h2>Apoya</h2>
+          <ul>
+            <li>
+              <SiteLink :to="{ name: 'inicio', hash: '#ayudar' }"
+                >Donar</SiteLink
+              >
+            </li>
+            <li>
+              <SiteLink
+                :to="{
+                  name: 'inicio',
+                  query: { motivo: 'voluntariado' },
+                  hash: '#contacto',
+                }"
+              >
+                Ser voluntario/a
+              </SiteLink>
+            </li>
+            <li>
+              <SiteLink
+                :to="{
+                  name: 'inicio',
+                  query: { motivo: 'especie' },
+                  hash: '#contacto',
+                }"
+              >
+                Donación en especie
+              </SiteLink>
+            </li>
+          </ul>
+        </nav>
+        <nav aria-label="Comunidad">
+          <h2>Comunidad</h2>
+          <ul>
+            <li v-for="network in networks" :key="network.key">
+              <a :href="network.url" target="_blank" rel="noopener">
+                {{ network.label }}
+              </a>
+            </li>
+            <li>
+              <SiteLink :to="{ name: 'inicio', hash: '#comunidad' }">
+                Galería
+              </SiteLink>
+            </li>
+          </ul>
+        </nav>
+      </div>
+      <div class="site-footer__base">
+        <span>
+          © {{ year }} Asociación de Parkinson «Mario Lagrava» · Bolivia
+        </span>
+        <RouterLink v-if="!user" :to="{ name: 'ingresar' }">
           Acceso del equipo
         </RouterLink>
       </div>
@@ -136,44 +209,70 @@ watch(
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--crema-50);
+  background: var(--crema-100);
+  --site-gutter: clamp(var(--space-4), 5.5vw, 5rem);
 }
 
-.public-header {
+.skip {
+  position: absolute;
+  left: var(--space-4);
+  top: -4rem;
+  z-index: calc(var(--z-sticky) + 1);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--aspar-verde);
+  color: #fff;
+}
+
+.skip:focus {
+  top: var(--space-2);
+}
+
+.site-header {
   position: sticky;
   top: 0;
   z-index: var(--z-sticky);
-  background: rgb(250 248 243 / 0.92);
+  background: rgb(255 253 249 / 0.94);
   backdrop-filter: saturate(1.4) blur(8px);
   box-shadow: 0 1px 0 var(--color-border);
 }
 
-.public-header__inner {
+.site-header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: min(14%, 12rem);
+  height: 2px;
+  background: var(--aspar-guindo);
+}
+
+.site-header__inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-6);
-  max-width: var(--content-max);
+  max-width: 90rem;
   margin: 0 auto;
-  padding: var(--space-3) clamp(var(--space-4), 4vw, var(--space-12));
+  padding: var(--space-3) var(--site-gutter);
 }
 
-.public-header__brand {
+.site-header__brand {
   text-decoration: none;
   border-radius: var(--radius-sm);
 }
 
-.public-header__toggle {
+.site-header__toggle {
   display: none;
 }
 
-.public-nav {
+.site-nav {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-1);
 }
 
-.public-nav__link {
+.site-nav__link {
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-sm);
   color: var(--color-text);
@@ -182,15 +281,15 @@ watch(
   transition: background-color var(--duration-fast) var(--ease-out);
 }
 
-.public-nav__link:hover {
+.site-nav__link:hover {
   background: rgb(7 57 48 / 0.06);
 }
 
-.public-nav__cta {
-  margin-left: var(--space-2);
+.site-nav__cta {
+  margin-left: var(--space-3);
 }
 
-.public-session {
+.site-session {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -201,13 +300,13 @@ watch(
   font-size: var(--text-sm);
 }
 
-.public-session__actions {
+.site-session__actions {
   display: inline-flex;
   gap: var(--space-4);
 }
 
-.public-session a,
-.public-session button {
+.site-session a,
+.site-session button {
   border: 0;
   background: none;
   padding: 0;
@@ -219,63 +318,110 @@ watch(
   cursor: pointer;
 }
 
-.public-content {
+.public-main {
   flex: 1;
+  outline: none;
 }
 
-.public-footer {
-  background: var(--verde-900);
-  color: rgb(255 255 255 / 0.82);
+.site-footer {
+  background: var(--aspar-verde);
+  color: rgb(255 255 255 / 0.78);
 }
 
-.public-footer__inner {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--space-6);
-  max-width: var(--content-max);
-  margin: 0 auto;
-  padding: var(--space-10) clamp(var(--space-4), 4vw, var(--space-12));
-}
-
-.public-footer__about {
+.site-footer__cols {
   display: grid;
+  grid-template-columns: 1.5fr repeat(3, 1fr);
+  gap: var(--space-8);
+  max-width: 90rem;
+  margin: 0 auto;
+  padding: var(--space-12) var(--site-gutter) var(--space-8);
+}
+
+.site-footer__about {
+  display: grid;
+  align-content: start;
   gap: var(--space-3);
 }
 
-.public-footer__legal {
-  font-size: var(--text-sm);
+.site-footer__about p {
+  margin: 0;
 }
 
-.public-footer__team {
+.site-footer h2 {
+  margin: 0 0 var(--space-3);
+  font-family: inherit;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
   color: #fff;
-  font-size: var(--text-sm);
-  font-weight: 600;
 }
 
-.public-footer a:focus-visible {
+.site-footer ul {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-footer__contact {
+  font-size: var(--text-sm);
+}
+
+.site-footer__contact span {
+  margin-right: var(--space-1);
+  color: rgb(255 255 255 / 0.6);
+}
+
+.site-footer a {
+  color: rgb(255 255 255 / 0.86);
+  text-decoration: none;
+  border-radius: var(--radius-xs);
+}
+
+.site-footer a:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+.site-footer a:focus-visible {
   box-shadow: var(--focus-ring-on-dark);
 }
 
-@media (max-width: 760px) {
-  .public-header__inner {
+.site-footer__base {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-3);
+  max-width: 90rem;
+  margin: 0 auto;
+  padding: var(--space-5) var(--site-gutter);
+  border-top: 1px solid rgb(255 255 255 / 0.12);
+  font-size: var(--text-sm);
+}
+
+@media (max-width: 960px) {
+  .site-header__inner {
     flex-wrap: wrap;
+    gap: var(--space-3);
   }
 
-  .public-header__toggle {
+  .site-header__toggle {
     display: inline-flex;
     align-items: center;
+    gap: var(--space-2);
     min-height: 2.75rem;
     padding: 0 var(--space-4);
     border: 1px solid var(--color-border-strong);
     border-radius: var(--radius-sm);
     background: var(--color-surface);
+    color: var(--aspar-verde);
     font-weight: 600;
     cursor: pointer;
   }
 
-  .public-nav {
+  .site-nav {
     display: none;
     width: 100%;
     flex-direction: column;
@@ -283,12 +429,33 @@ watch(
     padding-bottom: var(--space-3);
   }
 
-  .public-nav.is-open {
+  .is-open .site-nav {
     display: flex;
   }
 
-  .public-nav__cta {
+  .site-nav__link {
+    min-height: 2.75rem;
+    display: flex;
+    align-items: center;
+    font-size: var(--text-lg);
+  }
+
+  .site-nav__cta {
     margin: var(--space-2) 0 0;
+  }
+
+  .site-footer__cols {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .site-footer__about {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 480px) {
+  .site-header :deep(.brand__subtitle) {
+    display: none;
   }
 }
 </style>
