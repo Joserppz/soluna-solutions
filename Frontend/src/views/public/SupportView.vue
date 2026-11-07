@@ -959,12 +959,9 @@ onMounted(() => {
 
 .notice__captcha {
   display: grid;
+  justify-items: center;
   gap: var(--space-2);
-}
-
-/* La verificación se alinea con los campos, a la izquierda */
-.notice__captcha :deep(.turnstile) {
-  justify-items: start;
+  text-align: center;
 }
 
 .notice__error {

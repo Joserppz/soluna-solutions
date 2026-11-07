@@ -34,7 +34,14 @@ const links = [
 ]
 
 const networks = computed(() => socialLinks(content.value))
-const contacts = computed(() => contactLines(content.value))
+const lines = computed(() => contactLines(content.value))
+/** El correo va en «Comunidad»; WhatsApp, teléfono y dirección, junto al logo. */
+const email = computed(() =>
+  lines.value.find((line) => line.label === 'Correo'),
+)
+const contacts = computed(() =>
+  lines.value.filter((line) => line.label !== 'Correo'),
+)
 const year = new Date().getFullYear()
 
 async function logout() {
@@ -176,6 +183,11 @@ onMounted(load)
             <li v-for="network in networks" :key="network.key">
               <a :href="network.url" target="_blank" rel="noopener">
                 {{ network.label }}
+              </a>
+            </li>
+            <li v-if="email">
+              <a :href="email.href" class="site-footer__mail">
+                {{ email.value }}
               </a>
             </li>
             <li>
@@ -357,6 +369,10 @@ onMounted(load)
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.site-footer__mail {
+  overflow-wrap: anywhere;
 }
 
 .site-footer__contact {

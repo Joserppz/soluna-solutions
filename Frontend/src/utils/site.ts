@@ -251,7 +251,17 @@ export function trackingSteps(
   return ['done', 'now', 'todo']
 }
 
-/** Redes publicadas en «Redes y contacto», solo con enlaces https. */
+/**
+ * Las redes y el correo oficiales de ASPAR. Se muestran mientras «Redes y contacto» no
+ * tenga otro valor publicado para ese campo.
+ */
+export const ASPAR_CONTACT: Record<string, string> = {
+  facebook: 'https://www.facebook.com/share/1DKFqHL1TD/',
+  tiktok: 'https://www.tiktok.com/@aspar_lapaz_bolivia',
+  correo: 'asparlapaz@gmail.com',
+}
+
+/** Redes publicadas en «Redes y contacto» (o las oficiales), solo con enlaces https. */
 export function socialLinks(content: SiteContent) {
   const networks = [
     { key: 'facebook', label: 'Facebook' },
@@ -261,19 +271,24 @@ export function socialLinks(content: SiteContent) {
   return networks
     .map((network) => ({
       ...network,
-      url: text(content, 'redes_contacto', network.key),
+      url: text(
+        content,
+        'redes_contacto',
+        network.key,
+        ASPAR_CONTACT[network.key] ?? '',
+      ),
     }))
     .filter((network) => network.url.startsWith('https://'))
 }
 
-/** WhatsApp, teléfono, correo y dirección publicados. */
+/** WhatsApp, teléfono, correo (o el oficial) y dirección publicados. */
 export function contactLines(content: SiteContent) {
   const whatsapp = text(content, 'redes_contacto', 'whatsapp').replace(
     /\D/g,
     '',
   )
   const phone = text(content, 'redes_contacto', 'telefono')
-  const email = text(content, 'redes_contacto', 'correo')
+  const email = text(content, 'redes_contacto', 'correo', ASPAR_CONTACT.correo)
   const address = text(content, 'redes_contacto', 'direccion')
   return [
     whatsapp && {

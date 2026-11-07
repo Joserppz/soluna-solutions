@@ -103,7 +103,9 @@ async function submit() {
 <style scoped>
 .captcha {
   display: grid;
+  justify-items: center;
   gap: var(--space-2);
+  text-align: center;
 }
 
 .captcha__error {

@@ -462,8 +462,21 @@ describe('Textos del sitio', () => {
       }).map((s) => s.key),
     ).toEqual(['tiktok'])
     expect(contactLines({ redes_contacto: { telefono: '2 222 333' } })).toEqual(
-      [{ label: 'Teléfono', value: '2 222 333', href: 'tel:2222333' }],
+      [
+        { label: 'Teléfono', value: '2 222 333', href: 'tel:2222333' },
+        // Sin correo publicado, el oficial de ASPAR
+        {
+          label: 'Correo',
+          value: 'asparlapaz@gmail.com',
+          href: 'mailto:asparlapaz@gmail.com',
+        },
+      ],
     )
+    // Sin «Redes y contacto» publicado, las redes oficiales de ASPAR
+    expect(socialLinks({}).map((s) => [s.key, s.url])).toEqual([
+      ['facebook', 'https://www.facebook.com/share/1DKFqHL1TD/'],
+      ['tiktok', 'https://www.tiktok.com/@aspar_lapaz_bolivia'],
+    ])
     expect(
       contactErrors({
         name: 'Ana',

@@ -240,14 +240,17 @@ async function submit() {
   gap: var(--space-4);
 }
 
-.inquiry__consent,
-.inquiry__captcha {
+.inquiry__consent {
   display: grid;
   gap: var(--space-2);
 }
 
-.inquiry__captcha :deep(.turnstile) {
-  justify-items: start;
+/* La verificación de seguridad va centrada, como en el registro */
+.inquiry__captcha {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  text-align: center;
 }
 
 .inquiry__error {

@@ -166,5 +166,5 @@ def test_permisos_y_sitio_sin_sesion(client, auth_headers):
     assert client.get(f"{URL}/sections", headers=auth_headers("reception")).status_code == 403
     client.cookies.clear()
     public = client.get(PUBLIC).json()
-    assert {s["key"] for s in public} == {"presentacion", "mision_vision"}
+    assert {s["key"] for s in public} == {"presentacion", "mision_vision", "redes_contacto"}
     assert "draftContent" not in public[0]

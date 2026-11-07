@@ -854,12 +854,8 @@ onMounted(() => {
 
 /* Los tres caminos */
 .paths {
-  /* Fuera de la columna, el verde sigue a la izquierda y el guindo a la derecha */
-  background: linear-gradient(
-    90deg,
-    var(--aspar-verde) 50%,
-    var(--aspar-guindo) 50%
-  );
+  /* Verde a los costados y el guindo al centro: los colores se intercalan */
+  background: var(--aspar-verde);
 }
 
 .paths__inner {
@@ -878,14 +874,21 @@ onMounted(() => {
   display: grid;
   gap: var(--space-2);
   padding: clamp(var(--space-6), 3.5vh, 2.5rem) var(--gutter);
-  border-right: 1px solid rgb(255 255 255 / 0.12);
   color: #fff;
   text-decoration: none;
+  transition: background-color var(--duration-base) var(--ease-out);
 }
 
-.paths a:last-child {
-  border: 0;
+.paths a:nth-child(2) {
   background: var(--aspar-guindo);
+}
+
+.paths a:hover {
+  background: var(--verde-800);
+}
+
+.paths a:nth-child(2):hover {
+  background: var(--guindo-600);
 }
 
 .paths a:hover b span {
@@ -912,7 +915,7 @@ onMounted(() => {
   color: #c9d8d1;
 }
 
-.paths a:last-child > span {
+.paths a:nth-child(2) > span {
   color: #f1cfc9;
 }
 

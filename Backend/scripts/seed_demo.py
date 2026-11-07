@@ -658,6 +658,17 @@ def _content(db: Session, coordinator: User) -> str:
             "vision": "Una comunidad donde vivir con una condición de movimiento no signifique "
             "vivir sin apoyo.",
         },
+        # Las redes y el correo oficiales de ASPAR
+        "redes_contacto": {
+            "titulo": "",
+            "facebook": "https://www.facebook.com/share/1DKFqHL1TD/",
+            "instagram": "",
+            "tiktok": "https://www.tiktok.com/@aspar_lapaz_bolivia",
+            "whatsapp": "",
+            "telefono": "",
+            "correo": "asparlapaz@gmail.com",
+            "direccion": "",
+        },
     }
     for key, content in texts.items():
         section = db.scalar(select(InstitutionalSection).where(InstitutionalSection.key == key))
@@ -667,7 +678,7 @@ def _content(db: Session, coordinator: User) -> str:
         section.published_content = dict(section.draft_content)
         section.published_by = section.draft_updated_by = coordinator.id
         section.published_at = section.draft_updated_at = clock.now()
-    return "Contenido publicado: Presentación y Misión y visión"
+    return "Contenido publicado: Presentación, Misión y visión, y Redes y contacto"
 
 
 def _donations(db: Session, coordinator: User) -> str:
