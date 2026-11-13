@@ -17,8 +17,10 @@ import FormField from '../../../components/ui/FormField.vue'
 import PageHeader from '../../../components/ui/PageHeader.vue'
 import SkeletonBlock from '../../../components/ui/SkeletonBlock.vue'
 import StatusBadge from '../../../components/ui/StatusBadge.vue'
+import UnsavedChangesDialog from '../../../components/ui/UnsavedChangesDialog.vue'
 import { useApi } from '../../../composables/useApi'
 import { useFitLayout } from '../../../composables/useFitLayout'
+import { useUnsavedChanges } from '../../../composables/useUnsavedChanges'
 import { useToast } from '../../../composables/useToast'
 import {
   SECTION_FIELDS,
@@ -141,6 +143,9 @@ const dirty = computed(() => {
   const saved = copy(section.value.draftContent)
   return JSON.stringify(saved) !== JSON.stringify(copy(payloadAsDraft()))
 })
+
+/** Ir a otra sección del menú con un borrador sin guardar también pregunta. */
+const unsaved = useUnsavedChanges(dirty)
 
 function payloadAsDraft(): Record<string, unknown> {
   return payload()
@@ -737,6 +742,13 @@ onMounted(async () => {
         </AppButton>
       </template>
     </AppModal>
+
+    <UnsavedChangesDialog
+      :open="unsaved.asking.value"
+      where="en el borrador"
+      @stay="unsaved.stay"
+      @leave="unsaved.leave"
+    />
   </div>
 </template>
 

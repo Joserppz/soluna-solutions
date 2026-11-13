@@ -175,6 +175,25 @@ function tab(text: string) {
 }
 
 describe('Inventario', () => {
+  it('sin materiales invita a registrar el primero', async () => {
+    const fake = fakeApi()
+    fake.on('GET /inventory', {
+      body: { items: [], total: 0, limit: 10, offset: 0 },
+    })
+    const { wrapper } = await mountApp(PATH, fake)
+
+    expect(wrapper.get('.empty-state__title').text()).toBe(
+      'Todavía no hay materiales registrados.',
+    )
+    await button('+ Registrar el primer material', wrapper).trigger('click')
+    await settle()
+    expect(
+      [...document.querySelectorAll('[role="dialog"] h2')].map((h) =>
+        h.textContent?.trim(),
+      ),
+    ).toContain('Añadir material')
+  })
+
   it('muestra los contadores, el aviso de dañados y cada material con su origen', async () => {
     const fake = fakeApi()
     const { wrapper } = await mountApp(PATH, fake)

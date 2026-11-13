@@ -5,7 +5,7 @@
  * clínicos solo llegan si la API lo permite (RNF-06); la vista nunca los inventa.
  */
 import { computed, ref, watch } from 'vue'
-import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import { isApiError } from '../../../api/errors'
 import type { EvaluationOut, PatientOut } from '../../../api/types'
@@ -22,10 +22,12 @@ import InitialsAvatar from '../../../components/ui/InitialsAvatar.vue'
 import SkeletonBlock from '../../../components/ui/SkeletonBlock.vue'
 import StatusBadge from '../../../components/ui/StatusBadge.vue'
 import StickyHeader from '../../../components/ui/StickyHeader.vue'
+import UnsavedChangesDialog from '../../../components/ui/UnsavedChangesDialog.vue'
 import { useApi } from '../../../composables/useApi'
 import { useFitLayout } from '../../../composables/useFitLayout'
 import { usePageCrumb } from '../../../composables/usePageCrumb'
 import { patientsListLocation } from '../../../composables/usePatientsListLocation'
+import { useUnsavedChanges } from '../../../composables/useUnsavedChanges'
 import { longDay, monthYear, todayIso } from '../../../utils/format'
 import { ageOn, clinicalNotice, formatCi } from '../../../utils/patients'
 
@@ -134,25 +136,18 @@ function backToList() {
   void router.push(patientsListLocation())
 }
 
-const UNSAVED =
-  'Hay cambios sin guardar en la ficha. ¿Quieres salir sin guardarlos?'
-
-/** Cambiar de pestaña con cambios sin guardar los perdería: se pregunta antes. */
+/** Salir o cambiar de pestaña con cambios sin guardar los perdería: se pregunta antes. */
+const unsaved = useUnsavedChanges(dirty)
 const sticky = ref<InstanceType<typeof StickyHeader> | null>(null)
 
-function changeSection(next: Section) {
+async function changeSection(next: Section) {
   if (next === section.value) return
-  if (dirty.value && !window.confirm(UNSAVED)) return
+  if (!(await unsaved.confirmLeave())) return
   dirty.value = false
   section.value = next
   // La pestaña nueva empieza justo debajo del encabezado fijo
   sticky.value?.scrollToStart()
 }
-
-onBeforeRouteLeave((to) => {
-  if (!dirty.value || to.name === 'ingresar') return true
-  return window.confirm(UNSAVED)
-})
 
 void load()
 </script>
@@ -308,6 +303,13 @@ void load()
         @updated="onUpdated"
       />
     </template>
+
+    <UnsavedChangesDialog
+      :open="unsaved.asking.value"
+      where="en la ficha"
+      @stay="unsaved.stay"
+      @leave="unsaved.leave"
+    />
   </div>
 </template>
 

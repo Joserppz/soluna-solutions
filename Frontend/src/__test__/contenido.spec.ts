@@ -229,6 +229,26 @@ describe('Contenido del sitio', () => {
     )
   })
 
+  it('ir a otra sección del menú con un borrador sin guardar también pregunta', async () => {
+    const fake = fakeApi()
+    const { router } = await mountApp(`${PATH}?seccion=mision_vision`, fake)
+
+    await field('Misión').setValue('Otra misión')
+    void router.push('/equipo')
+    await settle()
+    expect(body().text()).toContain('se pierden los cambios en el borrador')
+    await button('Seguir editando').trigger('click')
+    await settle()
+    expect(router.currentRoute.value.path).toBe(PATH)
+
+    void router.push('/equipo')
+    await settle()
+    await button('Salir sin guardar').trigger('click')
+    await settle()
+    expect(router.currentRoute.value.path).toBe('/equipo')
+    expect(fake.callsTo('PUT /content/sections/mision_vision')).toHaveLength(0)
+  })
+
   it('las preguntas frecuentes se agregan, se quitan y se envían limpias', async () => {
     const fake = fakeApi()
     fake.on(

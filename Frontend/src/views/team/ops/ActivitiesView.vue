@@ -731,14 +731,14 @@ function shortDay(isoDay: string) {
 }
 
 /* Lo que ya pasó: una lista que se desplaza sola si es larga */
+/* Cuando la página se desplaza (tableta, celular), la lista crece con ella: una sola
+   barra. A ventana completa (.ops--fit) tiene la suya. */
 .past {
   display: grid;
   align-content: start;
   margin: 0;
   padding: 0;
   list-style: none;
-  max-height: 22rem;
-  overflow-y: auto;
 }
 
 .past li {
@@ -860,6 +860,6 @@ function shortDay(isoDay: string) {
 .ops--fit .past {
   flex: 1 1 0;
   min-height: 0;
-  max-height: none;
+  overflow-y: auto;
 }
 </style>

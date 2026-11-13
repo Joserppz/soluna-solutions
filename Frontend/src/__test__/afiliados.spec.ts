@@ -359,7 +359,33 @@ describe('Listado de afiliados', () => {
     })
     const { wrapper } = await mountApp(`/equipo/afiliados?pestana=${tab}`, fake)
 
-    expect(wrapper.get('tbody').text()).toBe(message)
+    expect(wrapper.get('tbody .empty-state__title').text()).toBe(message)
+    // Solo la pestaña «Todos» vacía invita a registrar la primera ficha
+    expect(
+      wrapper
+        .findAll('tbody button')
+        .some((b) => b.text() === '+ Registrar el primer afiliado'),
+    ).toBe(tab === 'todos')
+  })
+
+  it('«+ Registrar el primer afiliado» abre la ventana de registro', async () => {
+    const fake = fakeApi()
+    fake.on('GET /patients', {
+      body: { items: [], total: 0, limit: 10, offset: 0 },
+    })
+    const { wrapper } = await mountApp('/equipo/afiliados', fake)
+
+    expect(wrapper.get('tbody .empty-state__text').text()).toContain(
+      'Cada ficha guarda',
+    )
+    await wrapper
+      .findAll('tbody button')
+      .find((b) => b.text() === '+ Registrar el primer afiliado')!
+      .trigger('click')
+    await settle()
+    expect(document.querySelector('[role="dialog"] h2')?.textContent).toContain(
+      'Registrar',
+    )
   })
 
   it('con un filtro de actividad vacío, explica el período', async () => {

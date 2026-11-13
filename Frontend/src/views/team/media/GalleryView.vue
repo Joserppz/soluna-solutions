@@ -17,6 +17,7 @@ import AlbumPanel from '../../../components/media/AlbumPanel.vue'
 import NewAlbumDialog from '../../../components/media/NewAlbumDialog.vue'
 import AppAlert from '../../../components/ui/AppAlert.vue'
 import AppButton from '../../../components/ui/AppButton.vue'
+import EmptyState from '../../../components/ui/EmptyState.vue'
 import AppTabs, { type TabItem } from '../../../components/ui/AppTabs.vue'
 import PageHeader from '../../../components/ui/PageHeader.vue'
 import SkeletonBlock from '../../../components/ui/SkeletonBlock.vue'
@@ -370,15 +371,28 @@ function hideBroken(event: Event) {
               :lines="2"
               height="6rem"
             />
-            <p v-else-if="!albums.length" class="muted">
-              {{
+            <EmptyState
+              v-else-if="!albums.length"
+              icon="gallery"
+              :title="
                 tab === 'publico'
                   ? 'Todavía no hay álbumes publicados.'
                   : tab === 'privado'
                     ? 'No hay álbumes privados.'
-                    : 'Todavía no hay álbumes. Crea uno con «+ Nuevo álbum».'
-              }}
-            </p>
+                    : 'Todavía no hay álbumes.'
+              "
+              :text="
+                tab === 'todos'
+                  ? 'Un álbum junta las fotos y videos de un encuentro.'
+                  : undefined
+              "
+            >
+              <template v-if="tab === 'todos'" #actions>
+                <AppButton size="sm" @click="newOpen = true">
+                  + Crear el primer álbum
+                </AppButton>
+              </template>
+            </EmptyState>
             <ul v-else class="grid">
               <li v-for="album in albums" :key="album.id">
                 <button

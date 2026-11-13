@@ -198,6 +198,25 @@ function wideWindow() {
 }
 
 describe('Donaciones', () => {
+  it('un mes sin aportes invita a registrar uno', async () => {
+    const fake = fakeApi()
+    fake.on('GET /donations', {
+      body: { items: [], total: 0, limit: 10, offset: 0 },
+    })
+    const { wrapper } = await mountApp(PATH, fake)
+
+    expect(wrapper.get('.empty-state__title').text()).toMatch(
+      /^Todavía no hay aportes en /,
+    )
+    await button('+ Registrar un aporte', wrapper).trigger('click')
+    await settle()
+    expect(
+      [...document.querySelectorAll('[role="dialog"] h2')].map((h) =>
+        h.textContent?.trim(),
+      ),
+    ).toContain('Registrar un aporte recibido')
+  })
+
   it('muestra el resumen del mes, los tres canales, la meta y el registro', async () => {
     const fake = fakeApi()
     const { wrapper } = await mountApp(PATH, fake)
@@ -540,6 +559,39 @@ describe('Donaciones', () => {
       ],
     })
     expect(body().text()).toContain('No se muestra en el sitio.')
+  })
+
+  it('cerrar la meta con cambios pregunta antes de perderlos', async () => {
+    const fake = fakeApi()
+    const { wrapper } = await mountApp(PATH, fake)
+    const goalDialog = () =>
+      body()
+        .findAll('[role="dialog"]')
+        .find((d) => d.text().includes('Meta en el sitio'))
+
+    // Sin cambios, «Cancelar» cierra de una vez
+    await button('Editar meta →', wrapper).trigger('click')
+    await settle()
+    await button('Cancelar').trigger('click')
+    await settle()
+    expect(goalDialog()).toBeUndefined()
+
+    await button('Editar meta →', wrapper).trigger('click')
+    await settle()
+    await field('Meta (Bs.)').setValue('80000')
+    await button('Cancelar').trigger('click')
+    await settle()
+    expect(body().text()).toContain('se pierden los cambios en la meta')
+    await button('Seguir editando').trigger('click')
+    await settle()
+    expect(field('Meta (Bs.)').element).toHaveProperty('value', '80000')
+
+    await button('Cancelar').trigger('click')
+    await settle()
+    await button('Salir sin guardar').trigger('click')
+    await settle()
+    expect(goalDialog()).toBeUndefined()
+    expect(fake.callsTo('PUT /donations/goal')).toHaveLength(0)
   })
 
   it('sin permiso de donaciones no entra a la pantalla', async () => {

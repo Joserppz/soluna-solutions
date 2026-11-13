@@ -20,6 +20,7 @@ import type {
 import RegisterPatientDialog from '../../../components/patients/RegisterPatientDialog.vue'
 import AppAlert from '../../../components/ui/AppAlert.vue'
 import AppButton from '../../../components/ui/AppButton.vue'
+import EmptyState from '../../../components/ui/EmptyState.vue'
 import AppPagination from '../../../components/ui/AppPagination.vue'
 import AppTabs, { type TabItem } from '../../../components/ui/AppTabs.vue'
 import DataTable, { type Column } from '../../../components/ui/DataTable.vue'
@@ -455,16 +456,34 @@ rememberPatientsList(route.fullPath)
               </RouterLink>
             </template>
             <template #empty>
-              <p>{{ emptyMessage }}</p>
-              <AppButton
-                v-if="filtered"
-                variant="link"
-                size="sm"
-                class="patients__clear"
-                @click="clearFilters"
+              <EmptyState
+                :icon="filtered ? 'search' : 'patients'"
+                :title="emptyMessage"
+                :text="
+                  !filtered && group === 'all'
+                    ? 'Cada ficha guarda los datos, familiares y la asistencia de una persona.'
+                    : undefined
+                "
+                compact
               >
-                Quitar la búsqueda y el filtro
-              </AppButton>
+                <template
+                  v-if="filtered || (group === 'all' && canRegister)"
+                  #actions
+                >
+                  <AppButton
+                    v-if="filtered"
+                    variant="link"
+                    size="sm"
+                    class="patients__clear"
+                    @click="clearFilters"
+                  >
+                    Quitar la búsqueda y el filtro
+                  </AppButton>
+                  <AppButton v-else size="sm" @click="registerOpen = true">
+                    + Registrar el primer afiliado
+                  </AppButton>
+                </template>
+              </EmptyState>
             </template>
           </DataTable>
         </div>

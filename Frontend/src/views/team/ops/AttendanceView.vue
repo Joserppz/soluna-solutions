@@ -15,8 +15,10 @@ import type {
   NewcomerIn,
   ScheduleOut,
 } from '../../../api/types'
+import AttendancePrintSheet from '../../../components/ops/AttendancePrintSheet.vue'
 import AppAlert from '../../../components/ui/AppAlert.vue'
 import AppButton from '../../../components/ui/AppButton.vue'
+import AppIcon from '../../../components/ui/AppIcon.vue'
 import AppModal from '../../../components/ui/AppModal.vue'
 import AppPagination from '../../../components/ui/AppPagination.vue'
 import FormField from '../../../components/ui/FormField.vue'
@@ -462,6 +464,11 @@ async function saveNewcomer() {
   }
 }
 
+/** La lista en papel (AttendancePrintSheet), por si falla el internet en la sede. */
+function printSheet() {
+  window.print()
+}
+
 async function download(format: 'csv' | 'xlsx') {
   try {
     const blob = await api.attendance.downloadMonthly(format, month.value)
@@ -654,7 +661,18 @@ onMounted(async () => {
               >
                 Marcar a todos como presentes
               </AppButton>
+              <AppButton
+                variant="secondary"
+                size="md"
+                class="toolbar__print"
+                :disabled="!counts.total"
+                @click="printSheet"
+              >
+                <AppIcon name="print" :size="18" />
+                Imprimir lista
+              </AppButton>
             </div>
+            <AttendancePrintSheet :sheet="sheet" />
 
             <p class="tally" aria-live="polite">
               <span
@@ -1134,13 +1152,19 @@ onMounted(async () => {
 }
 
 .toolbar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--space-3);
 }
 
 .toolbar__search {
   position: relative;
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+
+.toolbar__print {
+  gap: var(--space-2);
 }
 
 .toolbar__search .input {
@@ -1389,8 +1413,8 @@ onMounted(async () => {
     transition: width var(--duration-base) var(--ease-out);
   }
 
-  .toolbar {
-    grid-template-columns: minmax(0, 1fr);
+  .toolbar > * {
+    flex: 1 1 100%;
   }
 
   .person {

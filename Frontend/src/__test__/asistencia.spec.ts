@@ -208,6 +208,33 @@ describe('Asistencia', () => {
     )
   })
 
+  it('«Imprimir lista» arma la hoja en papel con todas las personas y renglones para nuevas', async () => {
+    const fake = fakeApi()
+    const print = vi.fn()
+    vi.stubGlobal('print', print)
+    const { wrapper } = await mountApp(PATH, fake)
+
+    await button('Imprimir lista', wrapper).trigger('click')
+    expect(print).toHaveBeenCalledOnce()
+
+    // La hoja vive fuera de la app (solo se ve al imprimir)
+    const sheetEl = body().get('body > .print-sheet')
+    expect(sheetEl.attributes('aria-hidden')).toBe('true')
+    expect(sheetEl.text()).toContain('Movimiento en compañía')
+    expect(sheetEl.text()).toContain('Sede ASPAR · Lic. Ana Flores')
+    const rows = sheetEl
+      .findAll('.print-sheet__table:not(.print-sheet__new) tbody tr')
+      .map((tr) => tr.findAll('td').map((td) => td.text()))
+    // En orden alfabético, con lo ya marcado impreso
+    expect(rows.map((r) => r[1])).toEqual(
+      [...rows.map((r) => r[1]!)].sort((a, b) => a.localeCompare(b, 'es')),
+    )
+    expect(rows.some((r) => r[2] === '✓')).toBe(true)
+    expect(rows.some((r) => r[3] === '✗')).toBe(true)
+    expect(sheetEl.findAll('.print-sheet__new tbody tr')).toHaveLength(6)
+    vi.unstubAllGlobals()
+  })
+
   it('marcar «Vino» se guarda en ese momento y actualiza el resumen', async () => {
     const fake = fakeApi()
     fake.on('PUT /schedules/s-1/attendance/p-1', {

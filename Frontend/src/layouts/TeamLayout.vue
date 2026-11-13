@@ -5,6 +5,7 @@ import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import type { DashboardSummary } from '../api/types'
 import AsparBrand from '../components/AsparBrand.vue'
 import SessionTimeoutDialog from '../components/session/SessionTimeoutDialog.vue'
+import AppIcon from '../components/ui/AppIcon.vue'
 import { useApi } from '../composables/useApi'
 import { useIdleSession } from '../composables/useIdleSession'
 import { pageCrumb } from '../composables/usePageCrumb'
@@ -187,7 +188,10 @@ onBeforeUnmount(() => {
               class="nav-item"
               exact-active-class="is-active"
             >
-              Resumen
+              <span class="nav-item__label">
+                <AppIcon name="summary" />
+                Resumen
+              </span>
             </RouterLink>
           </li>
           <li v-for="section in mainSections" :key="section.name">
@@ -197,7 +201,10 @@ onBeforeUnmount(() => {
               :class="{ 'is-active': route.meta.section === section.name }"
               active-class="is-active"
             >
-              <span>{{ section.title }}</span>
+              <span class="nav-item__label">
+                <AppIcon :name="section.icon" />
+                {{ section.title }}
+              </span>
               <template v-if="badge(section.badge)">
                 <span class="nav-item__badge" aria-hidden="true">
                   {{ badge(section.badge) }}
@@ -214,7 +221,10 @@ onBeforeUnmount(() => {
               class="nav-item"
               :class="{ 'is-active': inAdmin }"
             >
-              {{ ADMIN_GROUP_TITLE }}
+              <span class="nav-item__label">
+                <AppIcon name="admin" />
+                {{ ADMIN_GROUP_TITLE }}
+              </span>
             </RouterLink>
             <ul v-if="inAdmin" class="nav-sub">
               <li v-for="section in adminSections" :key="section.name">
@@ -223,7 +233,10 @@ onBeforeUnmount(() => {
                   class="nav-item nav-item--sub"
                   active-class="is-active"
                 >
-                  {{ section.title }}
+                  <span class="nav-item__label">
+                    <AppIcon :name="section.icon" :size="17" />
+                    {{ section.title }}
+                  </span>
                 </RouterLink>
               </li>
             </ul>
@@ -236,7 +249,7 @@ onBeforeUnmount(() => {
       <ul class="sidebar__secondary">
         <li>
           <RouterLink :to="{ name: 'inicio' }" class="nav-link">
-            <span aria-hidden="true">↗</span> Ver sitio público
+            <AppIcon name="site" :size="18" /> Ver sitio público
           </RouterLink>
         </li>
         <li>
@@ -246,7 +259,7 @@ onBeforeUnmount(() => {
             :disabled="loggingOut"
             @click="logout"
           >
-            Cerrar sesión
+            <AppIcon name="logout" :size="18" /> Cerrar sesión
           </button>
         </li>
       </ul>
@@ -399,6 +412,27 @@ onBeforeUnmount(() => {
   transition:
     background-color var(--duration-fast) var(--ease-out),
     color var(--duration-fast) var(--ease-out);
+}
+
+.nav-item__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+/* El ícono acompaña sin competir con el nombre; se enciende en la sección abierta */
+.nav-item__label .app-icon {
+  opacity: 0.72;
+}
+
+.nav-item:hover .app-icon,
+.nav-item.is-active .app-icon {
+  opacity: 1;
+}
+
+.nav-item.is-active .app-icon {
+  color: var(--rosa-200);
 }
 
 .nav-item:hover {

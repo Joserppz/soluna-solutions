@@ -9,11 +9,13 @@ import { computed, reactive, ref, watch } from 'vue'
 import { isApiError } from '../../api/errors'
 import type { GoalIn, GoalOut } from '../../api/types'
 import { useApi } from '../../composables/useApi'
+import { useUnsavedChanges } from '../../composables/useUnsavedChanges'
 import { formatBs } from '../../utils/donations'
 import AppAlert from '../ui/AppAlert.vue'
 import AppButton from '../ui/AppButton.vue'
 import AppModal from '../ui/AppModal.vue'
 import FormField from '../ui/FormField.vue'
+import UnsavedChangesDialog from '../ui/UnsavedChangesDialog.vue'
 
 type MilestoneStatus = NonNullable<GoalIn['milestones']>[number]['status']
 
@@ -50,6 +52,8 @@ const draft = reactive({
 })
 const submitted = ref(false)
 const saving = ref(false)
+/** Lo que había al abrir: cerrar con cambios pregunta antes de perderlos. */
+const initial = ref('')
 const error = ref<string | null>(null)
 
 watch(
@@ -71,8 +75,28 @@ watch(
     })
     submitted.value = false
     error.value = null
+    initial.value = snapshot()
   },
 )
+
+function snapshot(): string {
+  return JSON.stringify({
+    ...draft,
+    milestones: draft.milestones.map(({ label, status }) => ({
+      label,
+      status,
+    })),
+  })
+}
+
+const dirty = computed(() => props.open && snapshot() !== initial.value)
+
+const unsaved = useUnsavedChanges(dirty)
+
+/** Cancelar, Esc, la × o un clic afuera: si hay cambios, primero se pregunta. */
+async function requestClose() {
+  if (await unsaved.confirmLeave()) emit('update:open', false)
+}
 
 function number(value: string): number | null {
   const clean = value.replace(/\s/g, '').replace(',', '.')
@@ -152,7 +176,7 @@ async function save() {
     title="Meta en el sitio"
     description="Solo suma lo confirmado. Al confirmar un aporte, la meta pública se actualiza sola."
     :dismissible="!saving"
-    @update:open="emit('update:open', $event)"
+    @update:open="$event ? emit('update:open', true) : requestClose()"
   >
     <form id="editar-meta" class="goal" novalidate @submit.prevent="save">
       <AppAlert v-if="error" tone="error">{{ error }}</AppAlert>
@@ -291,11 +315,7 @@ async function save() {
       </div>
     </form>
     <template #actions>
-      <AppButton
-        variant="secondary"
-        :disabled="saving"
-        @click="emit('update:open', false)"
-      >
+      <AppButton variant="secondary" :disabled="saving" @click="requestClose">
         Cancelar
       </AppButton>
       <AppButton
@@ -308,6 +328,13 @@ async function save() {
       </AppButton>
     </template>
   </AppModal>
+
+  <UnsavedChangesDialog
+    :open="unsaved.asking.value"
+    where="en la meta"
+    @stay="unsaved.stay"
+    @leave="unsaved.leave"
+  />
 </template>
 
 <style scoped>

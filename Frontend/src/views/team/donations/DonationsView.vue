@@ -20,6 +20,7 @@ import GoalDialog from '../../../components/donations/GoalDialog.vue'
 import RegisterDonationDialog from '../../../components/donations/RegisterDonationDialog.vue'
 import AppAlert from '../../../components/ui/AppAlert.vue'
 import AppButton from '../../../components/ui/AppButton.vue'
+import EmptyState from '../../../components/ui/EmptyState.vue'
 import AppModal from '../../../components/ui/AppModal.vue'
 import AppPagination from '../../../components/ui/AppPagination.vue'
 import AppTabs, { type TabItem } from '../../../components/ui/AppTabs.vue'
@@ -566,20 +567,37 @@ onMounted(async () => {
                 </tr>
                 <tr v-else-if="!items.length">
                   <td colspan="6" class="empty">
-                    <p>
-                      {{
+                    <EmptyState
+                      :icon="filtered ? 'search' : 'donations'"
+                      :title="
                         filtered
                           ? 'Ningún aporte coincide con estos filtros.'
                           : `Todavía no hay aportes en ${monthName}.`
-                      }}
-                    </p>
-                    <AppButton
-                      v-if="filtered"
-                      variant="link"
-                      size="sm"
-                      @click="clearFilters"
-                      >Quitar los filtros</AppButton
+                      "
+                      :text="
+                        filtered
+                          ? undefined
+                          : 'Los avisos del sitio llegan solos; los aportes en efectivo o en especie se anotan aquí.'
+                      "
+                      compact
                     >
+                      <template #actions>
+                        <AppButton
+                          v-if="filtered"
+                          variant="link"
+                          size="sm"
+                          @click="clearFilters"
+                          >Quitar los filtros</AppButton
+                        >
+                        <AppButton
+                          v-else
+                          size="sm"
+                          @click="registerOpen = true"
+                        >
+                          + Registrar un aporte
+                        </AppButton>
+                      </template>
+                    </EmptyState>
                   </td>
                 </tr>
                 <tr
@@ -1052,8 +1070,8 @@ onMounted(async () => {
 }
 
 .empty {
-  padding: var(--space-6) 0 !important;
-  color: var(--color-text-muted);
+  padding: 0 !important;
+  white-space: normal;
 }
 
 .don__footer {

@@ -133,6 +133,23 @@ async function pickFiles(wrapper: VueWrapper, files: File[]) {
 }
 
 describe('Galería', () => {
+  it('sin álbumes invita a crear el primero', async () => {
+    const fake = fakeApi()
+    fake.on('GET /media/albums', { body: [] })
+    const { wrapper } = await mountApp(PATH, fake)
+
+    expect(wrapper.get('.empty-state__title').text()).toBe(
+      'Todavía no hay álbumes.',
+    )
+    await button('+ Crear el primer álbum', wrapper).trigger('click')
+    await settle()
+    expect(
+      [...document.querySelectorAll('[role="dialog"] h2')].map((h) =>
+        h.textContent?.trim(),
+      ),
+    ).toContain('Nuevo álbum')
+  })
+
   it('muestra los álbumes con su estado y filtra por publicados o privados', async () => {
     const fake = fakeApi()
     const { wrapper, router } = await mountApp(PATH, fake)

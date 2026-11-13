@@ -16,6 +16,7 @@ import type {
 import ItemPanel from '../../../components/ops/ItemPanel.vue'
 import AppAlert from '../../../components/ui/AppAlert.vue'
 import AppButton from '../../../components/ui/AppButton.vue'
+import EmptyState from '../../../components/ui/EmptyState.vue'
 import AppModal from '../../../components/ui/AppModal.vue'
 import AppPagination from '../../../components/ui/AppPagination.vue'
 import PageHeader from '../../../components/ui/PageHeader.vue'
@@ -417,20 +418,33 @@ onMounted(async () => {
               </tr>
               <tr v-else-if="!items.length">
                 <td colspan="6" class="empty">
-                  <p>
-                    {{
+                  <EmptyState
+                    :icon="filtered ? 'search' : 'inventory'"
+                    :title="
                       filtered
                         ? 'Ningún material coincide con estos filtros.'
                         : 'Todavía no hay materiales registrados.'
-                    }}
-                  </p>
-                  <AppButton
-                    v-if="filtered"
-                    variant="link"
-                    size="sm"
-                    @click="clearFilters"
-                    >Quitar los filtros</AppButton
+                    "
+                    :text="
+                      filtered
+                        ? undefined
+                        : 'Anota sillas, andadores y otros equipos para saber quién los tiene.'
+                    "
+                    compact
                   >
+                    <template #actions>
+                      <AppButton
+                        v-if="filtered"
+                        variant="link"
+                        size="sm"
+                        @click="clearFilters"
+                        >Quitar los filtros</AppButton
+                      >
+                      <AppButton v-else size="sm" @click="startNew">
+                        + Registrar el primer material
+                      </AppButton>
+                    </template>
+                  </EmptyState>
                 </td>
               </tr>
               <tr
@@ -733,9 +747,9 @@ onMounted(async () => {
 }
 
 .empty {
-  padding: var(--space-6) 0 !important;
+  padding: 0 !important;
   color: var(--color-text-muted);
-  text-align: left !important;
+  white-space: normal;
 }
 
 .link {

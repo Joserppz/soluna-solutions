@@ -21,6 +21,7 @@ import EnrollDialog from '../../../components/inquiries/EnrollDialog.vue'
 import InquiryPanel from '../../../components/inquiries/InquiryPanel.vue'
 import AppAlert from '../../../components/ui/AppAlert.vue'
 import AppButton from '../../../components/ui/AppButton.vue'
+import EmptyState from '../../../components/ui/EmptyState.vue'
 import AppModal from '../../../components/ui/AppModal.vue'
 import AppPagination from '../../../components/ui/AppPagination.vue'
 import AppTabs, { type TabItem } from '../../../components/ui/AppTabs.vue'
@@ -295,21 +296,28 @@ onMounted(load)
                 class="inbox__skeleton"
               />
             </div>
-            <div v-else-if="!items.length && !loadError" class="inbox__empty">
-              <p v-if="filtered">No hay solicitudes con estos filtros.</p>
-              <p v-else>
-                Todavía no llegaron solicitudes. Aparecen aquí cuando alguien
-                escribe desde el sitio.
-              </p>
-              <AppButton
-                v-if="filtered"
-                size="sm"
-                variant="secondary"
-                @click="clearFilters"
-              >
-                Ver todas
-              </AppButton>
-            </div>
+            <EmptyState
+              v-else-if="!items.length && !loadError"
+              class="inbox__empty"
+              :icon="filtered ? 'search' : 'inquiries'"
+              :title="
+                filtered
+                  ? 'No hay solicitudes con estos filtros.'
+                  : 'Todavía no llegaron solicitudes.'
+              "
+              :text="
+                filtered
+                  ? undefined
+                  : 'Aparecen aquí cuando alguien escribe desde el sitio.'
+              "
+              compact
+            >
+              <template v-if="filtered" #actions>
+                <AppButton size="sm" variant="secondary" @click="clearFilters">
+                  Ver todas
+                </AppButton>
+              </template>
+            </EmptyState>
             <ul v-else class="items" aria-label="Solicitudes">
               <li v-for="item in items" :key="item.id">
                 <button
@@ -473,15 +481,7 @@ onMounted(load)
 }
 
 .inbox__empty {
-  display: grid;
-  justify-items: start;
-  gap: var(--space-3);
-  padding: var(--space-6) var(--space-5);
-  color: var(--color-text-muted);
-}
-
-.inbox__empty p {
-  margin: 0;
+  padding-block: var(--space-8);
 }
 
 .items {

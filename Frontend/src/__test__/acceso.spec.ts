@@ -158,6 +158,12 @@ describe('Espacio del equipo según el rol', () => {
       'Solicitudes',
       'Administración',
     ])
+    // Cada sección lleva su ícono (decorativo: el nombre sigue escrito)
+    expect(
+      menu
+        .findAll('a')
+        .every((a) => a.find('svg.app-icon[aria-hidden="true"]').exists()),
+    ).toBe(true)
     expect(
       menu.get('a[href="/equipo/donaciones"] .nav-item__badge').text(),
     ).toBe('5')

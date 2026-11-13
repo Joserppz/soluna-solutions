@@ -17,7 +17,7 @@ import {
   DASHBOARD,
   VOLUNTEER_SESSION,
   createApiFake,
-  mountApp,
+  mountApp as mountWholeApp,
   sessionFor,
   settle,
   type ApiFake,
@@ -212,6 +212,15 @@ function toasts() {
   return useToast().toasts.value.map((toast) => toast.message)
 }
 
+let mounted: Awaited<ReturnType<typeof mountWholeApp>>[] = []
+
+/** Monta la app y la desmonta al terminar (sus avisos de la ventana no se acumulan). */
+async function mountApp(path: string, fake: ApiFake) {
+  const app = await mountWholeApp(path, fake)
+  mounted.push(app)
+  return app
+}
+
 beforeEach(() => {
   vi.stubGlobal(
     'confirm',
@@ -220,6 +229,8 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  mounted.forEach(({ wrapper }) => wrapper.unmount())
+  mounted = []
   document.body.innerHTML = ''
   document.body.style.overflow = ''
   useToast().clear()
@@ -543,20 +554,30 @@ describe('Pestaña Datos', () => {
     expect(hasButton('Marcar como inactiva…')).toBe(false)
   })
 
+  /** La ventana «Tienes cambios sin guardar» (no la del navegador). */
+  function unsavedDialog() {
+    return body()
+      .findAll('[role="dialog"]')
+      .find((d) => d.text().includes('Tienes cambios sin guardar'))
+  }
+
   it('pregunta antes de salir con cambios sin guardar', async () => {
     const fake = fakeApi()
     const { router } = await mountApp(URL, fake)
-    const confirm = vi.fn(() => false)
-    vi.stubGlobal('confirm', confirm)
 
     await field('Zona').setValue('Obrajes')
-    await router.push('/equipo')
+    void router.push('/equipo')
     await settle()
-    expect(confirm).toHaveBeenCalledOnce()
+    const dialog = unsavedDialog()!
+    expect(dialog.text()).toContain('se pierden los cambios en la ficha')
+    await button('Seguir editando', dialog).trigger('click')
+    await settle()
     expect(router.currentRoute.value.fullPath).toBe(URL)
+    expect(unsavedDialog()).toBeUndefined()
 
-    confirm.mockReturnValue(true)
-    await router.push('/equipo')
+    void router.push('/equipo')
+    await settle()
+    await button('Salir sin guardar', unsavedDialog()!).trigger('click')
     await settle()
     expect(router.currentRoute.value.fullPath).toBe('/equipo')
   })
@@ -564,22 +585,36 @@ describe('Pestaña Datos', () => {
   it('pregunta antes de cambiar de pestaña con cambios sin guardar', async () => {
     const fake = fakeApi()
     const { router } = await mountApp(URL, fake)
-    const confirm = vi.fn(() => false)
-    vi.stubGlobal('confirm', confirm)
 
     await field('Zona').setValue('Obrajes')
     await openTab('Asistencia')
-    expect(confirm).toHaveBeenCalledOnce()
+    await button('Seguir editando', unsavedDialog()!).trigger('click')
+    await settle()
     expect(panel().text()).toContain('Datos personales')
 
-    confirm.mockReturnValue(true)
     await openTab('Asistencia')
+    await button('Salir sin guardar', unsavedDialog()!).trigger('click')
+    await settle()
     expect(router.currentRoute.value.query).toEqual({ seccion: 'asistencia' })
     // Los cambios se descartaron: salir ya no pregunta
     await router.push('/equipo')
     await settle()
-    expect(confirm).toHaveBeenCalledTimes(2)
+    expect(unsavedDialog()).toBeUndefined()
     expect(router.currentRoute.value.fullPath).toBe('/equipo')
+  })
+
+  it('con cambios sin guardar, cerrar o recargar la pestaña lo avisa el navegador', async () => {
+    const fake = fakeApi()
+    await mountApp(URL, fake)
+
+    const quiet = new Event('beforeunload', { cancelable: true })
+    window.dispatchEvent(quiet)
+    expect(quiet.defaultPrevented).toBe(false)
+
+    await field('Zona').setValue('Obrajes')
+    const warned = new Event('beforeunload', { cancelable: true })
+    window.dispatchEvent(warned)
+    expect(warned.defaultPrevented).toBe(true)
   })
 })
 
