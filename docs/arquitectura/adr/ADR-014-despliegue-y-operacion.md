@@ -19,12 +19,12 @@ Hasta el Sprint 2 el sistema solo corre en el entorno local (Docker). Para publi
 
 Mientras ASPAR no tenga dominio, el sistema se publica así ([guía](../../despliegue/DESPLIEGUE_SIN_DOMINIO.md)):
 
-- **Frontend en Vercel.** Reenvía `/api/v1` a Cloud Run (`vercel.json`), así el sitio y la API comparten el mismo sitio y las cookies `SameSite=Lax` funcionan sin cambios.
-- **API en Cloud Run.** Se despliega con `Backend/deploy/cloud_run.sh` desde Cloud Shell, con los secretos en Secret Manager y `PROXY_TRUSTED_HOPS=2`, porque delante están Vercel y Google.
+- **Frontend en Cloudflare Pages** (`<proyecto>.pages.dev`). Una Pages Function (`Frontend/functions/api/v1/[[path]].ts`) reenvía `/api/v1` a Cloud Run (variable `API_ORIGIN`), así el sitio y la API comparten el mismo sitio y las cookies `SameSite=Lax` funcionan sin cambios.
+- **API en Cloud Run.** Se despliega con `Backend/deploy/cloud_run.sh` desde Cloud Shell, con los secretos en Secret Manager y `PROXY_TRUSTED_HOPS=2`, porque delante están Cloudflare y Google.
 - **Base en Supabase,** con el mismo rol `aspar_api` del plan final.
 - **Correos con Brevo** y un remitente verificado, porque Resend necesita dominio.
 
-Al comprar el dominio se pasa al plan de abajo sin cambios de código: Cloudflare Pages o Vercel con el dominio, `api.<dominio>` en Cloud Run y `PROXY_TRUSTED_HOPS=1`.
+Al comprar el dominio se pasa al plan de abajo sin cambios de código: el mismo proyecto de Pages con el dominio, `api.<dominio>` en Cloud Run y `PROXY_TRUSTED_HOPS=1`.
 
 ## Decisión
 

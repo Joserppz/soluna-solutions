@@ -12,6 +12,7 @@ export default tseslint.config(
       'node_modules/**',
       'coverage/**',
       'e2e-resultados/**',
+      '.wrangler/**',
     ],
   },
   js.configs.recommended,

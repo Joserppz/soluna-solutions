@@ -37,7 +37,7 @@ cp .env.example .env
 | `ENV` | No | `dev` (por defecto), `test` o `prod`. |
 | `LOG_LEVEL` | No | `INFO` por defecto. Los logs salen en JSON, una línea por evento, con el `request_id` de cada petición. |
 | `DB_POOL` | No | `queue` (por defecto, base directa o Docker) o `null` con el Transaction Pooler de Supabase. |
-| `PROXY_TRUSTED_HOPS` | No | `0` en tu PC y en Docker; `1` en Google Cloud Run; `2` con Vercel delante (sin dominio propio). Indica cuántas IP del final de `X-Forwarded-For` agregaron nuestros proxies (ver `app/core/network.py`). |
+| `PROXY_TRUSTED_HOPS` | No | `0` en tu PC y en Docker; `1` en Google Cloud Run; `2` con el sitio en Cloudflare Pages reenviando `/api/v1` (sin dominio propio). Indica cuántas IP del final de `X-Forwarded-For` agregaron nuestros proxies (ver `app/core/network.py`). |
 | `JWT_SECRET` | Sí | Mínimo 32 caracteres: `python -c "import secrets; print(secrets.token_urlsafe(32))"`. La API no arranca con el valor de ejemplo. |
 | `SESSION_MAX_AGE_SECONDS` | No | Duración máxima de la sesión (por defecto 1800 = 30 min). |
 | `SESSION_IDLE_LIMIT_SECONDS` | No | Inactividad permitida (por defecto 900 = 15 min). |

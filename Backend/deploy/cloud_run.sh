@@ -6,7 +6,7 @@
 #   bash Backend/deploy/cloud_run.sh migrar     # crea o actualiza las tablas en Supabase
 #   bash Backend/deploy/cloud_run.sh api        # construye la imagen y despliega la API
 #   bash Backend/deploy/cloud_run.sh admin      # crea la primera cuenta de Administración
-#   bash Backend/deploy/cloud_run.sh estado     # dirección de la API, prueba de salud y vercel.json
+#   bash Backend/deploy/cloud_run.sh estado     # dirección de la API, prueba de salud y qué poner en Cloudflare Pages
 #
 # Los valores que no son secretos van en Backend/deploy/cloud-run.env (copia de
 # cloud-run.env.example; ese archivo no se sube a git). Guía completa:
@@ -35,7 +35,7 @@ load_config() {
   SA="$SERVICE@$PROJECT.iam.gserviceaccount.com"
   case "${FRONTEND_URL:-}" in
     https://*) FRONTEND_URL="${FRONTEND_URL%/}" ;;
-    *) fail "FRONTEND_URL debe empezar con https:// (la dirección de Vercel)." ;;
+    *) fail "FRONTEND_URL debe empezar con https:// (la dirección de Cloudflare Pages, …pages.dev)." ;;
   esac
   case "$EMAIL_PROVIDER" in
     brevo | resend) ;;
@@ -207,13 +207,9 @@ cmd_estado() {
   fi
   cat <<EOF
 
-Frontend/vercel.json debe quedar así (el sitio llama a la API por /api/v1):
-{
-  "rewrites": [
-    { "source": "/api/v1/:path*", "destination": "$url/api/v1/:path*" },
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
-}
+En Cloudflare Pages → tu proyecto → Settings → Variables and Secrets (Production):
+  API_ORIGIN = $url
+Después: Deployments → … → Retry deployment, para que el sitio la use.
 EOF
 }
 

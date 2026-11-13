@@ -23,6 +23,8 @@ frontend/dist/
 .eslintcache
 frontend/.eslintcache
 *.local
+# Cloudflare Pages (wrangler pages dev)
+.wrangler/
 
 # =========================
 # Entorno / Sistema
