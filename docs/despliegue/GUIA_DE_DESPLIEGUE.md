@@ -2,6 +2,8 @@
 
 Pasos para publicar el sistema según [ADR-014](../arquitectura/adr/ADR-014-despliegue-y-operacion.md).
 
+> **¿Todavía sin dominio?** Empieza por [Despliegue sin dominio propio](./DESPLIEGUE_SIN_DOMINIO.md): Cloud Run, Supabase y Vercel con un script para Cloud Shell. Esta guía es el plan final, con el dominio de ASPAR.
+
 - Cada paso se hace **una vez por entorno**: primero `staging` y, cuando todo funciona, `prod`.
 - Los nombres usan `<entorno>` (`staging` o `prod`) y `<proyecto>` (el id del proyecto de Google Cloud).
 - Los comandos de `gcloud` se ejecutan en [Cloud Shell](https://shell.cloud.google.com), que ya trae `gcloud` y `psql`.

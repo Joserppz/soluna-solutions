@@ -37,7 +37,7 @@ cp .env.example .env
 | `ENV` | No | `dev` (por defecto), `test` o `prod`. |
 | `LOG_LEVEL` | No | `INFO` por defecto. Los logs salen en JSON, una línea por evento, con el `request_id` de cada petición. |
 | `DB_POOL` | No | `queue` (por defecto, base directa o Docker) o `null` con el Transaction Pooler de Supabase. |
-| `PROXY_TRUSTED_HOPS` | No | `0` en tu PC y en Docker; `1` en Google Cloud Run. Indica cuántas IP del final de `X-Forwarded-For` agregaron nuestros proxies (ver `app/core/network.py`). |
+| `PROXY_TRUSTED_HOPS` | No | `0` en tu PC y en Docker; `1` en Google Cloud Run; `2` con Vercel delante (sin dominio propio). Indica cuántas IP del final de `X-Forwarded-For` agregaron nuestros proxies (ver `app/core/network.py`). |
 | `JWT_SECRET` | Sí | Mínimo 32 caracteres: `python -c "import secrets; print(secrets.token_urlsafe(32))"`. La API no arranca con el valor de ejemplo. |
 | `SESSION_MAX_AGE_SECONDS` | No | Duración máxima de la sesión (por defecto 1800 = 30 min). |
 | `SESSION_IDLE_LIMIT_SECONDS` | No | Inactividad permitida (por defecto 900 = 15 min). |
@@ -51,7 +51,7 @@ cp .env.example .env
 | `RATE_LIMITS_ENABLED` | No | `true` por defecto: limita login, registro y correos por IP y por cuenta (tabla `rate_limits`). Solo los tests lo apagan; en prod es obligatorio. |
 | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Solo para documentos | Supabase → Project Settings → API Keys. La `service_role` es secreta: **solo** en este `.env`, nunca en el frontend. Sin ellas, `/patients/{id}/documents` responde 503. |
 
-`.env` está en `.gitignore`; nunca lo subas al repositorio. En producción y staging no hay `.env`: los secretos están en **Google Secret Manager** y Cloud Run los entrega como variables de entorno. Los pasos están en [`docs/despliegue/GUIA_DE_DESPLIEGUE.md`](../docs/despliegue/GUIA_DE_DESPLIEGUE.md).
+`.env` está en `.gitignore`; nunca lo subas al repositorio. En producción y staging no hay `.env`: los secretos están en **Google Secret Manager** y Cloud Run los entrega como variables de entorno. Los pasos están en [`docs/despliegue/GUIA_DE_DESPLIEGUE.md`](../docs/despliegue/GUIA_DE_DESPLIEGUE.md); mientras no haya dominio, en [`DESPLIEGUE_SIN_DOMINIO.md`](../docs/despliegue/DESPLIEGUE_SIN_DOMINIO.md), con el script [`deploy/cloud_run.sh`](./deploy/cloud_run.sh).
 
 ## 4. Base de datos y migraciones versionadas
 

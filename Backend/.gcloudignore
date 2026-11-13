@@ -1,0 +1,18 @@
+# Lo que NO se sube a Cloud Build con «gcloud run deploy --source Backend»
+# (deploy/cloud_run.sh). Sin claves, entornos locales ni artefactos de pruebas.
+.gcloudignore
+.git
+.env
+*.env
+deploy/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+pytest-report.xml
+cobertura.md
+tests/
