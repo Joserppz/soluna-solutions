@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import { RouterLink } from 'vue-router'
 
 import { isApiError } from '../../api/errors'
 import type { PublicInquiryIn } from '../../api/types'
@@ -200,9 +201,16 @@ async function submit() {
           :aria-invalid="Boolean(errors.consent)"
           :aria-describedby="errors.consent ? field('permiso') : undefined"
         />
-        <span
-          >Autorizo a ASPAR a contactarme para responder a esta solicitud.</span
-        >
+        <span>
+          Autorizo a ASPAR a contactarme para responder a esta solicitud.
+          <RouterLink
+            :to="{ name: 'privacidad' }"
+            target="_blank"
+            class="inquiry__privacy"
+          >
+            Cómo cuidamos tus datos
+          </RouterLink>
+        </span>
       </label>
       <p v-if="errors.consent" :id="field('permiso')" class="inquiry__error">
         {{ errors.consent }}
@@ -238,6 +246,11 @@ async function submit() {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
   gap: var(--space-4);
+}
+
+.inquiry__privacy {
+  white-space: nowrap;
+  font-weight: 600;
 }
 
 .inquiry__consent {

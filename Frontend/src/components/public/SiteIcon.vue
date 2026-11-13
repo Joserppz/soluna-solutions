@@ -1,11 +1,11 @@
 <script setup lang="ts">
 /**
- * Íconos del sitio público (redes, WhatsApp y correo), en SVG y del color del texto.
+ * Íconos del sitio público (redes, WhatsApp, correo y galería), en SVG y del color del texto.
  * Son decorativos: el enlace que los lleva siempre tiene su nombre escrito o un
  * aria-label.
  */
 defineProps<{
-  name: 'facebook' | 'instagram' | 'tiktok' | 'whatsapp' | 'mail'
+  name: 'facebook' | 'instagram' | 'tiktok' | 'whatsapp' | 'mail' | 'photo'
   size?: number
 }>()
 </script>
@@ -67,6 +67,23 @@ defineProps<{
         d="m1.8 4 6.2 4.7L14.2 4"
         stroke-width="1.4"
         stroke-linejoin="round"
+      />
+    </g>
+    <g v-else-if="name === 'photo'" fill="none" stroke="currentColor">
+      <rect
+        x="1.3"
+        y="2.3"
+        width="13.4"
+        height="11.4"
+        rx="1.8"
+        stroke-width="1.4"
+      />
+      <circle cx="5.4" cy="6" r="1.3" stroke-width="1.3" />
+      <path
+        d="m1.8 12.2 3.6-3.4 2.6 2.3 2.6-3 3.6 4"
+        stroke-width="1.4"
+        stroke-linejoin="round"
+        stroke-linecap="round"
       />
     </g>
   </svg>

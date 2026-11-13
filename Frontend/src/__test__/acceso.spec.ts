@@ -505,7 +505,9 @@ describe('Sitio público con y sin sesión', () => {
     const fake = createApiFake({ 'GET /auth/me': NO_SESSION })
     const { wrapper } = await mountApp('/no-existe', fake)
 
-    expect(wrapper.get('h1').text()).toBe('No encontramos esta página.')
+    expect(wrapper.get('h1').text()).toBe(
+      'Esta página se nos perdió en el camino.',
+    )
     expect(wrapper.text()).not.toContain('Volver al espacio del equipo')
   })
 })

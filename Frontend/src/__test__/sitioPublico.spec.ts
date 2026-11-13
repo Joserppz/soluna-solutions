@@ -252,7 +252,7 @@ describe('Inicio del sitio público', () => {
     expect(footer.text()).toContain('Facebook')
     expect(footer.text()).toContain('TikTok')
     expect(footer.text()).not.toContain('Instagram')
-    expect(footer.text()).toContain('+591 7000 0000')
+    expect(footer.text()).not.toContain('+591 7000 0000')
     // WhatsApp siempre a mano, con el número publicado
     expect(wrapper.get('.wa-fab').attributes('href')).toMatch(
       /^https:\/\/wa\.me\/59170000000\?text=/,
@@ -260,7 +260,20 @@ describe('Inicio del sitio público', () => {
     expect(wrapper.get('.wa-fab').attributes('aria-label')).toBe(
       'Escríbenos por WhatsApp al +591 7000 0000',
     )
-    expect(footer.find('a[href="mailto:hola@aspar.org"]').exists()).toBe(true)
+    // «Contáctanos» destaca el correo; WhatsApp ya tiene su botón aparte
+    const reach = footer.get('.reach')
+    expect(reach.get('a.reach__card').attributes('href')).toBe(
+      'mailto:hola@aspar.org',
+    )
+    expect(reach.find('a[href^="https://wa.me"]').exists()).toBe(false)
+    // La galería lleva su ícono, como las redes
+    const gallery = footer
+      .findAll('.site-footer__network')
+      .find((link) => link.text() === 'Galería')!
+    expect(gallery.find('svg.site-icon').exists()).toBe(true)
+    expect(footer.get('.site-footer__legal a[href="/privacidad"]').text()).toBe(
+      'Privacidad',
+    )
     // «Cómo participar» y preguntas sin publicar: los textos del diseño
     expect(wrapper.text()).toContain('El primer paso es conversar.')
     expect(wrapper.text()).toContain('¿Tengo que crear una cuenta?')
@@ -436,6 +449,57 @@ describe('Inicio del sitio público', () => {
     await router.push({ name: 'inicio', hash: '#actividades' })
     await settle()
     expect(wrapper.get('.site-header').classes()).not.toContain('is-open')
+  })
+})
+
+describe('Privacidad y página no encontrada', () => {
+  it('la página de privacidad explica qué se guarda y a quién escribir', async () => {
+    const fake = fakeSite()
+    const { wrapper } = await mountApp('/privacidad', fake)
+
+    expect(document.title).toBe('Privacidad · ASPAR')
+    expect(wrapper.get('h1').text()).toBe('Cómo cuidamos tus datos.')
+    const titles = wrapper.findAll('.privacy__section h2').map((h) => h.text())
+    expect(titles).toEqual([
+      'Qué datos guardamos',
+      'Para qué los usamos',
+      'Quién puede verlos',
+      'Fotos y videos',
+      'Cómo los protegemos',
+      'Tus derechos',
+    ])
+    // El índice lleva a cada sección
+    expect(
+      wrapper.findAll('.privacy__index a').map((a) => a.attributes('href')),
+    ).toContain('#tus-derechos')
+    expect(wrapper.text()).toContain('vence en 5 minutos')
+    expect(
+      wrapper.get('.privacy__contact a[href="mailto:hola@aspar.org"]').text(),
+    ).toBe('hola@aspar.org')
+  })
+
+  it('el formulario de contacto enlaza a la privacidad en otra pestaña', async () => {
+    const fake = fakeSite()
+    const { wrapper } = await mountApp('/', fake)
+
+    const link = wrapper.get('.inquiry__privacy')
+    expect(link.attributes('href')).toBe('/privacidad')
+    expect(link.attributes('target')).toBe('_blank')
+  })
+
+  it('una dirección que no existe muestra la 404 con la vuelta al inicio', async () => {
+    const fake = fakeSite()
+    const { wrapper } = await mountApp('/esto-no-existe', fake)
+
+    expect(document.title).toBe('Página no encontrada · ASPAR')
+    expect(wrapper.get('h1').text()).toBe(
+      'Esta página se nos perdió en el camino.',
+    )
+    const actions = wrapper.findAll('.lost__actions a')
+    expect(actions.map((a) => [a.text(), a.attributes('href')])).toEqual([
+      ['Ir al inicio', '/'],
+      ['Apoya a ASPAR', '/apoyar'],
+    ])
   })
 })
 

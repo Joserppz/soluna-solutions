@@ -15,6 +15,8 @@ const PUBLIC = [
   '/ingresar',
   '/crear-cuenta',
   '/recuperar-contrasena',
+  '/privacidad',
+  '/pagina-que-no-existe',
 ]
 const TEAM = [
   '/equipo',

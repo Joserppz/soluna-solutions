@@ -37,7 +37,7 @@ const links = [
 const networks = computed(() => socialLinks(content.value))
 const lines = computed(() => contactLines(content.value))
 const whatsapp = computed(() => whatsappContact(content.value))
-/** Correo y WhatsApp van destacados en «Contáctanos»; el resto, debajo en texto. */
+/** El correo va destacado en «Contáctanos» (WhatsApp ya tiene su botón); el resto, debajo en texto. */
 const email = computed(() =>
   lines.value.find((line) => line.label === 'Correo'),
 )
@@ -131,22 +131,15 @@ onMounted(load)
           <p>Acompañamos. Nos movemos. Seguimos.</p>
           <section class="reach" aria-labelledby="pie-contacto">
             <h2 id="pie-contacto" class="reach__title">Contáctanos</h2>
-            <div class="reach__links">
-              <a v-if="email" class="reach__link" :href="email.href">
-                <SiteIcon name="mail" />
-                <span>{{ email.value }}</span>
-              </a>
-              <a
-                v-if="whatsapp.digits"
-                class="reach__link"
-                :href="whatsapp.href"
-                target="_blank"
-                rel="noopener"
-              >
-                <SiteIcon name="whatsapp" />
-                <span>{{ whatsapp.display }}</span>
-              </a>
-            </div>
+            <a v-if="email" class="reach__card" :href="email.href">
+              <span class="reach__icon"
+                ><SiteIcon name="mail" :size="20"
+              /></span>
+              <span class="reach__text">
+                <small>Escríbenos un correo</small>
+                <strong>{{ email.value }}</strong>
+              </span>
+            </a>
             <ul v-if="contacts.length" class="site-footer__contact">
               <li v-for="line in contacts" :key="line.label">
                 <span>{{ line.label }}:</span>
@@ -211,7 +204,11 @@ onMounted(load)
               </a>
             </li>
             <li>
-              <SiteLink :to="{ name: 'inicio', hash: '#comunidad' }">
+              <SiteLink
+                :to="{ name: 'inicio', hash: '#comunidad' }"
+                class="site-footer__network"
+              >
+                <SiteIcon name="photo" />
                 Galería
               </SiteLink>
             </li>
@@ -222,9 +219,12 @@ onMounted(load)
         <span>
           © {{ year }} Asociación de Parkinson «Mario Lagrava» · Bolivia
         </span>
-        <RouterLink v-if="!user" :to="{ name: 'ingresar' }">
-          Acceso del equipo
-        </RouterLink>
+        <span class="site-footer__legal">
+          <RouterLink :to="{ name: 'privacidad' }">Privacidad</RouterLink>
+          <RouterLink v-if="!user" :to="{ name: 'ingresar' }">
+            Acceso del equipo
+          </RouterLink>
+        </span>
       </div>
     </footer>
 
@@ -404,7 +404,7 @@ onMounted(load)
   list-style: none;
 }
 
-/* «Contáctanos»: correo y WhatsApp bien a la vista */
+/* «Contáctanos»: el correo en una tarjeta bien a la vista */
 .reach {
   display: grid;
   gap: var(--space-3);
@@ -415,33 +415,55 @@ onMounted(load)
   margin: 0;
 }
 
-.reach__links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
-
-.site-footer .reach__link {
+.site-footer .reach__card {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  min-height: 2.75rem;
-  padding: var(--space-2) var(--space-4);
-  border: 1px solid rgb(255 255 255 / 0.32);
-  border-radius: var(--radius-pill);
+  gap: var(--space-3);
+  justify-self: start;
+  max-width: 100%;
+  padding: var(--space-3) var(--space-5) var(--space-3) var(--space-3);
+  border: 1px solid rgb(255 255 255 / 0.18);
+  border-radius: var(--radius-md);
   background: rgb(255 255 255 / 0.06);
   color: #fff;
-  font-weight: 600;
-  overflow-wrap: anywhere;
   transition:
     background-color var(--duration-fast) var(--ease-out),
-    border-color var(--duration-fast) var(--ease-out);
+    border-color var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
 }
 
-.site-footer .reach__link:hover {
-  border-color: rgb(255 255 255 / 0.6);
-  background: rgb(255 255 255 / 0.14);
+.site-footer .reach__card:hover {
+  border-color: rgb(255 255 255 / 0.4);
+  background: rgb(255 255 255 / 0.12);
   text-decoration: none;
+  transform: translateY(-1px);
+}
+
+.reach__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  background: var(--rosa-100);
+  color: var(--guindo-700);
+}
+
+.reach__text {
+  display: grid;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.reach__text small {
+  color: rgb(255 255 255 / 0.78);
+  font-size: var(--text-sm);
+}
+
+.reach__text strong {
+  font-size: var(--text-lg);
+  overflow-wrap: anywhere;
 }
 
 .site-footer__network {
@@ -481,6 +503,12 @@ onMounted(load)
   box-shadow:
     var(--focus-ring),
     0 10px 24px rgb(4 38 31 / 0.28);
+}
+
+.site-footer__legal {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
 }
 
 .site-footer__contact {

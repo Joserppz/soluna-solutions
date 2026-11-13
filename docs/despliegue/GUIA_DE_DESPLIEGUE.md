@@ -247,6 +247,7 @@ pg_restore --clean --if-exists --no-owner --no-privileges --dbname "$DESTINO" ba
    - `NODE_VERSION=22` (la misma del CI)
    - `VITE_API_BASE_URL=https://api.<dominio>/api/v1`
    - `VITE_GOOGLE_CLIENT_ID` y `VITE_TURNSTILE_SITE_KEY`
+   - `VITE_SITE_URL=https://<dominio>` (sin «/» al final): la imagen y el título que muestran WhatsApp y Facebook al compartir el enlace (`public/compartir.jpg`). Si falta, se usa la dirección que da Pages al construir (`CF_PAGES_URL`).
 4. **Custom domains:** `aspar.com` en `aspar-web` y `staging.aspar.com` en `aspar-web-staging`.
 5. No agregues `404.html`: sin él, Pages responde `index.html` en cualquier ruta, como necesita una SPA con `vue-router`.
 6. El dominio del frontend debe estar en `CORS_ORIGINS` y en `FRONTEND_URL` de la API del mismo entorno.

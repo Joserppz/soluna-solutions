@@ -57,6 +57,12 @@ export const routes: RouteRecordRaw[] = [
         component: () => import('../views/public/SupportView.vue'),
         meta: { access: 'public', title: 'Apoya a ASPAR' },
       },
+      {
+        path: 'privacidad',
+        name: 'privacidad',
+        component: () => import('../views/public/PrivacyView.vue'),
+        meta: { access: 'public', title: 'Privacidad' },
+      },
     ],
   },
   {

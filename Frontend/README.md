@@ -18,6 +18,7 @@ cp .env.example .env
 | `VITE_API_BASE_URL`       | URL de la API (por defecto `http://localhost:8000/api/v1`)                             |
 | `VITE_GOOGLE_CLIENT_ID`   | ID de cliente OAuth de Google. Vacío: no aparece «Continuar con Google»                |
 | `VITE_TURNSTILE_SITE_KEY` | Clave pública de Cloudflare Turnstile. En desarrollo, si falta, se usa la de prueba    |
+| `VITE_SITE_URL`           | Dirección pública del sitio, para la vista previa al compartir en WhatsApp o Facebook  |
 
 Los tiempos de sesión (30 min, 15 min sin uso, 8 h como máximo) los define la API.
 
