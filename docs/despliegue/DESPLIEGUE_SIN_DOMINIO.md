@@ -49,7 +49,10 @@ Necesitas cuentas en:
 
 1. Crea la cuenta. Si pide sitio web, marca «No tengo sitio web» o pon la dirección de Pages del paso 3.
 2. **Senders, Domains & Dedicated IPs → Senders → Add sender**: nombre `ASPAR`, correo `asparlapaz@gmail.com`. Brevo envía un código o un enlace a ese buzón, y alguien de ASPAR lo confirma. Debe quedar en **Verified**.
-3. **SMTP & API → API Keys → Generate a new API key** → nombre `aspar-api`. Copia la clave en ese momento, porque se muestra una sola vez. Debe empezar con **`xkeysib-`**; las de la pestaña SMTP (`xsmtpsib-`) no sirven.
+3. **SMTP & API → API Keys → Generate a new API key** → nombre `aspar-api`, acceso **Restringido**, con solo el envío de correos transaccionales. Copia la clave en ese momento, porque se muestra una sola vez. Debe empezar con **`xkeysib-`**; las de la pestaña SMTP (`xsmtpsib-`) no sirven.
+4. **Security → Authorized IPs:** el bloqueo para **claves API** debe quedar **desactivado**. Cloud Run cambia de IP y Brevo rechazaría los envíos.
+
+> **La clave caduca tras 90 días sin uso.** Si pasan 3 meses sin registros ni recuperaciones de contraseña y dejan de llegar los correos, genera una nueva, corre `secretos` (solo cambia la de Brevo) y luego `api`.
 
 > Sin dominio propio, algunos correos pueden llegar a **spam** la primera vez. Pide a las personas que lo revisen y marquen «No es spam». Con el dominio de ASPAR se agregan SPF y DKIM y esto desaparece.
 
@@ -63,7 +66,7 @@ Necesitas cuentas en:
 
    | Campo | Valor |
    | :--- | :--- |
-   | Production branch | `Sprint2` (después, la rama de producción) |
+   | Production branch | `main` |
    | Framework preset | `None` |
    | Build command | `npm ci && npm run build` |
    | Build output directory | `dist` |
@@ -104,7 +107,7 @@ Abre [shell.cloud.google.com](https://shell.cloud.google.com). Es una terminal e
 ```bash
 gcloud config set project <ID-del-proyecto>
 gh auth login                       # GitHub.com → HTTPS → Login with a web browser
-gh repo clone Joserppz/soluna-solutions -- -b Sprint2
+gh repo clone Joserppz/soluna-solutions -- -b main
 cd soluna-solutions
 cp Backend/deploy/cloud-run.env.example Backend/deploy/cloud-run.env
 cloudshell edit Backend/deploy/cloud-run.env    # o: nano Backend/deploy/cloud-run.env
@@ -172,7 +175,7 @@ bash Backend/deploy/cloud_run.sh admin      # primera cuenta de Administración
 
 ## Publicar una versión nueva
 
-El sitio se actualiza solo en Cloudflare Pages con cada push a la rama elegida. Para la API:
+El trabajo diario va en la rama del sprint (por ejemplo `Sprint3`). Al pasarla a `main`, el sitio se actualiza solo en Cloudflare Pages. Para la API:
 
 ```bash
 cd ~/soluna-solutions && git pull

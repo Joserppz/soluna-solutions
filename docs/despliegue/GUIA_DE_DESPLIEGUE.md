@@ -240,7 +240,7 @@ pg_restore --clean --if-exists --no-owner --no-privileges --dbname "$DESTINO" ba
 
    | Campo | Valor |
    | :--- | :--- |
-   | Rama de producción | `main` (en staging, `Sprint2` o la rama de integración) |
+   | Rama de producción | `main` (en staging, la rama del sprint en curso) |
    | Directorio raíz | `Frontend` |
    | Comando de build | `npm ci && npm run build` |
    | Directorio de salida | `dist` |
