@@ -322,7 +322,7 @@ onMounted(async () => {
       />
     </section>
 
-    <div class="inv__body">
+    <div class="inv__body" :class="{ 'is-split': selected }">
       <section class="card" aria-labelledby="lista-titulo">
         <h2 id="lista-titulo" class="visually-hidden">Materiales</h2>
         <form class="filters" role="search" @submit.prevent>
@@ -502,7 +502,7 @@ onMounted(async () => {
         </footer>
       </section>
 
-      <aside class="inv__side">
+      <aside v-if="selected" class="inv__side">
         <ItemPanel
           v-if="selected"
           :key="`${selected.id}-${panelVersion}`"
@@ -512,13 +512,6 @@ onMounted(async () => {
           @deactivated="onDeactivated"
           @tab="panelTab = $event"
         />
-        <section v-else class="card card--hint" aria-labelledby="sin-material">
-          <h2 id="sin-material" class="card__title">Elige un material</h2>
-          <p>
-            Toca «Editar» en un material para cambiar su cantidad, su estado o
-            su historial.
-          </p>
-        </section>
       </aside>
     </div>
 
@@ -607,9 +600,14 @@ onMounted(async () => {
   background: var(--aspar-rojo);
 }
 
+/* Con algo abierto, el panel va al costado; si no, la lista usa todo el ancho */
+.inv__body.is-split {
+  grid-template-columns: minmax(0, 1fr) minmax(19rem, 24rem);
+}
+
 .inv__body {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(19rem, 24rem);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-5);
   align-items: start;
   min-width: 0;
@@ -626,10 +624,6 @@ onMounted(async () => {
   border-radius: var(--radius-lg);
   background: var(--color-surface);
   box-shadow: var(--shadow-sm);
-}
-
-.card--hint {
-  color: var(--color-text-muted);
 }
 
 .card__title {
@@ -767,7 +761,7 @@ onMounted(async () => {
 }
 
 @media (max-width: 1000px) {
-  .inv__body {
+  .inv__body.is-split {
     grid-template-columns: minmax(0, 1fr);
   }
 }
@@ -862,8 +856,11 @@ onMounted(async () => {
   flex: 1;
   min-height: 0;
   align-items: stretch;
-  grid-template-columns: minmax(0, 1fr) clamp(18rem, 24vw, 23rem);
   grid-template-rows: minmax(0, 1fr);
+}
+
+.inv--fit .inv__body.is-split {
+  grid-template-columns: minmax(0, 1fr) clamp(18rem, 24vw, 23rem);
 }
 
 .inv--fit .card {

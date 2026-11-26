@@ -124,7 +124,7 @@ test('«Ver días anteriores» y «Más recientes» recorren el registro sin des
   const firstRange = await range.textContent()
   const shown = Number(firstRange!.match(/1–(\d+)/)![1])
 
-  await page.getByRole('button', { name: 'Ver días anteriores →' }).click()
+  await page.getByRole('button', { name: 'Ver días anteriores' }).click()
   await expect(range).toHaveText(new RegExp(`^Mostrando ${shown + 1}–`))
   await expect.poll(() => fitsWindow(page)).toEqual(FITS)
 
@@ -176,7 +176,7 @@ for (const size of [
     // La última fila y la navegación quedan a la vista
     await expect(page.locator('.entry').last()).toBeInViewport()
     await expect(
-      page.getByRole('button', { name: 'Ver días anteriores →' }),
+      page.getByRole('button', { name: 'Ver días anteriores' }),
     ).toBeInViewport()
   })
 }

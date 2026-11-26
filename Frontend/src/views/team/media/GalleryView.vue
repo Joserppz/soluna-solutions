@@ -291,7 +291,7 @@ function hideBroken(event: Event) {
       </template>
     </PageHeader>
 
-    <div class="gal__body">
+    <div class="gal__body" :class="{ 'is-split': selected }">
       <div class="gal__main">
         <section class="card upload" aria-labelledby="subida-titulo">
           <h2 id="subida-titulo" class="visually-hidden">
@@ -471,7 +471,7 @@ function hideBroken(event: Event) {
         </section>
       </div>
 
-      <aside class="gal__side">
+      <aside v-if="selected" class="gal__side">
         <AlbumPanel
           v-if="selected"
           :key="selected.id"
@@ -481,13 +481,6 @@ function hideBroken(event: Event) {
           @deleted="onDeleted"
           @close="closeAlbum"
         />
-        <section v-else class="card card--hint" aria-labelledby="sin-album">
-          <h2 id="sin-album" class="card__title">Elige un álbum</h2>
-          <p>
-            Toca un álbum para ver sus fotos, etiquetar a quienes aparecen y
-            publicarlo cuando todas hayan dado su permiso.
-          </p>
-        </section>
       </aside>
     </div>
 
@@ -506,9 +499,14 @@ function hideBroken(event: Event) {
   margin-bottom: 0;
 }
 
+/* Con algo abierto, el panel va al costado; si no, la lista usa todo el ancho */
+.gal__body.is-split {
+  grid-template-columns: minmax(0, 1fr) minmax(19rem, 24rem);
+}
+
 .gal__body {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(19rem, 24rem);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-5);
   align-items: start;
   min-width: 0;
@@ -529,10 +527,6 @@ function hideBroken(event: Event) {
   border-radius: var(--radius-lg);
   background: var(--color-surface);
   box-shadow: var(--shadow-sm);
-}
-
-.card--hint {
-  color: var(--color-text-muted);
 }
 
 .card__title {
@@ -710,7 +704,7 @@ function hideBroken(event: Event) {
 }
 
 @media (max-width: 1100px) {
-  .gal__body {
+  .gal__body.is-split {
     grid-template-columns: minmax(0, 1fr);
   }
 }
@@ -743,8 +737,11 @@ function hideBroken(event: Event) {
   flex: 1;
   min-height: 0;
   align-items: stretch;
-  grid-template-columns: minmax(0, 1fr) clamp(19rem, 26vw, 24rem);
   grid-template-rows: minmax(0, 1fr);
+}
+
+.gal--fit .gal__body.is-split {
+  grid-template-columns: minmax(0, 1fr) clamp(19rem, 26vw, 24rem);
 }
 
 .gal--fit .gal__main {

@@ -22,6 +22,7 @@ import AppButton from '../ui/AppButton.vue'
 import AppModal from '../ui/AppModal.vue'
 import FormField from '../ui/FormField.vue'
 import StatusBadge from '../ui/StatusBadge.vue'
+import DatePicker from '../ui/DatePicker.vue'
 
 const props = defineProps<{ donation: DonationOut }>()
 const emit = defineEmits<{
@@ -201,7 +202,7 @@ async function cancel() {
         query: { material: donation.inventoryItemId },
       }"
     >
-      Ver el material en el inventario →
+      Ver el material en el inventario
     </RouterLink>
 
     <form v-if="pending" class="confirm" novalidate @submit.prevent="confirm">
@@ -229,14 +230,12 @@ async function cancel() {
           required
           :error="submitted ? (dateError ?? undefined) : undefined"
         >
-          <input
+          <DatePicker
             :id="id"
             v-model="creditedOn"
-            class="input"
-            type="date"
             :max="todayIso()"
-            :aria-describedby="describedBy"
-            :aria-invalid="invalid"
+            :describedby="describedBy"
+            :invalid="invalid"
           />
         </FormField>
       </div>

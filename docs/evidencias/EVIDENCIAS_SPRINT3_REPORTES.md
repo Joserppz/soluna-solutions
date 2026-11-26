@@ -23,12 +23,18 @@ Responde al [informe de evaluación de los Sprints 1 y 2](#informe-de-evaluació
 | Actividades | Fecha de la actividad (el rango se elige en «Descargar») | `GET /schedules/export` | `schedules:manage` o `attendance:write` | Fecha, horario, actividad, tipo, lugar, profesional, estado, cupos, interesados y cuántos vinieron |
 | Asistencia | Fecha de la actividad (el rango se elige en «Descargar») | `GET /attendance/export` | `schedules:manage` o `attendance:write` | Cada asistencia marcada: quién, a qué actividad, cuándo y con qué nota. El resumen mensual sigue en el mismo menú |
 | Galería | Creación del álbum | `GET /media/albums/export` | `media:manage` | Álbum, descripción, estado, permisos revisados, archivos y fecha |
-| Donaciones | Fecha del aporte; sin rango propio, el mes elegido | `GET /donations/export` | `donations:manage` | El registro filtrado de la tabla. El resumen del mes sigue aparte |
+| Donaciones | Fecha del aporte; sin rango propio, el mes elegido arriba | `GET /donations/export` | `donations:manage` | El registro filtrado de la tabla. El resumen del mes está en el mismo botón |
 | Solicitudes | Día en que llegó | `GET /inquiries/export` | `inquiries:manage` | Fecha, nombre, teléfono, para quién, zona, motivo, actividad, estado, quién atiende, mensaje y permiso para llamar |
 | Equipo y permisos | Alta de la cuenta | `GET /users/export` | `users:manage` | Nombre, correo, rol, área, activa, correo confirmado, último ingreso y alta. **Sin contraseñas ni sesiones** |
 | Registro de actividad | Fecha del movimiento (reemplaza a «Últimos N días») | `GET /audit/export` | `audit:read` | Todos los movimientos del filtro. Antes se cortaba en 5000 filas sin avisar |
 
 En todas, descargar exige además `reports:export`. Contenido (las 7 secciones del sitio) y Resumen (contadores) no son listados de registros, por eso no llevan rango ni descarga.
+
+## Cómo se ve en cada pantalla
+
+- **Un solo botón «Descargar» por pantalla**, cuadrado y con el ícono, junto a los filtros o al título de la tarjeta. Si la pantalla tiene más de un reporte (Donaciones: resumen del mes y registro; Asistencia: resumen mensual y asistencias marcadas), los dos están en el mismo menú, cada uno con su Excel y su CSV.
+- **Un solo calendario en todo el sistema** (`CalendarGrid`): el filtro de fechas, el rango de «Descargar», el día de Asistencia y cada campo de fecha de los formularios. Semana de lunes a domingo, hoy marcado, mes y año para saltar lejos y los días no permitidos apagados (por ejemplo, fechas futuras en un nacimiento o en una firma).
+- **Los menús flotan sobre la página** (`useFloating`): se abren debajo del botón o encima si no hay lugar, y ninguna tarjeta los recorta.
 
 ## Reglas comunes
 
@@ -74,6 +80,7 @@ Un listado sin filtros no escribe nada.
 | :--- | :--- |
 | `Backend/tests/test_reports.py` (34) | Etiquetas y bordes del rango; 422 si «desde» > «hasta» en 6 listados; extremos incluidos en columnas de fecha (ingreso) y de fecha con hora (registro, a las 00:00, 21:30 y 23:59 de Bolivia); solo desde o solo hasta; **filas exportadas = total del listado** en 9 combinaciones de pantalla, rol y filtro, más Galería y Asistencia; la página no limita la descarga; nada de fuera del filtro; Excel con la misma cantidad; tope de 10 000; fórmulas; 7 combinaciones de rol sin permiso → 403; permiso visible en la matriz de roles; sin datos clínicos; registro y log con filtro y filas |
 | `Frontend/src/__test__/reportes.spec.ts` (18) | Atajos, etiquetas, errores y dirección del rango; el componente de fechas (atajo, rango al revés, quitar, Esc); en Afiliados las fechas van a la tabla, a las pestañas y a la dirección, y la descarga lleva todo el filtro sin `limit`; un rol sin permiso no ve «Descargar»; error de tope; Inventario, Solicitudes, Donaciones (mes o rango propio), Galería, Actividades y Registro |
+| `Frontend/src/__test__/calendario.spec.ts` (7) | El calendario propio: semana de lunes a domingo, hoy marcado, días fuera de mínimo y máximo apagados, teclado (flechas, Re Pág, Fin), días con actividad marcados; el campo de fecha (elegir, «Hoy», «Borrar», formato largo, Esc, deshabilitado) |
 | `Frontend/e2e/reportes.spec.ts` (3) | Con la API real: el CSV de Afiliados de «Este año» tiene tantas filas como el total del filtro, aunque la tabla muestre una página; un rango sin datos no deja descargar; la descarga de Inventario queda en el registro con su filtro y sus filas |
 
 ## Pendiente del equipo

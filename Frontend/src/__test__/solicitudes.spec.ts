@@ -292,7 +292,7 @@ describe('Solicitudes', () => {
       fake,
     )
 
-    await button('Inscribir como afiliado →').trigger('click')
+    await button('Inscribir como afiliado').trigger('click')
     await settle()
     const dialog = topDialog()
     expect(dialog.text()).toContain('Inscribir como afiliado')
@@ -350,7 +350,7 @@ describe('Solicitudes', () => {
     })
     await mountApp('/equipo/solicitudes?solicitud=inq-1', fake)
 
-    await button('Inscribir como afiliado →').trigger('click')
+    await button('Inscribir como afiliado').trigger('click')
     await settle()
     const dialog = topDialog()
     await field('Carnet').setValue('1234567')
@@ -413,7 +413,7 @@ describe('Solicitudes', () => {
 
     await router.push('/equipo/solicitudes?solicitud=inq-2')
     await settle()
-    expect(button('Ver la ficha →').attributes('href')).toBe(
+    expect(button('Ver la ficha').attributes('href')).toBe(
       '/equipo/afiliados/pac-3',
     )
     expect(body().text()).not.toContain('Inscribir como afiliado')

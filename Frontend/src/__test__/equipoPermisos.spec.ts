@@ -423,9 +423,9 @@ describe('Invitar a una persona', () => {
     })
     await mountApp(PATH, fake)
 
-    // «+ Nuevo rol» abre la invitación en una ventana
+    // «+ Nuevo integrante» abre la invitación en una ventana
     expect(body().find('[data-testid="panel-invitar"]').exists()).toBe(false)
-    await button('+ Nuevo rol').trigger('click')
+    await button('+ Nuevo integrante').trigger('click')
     await settle()
     const panel = body().get('[data-testid="panel-invitar"]')
     expect(document.activeElement).toBe(field('Nombre completo', panel).element)
@@ -506,7 +506,7 @@ describe('Invitar a una persona', () => {
       },
     ])
     await mountApp(PATH, fake)
-    await button('+ Nuevo rol').trigger('click')
+    await button('+ Nuevo integrante').trigger('click')
     await settle()
     const panel = body().get('[data-testid="panel-invitar"]')
 
@@ -537,7 +537,7 @@ describe('Invitar a una persona', () => {
     const { wrapper, router } = await mountApp(`${PATH}?pestana=permisos`, fake)
     expect(wrapper.find('[data-testid="tabla-permisos"]').exists()).toBe(true)
 
-    await button('+ Nuevo rol').trigger('click')
+    await button('+ Nuevo integrante').trigger('click')
     await settle()
 
     expect(router.currentRoute.value.query.pestana).toBe('permisos')

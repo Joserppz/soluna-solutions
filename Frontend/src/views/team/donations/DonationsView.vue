@@ -21,6 +21,7 @@ import RegisterDonationDialog from '../../../components/donations/RegisterDonati
 import DateRangeFilter from '../../../components/reports/DateRangeFilter.vue'
 import ExportMenu, {
   type ExportFormat,
+  type ExportItem,
 } from '../../../components/reports/ExportMenu.vue'
 import AppAlert from '../../../components/ui/AppAlert.vue'
 import AppButton from '../../../components/ui/AppButton.vue'
@@ -54,7 +55,6 @@ import {
   writeRange,
   type DateRangeValue,
 } from '../../../utils/dateRange'
-import { saveBlob } from '../../../utils/download'
 import {
   monthBounds,
   monthTitle,
@@ -66,8 +66,7 @@ import { normalizeSearch } from '../../../utils/patients'
 const ROW_HEIGHT = 56
 const SCROLL_PAGE_SIZE = 10
 
-const { api, session } = useApi()
-const canExport = computed(() => session.can('reports:export'))
+const { api } = useApi()
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
@@ -104,7 +103,6 @@ const items = ref<DonationOut[]>([])
 const total = ref(0)
 const loading = ref(true)
 const loadError = ref<string | null>(null)
-const exporting = ref<'csv' | 'xlsx' | null>(null)
 const registerOpen = ref(false)
 const goalOpen = ref(false)
 
@@ -195,6 +193,23 @@ function currentFilters(): DonationListQuery {
 function exportDonations(format: ExportFormat) {
   return api.donations.export({ ...currentFilters(), format })
 }
+
+/** Un solo «Descargar»: el resumen del mes y el registro con el filtro de la tabla */
+const downloads = computed<ExportItem[]>(() => [
+  {
+    title: `Resumen de ${monthName.value}`,
+    detail: 'Totales por canal y estado',
+    filename: 'donaciones',
+    stamp: month.value,
+    download: (format) => api.donations.downloadSummary(format, month.value),
+  },
+  {
+    title: 'Registro de aportes',
+    filename: 'donaciones-registro',
+    total: loading.value ? null : total.value,
+    download: exportDonations,
+  },
+])
 
 let request = 0
 
@@ -338,22 +353,6 @@ function onGoalSaved(saved: GoalOut) {
   )
 }
 
-async function download(format: 'csv' | 'xlsx') {
-  exporting.value = format
-  try {
-    const blob = await api.donations.downloadSummary(format, month.value)
-    saveBlob(blob, `donaciones-${month.value}.${format}`)
-  } catch (failure) {
-    toast.error(
-      isApiError(failure)
-        ? failure.message
-        : 'No pudimos descargar el resumen. Intenta de nuevo.',
-    )
-  } finally {
-    exporting.value = null
-  }
-}
-
 /** Un enlace con ?aporte= abre ese aporte aunque no esté en la página que se ve. */
 async function openLinked() {
   const id = selectedId.value
@@ -394,7 +393,7 @@ onMounted(async () => {
   <div class="don" :class="{ 'don--fit': fit }">
     <PageHeader
       title="Donaciones"
-      subtitle="Cada aporte queda registrado. Se confirma cuando el ingreso aparece en el banco."
+      subtitle="Aportes recibidos. Cada uno se confirma con el extracto del banco."
     >
       <template #actions>
         <AppButton size="lg" @click="registerOpen = true">
@@ -405,7 +404,19 @@ onMounted(async () => {
 
     <section class="band" aria-label="Resumen del mes">
       <div class="band__month">
-        <p class="eyebrow">{{ monthTitle(month).replace(' de ', ' ') }}</p>
+        <div class="band__month-head">
+          <label class="visually-hidden" for="filtro-mes">Mes</label>
+          <select id="filtro-mes" v-model="month" class="band__select">
+            <option
+              v-for="item in months"
+              :key="item.value"
+              :value="item.value"
+            >
+              {{ item.label }}
+            </option>
+          </select>
+          <ExportMenu :items="downloads" what="donaciones" size="sm" />
+        </div>
         <SkeletonBlock v-if="!summary" :lines="2" height="1.25rem" />
         <template v-else>
           <p class="band__headline">
@@ -434,33 +445,6 @@ onMounted(async () => {
             }}.
           </p>
         </template>
-        <p
-          v-if="canExport"
-          class="downloads"
-          role="group"
-          aria-labelledby="resumen-mes"
-        >
-          <span id="resumen-mes">Descargar el resumen del mes:</span>
-          <button
-            type="button"
-            class="link"
-            aria-label="Descargar el resumen del mes en CSV"
-            :disabled="exporting !== null"
-            @click="download('csv')"
-          >
-            {{ exporting === 'csv' ? 'Preparando…' : 'CSV' }}
-          </button>
-          <span aria-hidden="true">·</span>
-          <button
-            type="button"
-            class="link"
-            aria-label="Descargar el resumen del mes en Excel"
-            :disabled="exporting !== null"
-            @click="download('xlsx')"
-          >
-            {{ exporting === 'xlsx' ? 'Preparando…' : 'Excel' }}
-          </button>
-        </p>
       </div>
 
       <div class="band__channels">
@@ -516,12 +500,12 @@ onMounted(async () => {
           Todavía no hay una meta. Créala para mostrarla en el sitio.
         </p>
         <button type="button" class="link" @click="goalOpen = true">
-          {{ goal ? 'Editar meta →' : 'Crear meta →' }}
+          {{ goal ? 'Editar meta' : 'Crear meta' }}
         </button>
       </div>
     </section>
 
-    <div class="don__body">
+    <div class="don__body" :class="{ 'is-split': wide && selected }">
       <section class="card" aria-labelledby="registro-titulo">
         <h2 id="registro-titulo" class="visually-hidden">
           Registro de aportes
@@ -564,22 +548,10 @@ onMounted(async () => {
                 {{ item.label }}
               </option>
             </select>
-            <label class="visually-hidden" for="filtro-mes">Mes</label>
-            <select id="filtro-mes" v-model="month" class="select">
-              <option
-                v-for="item in months"
-                :key="item.value"
-                :value="item.value"
-              >
-                {{ item.label }}
-              </option>
-            </select>
-            <DateRangeFilter v-model="period" label="Fechas de la tabla" />
-            <ExportMenu
-              :download="exportDonations"
-              filename="donaciones-registro"
-              what="aportes"
-              :total="loading ? null : total"
+            <DateRangeFilter
+              v-model="period"
+              label="Fechas de la tabla"
+              :empty-label="`Todo ${monthName}`"
             />
           </form>
 
@@ -721,7 +693,7 @@ onMounted(async () => {
         </div>
       </section>
 
-      <aside v-if="wide" class="don__side">
+      <aside v-if="wide && selected" class="don__side">
         <DonationPanel
           v-if="selected"
           :key="`${selected.id}-${selected.status}`"
@@ -729,22 +701,6 @@ onMounted(async () => {
           @updated="onUpdated"
           @close="closePanel"
         />
-        <section v-else class="card card--hint" aria-labelledby="sin-aporte">
-          <h2 id="sin-aporte" class="card__title">Elige un aporte</h2>
-          <p>
-            Toca «Confirmar» en un aviso pendiente para buscarlo en el extracto,
-            o «Ver» para revisar un aporte. Ningún aporte se borra: si no
-            corresponde, se anula con el motivo.
-          </p>
-          <AppButton
-            v-if="summary?.pendingCount && tab !== 'pendiente'"
-            variant="secondary"
-            size="sm"
-            @click="tab = 'pendiente'"
-          >
-            Ver los {{ summary.pendingCount }} por confirmar
-          </AppButton>
-        </section>
       </aside>
     </div>
 
@@ -783,14 +739,34 @@ onMounted(async () => {
   margin-bottom: 0;
 }
 
-.downloads {
+.band__month-head {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-2);
-  margin-top: auto;
-  color: var(--color-text-muted);
-  font-size: var(--text-sm);
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+/* El mes del resumen (y de la tabla, si no tiene fechas propias) */
+.band__select {
+  min-height: 2.5rem;
+  padding: 0 2rem 0 var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+    no-repeat right 0.7rem center;
+  appearance: none;
+  color: var(--aspar-rojo);
+  font: inherit;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.band__select:hover {
+  border-color: var(--color-text-subtle);
 }
 
 /* Franja de arriba: el mes, por dónde llegaron y la meta, en una fila */
@@ -819,14 +795,6 @@ onMounted(async () => {
 .band__channels,
 .band__goal {
   background: var(--color-surface-muted);
-}
-
-.eyebrow {
-  color: var(--aspar-rojo);
-  font-size: var(--text-xs);
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
 }
 
 .band__headline {
@@ -953,9 +921,14 @@ onMounted(async () => {
   cursor: pointer;
 }
 
+/* Con algo abierto, el panel va al costado; si no, la lista usa todo el ancho */
+.don__body.is-split {
+  grid-template-columns: minmax(0, 1fr) minmax(19rem, 23rem);
+}
+
 .don__body {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(19rem, 23rem);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-5);
   align-items: start;
   min-width: 0;
@@ -980,11 +953,6 @@ onMounted(async () => {
   min-width: 0;
 }
 
-.card--hint {
-  color: var(--color-text-muted);
-  justify-items: start;
-}
-
 .card__title {
   font-family: var(--font-serif);
   font-size: var(--text-xl);
@@ -994,21 +962,12 @@ onMounted(async () => {
 
 .filters {
   display: grid;
-  grid-template-columns:
-    minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)
-    auto;
+  grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr));
   gap: var(--space-2);
 }
 
 .filters :deep(.range__trigger) {
   font-size: var(--text-sm);
-}
-
-/* Con el panel del aporte al costado, la tabla es más angosta: dos filas de filtros */
-@media (max-width: 1599.98px) {
-  .filters {
-    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr);
-  }
 }
 
 .filters .select,
@@ -1161,7 +1120,7 @@ onMounted(async () => {
     border-bottom: 1px solid var(--color-border);
   }
 
-  .don__body {
+  .don__body.is-split {
     grid-template-columns: minmax(0, 1fr);
   }
 }
@@ -1245,12 +1204,15 @@ onMounted(async () => {
   flex: 1;
   min-height: 0;
   align-items: stretch;
-  grid-template-columns: minmax(0, 1fr) clamp(18rem, 24vw, 23rem);
   grid-template-rows: minmax(0, 1fr);
 }
 
+.don--fit .don__body.is-split {
+  grid-template-columns: minmax(0, 1fr) clamp(18rem, 24vw, 23rem);
+}
+
 @media (max-width: 1199.98px) {
-  .don--fit .don__body {
+  .don--fit .don__body.is-split {
     grid-template-columns: minmax(0, 1fr);
   }
 }

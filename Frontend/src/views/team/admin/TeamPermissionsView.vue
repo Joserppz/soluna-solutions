@@ -101,7 +101,7 @@ watch(tab, (value) => {
   void router.replace({ query })
 })
 
-/** «+ Nuevo rol» abre la invitación en una ventana: las listas usan todo el ancho. */
+/** «+ Nuevo integrante» abre la invitación en una ventana: las listas usan todo el ancho. */
 async function startInvite() {
   inviteOpen.value = true
   await nextTick()
@@ -122,7 +122,9 @@ onMounted(() => {
       subtitle="Quién entra al espacio del equipo y qué puede ver cada persona."
     >
       <template v-if="canManageUsers" #actions>
-        <AppButton size="lg" @click="startInvite"> + Nuevo rol </AppButton>
+        <AppButton size="lg" @click="startInvite">
+          + Nuevo integrante
+        </AppButton>
       </template>
     </PageHeader>
 

@@ -18,6 +18,7 @@ import type {
 import AttendancePrintSheet from '../../../components/ops/AttendancePrintSheet.vue'
 import ExportMenu, {
   type ExportFormat,
+  type ExportItem,
 } from '../../../components/reports/ExportMenu.vue'
 import AppAlert from '../../../components/ui/AppAlert.vue'
 import AppButton from '../../../components/ui/AppButton.vue'
@@ -32,7 +33,6 @@ import { useApi } from '../../../composables/useApi'
 import { useFitLayout } from '../../../composables/useFitLayout'
 import { useFitRows } from '../../../composables/useFitRows'
 import { useToast } from '../../../composables/useToast'
-import { saveBlob } from '../../../utils/download'
 import { firstName } from '../../../utils/format'
 import {
   dayLabel,
@@ -44,6 +44,7 @@ import {
   today,
 } from '../../../utils/ops'
 import { rangeQuery, type DateRangeValue } from '../../../utils/dateRange'
+import DatePicker from '../../../components/ui/DatePicker.vue'
 
 /** Para buscar sin importar tildes ni mayúsculas: «gutierrez» encuentra «Gutiérrez». */
 function foldText(text: string): string {
@@ -72,7 +73,6 @@ const canClose = computed(() =>
   session.canAny('schedules:manage', 'attendance:write'),
 )
 const canDownload = computed(() => session.can('schedules:manage'))
-const canExport = computed(() => session.can('reports:export'))
 
 /*
  * La asistencia se toma por día: arriba se elige la fecha (se puede escribir o
@@ -99,6 +99,8 @@ const previousDay = computed(
 const nextDay = computed(
   () => nearby.value.find((item) => item.date > day.value)?.date ?? null,
 )
+/** Días con actividad publicada cerca: llevan un punto en el calendario */
+const activityDays = computed(() => nearby.value.map((item) => item.date))
 
 const sheet = ref<AttendanceSheet | null>(null)
 const loadingSheet = ref(false)
@@ -475,19 +477,6 @@ function printSheet() {
   window.print()
 }
 
-async function download(format: 'csv' | 'xlsx') {
-  try {
-    const blob = await api.attendance.downloadMonthly(format, month.value)
-    saveBlob(blob, `resumen-mensual-asistencia-${month.value}.${format}`)
-  } catch (failure) {
-    toast.error(
-      isApiError(failure)
-        ? failure.message
-        : 'No pudimos descargar el resumen.',
-    )
-  }
-}
-
 /** Ancho de cada barra del mes: la actividad con más gente llena la barra; sin nadie, vacía. */
 function barWidth(came: number): number {
   const top = Math.max(
@@ -515,13 +504,30 @@ function exportMarks(format: ExportFormat, range?: DateRangeValue) {
     format,
   })
 }
+
+/** Un solo botón: el resumen del mes y el detalle de un rango (por defecto, el mes) */
+const downloads = computed<ExportItem[]>(() => [
+  {
+    title: 'Resumen mensual',
+    detail: 'Personas por actividad del mes',
+    filename: 'resumen-mensual-asistencia',
+    stamp: month.value,
+    download: (format) => api.attendance.downloadMonthly(format, month.value),
+  },
+  {
+    title: 'Asistencias marcadas',
+    filename: 'asistencia-detalle',
+    range: monthBounds(month.value),
+    download: exportMarks,
+  },
+])
 </script>
 
 <template>
   <div class="att" :class="{ 'att--fit': fit }">
     <PageHeader
       title="Asistencia"
-      subtitle="Marca quién vino al encuentro. Toma menos de dos minutos."
+      subtitle="Quién vino a cada actividad del día."
     >
       <template #actions>
         <div class="when">
@@ -534,13 +540,14 @@ function exportMarks(format: ExportFormat, range?: DateRangeValue) {
           >
             ‹
           </button>
-          <label class="visually-hidden" for="dia-asistencia">Día</label>
-          <input
+          <DatePicker
             id="dia-asistencia"
-            :value="day"
-            class="input when__day"
-            type="date"
-            @change="pickDay(($event.target as HTMLInputElement).value)"
+            :model-value="day"
+            class="when__day"
+            format="long"
+            aria-label="Día"
+            :marked="activityDays"
+            @change="pickDay"
           />
           <button
             type="button"
@@ -823,7 +830,12 @@ function exportMarks(format: ExportFormat, range?: DateRangeValue) {
         </section>
 
         <section v-if="canDownload" class="card" aria-labelledby="mes-titulo">
-          <h2 id="mes-titulo" class="card__title">{{ monthTitle(month) }}</h2>
+          <div class="card__head">
+            <h2 id="mes-titulo" class="card__title">
+              {{ monthTitle(month) }}
+            </h2>
+            <ExportMenu :items="downloads" what="asistencia" size="sm" />
+          </div>
           <p class="card__text">Personas por actividad</p>
           <ul v-if="monthly?.totalCame" class="bars">
             <li v-for="row in monthly.byCategory" :key="row.category">
@@ -840,38 +852,6 @@ function exportMarks(format: ExportFormat, range?: DateRangeValue) {
             </li>
           </ul>
           <p v-else class="card__text">Todavía no hay asistencias este mes.</p>
-          <div v-if="canExport" class="card__export">
-            <ExportMenu
-              :download="exportMarks"
-              :range="monthBounds(month)"
-              filename="asistencia-detalle"
-              what="asistencias marcadas"
-              size="sm"
-            >
-              <template #extra>
-                <p class="downloads">
-                  <span>Resumen del mes:</span>
-                  <button
-                    type="button"
-                    class="link"
-                    aria-label="Descargar resumen mensual en CSV"
-                    @click="download('csv')"
-                  >
-                    CSV
-                  </button>
-                  <span aria-hidden="true">·</span>
-                  <button
-                    type="button"
-                    class="link"
-                    aria-label="Descargar resumen mensual en Excel"
-                    @click="download('xlsx')"
-                  >
-                    Excel
-                  </button>
-                </p>
-              </template>
-            </ExportMenu>
-          </div>
         </section>
 
         <p class="volunteer-note">
@@ -987,14 +967,30 @@ function exportMarks(format: ExportFormat, range?: DateRangeValue) {
 /* Día de la asistencia: se escribe o se elige; ‹ y › saltan al día con actividad */
 .when {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: flex-end;
   gap: var(--space-2);
 }
 
-.when__day {
-  width: 11rem;
+.when :deep(.when__day) {
+  width: 16.5rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Celular: la fecha entra entre ‹ y › sin empujar la pantalla de lado */
+@media (max-width: 520px) {
+  .att .when {
+    width: 100%;
+  }
+
+  .att .when :deep(.when__day) {
+    flex: 1;
+    width: auto;
+    padding-inline: var(--space-3);
+    font-size: var(--text-sm);
+  }
 }
 
 .when__step {
@@ -1039,20 +1035,11 @@ function exportMarks(format: ExportFormat, range?: DateRangeValue) {
   flex: 1;
 }
 
-.card__export {
+.card__head {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-2) var(--space-3);
-}
-
-.downloads {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  margin: 0;
-  font-size: var(--text-sm);
+  justify-content: space-between;
+  gap: var(--space-3);
 }
 
 .att__body {
@@ -1211,6 +1198,19 @@ function exportMarks(format: ExportFormat, range?: DateRangeValue) {
 
   .toolbar__print-more {
     display: none;
+  }
+
+  /* Los nombres se leen completos: los dos botones se angostan un poco */
+  .att .choice {
+    width: 9.5rem;
+  }
+
+  .att .choice__btn {
+    padding: 0 var(--space-2);
+  }
+
+  .att.att--fit .att__body {
+    grid-template-columns: minmax(0, 1fr) 14.5rem;
   }
 
   .att--fit .att__side .card {
@@ -1416,7 +1416,7 @@ function exportMarks(format: ExportFormat, range?: DateRangeValue) {
     justify-content: flex-start;
   }
 
-  .when__day {
+  .when :deep(.when__day) {
     flex: 1;
     width: auto;
   }

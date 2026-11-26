@@ -27,6 +27,7 @@ import ContactFields, {
   type ContactDraft,
   type ContactErrors,
 } from './ContactFields.vue'
+import DatePicker from '../ui/DatePicker.vue'
 
 const props = defineProps<{ open: boolean }>()
 const emit = defineEmits<{
@@ -255,14 +256,13 @@ function searchDuplicate() {
             label="Fecha de nacimiento"
             :error="shown(errors.birthDate)"
           >
-            <input
+            <DatePicker
               :id="id"
               v-model="draft.birthDate"
-              class="input"
-              type="date"
+              clearable
               :max="today"
-              :aria-describedby="describedBy"
-              :aria-invalid="invalid"
+              :describedby="describedBy"
+              :invalid="invalid"
             />
           </FormField>
           <FormField
@@ -324,14 +324,12 @@ function searchDuplicate() {
             required
             :error="shown(errors.consentDate)"
           >
-            <input
+            <DatePicker
               :id="id"
               v-model="draft.consentDate"
-              class="input"
-              type="date"
               :max="today"
-              :aria-describedby="describedBy"
-              :aria-invalid="invalid"
+              :describedby="describedBy"
+              :invalid="invalid"
             />
           </FormField>
           <label class="checkbox register__image">

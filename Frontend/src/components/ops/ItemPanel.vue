@@ -20,6 +20,7 @@ import AppButton from '../ui/AppButton.vue'
 import AppModal from '../ui/AppModal.vue'
 import FormField from '../ui/FormField.vue'
 import StatusBadge from '../ui/StatusBadge.vue'
+import DatePicker from '../ui/DatePicker.vue'
 
 const CATEGORIES: { value: ItemIn['category']; label: string }[] = [
   { value: 'fisioterapia', label: 'Fisioterapia' },
@@ -487,11 +488,9 @@ const categoryLabel = computed(
               </select>
             </FormField>
             <FormField v-slot="{ id }" label="Ingreso">
-              <input
+              <DatePicker
                 :id="id"
                 v-model="draft.entryDate"
-                class="input"
-                type="date"
                 :disabled="!canManage"
               />
             </FormField>

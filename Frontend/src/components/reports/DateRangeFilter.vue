@@ -2,11 +2,12 @@
 /**
  * Filtro por rango de fechas, igual en todas las pantallas: un botón compacto que dice
  * qué fechas se ven («Todas las fechas», «Este mes», «1 nov 2026 – 15 nov 2026») y abre
- * atajos y un rango propio. Ocupa lo mismo que un campo, así entra en cada barra de
- * filtros sin agregar barras de desplazamiento.
+ * atajos y el calendario del sistema para un rango propio. El panel flota sobre la
+ * página: ninguna tarjeta lo recorta.
  */
-import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue'
+import { computed, ref, useId, watch } from 'vue'
 
+import { useClickOutside, useFloating } from '../../composables/useFloating'
 import {
   ALL_DATES,
   PRESETS,
@@ -20,30 +21,54 @@ import {
 } from '../../utils/dateRange'
 import { todayIso } from '../../utils/format'
 import AppIcon from '../ui/AppIcon.vue'
+import CalendarGrid from '../ui/CalendarGrid.vue'
 
 const props = withDefaults(
   defineProps<{
     modelValue: DateRangeValue
     /** Qué fecha se filtra: «Fecha de registro», «Fecha de ingreso»… */
     label?: string
-    /** Sin la opción «Todas las fechas» (por ejemplo, la asistencia siempre va por rango). */
+    /** Sin la opción «Todas las fechas» */
     required?: boolean
+    /** Qué se ve sin rango propio (Donaciones: «Todo noviembre», el mes de arriba) */
+    emptyLabel?: string
+    size?: 'sm' | 'md'
   }>(),
-  { label: 'Fechas', required: false },
+  {
+    label: 'Fechas',
+    required: false,
+    emptyLabel: 'Todas las fechas',
+    size: 'md',
+  },
 )
 
 const emit = defineEmits<{ 'update:modelValue': [value: DateRangeValue] }>()
 
 const id = useId()
 const open = ref(false)
-const root = ref<HTMLElement | null>(null)
 const trigger = ref<HTMLButtonElement | null>(null)
 const panel = ref<HTMLElement | null>(null)
 const draft = ref<DateRangeValue>({ ...props.modelValue })
 const today = computed(() => todayIso())
 const error = computed(() => rangeError(draft.value))
 const current = computed(() => presetOf(props.modelValue, today.value))
-const text = computed(() => periodLabel(props.modelValue, today.value))
+const text = computed(() =>
+  isActive(props.modelValue)
+    ? periodLabel(props.modelValue, today.value)
+    : props.emptyLabel,
+)
+const draftText = computed(() => {
+  if (!draft.value.from) return 'Elige el primer día'
+  if (!draft.value.to) return 'Ahora elige el último día'
+  return periodLabel(draft.value, today.value)
+})
+const { floatingStyle, ready } = useFloating(trigger, panel, open)
+useClickOutside(
+  [trigger, panel],
+  open,
+  () => close(false),
+  () => close(),
+)
 
 watch(
   () => props.modelValue,
@@ -56,8 +81,8 @@ async function toggle() {
   open.value = !open.value
   if (open.value) {
     draft.value = { ...props.modelValue }
-    await nextTick()
-    panel.value?.querySelector<HTMLElement>('button, input')?.focus()
+    await ready()
+    panel.value?.querySelector<HTMLElement>('button')?.focus()
   }
 }
 
@@ -73,9 +98,12 @@ function choose(key: PresetKey) {
 }
 
 function apply() {
-  if (error.value) return
-  if (props.required && (!draft.value.from || !draft.value.to)) return
-  emit('update:modelValue', { ...draft.value })
+  if (error.value || !draft.value.from) return
+  const range = {
+    from: draft.value.from,
+    to: draft.value.to || draft.value.from,
+  }
+  emit('update:modelValue', range)
   close()
 }
 
@@ -83,22 +111,10 @@ function clear() {
   emit('update:modelValue', { ...ALL_DATES })
   close()
 }
-
-function onDocumentClick(event: MouseEvent) {
-  if (open.value && !root.value?.contains(event.target as Node)) close(false)
-}
-
-watch(open, (value) => {
-  if (value) document.addEventListener('mousedown', onDocumentClick)
-  else document.removeEventListener('mousedown', onDocumentClick)
-})
-onBeforeUnmount(() =>
-  document.removeEventListener('mousedown', onDocumentClick),
-)
 </script>
 
 <template>
-  <div ref="root" class="range" @keydown.esc.stop="close()">
+  <div class="range" :class="`range--${size}`">
     <button
       ref="trigger"
       type="button"
@@ -113,74 +129,64 @@ onBeforeUnmount(() =>
       <span class="range__text">
         <span class="visually-hidden">{{ label }}: </span>{{ text }}
       </span>
-      <span class="range__caret" aria-hidden="true">▾</span>
+      <AppIcon name="chevron" :size="14" class="range__caret" />
     </button>
 
-    <div
-      v-if="open"
-      :id="`${id}-panel`"
-      ref="panel"
-      class="range__panel"
-      role="dialog"
-      :aria-label="label"
-    >
-      <p class="range__title">{{ label }}</p>
-      <div class="range__presets">
-        <button
-          v-for="preset in PRESETS"
-          :key="preset.key"
-          type="button"
-          class="range__chip"
-          :aria-pressed="current === preset.key"
-          @click="choose(preset.key)"
-        >
-          {{ preset.label }}
-        </button>
-      </div>
-
-      <form class="range__custom" novalidate @submit.prevent="apply">
-        <label class="range__field">
-          <span>Desde</span>
-          <input
-            v-model="draft.from"
-            class="input"
-            type="date"
-            :max="draft.to || undefined"
-            :required="required"
-          />
-        </label>
-        <label class="range__field">
-          <span>Hasta</span>
-          <input
-            v-model="draft.to"
-            class="input"
-            type="date"
-            :min="draft.from || undefined"
-            :required="required"
-          />
-        </label>
-        <p v-if="error" class="range__error" role="alert">{{ error }}</p>
-        <div class="range__actions">
+    <Teleport to="body">
+      <div
+        v-if="open"
+        :id="`${id}-panel`"
+        ref="panel"
+        class="range__panel"
+        role="dialog"
+        :aria-label="label"
+        :style="floatingStyle"
+        @keydown.esc.stop="close()"
+      >
+        <p class="range__title">{{ label }}</p>
+        <div class="range__presets">
           <button
-            v-if="!required"
+            v-for="preset in PRESETS"
+            :key="preset.key"
             type="button"
-            class="range__link"
-            @click="clear"
+            class="range__chip"
+            :aria-pressed="current === preset.key"
+            @click="choose(preset.key)"
           >
-            Todas las fechas
-          </button>
-          <button
-            type="submit"
-            class="range__apply"
-            :disabled="
-              Boolean(error) || (required && (!draft.from || !draft.to))
-            "
-          >
-            Aplicar
+            {{ preset.label }}
           </button>
         </div>
-      </form>
-    </div>
+
+        <div class="range__custom">
+          <p class="range__hint" aria-live="polite">{{ draftText }}</p>
+          <CalendarGrid
+            mode="range"
+            :range="draft"
+            label="Rango propio"
+            @update:range="draft = $event"
+          />
+          <p v-if="error" class="range__error" role="alert">{{ error }}</p>
+          <div class="range__actions">
+            <button
+              v-if="!required"
+              type="button"
+              class="range__link"
+              @click="clear"
+            >
+              {{ emptyLabel }}
+            </button>
+            <button
+              type="button"
+              class="range__apply"
+              :disabled="Boolean(error) || !draft.from"
+              @click="apply"
+            >
+              Aplicar
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -208,6 +214,11 @@ onBeforeUnmount(() =>
   cursor: pointer;
 }
 
+.range--sm .range__trigger {
+  min-height: 2.5rem;
+  font-size: var(--text-sm);
+}
+
 .range__trigger:hover {
   border-color: var(--color-text-subtle);
 }
@@ -229,17 +240,16 @@ onBeforeUnmount(() =>
 
 .range__caret {
   color: var(--color-text-subtle);
-  font-size: var(--text-sm);
 }
+</style>
 
+<style>
+/* El panel va en <body>: estilos sin «scoped» */
 .range__panel {
-  position: absolute;
-  top: calc(100% + var(--space-2));
-  right: 0;
   z-index: calc(var(--z-sticky) + 5);
   display: grid;
   gap: var(--space-3);
-  width: min(22rem, calc(100vw - 2rem));
+  width: min(19.5rem, calc(100vw - 1.5rem));
   padding: var(--space-4);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -249,8 +259,8 @@ onBeforeUnmount(() =>
 
 .range__title {
   margin: 0;
-  font-weight: 600;
   color: var(--color-heading);
+  font-weight: 600;
 }
 
 .range__presets {
@@ -260,7 +270,7 @@ onBeforeUnmount(() =>
 }
 
 .range__chip {
-  min-height: 2.25rem;
+  min-height: 2rem;
   padding: 0 var(--space-3);
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-pill);
@@ -281,37 +291,32 @@ onBeforeUnmount(() =>
 
 .range__custom {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-3);
+  justify-items: center;
+  gap: var(--space-2);
   padding-top: var(--space-3);
   border-top: 1px solid var(--color-border);
 }
 
-.range__field {
-  display: grid;
-  gap: var(--space-1);
+.range__hint {
+  justify-self: start;
+  margin: 0;
+  color: var(--color-text-muted);
   font-size: var(--text-sm);
-  font-weight: 600;
-}
-
-.range__field .input {
-  min-height: 2.6rem;
-  padding: 0 var(--space-2);
 }
 
 .range__error {
-  grid-column: 1 / -1;
+  justify-self: start;
   margin: 0;
   color: var(--color-danger);
   font-size: var(--text-sm);
 }
 
 .range__actions {
-  grid-column: 1 / -1;
   display: flex;
   justify-content: flex-end;
   align-items: center;
   gap: var(--space-3);
+  width: 100%;
 }
 
 .range__link {
@@ -329,7 +334,7 @@ onBeforeUnmount(() =>
 }
 
 .range__apply {
-  min-height: 2.5rem;
+  min-height: 2.25rem;
   padding: 0 var(--space-5);
   border: 0;
   border-radius: var(--radius-sm);

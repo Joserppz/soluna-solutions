@@ -91,7 +91,7 @@ test('del mensaje del sitio a la ficha: seguimiento, nota de la llamada e inscri
   await expect(row).toContainText('Contactada')
 
   // Inscribir: la ficha es del esposo y quien escribió queda como su contacto
-  await panel.getByRole('button', { name: 'Inscribir como afiliado →' }).click()
+  await panel.getByRole('button', { name: 'Inscribir como afiliado' }).click()
   const dialog = page.getByRole('dialog', { name: 'Inscribir como afiliado' })
   await expect(dialog.getByLabel(/^Nombre completo/)).toHaveValue(husband)
   await expect(dialog).toContainText(`${name} (Familiar)`)

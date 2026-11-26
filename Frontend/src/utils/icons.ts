@@ -20,6 +20,7 @@ export type IconName =
   | 'print'
   | 'download'
   | 'calendar'
+  | 'chevron'
   | 'search'
   | 'goal'
 
@@ -102,6 +103,7 @@ const ICON_PATHS: Record<IconName, string[]> = {
   ],
   search: ['M10.5 17a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13z', 'm15.5 15.5 5 5'],
   download: ['M12 4v11', 'm7.5 10.5 4.5 4.5 4.5-4.5', 'M5 19.5h14'],
+  chevron: ['m6 9 6 6 6-6'],
   calendar: [
     'M4 6.5A1.5 1.5 0 0 1 5.5 5h13A1.5 1.5 0 0 1 20 6.5v12a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5z',
     'M4 10h16',

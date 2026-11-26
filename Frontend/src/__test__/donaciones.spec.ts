@@ -25,6 +25,7 @@ import {
   type ApiFake,
   type RecordedCall,
 } from './apiFake'
+import { clickDay, downloadAs } from './reports'
 
 const PATH = '/equipo/donaciones'
 
@@ -172,7 +173,7 @@ function field(
     .findAll('.field')
     .find((f) => f.get('label').text().replace('*', '').trim() === label)
   if (!found) throw new Error(`No hay un campo «${label}»`)
-  return found.get('input, select, textarea')
+  return found.get('input, select, textarea, .date-field')
 }
 
 function button(
@@ -312,10 +313,7 @@ describe('Donaciones', () => {
       'value',
       '48213907',
     )
-    expect(field('Acreditado el', panel).element).toHaveProperty(
-      'value',
-      '2026-11-06',
-    )
+    expect(field('Acreditado el', panel).text()).toBe('06/11/2026')
 
     await field('Ref. del extracto', panel).setValue('x')
     await panel.get('form.confirm').trigger('submit')
@@ -407,14 +405,11 @@ describe('Donaciones', () => {
     const fake = fakeApi()
     const { wrapper } = await mountApp(PATH, fake)
 
-    await wrapper
-      .get('[aria-label="Descargar el resumen del mes en CSV"]')
-      .trigger('click')
-    await settle()
-    await wrapper
-      .get('[aria-label="Descargar el resumen del mes en Excel"]')
-      .trigger('click')
-    await settle()
+    // El único «Descargar» de la pantalla está junto al mes, arriba
+    const band = wrapper.get('.band__month')
+    expect(wrapper.findAll('.export__trigger')).toHaveLength(1)
+    await downloadAs(band, 'CSV', 'donaciones', 'Resumen de noviembre')
+    await downloadAs(band, 'Excel', 'donaciones', 'Resumen de noviembre')
     expect(names).toEqual(['donaciones-2026-11.csv', 'donaciones-2026-11.xlsx'])
   })
 
@@ -509,19 +504,29 @@ describe('Donaciones', () => {
     })
   })
 
-  it('no deja registrar con una fecha futura', async () => {
+  it('no deja elegir una fecha futura', async () => {
     const fake = fakeApi()
     const { wrapper } = await mountApp(PATH, fake)
 
     await button('+ Registrar aporte recibido', wrapper).trigger('click')
     await settle()
-    await field('Monto (Bs.)').setValue('50')
-    await field('Fecha de recepción').setValue('2026-12-01')
-    await button('Registrar aporte').trigger('click')
+    // El calendario propio: hoy está marcado y los días que vienen, apagados
+    const date = field('Fecha de recepción')
+    expect(date.text()).toBe('06/11/2026')
+    await date.trigger('click')
     await settle()
-    expect(body().text()).toContain(
-      'La fecha de recepción no puede ser futura.',
-    )
+    const calendar = document.body.querySelector('.date-panel')!
+    expect(
+      calendar
+        .querySelector('[data-day="2026-11-06"]')!
+        .getAttribute('aria-current'),
+    ).toBe('date')
+    expect(
+      calendar.querySelector<HTMLButtonElement>('[data-day="2026-11-07"]')!
+        .disabled,
+    ).toBe(true)
+    await clickDay(calendar, '2026-11-02')
+    expect(field('Fecha de recepción').text()).toBe('02/11/2026')
     expect(fake.callsTo('POST /donations')).toHaveLength(0)
   })
 
@@ -532,7 +537,7 @@ describe('Donaciones', () => {
     }))
     const { wrapper } = await mountApp(PATH, fake)
 
-    await button('Editar meta →', wrapper).trigger('click')
+    await button('Editar meta', wrapper).trigger('click')
     await settle()
     expect(field('Título').element).toHaveProperty('value', GOAL.title)
     await field('Meta (Bs.)').setValue('80000')
@@ -570,13 +575,13 @@ describe('Donaciones', () => {
         .find((d) => d.text().includes('Meta en el sitio'))
 
     // Sin cambios, «Cancelar» cierra de una vez
-    await button('Editar meta →', wrapper).trigger('click')
+    await button('Editar meta', wrapper).trigger('click')
     await settle()
     await button('Cancelar').trigger('click')
     await settle()
     expect(goalDialog()).toBeUndefined()
 
-    await button('Editar meta →', wrapper).trigger('click')
+    await button('Editar meta', wrapper).trigger('click')
     await settle()
     await field('Meta (Bs.)').setValue('80000')
     await button('Cancelar').trigger('click')

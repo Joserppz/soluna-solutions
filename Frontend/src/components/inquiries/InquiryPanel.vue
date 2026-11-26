@@ -332,7 +332,7 @@ async function saveNote(markContacted: boolean) {
             class="inquiry__link"
             :to="{ name: 'afiliado', params: { id: detail.patientId } }"
           >
-            Ver la ficha →
+            Ver la ficha
           </RouterLink>
         </div>
         <div v-else-if="!closed && !enrolled" class="box box--rose">
@@ -346,7 +346,7 @@ async function saveNote(markContacted: boolean) {
             class="inquiry__link"
             @click="emit('enroll', detail)"
           >
-            Inscribir como afiliado →
+            Inscribir como afiliado
           </button>
         </div>
         <p class="box box--privacy">

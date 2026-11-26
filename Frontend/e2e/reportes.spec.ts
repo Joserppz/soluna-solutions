@@ -28,9 +28,17 @@ async function csvRows(download: Awaited<ReturnType<typeof downloadReport>>) {
     .filter((line) => line.trim())
 }
 
+/** Elige un atajo y espera a que la lista llegue con esas fechas (no la de antes). */
 async function choosePreset(page: Page, label: string) {
   await page.locator('.range__trigger').first().click()
-  await page.getByRole('button', { name: label, exact: true }).click()
+  await Promise.all([
+    page.waitForResponse(
+      (response) =>
+        /\/api\/v1\/[a-z]+\?.*from=/.test(response.url()) && response.ok(),
+    ),
+    page.getByRole('button', { name: label, exact: true }).click(),
+  ])
+  await expect(page.locator('.range__trigger').first()).toContainText(label)
 }
 
 test('Afiliados: el CSV trae todas las fichas del filtro (todas las páginas)', async ({
@@ -56,15 +64,21 @@ test('Solicitudes: un rango sin solicitudes deja la bandeja vacía y no descarga
 }) => {
   await page.goto('/equipo/solicitudes')
   await page.locator('.range__trigger').click()
-  await page.getByLabel('Desde').fill('2020-01-01')
-  await page.getByLabel('Hasta').fill('2020-01-31')
-  await page.getByRole('button', { name: 'Aplicar' }).click()
+  // El calendario propio: mes y año, luego el primer y el último día
+  const panel = page.locator('.range__panel')
+  await panel.getByLabel('Año', { exact: true }).selectOption('2020')
+  await panel
+    .getByLabel('Mes', { exact: true })
+    .selectOption({ label: 'enero' })
+  await panel.locator('[data-day="2020-01-01"]').click()
+  await panel.locator('[data-day="2020-01-31"]').click()
+  await panel.getByRole('button', { name: 'Aplicar' }).click()
 
   await expect(
     page.getByText('No hay solicitudes con estos filtros.'),
   ).toBeVisible()
   await page.locator('.export__trigger').click()
-  await expect(page.getByText('No hay filas con este filtro.')).toBeVisible()
+  await expect(page.getByText('No hay filas con este filtro')).toBeVisible()
   await expect(page.locator('.export__option').first()).toBeDisabled()
 })
 

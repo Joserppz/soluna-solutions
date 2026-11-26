@@ -335,8 +335,8 @@ test('inventario: alta, cambio de cantidad con motivo, movimiento, baja y export
 
   // Dado de baja ya no aparece con la búsqueda: sin filas, no hay nada que descargar
   await page.locator('.export__trigger').click()
-  await expect(page.getByText('No hay filas con este filtro.')).toBeVisible()
-  await page.locator('.export__trigger').click()
+  await expect(page.getByText('No hay filas con este filtro')).toBeVisible()
+  await page.keyboard.press('Escape')
 
   // Sin la búsqueda, «Descargar» trae todo el inventario (la Alcaldía aparte)
   await page.getByLabel('Nombre del material').fill('')

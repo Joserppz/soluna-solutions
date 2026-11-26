@@ -38,8 +38,8 @@ test('invitar a una persona: la contraseña temporal sirve una vez y obliga a ca
 }) => {
   const email = `invitada.f3.${Date.now()}@aspar.org`
   await openTeam(page)
-  // «+ Nuevo rol» abre la invitación en una ventana
-  await page.getByRole('button', { name: '+ Nuevo rol' }).click()
+  // «+ Nuevo integrante» abre la invitación en una ventana
+  await page.getByRole('button', { name: '+ Nuevo integrante' }).click()
   await expect(page.getByRole('dialog')).toBeVisible()
 
   const panel = page.getByTestId('panel-invitar')
@@ -273,7 +273,7 @@ for (const size of [
     if (size.width === 1366) await evidence(page, 'F3-01-equipo')
     // La lista usa todo el ancho; la invitación se abre en una ventana que entra completa
     await expect(page.getByTestId('panel-invitar')).toHaveCount(0)
-    await page.getByRole('button', { name: '+ Nuevo rol' }).click()
+    await page.getByRole('button', { name: '+ Nuevo integrante' }).click()
     await expect(page.getByTestId('panel-invitar')).toBeVisible()
     await expect.poll(() => fitsWindow(page)).toEqual(FITS)
     await page.getByRole('button', { name: 'Cerrar la invitación' }).click()

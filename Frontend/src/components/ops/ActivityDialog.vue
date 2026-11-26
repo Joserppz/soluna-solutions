@@ -23,6 +23,7 @@ import AppButton from '../ui/AppButton.vue'
 import AppModal from '../ui/AppModal.vue'
 import FormField from '../ui/FormField.vue'
 import StatusBadge from '../ui/StatusBadge.vue'
+import DatePicker from '../ui/DatePicker.vue'
 
 /** Categorías de la API (las mismas que la agenda pública). */
 const CATEGORIES: { value: ScheduleIn['category']; label: string }[] = [
@@ -362,14 +363,12 @@ async function cancel() {
               required
               :error="submitted ? errors.date : undefined"
             >
-              <input
+              <DatePicker
                 :id="id"
                 v-model="draft.date"
-                class="input"
-                type="date"
                 :disabled="locked"
-                :aria-describedby="describedBy"
-                :aria-invalid="invalid"
+                :describedby="describedBy"
+                :invalid="invalid"
               />
             </FormField>
           </div>

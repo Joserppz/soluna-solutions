@@ -264,7 +264,7 @@ onMounted(load)
   <div class="inq" :class="{ 'inq--fit': fit }">
     <PageHeader
       title="Solicitudes"
-      subtitle="Personas que nos escribieron. Llamar a tiempo es parte del acompañamiento."
+      subtitle="Personas que escribieron desde el sitio y su seguimiento."
     >
       <template #actions>
         <div class="inq__filters">
@@ -288,7 +288,7 @@ onMounted(load)
       </template>
     </PageHeader>
 
-    <div class="inq__body">
+    <div class="inq__body" :class="{ 'is-split': wide && selectedId }">
       <section class="card inbox" aria-labelledby="bandeja-titulo">
         <h2 id="bandeja-titulo" class="visually-hidden">
           Bandeja de solicitudes
@@ -415,7 +415,7 @@ onMounted(load)
         </div>
       </section>
 
-      <aside v-if="wide" class="card inq__side">
+      <aside v-if="wide && selectedId" class="card inq__side">
         <InquiryPanel
           v-if="selectedId"
           :key="selectedId"
@@ -424,21 +424,6 @@ onMounted(load)
           @changed="onChanged"
           @enroll="startEnroll"
         />
-        <div v-else class="inq__hint">
-          <h2 class="inq__hint-title">Elige una solicitud</h2>
-          <p>
-            Las nuevas tienen un punto rojo. Llama, anota lo que conversaron y,
-            cuando venga a su primer sábado, inscríbela como afiliada.
-          </p>
-          <AppButton
-            v-if="summary?.recibida && tab !== 'recibida'"
-            size="sm"
-            variant="secondary"
-            @click="tab = 'recibida'"
-          >
-            Ver las {{ summary.recibida }} nuevas
-          </AppButton>
-        </div>
       </aside>
     </div>
 
@@ -496,9 +481,14 @@ onMounted(load)
   gap: var(--space-2);
 }
 
+/* Con algo abierto, el panel va al costado; si no, la lista usa todo el ancho */
+.inq__body.is-split {
+  grid-template-columns: minmax(25rem, 0.9fr) minmax(0, 1.1fr);
+}
+
 .inq__body {
   display: grid;
-  grid-template-columns: minmax(25rem, 0.9fr) minmax(0, 1.1fr);
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
   gap: var(--space-5);
   min-width: 0;
@@ -641,30 +631,12 @@ onMounted(load)
   padding: var(--space-5) var(--space-6);
 }
 
-.inq__hint {
-  display: grid;
-  justify-items: start;
-  gap: var(--space-3);
-  color: var(--color-text-muted);
-}
-
-.inq__hint p {
-  margin: 0;
-}
-
-.inq__hint-title {
-  font-family: var(--font-serif);
-  font-size: var(--text-xl);
-  font-weight: 500;
-  color: var(--color-text);
-}
-
 .inq__modal {
   padding: var(--space-5);
 }
 
 @media (max-width: 1099.98px) {
-  .inq__body {
+  .inq__body.is-split {
     grid-template-columns: minmax(0, 1fr);
   }
 }

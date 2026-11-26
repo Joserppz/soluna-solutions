@@ -22,6 +22,7 @@ import {
   settle,
   type ApiFake,
 } from './apiFake'
+import { futureIsBlocked, setDate } from './datePicker'
 
 const RECEPTION_SESSION = sessionFor(
   { name: 'Patricia Mendoza', role: 'reception', roleName: 'Recepción' },
@@ -173,7 +174,7 @@ function field(
     .findAll('.field')
     .find((f) => f.get('label').text().replace('*', '').trim() === label)
   if (!found) throw new Error(`No hay un campo «${label}»`)
-  return found.get('input, select, textarea')
+  return found.get('input, select, textarea, .date-field')
 }
 
 function button(
@@ -409,12 +410,8 @@ describe('Pestaña Datos', () => {
     await settle()
     expect(fake.callsTo('PATCH /patients/p-1')).toHaveLength(1)
 
-    // Pero si la persona escribe una fecha futura, se le avisa
-    await field('Fecha de la firma').setValue('2999-02-01')
-    await wrapper.get('#ficha-datos').trigger('submit')
-    await settle()
-    expect(panel().text()).toContain('La fecha no puede ser posterior a hoy.')
-    expect(fake.callsTo('PATCH /patients/p-1')).toHaveLength(1)
+    // Pero en el calendario ya no se puede elegir un día que viene
+    expect(await futureIsBlocked(field('Fecha de la firma'))).toBe(true)
   })
 
   it('cancelar vuelve a lo guardado', async () => {
@@ -511,12 +508,10 @@ describe('Pestaña Datos', () => {
     expect((field('Historia clínica').element as HTMLSelectElement).value).toBe(
       'Activo',
     )
-    await field('Fecha de la firma').setValue('')
-    await wrapper.get('#ficha-datos').trigger('submit')
-    await settle()
-    expect(panel().text()).toContain('Indica la fecha en que se firmó.')
-
-    await field('Fecha de la firma').setValue(todayIso())
+    // Al marcar la firma, la fecha es hoy
+    expect(field('Fecha de la firma').text()).toBe(
+      todayIso().split('-').reverse().join('/'),
+    )
     await field('Historia clínica').setValue('Revocado')
     await wrapper.get('#ficha-datos').trigger('submit')
     await settle()
@@ -851,18 +846,17 @@ describe('Evaluaciones de seguimiento', () => {
     const dialog = () => body().get('[role="dialog"]')
     expect(dialog().text()).toContain('Nueva evaluación')
     expect(dialog().text()).toContain('queda a tu nombre (Lucía Choque)')
-    await field('Fecha', dialog()).setValue('2999-01-01')
+    expect(await futureIsBlocked(field('Fecha', dialog()))).toBe(true)
     await field('Profesional que evaluó', dialog()).setValue('Li')
     await body().get('#evaluacion').trigger('submit')
     await settle()
-    expect(dialog().text()).toContain('La fecha no puede ser posterior a hoy.')
     expect(dialog().text()).toContain(
       'Escribe el nombre completo del profesional.',
     )
     expect(dialog().text()).toContain('Escribe las observaciones.')
 
     await field('Área', dialog()).setValue('fonoaudiologica')
-    await field('Fecha', dialog()).setValue(todayIso())
+    await setDate(field('Fecha', dialog()), todayIso())
     await field('Profesional que evaluó', dialog()).setValue('')
     await field('Observaciones', dialog()).setValue(' Voz con buen volumen. ')
     await body().get('#evaluacion').trigger('submit')

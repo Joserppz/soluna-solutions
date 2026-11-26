@@ -28,7 +28,7 @@ import {
   settle,
   type ApiFake,
 } from './apiFake'
-import { downloadAs } from './reports'
+import { clickDay, downloadAs, exportPanel, pickRange } from './reports'
 
 const NOW = new Date('2026-11-26T16:00:00Z')
 const TODAY = '2026-11-26'
@@ -101,13 +101,17 @@ async function choosePreset(label: string, which = 0) {
   await settle()
 }
 
+function rangePanel(): HTMLElement {
+  const panel = document.body.querySelector<HTMLElement>('.range__panel')
+  if (!panel) throw new Error('El filtro de fechas no está abierto')
+  return panel
+}
+
 async function chooseDates(from: string, to: string, which = 0) {
   await body().findAll('.range__trigger')[which]!.trigger('click')
   await settle()
-  const [start, end] = body().findAll('.range__custom input')
-  await start!.setValue(from)
-  await end!.setValue(to)
-  await body().get('.range__custom').trigger('submit')
+  await pickRange(rangePanel(), from, to)
+  rangePanel().querySelector<HTMLButtonElement>('.range__apply')!.click()
   await settle()
 }
 
@@ -199,11 +203,12 @@ describe('Filtro de fechas (componente)', () => {
     expect(trigger.attributes('aria-expanded')).toBe('false')
 
     await trigger.trigger('click')
+    await settle()
     expect(trigger.attributes('aria-expanded')).toBe('true')
-    expect(wrapper.get('[role="dialog"]').attributes('aria-label')).toBe(
-      'Fecha de registro',
-    )
-    await wrapper
+    // El panel flota en <body>, fuera de la tarjeta que lo contiene
+    expect(rangePanel().getAttribute('role')).toBe('dialog')
+    expect(rangePanel().getAttribute('aria-label')).toBe('Fecha de registro')
+    await body()
       .findAll('.range__chip')
       .find((chip) => chip.text() === 'Últimos 7 días')!
       .trigger('click')
@@ -211,28 +216,41 @@ describe('Filtro de fechas (componente)', () => {
     expect(wrapper.emitted('update:modelValue')![0]).toEqual([
       { from: '2026-11-20', to: TODAY },
     ])
-    expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
+    expect(document.body.querySelector('.range__panel')).toBeNull()
     wrapper.unmount()
   })
 
-  it('un rango propio al revés no se aplica', async () => {
+  it('en el calendario, un rango al revés se ordena solo; un día suelto vale', async () => {
     const wrapper = mountFilter()
     await wrapper.get('.range__trigger').trigger('click')
-    const [from, to] = wrapper.findAll('.range__custom input')
-    await from!.setValue('2026-11-20')
-    await to!.setValue('2026-11-10')
+    await settle()
+    const apply = () =>
+      rangePanel().querySelector<HTMLButtonElement>('.range__apply')!
 
-    expect(wrapper.get('[role="alert"]').text()).toContain(
-      '«desde» no puede ser posterior',
-    )
-    expect(wrapper.get('.range__apply').attributes('disabled')).toBeDefined()
-    await wrapper.get('.range__custom').trigger('submit')
-    expect(wrapper.emitted('update:modelValue')).toBeUndefined()
-
-    await to!.setValue('2026-11-25')
-    await wrapper.get('.range__custom').trigger('submit')
+    // Sin días elegidos no hay nada que aplicar
+    expect(apply().disabled).toBe(true)
+    await clickDay(rangePanel(), '2026-11-20')
+    expect(rangePanel().textContent).toContain('Ahora elige el último día')
+    await clickDay(rangePanel(), '2026-11-10')
+    expect(
+      rangePanel().querySelector('[data-day="2026-11-15"]')!.className,
+    ).toContain('is-between')
+    apply().click()
+    await settle()
     expect(wrapper.emitted('update:modelValue')![0]).toEqual([
-      { from: '2026-11-20', to: '2026-11-25' },
+      { from: '2026-11-10', to: '2026-11-20' },
+    ])
+
+    // Un solo día: desde y hasta el mismo
+    await wrapper.get('.range__trigger').trigger('click')
+    await settle()
+    await clickDay(rangePanel(), '2026-11-03')
+    await clickDay(rangePanel(), '2026-11-05')
+    await clickDay(rangePanel(), '2026-11-03')
+    apply().click()
+    await settle()
+    expect(wrapper.emitted('update:modelValue')![1]).toEqual([
+      { from: '2026-11-03', to: '2026-11-03' },
     ])
     wrapper.unmount()
   })
@@ -240,21 +258,26 @@ describe('Filtro de fechas (componente)', () => {
   it('«Todas las fechas» quita el rango; si es obligatorio, no se ofrece', async () => {
     const wrapper = mountFilter()
     await wrapper.get('.range__trigger').trigger('click')
-    await wrapper.get('.range__link').trigger('click')
+    await settle()
+    await body().get('.range__link').trigger('click')
     expect(wrapper.emitted('update:modelValue')![0]).toEqual([ALL_DATES])
     wrapper.unmount()
 
     const required = mountFilter(true)
     await required.get('.range__trigger').trigger('click')
-    expect(required.find('.range__link').exists()).toBe(false)
+    await settle()
+    expect(body().find('.range__panel').exists()).toBe(true)
+    expect(body().find('.range__link').exists()).toBe(false)
     required.unmount()
   })
 
   it('Esc cierra el panel', async () => {
     const wrapper = mountFilter()
     await wrapper.get('.range__trigger').trigger('click')
-    await wrapper.get('.range').trigger('keydown', { key: 'Escape' })
-    expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
+    await settle()
+    await body().get('.range__panel').trigger('keydown', { key: 'Escape' })
+    expect(body().find('.range__panel').exists()).toBe(false)
+    expect(document.activeElement).toBe(wrapper.get('.range__trigger').element)
     wrapper.unmount()
   })
 })
@@ -306,13 +329,9 @@ describe('Afiliados: fechas de registro y descarga', () => {
     await body().get('.export__trigger').trigger('click')
     await settle()
     expect(body().get('.export__summary').text()).toBe(
-      'Se descargan 37 filas con el filtro actual.',
+      '37 filas con el filtro actual',
     )
-    await body()
-      .findAll('.export__option')
-      .find((b) => b.get('strong').text() === 'Excel')!
-      .trigger('click')
-    await settle()
+    await downloadAs(body(), 'Excel')
 
     const query = lastQuery(api, 'GET /patients/export')
     expect(query).toEqual({
@@ -439,7 +458,15 @@ describe('Las demás pantallas', () => {
     })
     await mountApp('/equipo/donaciones', api)
 
-    await downloadAs(body(), 'CSV', 'aportes')
+    // Un solo «Descargar»: el resumen del mes y el registro con el filtro de la tabla
+    await body().get('.export__trigger').trigger('click')
+    await settle()
+    expect(
+      [...exportPanel().querySelectorAll('.export__title')].map(
+        (t) => t.textContent,
+      ),
+    ).toEqual(['Resumen de noviembre', 'Registro de aportes'])
+    await downloadAs(body(), 'CSV', 'donaciones', 'Registro de aportes')
     expect(lastQuery(api, 'GET /donations/export')).toEqual({
       from: '2026-11-01',
       to: '2026-11-30',
@@ -447,7 +474,7 @@ describe('Las demás pantallas', () => {
     })
 
     await choosePreset('Mes pasado')
-    await downloadAs(body(), 'Excel', 'aportes')
+    await downloadAs(body(), 'Excel', 'donaciones', 'Registro de aportes')
     expect(lastQuery(api, 'GET /donations/export')).toEqual({
       from: '2026-10-01',
       to: '2026-10-31',
@@ -501,15 +528,13 @@ describe('Las demás pantallas', () => {
 
     await body().get('.export__trigger').trigger('click')
     await settle()
-    const [from, to] = body().findAll('.export__range input')
-    expect(from!.element).toHaveProperty('value', '2026-11-01')
-    expect(to!.element).toHaveProperty('value', '2026-11-30')
-    await from!.setValue('2026-09-01')
-    await body()
-      .findAll('.export__option')
-      .find((b) => b.get('strong').text() === 'CSV')!
-      .trigger('click')
+    expect(body().get('.export__summary').text()).toBe(
+      '1 nov 2026 – 30 nov 2026',
+    )
+    await body().get('.export__change').trigger('click')
     await settle()
+    await pickRange(exportPanel(), '2026-09-01', '2026-11-30')
+    await downloadAs(body(), 'CSV')
 
     expect(lastQuery(api, 'GET /schedules/export')).toEqual({
       from: '2026-09-01',

@@ -19,6 +19,7 @@ import {
   type ApiFake,
   type RecordedCall,
 } from './apiFake'
+import { clickDay, downloadAs } from './reports'
 
 const PATH = '/equipo/asistencia'
 
@@ -367,8 +368,9 @@ describe('Asistencia', () => {
     const { wrapper, router } = await mountApp(PATH, fake)
 
     // Hoy hay actividad: se abre esa, y arriba solo está la fecha
+    // El mismo calendario de todo el sistema (con un punto en los días con actividad)
     const dayInput = wrapper.get('#dia-asistencia')
-    expect(dayInput.element).toHaveProperty('value', '2026-11-07')
+    expect(dayInput.text()).toBe('Sábado, 7 de noviembre de 2026')
     expect(wrapper.find('#actividad-asistencia').exists()).toBe(false)
 
     // › salta el borrador del 12 y va al 14
@@ -376,22 +378,26 @@ describe('Asistencia', () => {
       .get('[aria-label="Día siguiente con actividad"]')
       .trigger('click')
     await settle()
-    expect(dayInput.element).toHaveProperty('value', '2026-11-14')
+    expect(dayInput.text()).toBe('Sábado, 14 de noviembre de 2026')
     expect(router.currentRoute.value.query.dia).toBe('2026-11-14')
     expect(wrapper.get('.banner__title').text()).toBe(
       'Arteterapia: crear juntos',
     )
 
     // Un día sin actividad publicada lo dice y ofrece los días cercanos
-    await dayInput.setValue('2026-11-12')
-    await dayInput.trigger('change')
+    await dayInput.trigger('click')
     await settle()
+    const calendar = document.body.querySelector('.date-panel')!
+    expect(
+      calendar.querySelector('[data-day="2026-11-14"]')!.className,
+    ).toContain('is-marked')
+    await clickDay(calendar, '2026-11-12')
     expect(wrapper.text()).toContain(
       'No hay actividades publicadas el jueves, 12 de noviembre.',
     )
     await button('Sábado, 14 de noviembre ›', wrapper).trigger('click')
     await settle()
-    expect(dayInput.element).toHaveProperty('value', '2026-11-14')
+    expect(dayInput.text()).toBe('Sábado, 14 de noviembre de 2026')
   })
 
   it('si un día tiene dos actividades, se elige cuál', async () => {
@@ -553,16 +559,9 @@ describe('Asistencia', () => {
     const { wrapper } = await mountApp(PATH, fake)
 
     // El resumen del mes está dentro de «Descargar», junto al detalle por rango
-    await wrapper.get('.export__trigger').trigger('click')
-    await settle()
-    await wrapper
-      .get('[aria-label="Descargar resumen mensual en CSV"]')
-      .trigger('click')
-    await settle()
-    await wrapper
-      .get('[aria-label="Descargar resumen mensual en Excel"]')
-      .trigger('click')
-    await settle()
+    expect(wrapper.findAll('.export__trigger')).toHaveLength(1)
+    await downloadAs(wrapper, 'CSV', 'asistencia', 'Resumen mensual')
+    await downloadAs(wrapper, 'Excel', 'asistencia', 'Resumen mensual')
 
     expect(click).toHaveBeenCalledTimes(2)
     expect(names).toEqual([
@@ -578,11 +577,7 @@ describe('Asistencia', () => {
     expect(wrapper.text()).toContain('Arteterapia')
 
     // El detalle: cada asistencia marcada del rango (por defecto, el mes)
-    await wrapper
-      .findAll('.export__option')
-      .find((b) => b.get('strong').text() === 'Excel')!
-      .trigger('click')
-    await settle()
+    await downloadAs(wrapper, 'Excel', 'asistencia', 'Asistencias marcadas')
     const query = Object.fromEntries(
       fake.callsTo('GET /attendance/export')[0]!.query,
     )

@@ -19,6 +19,7 @@ import AppAlert from '../../ui/AppAlert.vue'
 import AppButton from '../../ui/AppButton.vue'
 import AppModal from '../../ui/AppModal.vue'
 import FormField from '../../ui/FormField.vue'
+import DatePicker from '../../ui/DatePicker.vue'
 
 const props = defineProps<{
   patientId: string
@@ -258,14 +259,12 @@ function shown(message: string | null) {
           required
           :error="shown(errors.evaluatedOn)"
         >
-          <input
+          <DatePicker
             :id="id"
             v-model="draft.evaluatedOn"
-            class="input"
-            type="date"
             :max="todayIso()"
-            :aria-describedby="describedBy"
-            :aria-invalid="invalid"
+            :describedby="describedBy"
+            :invalid="invalid"
           />
         </FormField>
       </div>

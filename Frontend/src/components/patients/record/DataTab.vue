@@ -33,6 +33,7 @@ import AppAlert from '../../ui/AppAlert.vue'
 import AppButton from '../../ui/AppButton.vue'
 import FormField from '../../ui/FormField.vue'
 import ContactsCard from './ContactsCard.vue'
+import DatePicker from '../../ui/DatePicker.vue'
 
 const props = defineProps<{ patient: PatientOut }>()
 const emit = defineEmits<{
@@ -271,14 +272,13 @@ void loadAttendance()
               label="Fecha de nacimiento"
               :error="shown(errors.birthDate)"
             >
-              <input
+              <DatePicker
                 :id="id"
                 v-model="draft.birthDate"
-                class="input"
-                type="date"
+                clearable
                 :max="today"
-                :aria-describedby="describedBy"
-                :aria-invalid="invalid"
+                :describedby="describedBy"
+                :invalid="invalid"
               />
             </FormField>
             <FormField
@@ -350,15 +350,12 @@ void loadAttendance()
               required
               :error="shown(errors.consentDate)"
             >
-              <input
+              <DatePicker
                 :id="id"
                 v-model="draft.consentDate"
-                form="ficha-datos"
-                class="input"
-                type="date"
                 :max="today"
-                :aria-describedby="describedBy"
-                :aria-invalid="invalid"
+                :describedby="describedBy"
+                :invalid="invalid"
               />
             </FormField>
             <label class="checkbox">

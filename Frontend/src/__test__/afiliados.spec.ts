@@ -20,6 +20,7 @@ import {
   type ApiFake,
   type RecordedCall,
 } from './apiFake'
+import { futureIsBlocked, setDate } from './datePicker'
 
 afterEach(() => {
   document.body.innerHTML = ''
@@ -116,7 +117,7 @@ function field(label: string, root: DOMWrapper<Element> = body()) {
     .findAll('.field')
     .find((f) => f.get('label').text().replace('*', '').trim() === label)
   if (!found) throw new Error(`No hay un campo «${label}»`)
-  return found.get('input, select')
+  return found.get('input, select, .date-field')
 }
 
 function button(text: string, root: DOMWrapper<Element> = body()) {
@@ -560,7 +561,7 @@ describe('Registrar afiliado', () => {
   async function fillPerson() {
     await field('Nombre completo').setValue('Fausto Rojas Calle')
     await field('Carnet').setValue('5.208.773')
-    await field('Fecha de nacimiento').setValue('1955-06-12')
+    await setDate(field('Fecha de nacimiento'), '1955-06-12')
     await field('Teléfono').setValue('7771 2345')
     await field('Zona').setValue('San Pedro')
     await field('Dirección').setValue(' Calle 3, San Pedro ')
@@ -596,16 +597,19 @@ describe('Registrar afiliado', () => {
 
     await field('Carnet').setValue('12AB')
     await field('Teléfono').setValue('70-12')
-    await field('Fecha de nacimiento').setValue('2999-01-01')
+    // En el calendario, los días que vienen no se pueden elegir
+    expect(await futureIsBlocked(field('Fecha de nacimiento'))).toBe(true)
     await body().findAll('.checkbox input')[0]!.setValue(true)
-    await field('Fecha de la firma').setValue('')
+    // Al marcar la firma, la fecha es hoy
+    expect(field('Fecha de la firma').text()).toBe(
+      todayIso().split('-').reverse().join('/'),
+    )
+    expect(await futureIsBlocked(field('Fecha de la firma'))).toBe(true)
     await submit()
 
     const text = body().get('[role="dialog"]').text()
     expect(text).toContain('El carnet lleva de 5 a 10 números')
     expect(text).toContain('El teléfono lleva de 7 a 12 números')
-    expect(text).toContain('La fecha no puede ser posterior a hoy.')
-    expect(text).toContain('Indica la fecha en que se firmó.')
   })
 
   it('registra la ficha con el consentimiento y sus contactos, y abre la ficha', async () => {
@@ -660,7 +664,7 @@ describe('Registrar afiliado', () => {
     await openForm(fake)
 
     await fillPerson()
-    await field('Fecha de nacimiento').setValue('')
+    await setDate(field('Fecha de nacimiento'), '')
     expect(body().text()).toContain('nadie ve su historia clínica')
     await fillContact(0, 'Ana Rojas', 'Nieta')
     await submit()

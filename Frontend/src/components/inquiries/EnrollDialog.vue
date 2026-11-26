@@ -29,6 +29,7 @@ import AppButton from '../ui/AppButton.vue'
 import AppModal from '../ui/AppModal.vue'
 import FormField from '../ui/FormField.vue'
 import SkeletonBlock from '../ui/SkeletonBlock.vue'
+import DatePicker from '../ui/DatePicker.vue'
 
 const props = defineProps<{ open: boolean; inquiry: InquiryOut | null }>()
 const emit = defineEmits<{
@@ -238,14 +239,13 @@ async function submit() {
           label="Fecha de nacimiento"
           :error="shown(errors.birthDate)"
         >
-          <input
+          <DatePicker
             :id="id"
             v-model="draft.birthDate"
-            class="input"
-            type="date"
+            clearable
             :max="todayIso()"
-            :aria-describedby="describedBy"
-            :aria-invalid="invalid"
+            :describedby="describedBy"
+            :invalid="invalid"
           />
         </FormField>
         <FormField

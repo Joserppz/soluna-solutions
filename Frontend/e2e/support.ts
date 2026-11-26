@@ -121,14 +121,19 @@ export async function downloadReport(
   page: Page,
   format: 'Excel' | 'CSV',
   scope: ReturnType<Page['locator']> = page.locator('.export').first(),
+  item?: string,
 ) {
-  await scope.locator('.export__trigger').click()
+  // El menú flota en <body>, fuera de la pantalla
+  const trigger = scope.locator('.export__trigger')
+  if ((await trigger.getAttribute('aria-expanded')) !== 'true')
+    await trigger.click()
+  const panel = page.locator('.export__panel')
+  const section = item
+    ? panel.getByRole('region', { name: item })
+    : panel.locator('.export__item').first()
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    scope
-      .locator('.export__option')
-      .filter({ has: page.locator('strong', { hasText: format }) })
-      .click(),
+    section.locator('.export__option', { hasText: format }).click(),
   ])
   return download
 }

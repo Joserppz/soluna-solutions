@@ -479,7 +479,7 @@ onBeforeUnmount(() => {
               ← Más recientes
             </AppButton>
             <AppButton v-if="hasOlder" variant="link" size="sm" @click="older">
-              Ver días anteriores →
+              Ver días anteriores
             </AppButton>
           </div>
         </footer>

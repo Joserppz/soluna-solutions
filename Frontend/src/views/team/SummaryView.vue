@@ -174,10 +174,7 @@ onMounted(load)
 
 <template>
   <div class="summary" :class="{ 'summary--fit': fit }">
-    <PageHeader
-      :title="title"
-      subtitle="Esto es lo que necesita atención esta semana."
-    />
+    <PageHeader :title="title" subtitle="Lo pendiente de esta semana." />
 
     <AppAlert v-if="!sections.length" tone="neutral">
       Tu rol todavía no tiene secciones asignadas. Pídele a Administración que

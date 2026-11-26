@@ -6,7 +6,14 @@
  */
 import { expect, test, type Page } from '@playwright/test'
 
-import { ADMIN_STATE, FITS, adminApi, evidence, fitsWindow } from './support'
+import {
+  ADMIN_STATE,
+  FITS,
+  adminApi,
+  downloadReport,
+  evidence,
+  fitsWindow,
+} from './support'
 
 test.use({ storageState: ADMIN_STATE, viewport: { width: 1366, height: 768 } })
 
@@ -183,12 +190,14 @@ test('lo que llega en especie queda recibido y se agrega al inventario', async (
 
 test('el resumen del mes se descarga en Excel', async ({ page }) => {
   await openDonations(page)
-  const [download] = await Promise.all([
-    page.waitForEvent('download'),
-    page
-      .getByRole('button', { name: 'Descargar el resumen del mes en Excel' })
-      .click(),
-  ])
+  // Un solo «Descargar» en la pantalla, junto al mes
+  await expect(page.locator('.export__trigger')).toHaveCount(1)
+  const download = await downloadReport(
+    page,
+    'Excel',
+    page.locator('.band__month .export'),
+    `Resumen de ${new Intl.DateTimeFormat('es-BO', { month: 'long', timeZone: 'America/La_Paz' }).format(new Date())}`,
+  )
   expect(download.suggestedFilename()).toMatch(/^donaciones-\d{4}-\d{2}\.xlsx$/)
 })
 
