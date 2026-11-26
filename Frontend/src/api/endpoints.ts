@@ -4,7 +4,9 @@
  */
 import type { HttpClient } from './client'
 import type {
+  AlbumExportQuery,
   AlbumIn,
+  AlbumListQuery,
   AlbumOut,
   AlbumPublish,
   AlbumSummary,
@@ -12,15 +14,21 @@ import type {
   AssetIn,
   AssetOut,
   AttendanceEntry,
+  AttendanceExportQuery,
   AttendanceMark,
   AttendanceSheet,
   AuditExportQuery,
   AuditListQuery,
-  AuditSummary,
   AuditPage,
+  AuditSummary,
   ChangePasswordRequest,
+  ContactIn,
+  ContactOut,
+  ContactUpdate,
+  DashboardSummary,
   DonationCancel,
   DonationConfirm,
+  DonationExportQuery,
   DonationListQuery,
   DonationManualIn,
   DonationNoticeIn,
@@ -28,10 +36,6 @@ import type {
   DonationPage,
   DonationSummary,
   DonationTracking,
-  ContactIn,
-  ContactOut,
-  ContactUpdate,
-  DashboardSummary,
   EmailRequest,
   EvaluationArea,
   EvaluationIn,
@@ -43,12 +47,14 @@ import type {
   GoogleLoginRequest,
   InquiryConvert,
   InquiryDetail,
+  InquiryExportQuery,
   InquiryListQuery,
   InquiryPage,
   InquirySummary,
   InquiryUpdate,
   InventorySummary,
   ItemDeactivate,
+  ItemExportQuery,
   ItemIn,
   ItemListQuery,
   ItemOut,
@@ -56,38 +62,40 @@ import type {
   ItemUpdate,
   LoginRequest,
   MessageResponse,
+  MonthlySummary,
   MovementIn,
   MovementOut,
-  MonthlySummary,
   NewcomerIn,
   NewcomerOut,
   NoteIn,
-  PatientDraft,
   PasswordResetOut,
-  RoleMatrix,
-  RoleOut,
-  RolePermissionsUpdate,
-  PatientDeactivate,
-  PatientDocument,
-  PatientIn,
-  PatientListQuery,
   PatientAttendancePage,
   PatientCounts,
   PatientCountsQuery,
+  PatientDeactivate,
+  PatientDocument,
+  PatientDraft,
+  PatientExportQuery,
+  PatientIn,
+  PatientListQuery,
   PatientOut,
   PatientPage,
   PatientReactivate,
   PatientUpdate,
-  RegisterRequest,
-  ResetPasswordRequest,
   PublicAlbum,
   PublicAlbumSummary,
   PublicGoal,
   PublicInquiryIn,
-  PublicSection,
   PublicSchedule,
   PublicScheduleQuery,
+  PublicSection,
+  RegisterRequest,
+  ResetPasswordRequest,
+  RoleMatrix,
+  RoleOut,
+  RolePermissionsUpdate,
   ScheduleCancel,
+  ScheduleExportQuery,
   ScheduleIn,
   ScheduleListQuery,
   ScheduleOut,
@@ -96,13 +104,14 @@ import type {
   SectionDraftIn,
   SectionOut,
   SessionOut,
-  SocialLinksIn,
   SignedUrl,
+  SocialLinksIn,
   TokenRequest,
   UploadSignature,
-  UserCreate,
   UserApprove,
+  UserCreate,
   UserCreated,
+  UserExportQuery,
   UserListQuery,
   UserOut,
   UserPage,
@@ -150,6 +159,9 @@ export function createEndpoints(http: HttpClient) {
     patients: {
       list: (query: PatientListQuery = {}) =>
         http.get<PatientPage>('/patients', { query }),
+      /** Todas las fichas del filtro del listado, en CSV o Excel. */
+      export: (query: PatientExportQuery = {}) =>
+        http.get<Blob>('/patients/export', { query, blob: true }),
       /** Contadores de las pestañas y opciones del filtro por actividad. */
       summary: (query: PatientCountsQuery = {}) =>
         http.get<PatientCounts>('/patients/summary', { query }),
@@ -257,6 +269,8 @@ export function createEndpoints(http: HttpClient) {
     users: {
       list: (query: UserListQuery = {}) =>
         http.get<UserPage>('/users', { query }),
+      export: (query: UserExportQuery = {}) =>
+        http.get<Blob>('/users/export', { query, blob: true }),
       create: (body: UserCreate) => http.post<UserCreated>('/users', { body }),
       update: (userId: string, body: UserUpdate) =>
         http.patch<UserOut>(`/users/${id(userId)}`, { body }),
@@ -275,6 +289,8 @@ export function createEndpoints(http: HttpClient) {
     schedules: {
       list: (query: ScheduleListQuery = {}) =>
         http.get<SchedulePage>('/schedules', { query }),
+      export: (query: ScheduleExportQuery = {}) =>
+        http.get<Blob>('/schedules/export', { query, blob: true }),
       get: (scheduleId: string) =>
         http.get<ScheduleOut>(`/schedules/${id(scheduleId)}`),
       create: (body: ScheduleIn) =>
@@ -320,6 +336,9 @@ export function createEndpoints(http: HttpClient) {
         ),
       monthly: (month?: string) =>
         http.get<MonthlySummary>('/attendance/monthly', { query: { month } }),
+      /** Cada asistencia marcada en las actividades de un rango (CSV o Excel). */
+      export: (query: AttendanceExportQuery) =>
+        http.get<Blob>('/attendance/export', { query, blob: true }),
       /** Archivo del resumen mensual para descargar (CSV o Excel). */
       downloadMonthly: (format: 'csv' | 'xlsx', month?: string) =>
         http.get<Blob>('/attendance/monthly', {
@@ -342,14 +361,17 @@ export function createEndpoints(http: HttpClient) {
         http.post<MovementOut>(`/inventory/${id(itemId)}/movements`, { body }),
       deactivate: (itemId: string, body: ItemDeactivate) =>
         http.post<ItemOut>(`/inventory/${id(itemId)}/deactivate`, { body }),
-      /** Archivo para la rendición de cuentas (la Alcaldía va aparte). */
-      export: (format: 'csv' | 'xlsx' = 'xlsx') =>
-        http.get<Blob>('/inventory/export', { query: { format }, blob: true }),
+      /** Todos los materiales del filtro; la Alcaldía va en su propia hoja. */
+      export: (query: ItemExportQuery = {}) =>
+        http.get<Blob>('/inventory/export', { query, blob: true }),
     },
 
     donations: {
       list: (query: DonationListQuery = {}) =>
         http.get<DonationPage>('/donations', { query }),
+      /** Todos los aportes del filtro de la tabla. */
+      export: (query: DonationExportQuery = {}) =>
+        http.get<Blob>('/donations/export', { query, blob: true }),
       summary: (month?: string) =>
         http.get<DonationSummary>('/donations/summary', { query: { month } }),
       /** «Descargar resumen del mes»: resumen y detalle de los aportes. */
@@ -375,8 +397,10 @@ export function createEndpoints(http: HttpClient) {
     },
 
     media: {
-      albums: (visibility?: 'privado' | 'publico') =>
-        http.get<AlbumSummary[]>('/media/albums', { query: { visibility } }),
+      albums: (query: AlbumListQuery = {}) =>
+        http.get<AlbumSummary[]>('/media/albums', { query }),
+      exportAlbums: (query: AlbumExportQuery = {}) =>
+        http.get<Blob>('/media/albums/export', { query, blob: true }),
       album: (albumId: string) =>
         http.get<AlbumOut>(`/media/albums/${id(albumId)}`),
       createAlbum: (body: AlbumIn) =>
@@ -419,6 +443,8 @@ export function createEndpoints(http: HttpClient) {
     inquiries: {
       list: (query: InquiryListQuery = {}) =>
         http.get<InquiryPage>('/inquiries', { query }),
+      export: (query: InquiryExportQuery = {}) =>
+        http.get<Blob>('/inquiries/export', { query, blob: true }),
       summary: () => http.get<InquirySummary>('/inquiries/summary'),
       get: (inquiryId: string) =>
         http.get<InquiryDetail>(`/inquiries/${id(inquiryId)}`),

@@ -549,8 +549,12 @@ describe('Asistencia', () => {
     fake.on('GET /attendance/monthly', (call) =>
       call.query.get('format') ? { body: 'contenido' } : { body: MONTHLY },
     )
+    fake.on('GET /attendance/export', { body: 'contenido' })
     const { wrapper } = await mountApp(PATH, fake)
 
+    // El resumen del mes está dentro de «Descargar», junto al detalle por rango
+    await wrapper.get('.export__trigger').trigger('click')
+    await settle()
     await wrapper
       .get('[aria-label="Descargar resumen mensual en CSV"]')
       .trigger('click')
@@ -572,6 +576,21 @@ describe('Asistencia', () => {
     expect(formats).toEqual(['csv', 'xlsx'])
     expect(wrapper.text()).toContain('Fisioterapia')
     expect(wrapper.text()).toContain('Arteterapia')
+
+    // El detalle: cada asistencia marcada del rango (por defecto, el mes)
+    await wrapper
+      .findAll('.export__option')
+      .find((b) => b.get('strong').text() === 'Excel')!
+      .trigger('click')
+    await settle()
+    const query = Object.fromEntries(
+      fake.callsTo('GET /attendance/export')[0]!.query,
+    )
+    expect(query).toEqual({
+      from: '2026-11-01',
+      to: '2026-11-30',
+      format: 'xlsx',
+    })
   })
 
   it('el voluntariado marca y cierra, pero no ve el resumen del mes', async () => {
@@ -585,6 +604,7 @@ describe('Asistencia', () => {
         .some((b) => b.text() === 'Cerrar asistencia del día'),
     ).toBe(true)
     expect(wrapper.text()).not.toContain('Descargar resumen mensual')
+    expect(wrapper.find('.export').exists()).toBe(false)
     expect(fake.callsTo('GET /attendance/monthly')).toHaveLength(0)
   })
 

@@ -3,12 +3,17 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.reports import DateRange, filter_range
 from app.modules.media.models import MediaAlbum, MediaAsset
 from app.modules.patients.models import Patient
 
 
-def list_albums(db: Session, visibility: str | None = None) -> list[MediaAlbum]:
+def list_albums(
+    db: Session, visibility: str | None = None, period: DateRange | None = None
+) -> list[MediaAlbum]:
+    """Álbumes, del más nuevo al más antiguo; el rango de fechas es por fecha de creación."""
     query = select(MediaAlbum).order_by(MediaAlbum.created_at.desc(), MediaAlbum.id)
+    query = filter_range(query, MediaAlbum.created_at, period)
     if visibility:
         query = query.where(MediaAlbum.visibility == visibility)
     return list(db.scalars(query))

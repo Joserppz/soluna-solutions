@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import escape_like
 from app.core.pagination import PageParams, PageResult, paginate
+from app.core.reports import DateRange, filter_range
 from app.modules.inquiries.models import Inquiry, InquiryNote
 
 
@@ -14,8 +15,10 @@ def list_inquiries(
     status: str | None,
     kind: str | None,
     search: str | None,
+    period: DateRange | None = None,
 ) -> PageResult:
-    query = select(Inquiry)
+    """Bandeja filtrada; el rango de fechas es por el día en que llegó la solicitud."""
+    query = filter_range(select(Inquiry), Inquiry.created_at, period)
     if status:
         query = query.where(Inquiry.status == status)
     if kind:

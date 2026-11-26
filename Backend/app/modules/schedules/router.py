@@ -2,9 +2,25 @@ import datetime as dt
 import uuid
 
 from fastapi import APIRouter, Depends, Query, status
+from fastapi.responses import Response
 
 from app.core.database import DbSession
 from app.core.pagination import Pagination
+from app.core.reports import (
+    EXPORT_PAGE,
+    EXPORT_PERMISSION,
+    EXPORT_RESPONSES,
+    FORMAT_QUERY,
+    DateRange,
+    FileFormat,
+    Range,
+    Report,
+    Sheet,
+    describe,
+    download,
+    exportable,
+    log_query,
+)
 from app.core.schemas import MessageResponse
 from app.modules.auth.dependencies import CurrentUser, require_permission
 from app.modules.schedules import service as schedule_service
@@ -26,6 +42,7 @@ public_router = APIRouter(prefix="/api/v1/public", tags=["Sitio público"])
 # La agenda interna la ve quien gestiona actividades o quien toma asistencia
 readers = require_permission(SCHEDULES_MANAGE, ATTENDANCE_WRITE, any_of=True)
 managers = require_permission(SCHEDULES_MANAGE)
+exporter = require_permission(EXPORT_PERMISSION)
 
 
 def to_schedule_out(schedule: Schedule, interested: int, came: int) -> ScheduleOut:
@@ -60,22 +77,87 @@ def _out(db: DbSession, schedule: Schedule) -> ScheduleOut:
     return to_schedule_out(schedule, interested, came)
 
 
+STATUS_LABELS = {"borrador": "Borrador", "publicada": "Publicada", "cancelada": "Cancelada"}
+
+
+def _described(period: DateRange, status_filter: str | None) -> dict[str, str]:
+    return describe(period, {"Estado": STATUS_LABELS.get(status_filter or "")})
+
+
 @router.get("", response_model=SchedulePage, response_model_by_alias=True)
 def list_schedules(
     db: DbSession,
     page: Pagination,
-    date_from: dt.date | None = Query(default=None, alias="from"),
-    date_to: dt.date | None = Query(default=None, alias="to"),
+    period: Range,
     status_filter: ScheduleStatus | None = Query(default=None, alias="status"),
     current: CurrentUser = Depends(readers),
 ):
     """Agenda interna (incluye borradores), por fecha y hora."""
-    result = schedule_service.list_schedules(db, date_from, date_to, status_filter, page)
+    result = schedule_service.list_schedules(db, period.start, period.end, status_filter, page)
+    log_query("Actividades", _described(period, status_filter), result.total)
     interested = schedule_service.interested(db, result.items)
     came = schedule_service.came(db, result.items)
     return SchedulePage.of(
         result, lambda s: to_schedule_out(s, interested.get(s.id, 0), came.get(s.id, 0))
     )
+
+
+@router.get(
+    "/export",
+    response_class=Response,
+    responses=EXPORT_RESPONSES,
+    dependencies=[Depends(exporter)],
+)
+def export_schedules(
+    db: DbSession,
+    period: Range,
+    status_filter: ScheduleStatus | None = Query(default=None, alias="status"),
+    file_format: FileFormat = FORMAT_QUERY,
+    current: CurrentUser = Depends(readers),
+):
+    """Todas las actividades del rango, con interesados y cuántos vinieron."""
+    result = schedule_service.list_schedules(
+        db, period.start, period.end, status_filter, EXPORT_PAGE
+    )
+    schedules = exportable(result)
+    interested = schedule_service.interested(db, schedules)
+    came = schedule_service.came(db, schedules)
+    sheet = Sheet(
+        "Actividades",
+        [
+            "Fecha",
+            "Inicio",
+            "Fin",
+            "Actividad",
+            "Categoría",
+            "Lugar",
+            "Profesional",
+            "Estado",
+            "Cupos",
+            "Interesados",
+            "Vinieron",
+            "Aviso de cancelación",
+        ],
+        [
+            [
+                item.date,
+                item.start_time.strftime("%H:%M"),
+                item.end_time.strftime("%H:%M"),
+                item.title,
+                CATEGORY_LABELS[item.category],
+                item.location,
+                item.professional_name,
+                STATUS_LABELS[item.status],
+                item.spots,
+                interested.get(item.id, 0),
+                came.get(item.id, 0),
+                item.cancellation_note,
+            ]
+            for item in schedules
+        ],
+    )
+    report = Report("Actividades", "actividades", "CRONOGRAMA", _described(period, status_filter))
+    return download(db, current, report, [sheet], file_format)
 
 
 @router.get("/{schedule_id}", response_model=ScheduleOut, response_model_by_alias=True)

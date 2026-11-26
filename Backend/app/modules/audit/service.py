@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.errors import ValidationError
 from app.core.pagination import PageParams, PageResult
+from app.core.reports import EXPORT_PAGE, exportable
 from app.modules.audit import repository as audit_repository
 from app.modules.audit.models import (
     AUDIT_AREAS,
@@ -108,10 +109,6 @@ def audit(
     )
 
 
-# Tope de filas de una descarga: el registro se filtra por área, persona o días
-EXPORT_LIMIT = 5000
-
-
 def _validate(category: str | None, severity: str | None) -> None:
     if category and category not in AUDIT_CATEGORIES:
         raise ValidationError("Categoría inválida. Usa: " + ", ".join(AUDIT_CATEGORIES) + ".")
@@ -187,19 +184,10 @@ def summary(db: Session, days: int) -> dict:
     }
 
 
-def export_entries(
-    db: Session, current: "CurrentUser", **filters
-) -> tuple[list[AuditLog], dict[str, str]]:
-    """Filas para descargar el registro (con el mismo filtro de la pantalla). La descarga
-    también queda registrada: el registro de actividad es información sensible."""
+def export_entries(db: Session, **filters) -> tuple[list[AuditLog], dict[str, str]]:
+    """Todas las filas del filtro de la pantalla, para descargarlas (la descarga queda en
+    el propio registro: es información sensible)."""
     _validate(filters.get("category"), filters.get("severity"))
-    entries = audit_repository.all_entries(db, EXPORT_LIMIT, **filters)
-    audit(
-        db,
-        current,
-        category="SISTEMA",
-        action="Descarga del registro de actividad",
-        detail=f"Descargó {len(entries)} movimientos del registro de actividad",
-    )
+    entries = exportable(audit_repository.list_entries(db, page=EXPORT_PAGE, **filters))
     names = audit_repository.names_by_email(db, {entry.actor for entry in entries})
     return entries, names

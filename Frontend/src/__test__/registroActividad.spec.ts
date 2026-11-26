@@ -13,6 +13,7 @@ import {
   type FakeReply,
   type RecordedCall,
 } from './apiFake'
+import { downloadAs } from './reports'
 
 const PATH = '/equipo/administracion/registro'
 
@@ -411,11 +412,7 @@ describe('Descargar registro', () => {
     fake.on('GET /audit/export', { body: 'contenido' })
     const { wrapper } = await mountApp(`${PATH}?area=equipo`, fake)
 
-    await wrapper
-      .findAll('button')
-      .find((b) => b.text() === 'Descargar registro')!
-      .trigger('click')
-    await settle()
+    await downloadAs(wrapper, 'Excel')
 
     expect(lastQuery(fake, 'GET /audit/export')).toEqual({
       area: 'equipo',
@@ -424,9 +421,9 @@ describe('Descargar registro', () => {
     })
     expect(click).toHaveBeenCalledTimes(1)
     expect(createObjectURL).toHaveBeenCalledTimes(1)
-    expect(wrapper.text()).toContain(
-      'Descargamos el registro. La descarga también quedó anotada.',
-    )
+    expect(wrapper.text()).toContain('Descargamos')
+    // La descarga queda en el propio registro: la lista se vuelve a pedir
+    expect(fake.callsTo('GET /audit').length).toBeGreaterThan(1)
     // Se vuelve a leer la lista y el resumen: la descarga aparece en el registro
     expect(fake.callsTo('GET /audit')).toHaveLength(2)
     expect(fake.callsTo('GET /audit/summary')).toHaveLength(2)
@@ -440,11 +437,7 @@ describe('Descargar registro', () => {
     })
     const { wrapper } = await mountApp(PATH, fake)
 
-    await wrapper
-      .findAll('button')
-      .find((b) => b.text() === 'Descargar registro')!
-      .trigger('click')
-    await settle()
+    await downloadAs(wrapper, 'CSV')
 
     expect(wrapper.text()).toContain(
       'No tienes permiso para realizar esta acción.',

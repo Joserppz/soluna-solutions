@@ -1,7 +1,7 @@
-"""Descarga del registro de actividad (CSV para Excel en español o .xlsx)."""
+"""Hoja de la descarga del registro de actividad."""
 
 from app.core import clock
-from app.core.spreadsheet import csv_bytes, safe, xlsx_bytes
+from app.core.reports import Sheet
 from app.modules.audit.models import AuditLog
 from app.modules.audit.schemas import to_audit_out
 
@@ -26,20 +26,16 @@ def _row(entry: AuditLog, names: dict[str, str]) -> tuple:
     return (
         when.strftime("%d/%m/%Y"),
         when.strftime("%H:%M"),
-        safe(out.actor_name or ""),
-        safe(entry.actor),
-        safe(entry.actor_role),
+        out.actor_name or "",
+        entry.actor,
+        entry.actor_role,
         out.area_label or "",
-        safe(entry.action),
-        safe(entry.detail),
+        entry.action,
+        entry.detail,
         entry.occurrences,
         REVIEW_LABELS.get(out.review or "", ""),
     )
 
 
-def to_csv(entries: list[AuditLog], names: dict[str, str]) -> bytes:
-    return csv_bytes([HEADERS, *(_row(entry, names) for entry in entries)])
-
-
-def to_xlsx(entries: list[AuditLog], names: dict[str, str]) -> bytes:
-    return xlsx_bytes([("Registro de actividad", HEADERS, [_row(e, names) for e in entries])])
+def sheet(entries: list[AuditLog], names: dict[str, str]) -> Sheet:
+    return Sheet("Registro de actividad", HEADERS, [_row(entry, names) for entry in entries])

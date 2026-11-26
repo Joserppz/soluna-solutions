@@ -14,6 +14,10 @@ import type {
   ItemOut,
 } from '../../../api/types'
 import ItemPanel from '../../../components/ops/ItemPanel.vue'
+import DateRangeFilter from '../../../components/reports/DateRangeFilter.vue'
+import ExportMenu, {
+  type ExportFormat,
+} from '../../../components/reports/ExportMenu.vue'
 import AppAlert from '../../../components/ui/AppAlert.vue'
 import AppButton from '../../../components/ui/AppButton.vue'
 import EmptyState from '../../../components/ui/EmptyState.vue'
@@ -25,9 +29,14 @@ import StatusBadge from '../../../components/ui/StatusBadge.vue'
 import { useApi } from '../../../composables/useApi'
 import { useFitLayout } from '../../../composables/useFitLayout'
 import { useFitRows } from '../../../composables/useFitRows'
-import { useToast } from '../../../composables/useToast'
-import { saveBlob } from '../../../utils/download'
-import { todayIso } from '../../../utils/format'
+import {
+  ALL_DATES,
+  isActive,
+  rangeQuery,
+  readRange,
+  writeRange,
+  type DateRangeValue,
+} from '../../../utils/dateRange'
 import { CONDITION_TONES, itemLine } from '../../../utils/ops'
 import { normalizeSearch } from '../../../utils/patients'
 
@@ -37,7 +46,6 @@ const SCROLL_PAGE_SIZE = 10
 const { api, session } = useApi()
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
 const fit = useFitLayout()
 const canManage = computed(() => session.can('inventory:manage'))
 
@@ -71,6 +79,8 @@ const condition = ref(text('condicion'))
 const searchInput = ref(text('buscar'))
 const search = ref(normalizeSearch(searchInput.value))
 const page = ref(Math.max(1, Number(text('pagina')) || 1))
+/** Fecha de ingreso del material (?desde=&hasta=) */
+const period = ref<DateRangeValue>(readRange(route.query))
 
 const summary = ref<InventorySummary | null>(null)
 const items = ref<ItemOut[]>([])
@@ -79,7 +89,6 @@ const loading = ref(true)
 const loadError = ref<string | null>(null)
 const selectedId = ref<string | null>(text('material') || null)
 const creating = ref(false)
-const exporting = ref<'csv' | 'xlsx' | null>(null)
 
 const tableArea = ref<HTMLElement | null>(null)
 const { pageSize } = useFitRows(tableArea, {
@@ -97,8 +106,25 @@ const selected = computed(() =>
     : (items.value.find((item) => item.id === selectedId.value) ?? null),
 )
 const filtered = computed(() =>
-  Boolean(search.value || origin.value || category.value || condition.value),
+  Boolean(
+    search.value ||
+    origin.value ||
+    category.value ||
+    condition.value ||
+    isActive(period.value),
+  ),
 )
+
+/** Filtros de la tabla: los mismos para la descarga. */
+function currentFilters(): ItemListQuery {
+  return {
+    search: search.value || undefined,
+    origin: (origin.value || undefined) as ItemListQuery['origin'],
+    category: (category.value || undefined) as ItemListQuery['category'],
+    condition: (condition.value || undefined) as ItemListQuery['condition'],
+    ...rangeQuery(period.value),
+  }
+}
 
 let request = 0
 
@@ -109,10 +135,7 @@ async function load() {
   try {
     const [list, counts] = await Promise.all([
       api.inventory.list({
-        search: search.value || undefined,
-        origin: (origin.value || undefined) as ItemListQuery['origin'],
-        category: (category.value || undefined) as ItemListQuery['category'],
-        condition: (condition.value || undefined) as ItemListQuery['condition'],
+        ...currentFilters(),
         limit: pageSize.value,
         offset: (page.value - 1) * pageSize.value,
       }),
@@ -144,6 +167,7 @@ function syncQuery() {
   if (category.value) query.categoria = category.value
   if (condition.value) query.condicion = condition.value
   if (page.value > 1) query.pagina = String(page.value)
+  writeRange(period.value, query)
   if (selectedId.value) query.material = selectedId.value
   void router.replace({ query })
 }
@@ -153,7 +177,7 @@ function refresh() {
   void load()
 }
 
-watch([search, origin, category, condition], () => {
+watch([search, origin, category, condition, period], () => {
   if (page.value === 1) refresh()
   else page.value = 1
 })
@@ -216,27 +240,12 @@ function clearFilters() {
   origin.value = ''
   category.value = ''
   condition.value = ''
+  period.value = { ...ALL_DATES }
 }
 
-async function exportAs(format: 'csv' | 'xlsx') {
-  exporting.value = format
-  try {
-    const blob = await api.inventory.export(format)
-    saveBlob(blob, `inventario-${todayIso()}.${format}`)
-    toast.success(
-      format === 'xlsx'
-        ? 'Descargamos el inventario. Los bienes de la Alcaldía van en su propia hoja.'
-        : 'Descargamos el inventario. Los bienes de la Alcaldía van en un archivo aparte.',
-    )
-  } catch (failure) {
-    toast.error(
-      isApiError(failure)
-        ? failure.message
-        : 'No pudimos exportar el inventario.',
-    )
-  } finally {
-    exporting.value = null
-  }
+/** «Descargar»: todos los materiales del filtro; la Alcaldía va en su propia hoja. */
+function exportInventory(format: ExportFormat) {
+  return api.inventory.export({ ...currentFilters(), format })
 }
 
 function dateLabel(value: string | null): string {
@@ -303,29 +312,14 @@ onMounted(async () => {
           }}
         </p>
       </template>
-      <div class="exports" role="group" aria-labelledby="exportar-titulo">
-        <span id="exportar-titulo" class="exports__label">Exportar</span>
-        <AppButton
-          variant="secondary"
-          size="sm"
-          aria-label="Exportar CSV"
-          :loading="exporting === 'csv'"
-          loading-label="Preparando…"
-          @click="exportAs('csv')"
-        >
-          CSV
-        </AppButton>
-        <AppButton
-          variant="secondary"
-          size="sm"
-          aria-label="Exportar Excel"
-          :loading="exporting === 'xlsx'"
-          loading-label="Preparando…"
-          @click="exportAs('xlsx')"
-        >
-          Excel
-        </AppButton>
-      </div>
+      <ExportMenu
+        class="exports"
+        :download="exportInventory"
+        filename="inventario"
+        what="materiales"
+        :total="total"
+        size="sm"
+      />
     </section>
 
     <div class="inv__body">
@@ -383,6 +377,7 @@ onMounted(async () => {
               {{ option.label }}
             </option>
           </select>
+          <DateRangeFilter v-model="period" label="Fecha de ingreso" />
         </form>
 
         <AppAlert v-if="loadError" tone="error">
@@ -593,11 +588,6 @@ onMounted(async () => {
   margin-left: auto;
 }
 
-.exports__label {
-  color: var(--color-text-muted);
-  font-size: var(--text-sm);
-}
-
 .damaged {
   display: inline-flex;
   align-items: center;
@@ -651,8 +641,12 @@ onMounted(async () => {
 
 .filters {
   display: grid;
-  grid-template-columns: minmax(0, 1.7fr) repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.5fr) repeat(4, minmax(0, 1fr));
   gap: var(--space-2);
+}
+
+.filters :deep(.range__trigger) {
+  font-size: var(--text-sm);
 }
 
 .filters .select {
@@ -775,6 +769,16 @@ onMounted(async () => {
 @media (max-width: 1000px) {
   .inv__body {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 1280px) {
+  .filters {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .filters__search {
+    grid-column: span 2;
   }
 }
 

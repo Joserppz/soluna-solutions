@@ -1,9 +1,24 @@
 import uuid
 
 from fastapi import APIRouter, Depends, Query, status
+from fastapi.responses import Response
 
 from app.core.database import DbSession
 from app.core.pagination import Pagination
+from app.core.reports import (
+    EXPORT_PAGE,
+    EXPORT_PERMISSION,
+    EXPORT_RESPONSES,
+    FORMAT_QUERY,
+    FileFormat,
+    Range,
+    Report,
+    Sheet,
+    describe,
+    download,
+    exportable,
+    log_query,
+)
 from app.core.schemas import MessageResponse
 from app.modules.auth.dependencies import CurrentUser, require_permission
 from app.modules.patients import service as patient_service
@@ -24,6 +39,7 @@ from app.modules.patients.schemas import (
     to_patient_out,
     to_patient_summary,
 )
+from app.modules.schedules.models import CATEGORY_LABELS
 from app.modules.schedules.schemas import ScheduleCategory
 from app.modules.users.models import PATIENTS_DEACTIVATE, PATIENTS_READ, PATIENTS_WRITE
 
@@ -32,39 +48,83 @@ router = APIRouter(prefix="/api/v1/patients", tags=["Afiliados"])
 staff = require_permission(PATIENTS_READ)
 editors = require_permission(PATIENTS_WRITE)
 admin_only = require_permission(PATIENTS_DEACTIVATE)
+exporters = require_permission(PATIENTS_READ, EXPORT_PERMISSION)
 
 
 def _out(patient, current: CurrentUser) -> PatientOut:
     return to_patient_out(patient, patient_service.can_view_clinical_record(current, patient))
 
 
+GROUP_LABELS = {
+    "all": "Todos",
+    "active": "Activos",
+    "consent_pending": "Consentimiento pendiente",
+    "inactive": "Inactivos",
+}
+
+
+class PatientFilters:
+    """Filtros del listado de afiliados: los mismos para la página, las pestañas y la
+    descarga. El rango de fechas es por fecha de registro de la ficha."""
+
+    def __init__(
+        self,
+        period: Range,
+        search: str | None = Query(default=None, max_length=120),
+        access_status: str | None = Query(default=None, alias="status", max_length=20),
+        include_inactive: bool = Query(default=False, alias="includeInactive"),
+        group: PatientGroup | None = Query(
+            default=None,
+            description="Pestaña del listado; si se indica, reemplaza a includeInactive",
+        ),
+        activity: ScheduleCategory | None = Query(
+            default=None,
+            description="Solo quienes vinieron a esa actividad en los últimos 6 meses",
+        ),
+        order: PatientOrder = Query(default="recent"),
+    ):
+        self.period = period
+        self.search = search
+        self.access_status = access_status
+        self.include_inactive = include_inactive
+        self.group = group
+        self.activity = activity
+        self.order = order
+
+    def run(self, db, page):
+        return patient_service.list_patients(
+            db,
+            self.search,
+            self.access_status,
+            self.include_inactive,
+            page,
+            group=self.group,
+            activity=self.activity,
+            order=self.order,
+            period=self.period,
+        )
+
+    def described(self) -> dict[str, str]:
+        return describe(
+            self.period,
+            {
+                "Pestaña": GROUP_LABELS.get(self.group or ""),
+                "Búsqueda": self.search,
+                "Actividad": CATEGORY_LABELS.get(self.activity or ""),
+                "Estado": self.access_status,
+            },
+        )
+
+
 @router.get("", response_model=PatientPage, response_model_by_alias=True)
 def list_patients(
     db: DbSession,
     page: Pagination,
-    search: str | None = Query(default=None, max_length=120),
-    access_status: str | None = Query(default=None, alias="status", max_length=20),
-    include_inactive: bool = Query(default=False, alias="includeInactive"),
-    group: PatientGroup | None = Query(
-        default=None,
-        description="Pestaña del listado; si se indica, reemplaza a includeInactive",
-    ),
-    activity: ScheduleCategory | None = Query(
-        default=None, description="Solo quienes vinieron a esa actividad en los últimos 6 meses"
-    ),
-    order: PatientOrder = Query(default="recent"),
+    filters: PatientFilters = Depends(),
     current: CurrentUser = Depends(staff),
 ):
-    result, activities = patient_service.list_patients(
-        db,
-        search,
-        access_status,
-        include_inactive,
-        page,
-        group=group,
-        activity=activity,
-        order=order,
-    )
+    result, activities = filters.run(db, page)
+    log_query("Afiliados", filters.described(), result.total)
     return PatientPage.of(
         result, lambda patient: to_patient_summary(patient, activities.get(patient.id))
     )
@@ -73,12 +133,63 @@ def list_patients(
 @router.get("/summary", response_model=PatientCounts, response_model_by_alias=True)
 def patient_counts(
     db: DbSession,
+    period: Range,
     search: str | None = Query(default=None, max_length=120),
     activity: ScheduleCategory | None = Query(default=None),
     current: CurrentUser = Depends(staff),
 ):
-    """Contadores de las pestañas (con la misma búsqueda y actividad del listado)."""
-    return patient_service.patient_counts(db, search, activity)
+    """Contadores de las pestañas (con la misma búsqueda, actividad y fechas del listado)."""
+    return patient_service.patient_counts(db, search, activity, period)
+
+
+@router.get("/export", response_class=Response, responses=EXPORT_RESPONSES)
+def export_patients(
+    db: DbSession,
+    filters: PatientFilters = Depends(),
+    file_format: FileFormat = FORMAT_QUERY,
+    current: CurrentUser = Depends(exporters),
+):
+    """Todas las fichas que cumplen el filtro del listado (sin datos clínicos)."""
+    result, activities = filters.run(db, EXPORT_PAGE)
+    patients = exportable(result)
+    sheet = Sheet(
+        "Afiliados",
+        [
+            "Nombre",
+            "Carnet",
+            "Teléfono",
+            "Zona",
+            "Familiar principal",
+            "Teléfono del familiar",
+            "Consentimiento",
+            "Uso de imagen",
+            "Estado de acceso",
+            "Actividades (6 meses)",
+            "Ficha",
+            "Registrada",
+        ],
+    )
+    for patient in patients:
+        summary = to_patient_summary(patient, activities.get(patient.id))
+        contact = summary.primary_contact
+        sheet.rows.append(
+            [
+                patient.name,
+                patient.ci,
+                patient.phone,
+                patient.zone,
+                contact.name if contact else "",
+                contact.phone if contact else "",
+                "Firmado" if patient.consent else "Pendiente",
+                patient.image_consent,
+                patient.access_status,
+                ", ".join(tag.label for tag in summary.activities),
+                "Activa" if patient.active else "Inactiva",
+                patient.created_at,
+            ]
+        )
+    report = Report("Afiliados", "afiliados", "PACIENTES", filters.described(), "WARNING")
+    return download(db, current, report, [sheet], file_format)
 
 
 @router.get("/{patient_id}", response_model=PatientOut, response_model_by_alias=True)

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import escape_like
 from app.core.pagination import PageParams, PageResult, paginate
+from app.core.reports import DateRange, filter_range
 from app.modules.donations.models import Donation, DonationGoal
 
 
@@ -33,10 +34,7 @@ def list_donations(
                 Donation.bank_reference.ilike(pattern, escape="\\"),
             )
         )
-    if date_from:
-        query = query.where(Donation.date >= date_from)
-    if date_to:
-        query = query.where(Donation.date <= date_to)
+    query = filter_range(query, Donation.date, DateRange(date_from, date_to))
     return paginate(
         db, query.order_by(Donation.date.desc(), Donation.created_at.desc(), Donation.id), page
     )

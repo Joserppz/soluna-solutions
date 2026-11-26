@@ -112,3 +112,23 @@ export async function fitsWindow(page: Page) {
 }
 
 export const FITS = { pageScrolls: false, sideways: false, inner: [] }
+
+/**
+ * «Descargar» (el primero de la pantalla, o el de `scope`) en Excel o CSV; devuelve la
+ * descarga del navegador.
+ */
+export async function downloadReport(
+  page: Page,
+  format: 'Excel' | 'CSV',
+  scope: ReturnType<Page['locator']> = page.locator('.export').first(),
+) {
+  await scope.locator('.export__trigger').click()
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    scope
+      .locator('.export__option')
+      .filter({ has: page.locator('strong', { hasText: format }) })
+      .click(),
+  ])
+  return download
+}

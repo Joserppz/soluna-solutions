@@ -1,12 +1,27 @@
 import uuid
 
 from fastapi import APIRouter, Depends, Query, Request, status
+from fastapi.responses import Response
 
 from app.adapters.turnstile import TurnstileVerifier, get_turnstile
 from app.core import rate_limit
 from app.core.database import DbSession
 from app.core.network import client_ip
 from app.core.pagination import Pagination
+from app.core.reports import (
+    EXPORT_PAGE,
+    EXPORT_PERMISSION,
+    EXPORT_RESPONSES,
+    FORMAT_QUERY,
+    FileFormat,
+    Range,
+    Report,
+    Sheet,
+    describe,
+    download,
+    exportable,
+    log_query,
+)
 from app.core.schemas import MessageResponse
 from app.modules.auth.dependencies import CurrentUser, require_permission
 from app.modules.auth.service import require_human
@@ -34,6 +49,7 @@ router = APIRouter(prefix="/api/v1/inquiries", tags=["Solicitudes"])
 public_router = APIRouter(prefix="/api/v1/public/inquiries", tags=["Sitio público"])
 
 managers = require_permission(INQUIRIES_MANAGE)
+exporters = require_permission(INQUIRIES_MANAGE, EXPORT_PERMISSION)
 # Inscribir abre una ficha: hace falta además poder registrar afiliados
 enrollers = require_permission(INQUIRIES_MANAGE, PATIENTS_WRITE)
 
@@ -95,22 +111,92 @@ def create_public(
     return MessageResponse(message=THANKS)
 
 
+class InquiryFilters:
+    """Filtros de la bandeja, iguales para la lista y su descarga."""
+
+    def __init__(
+        self,
+        period: Range,
+        status_filter: InquiryStatus | None = Query(default=None, alias="status"),
+        kind: InquiryKind | None = None,
+        search: str | None = Query(default=None, max_length=120),
+    ):
+        self.period = period
+        self.values = {"status": status_filter, "kind": kind, "search": search, "period": period}
+
+    def described(self) -> dict[str, str]:
+        return describe(
+            self.period,
+            {
+                "Estado": STATUS_LABELS.get(self.values["status"] or ""),
+                "Motivo": KIND_LABELS.get(self.values["kind"] or ""),
+                "Búsqueda": self.values["search"],
+            },
+        )
+
+
 @router.get("", response_model=InquiryPage, response_model_by_alias=True)
 def list_inquiries(
     db: DbSession,
     page: Pagination,
-    status_filter: InquiryStatus | None = Query(default=None, alias="status"),
-    kind: InquiryKind | None = None,
-    search: str | None = Query(default=None, max_length=120),
+    filters: InquiryFilters = Depends(),
     current: CurrentUser = Depends(managers),
 ):
     """Bandeja, la más reciente primero; busca por nombre o teléfono."""
-    result = inquiry_service.list_inquiries(
-        db, page, status=status_filter, kind=kind, search=search
-    )
+    result = inquiry_service.list_inquiries(db, page, **filters.values)
+    log_query("Solicitudes", filters.described(), result.total)
     titles = inquiry_service.schedule_titles(db, result.items)
     names = inquiry_service.assignee_names(db, result.items)
     return InquiryPage.of(result, lambda i: InquiryOut(**_fields(i, titles, names)))
+
+
+@router.get("/export", response_class=Response, responses=EXPORT_RESPONSES)
+def export_inquiries(
+    db: DbSession,
+    filters: InquiryFilters = Depends(),
+    file_format: FileFormat = FORMAT_QUERY,
+    current: CurrentUser = Depends(exporters),
+):
+    """Todas las solicitudes del filtro de la bandeja."""
+    inquiries = exportable(inquiry_service.list_inquiries(db, EXPORT_PAGE, **filters.values))
+    titles = inquiry_service.schedule_titles(db, inquiries)
+    names = inquiry_service.assignee_names(db, inquiries)
+    sheet = Sheet(
+        "Solicitudes",
+        [
+            "Recibida",
+            "Nombre",
+            "Teléfono",
+            "Para",
+            "Zona",
+            "Motivo",
+            "Actividad",
+            "Estado",
+            "Atiende",
+            "Mejor hora para llamar",
+            "Mensaje",
+            "Permiso para llamar",
+        ],
+        [
+            [
+                i.created_at,
+                i.name,
+                i.phone,
+                i.on_behalf_of,
+                i.zone,
+                KIND_LABELS[i.kind],
+                titles.get(i.schedule_id),
+                STATUS_LABELS[i.status],
+                names.get(i.assigned_to),
+                i.preferred_call_time,
+                i.message,
+                i.contact_consent,
+            ]
+            for i in inquiries
+        ],
+    )
+    report = Report("Solicitudes", "solicitudes", "SOLICITUDES", filters.described(), "WARNING")
+    return download(db, current, report, [sheet], file_format)
 
 
 @router.get("/summary", response_model=InquirySummary, response_model_by_alias=True)

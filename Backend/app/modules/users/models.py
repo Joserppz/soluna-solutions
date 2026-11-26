@@ -43,6 +43,8 @@ CONTENT_MANAGE = "content:manage"
 USERS_MANAGE = "users:manage"
 ROLES_MANAGE = "roles:manage"
 AUDIT_READ = "audit:read"
+# Descargar en CSV o Excel el resultado completo de un filtro (se suma al permiso del listado)
+REPORTS_EXPORT = "reports:export"
 PERMISSION_KEYS = (
     PATIENTS_READ,
     PATIENTS_WRITE,
@@ -61,6 +63,7 @@ PERMISSION_KEYS = (
     USERS_MANAGE,
     ROLES_MANAGE,
     AUDIT_READ,
+    REPORTS_EXPORT,
 )
 # Se publica en OpenAPI como enumeración: el frontend recibe el tipo exacto de cada clave
 PermissionKey = Literal[PERMISSION_KEYS]

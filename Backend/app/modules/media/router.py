@@ -1,9 +1,25 @@
 import uuid
 
 from fastapi import APIRouter, Depends, status
+from fastapi.responses import Response
 
 from app.adapters.cloudinary import MediaSigner, get_media_signer, get_optional_media_signer
 from app.core.database import DbSession
+from app.core.errors import ValidationError
+from app.core.reports import (
+    EXPORT_LIMIT,
+    EXPORT_PERMISSION,
+    EXPORT_RESPONSES,
+    FORMAT_QUERY,
+    DateRange,
+    FileFormat,
+    Range,
+    Report,
+    Sheet,
+    describe,
+    download,
+    log_query,
+)
 from app.core.schemas import MessageResponse
 from app.modules.auth.dependencies import CurrentUser, require_permission
 from app.modules.media import repository as media_repository
@@ -32,6 +48,7 @@ router = APIRouter(prefix="/api/v1/media", tags=["Galería y contenido"])
 public_router = APIRouter(prefix="/api/v1/public/media", tags=["Sitio público"])
 
 managers = require_permission(MEDIA_MANAGE)
+exporters = require_permission(MEDIA_MANAGE, EXPORT_PERMISSION)
 
 
 def _cover(album: MediaAlbum) -> str | None:
@@ -87,14 +104,54 @@ def _album_out(db: DbSession, album: MediaAlbum) -> AlbumOut:
     )
 
 
+VISIBILITY_LABELS = {"publico": "Publicado", "privado": "Privado"}
+
+
+def _described(period: DateRange, visibility: str | None) -> dict[str, str]:
+    return describe(period, {"Álbumes": VISIBILITY_LABELS.get(visibility or "")})
+
+
 @router.get("/albums", response_model=list[AlbumSummaryOut], response_model_by_alias=True)
 def list_albums(
-    db: DbSession, visibility: Visibility | None = None, current: CurrentUser = Depends(managers)
+    db: DbSession,
+    period: Range,
+    visibility: Visibility | None = None,
+    current: CurrentUser = Depends(managers),
 ):
-    return [
-        AlbumSummaryOut(**_summary_fields(album))
-        for album in media_repository.list_albums(db, visibility)
-    ]
+    albums = media_repository.list_albums(db, visibility, period)
+    log_query("Galería", _described(period, visibility), len(albums))
+    return [AlbumSummaryOut(**_summary_fields(album)) for album in albums]
+
+
+@router.get("/albums/export", response_class=Response, responses=EXPORT_RESPONSES)
+def export_albums(
+    db: DbSession,
+    period: Range,
+    visibility: Visibility | None = None,
+    file_format: FileFormat = FORMAT_QUERY,
+    current: CurrentUser = Depends(exporters),
+):
+    """Todos los álbumes del filtro, con cuántos archivos tienen y su estado de permisos."""
+    albums = media_repository.list_albums(db, visibility, period)
+    if len(albums) > EXPORT_LIMIT:
+        raise ValidationError("Hay demasiados álbumes en el filtro: acota el rango de fechas.")
+    sheet = Sheet(
+        "Galería",
+        ["Álbum", "Descripción", "Estado", "Permisos revisados", "Archivos", "Creado"],
+        [
+            [
+                album.title,
+                album.description,
+                VISIBILITY_LABELS.get(album.visibility, album.visibility),
+                album.permissions_reviewed,
+                len(album.assets),
+                album.created_at,
+            ]
+            for album in albums
+        ],
+    )
+    report = Report("Galería", "galeria", "GALERIA", _described(period, visibility))
+    return download(db, current, report, [sheet], file_format)
 
 
 @router.post(

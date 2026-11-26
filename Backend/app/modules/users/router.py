@@ -1,9 +1,25 @@
 import uuid
 
 from fastapi import APIRouter, Depends, Query, status
+from fastapi.responses import Response
 
 from app.core.database import DbSession
 from app.core.pagination import Pagination
+from app.core.reports import (
+    EXPORT_PAGE,
+    EXPORT_PERMISSION,
+    EXPORT_RESPONSES,
+    FORMAT_QUERY,
+    DateRange,
+    FileFormat,
+    Range,
+    Report,
+    Sheet,
+    describe,
+    download,
+    exportable,
+    log_query,
+)
 from app.modules.auth.dependencies import CurrentUser, require_permission
 from app.modules.users import service as user_service
 from app.modules.users.models import USERS_MANAGE
@@ -21,22 +37,76 @@ from app.modules.users.schemas import (
 router = APIRouter(prefix="/api/v1/users", tags=["Usuarios y roles"])
 
 admin_only = require_permission(USERS_MANAGE)
+exporters = require_permission(USERS_MANAGE, EXPORT_PERMISSION)
+
+
+ROLE_QUERY = Query(
+    default=None,
+    max_length=30,
+    description="Clave del rol, o «pendiente» para las cuentas que esperan aprobación",
+)
+
+
+def _described(period: DateRange, search: str | None, role: str | None) -> dict[str, str]:
+    return describe(period, {"Búsqueda": search, "Rol": role})
 
 
 @router.get("", response_model=UserPage, response_model_by_alias=True)
 def list_users(
     db: DbSession,
     page: Pagination,
+    period: Range,
     search: str | None = Query(default=None, max_length=150),
-    role: str | None = Query(
-        default=None,
-        max_length=30,
-        description="Clave del rol, o «pendiente» para las cuentas que esperan aprobación",
-    ),
+    role: str | None = ROLE_QUERY,
     current: CurrentUser = Depends(admin_only),
 ):
-    """Equipo, con búsqueda por nombre o correo y filtro por rol."""
-    return UserPage.of(user_service.list_users(db, search, page, role), to_user_out)
+    """Equipo, con búsqueda por nombre o correo, filtro por rol y fecha de alta."""
+    result = user_service.list_users(db, search, page, role, period)
+    log_query("Equipo", _described(period, search, role), result.total)
+    return UserPage.of(result, to_user_out)
+
+
+@router.get("/export", response_class=Response, responses=EXPORT_RESPONSES)
+def export_users(
+    db: DbSession,
+    period: Range,
+    search: str | None = Query(default=None, max_length=150),
+    role: str | None = ROLE_QUERY,
+    file_format: FileFormat = FORMAT_QUERY,
+    current: CurrentUser = Depends(exporters),
+):
+    """Todas las cuentas del filtro (sin contraseñas ni datos de sesión)."""
+    users = exportable(user_service.list_users(db, search, EXPORT_PAGE, role, period))
+    sheet = Sheet(
+        "Equipo",
+        [
+            "Nombre",
+            "Correo",
+            "Rol",
+            "Área",
+            "Activa",
+            "Correo confirmado",
+            "Último ingreso",
+            "Alta",
+        ],
+        [
+            [
+                user.name,
+                user.email,
+                user.role_name,
+                user.department,
+                user.active,
+                user.email_verified,
+                user.last_login_at,
+                user.created_at,
+            ]
+            for user in users
+        ],
+    )
+    report = Report(
+        "Equipo", "equipo", "USUARIOS_ROLES", _described(period, search, role), "WARNING"
+    )
+    return download(db, current, report, [sheet], file_format)
 
 
 @router.post(

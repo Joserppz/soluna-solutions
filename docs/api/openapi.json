@@ -4518,7 +4518,8 @@
               "content:manage",
               "users:manage",
               "roles:manage",
-              "audit:read"
+              "audit:read",
+              "reports:export"
             ],
             "title": "Key",
             "type": "string"
@@ -5146,7 +5147,8 @@
                 "content:manage",
                 "users:manage",
                 "roles:manage",
-                "audit:read"
+                "audit:read",
+                "reports:export"
               ],
               "type": "string"
             },
@@ -5191,7 +5193,8 @@
                 "content:manage",
                 "users:manage",
                 "roles:manage",
-                "audit:read"
+                "audit:read",
+                "reports:export"
               ],
               "type": "string"
             },
@@ -5837,7 +5840,8 @@
                 "content:manage",
                 "users:manage",
                 "roles:manage",
-                "audit:read"
+                "audit:read",
+                "reports:export"
               ],
               "type": "string"
             },
@@ -6549,6 +6553,109 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/attendance/export": {
+      "get": {
+        "description": "Cada asistencia marcada en las actividades del rango (quién, cuándo y a qué).",
+        "operationId": "export_attendance_api_v1_attendance_export_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "vino",
+                    "no_vino"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "default": "xlsx",
+              "enum": [
+                "csv",
+                "xlsx"
+              ],
+              "title": "Format",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Primer día incluido (AAAA-MM-DD)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Primer día incluido (AAAA-MM-DD)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "Último día incluido (AAAA-MM-DD)",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Último día incluido (AAAA-MM-DD)",
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
+              "text/csv; charset=utf-8": {}
+            },
+            "description": "Archivo CSV o Excel con todas las filas que cumplen el filtro"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Attendance",
+        "tags": [
+          "Asistencia"
+        ]
+      }
+    },
     "/api/v1/attendance/monthly": {
       "get": {
         "description": "Resumen del mes por actividad y por tipo. Con format=csv o xlsx se descarga.",
@@ -6774,36 +6881,40 @@
             }
           },
           {
+            "description": "Primer día incluido (AAAA-MM-DD)",
             "in": "query",
             "name": "from",
             "required": false,
             "schema": {
               "anyOf": [
                 {
-                  "format": "date-time",
+                  "format": "date",
                   "type": "string"
                 },
                 {
                   "type": "null"
                 }
               ],
+              "description": "Primer día incluido (AAAA-MM-DD)",
               "title": "From"
             }
           },
           {
+            "description": "Último día incluido (AAAA-MM-DD)",
             "in": "query",
             "name": "to",
             "required": false,
             "schema": {
               "anyOf": [
                 {
-                  "format": "date-time",
+                  "format": "date",
                   "type": "string"
                 },
                 {
                   "type": "null"
                 }
               ],
+              "description": "Último día incluido (AAAA-MM-DD)",
               "title": "To"
             }
           }
@@ -6838,7 +6949,7 @@
     },
     "/api/v1/audit/export": {
       "get": {
-        "description": "«Descargar registro»: lo que muestra el filtro (hasta 5000 movimientos).",
+        "description": "«Descargar registro»: todos los movimientos del filtro de la pantalla.",
         "operationId": "export_audit_api_v1_audit_export_get",
         "parameters": [
           {
@@ -6982,36 +7093,40 @@
             }
           },
           {
+            "description": "Primer día incluido (AAAA-MM-DD)",
             "in": "query",
             "name": "from",
             "required": false,
             "schema": {
               "anyOf": [
                 {
-                  "format": "date-time",
+                  "format": "date",
                   "type": "string"
                 },
                 {
                   "type": "null"
                 }
               ],
+              "description": "Primer día incluido (AAAA-MM-DD)",
               "title": "From"
             }
           },
           {
+            "description": "Último día incluido (AAAA-MM-DD)",
             "in": "query",
             "name": "to",
             "required": false,
             "schema": {
               "anyOf": [
                 {
-                  "format": "date-time",
+                  "format": "date",
                   "type": "string"
                 },
                 {
                   "type": "null"
                 }
               ],
+              "description": "Último día incluido (AAAA-MM-DD)",
               "title": "To"
             }
           }
@@ -7022,7 +7137,7 @@
               "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
               "text/csv; charset=utf-8": {}
             },
-            "description": "Successful Response"
+            "description": "Archivo CSV o Excel con todas las filas que cumplen el filtro"
           },
           "422": {
             "content": {
@@ -7715,6 +7830,29 @@
         "parameters": [
           {
             "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
             "name": "status",
             "required": false,
             "schema": {
@@ -7774,6 +7912,7 @@
             }
           },
           {
+            "description": "Primer día incluido (AAAA-MM-DD)",
             "in": "query",
             "name": "from",
             "required": false,
@@ -7787,10 +7926,12 @@
                   "type": "null"
                 }
               ],
+              "description": "Primer día incluido (AAAA-MM-DD)",
               "title": "From"
             }
           },
           {
+            "description": "Último día incluido (AAAA-MM-DD)",
             "in": "query",
             "name": "to",
             "required": false,
@@ -7804,30 +7945,8 @@
                   "type": "null"
                 }
               ],
+              "description": "Último día incluido (AAAA-MM-DD)",
               "title": "To"
-            }
-          },
-          {
-            "in": "query",
-            "name": "limit",
-            "required": false,
-            "schema": {
-              "default": 50,
-              "maximum": 200,
-              "minimum": 1,
-              "title": "Limit",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "offset",
-            "required": false,
-            "schema": {
-              "default": 0,
-              "minimum": 0,
-              "title": "Offset",
-              "type": "integer"
             }
           }
         ],
@@ -7894,6 +8013,149 @@
           }
         },
         "summary": "Register Manual",
+        "tags": [
+          "Donaciones"
+        ]
+      }
+    },
+    "/api/v1/donations/export": {
+      "get": {
+        "description": "Todos los aportes del filtro de la tabla (no solo la página que se ve).",
+        "operationId": "export_donations_api_v1_donations_export_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "default": "xlsx",
+              "enum": [
+                "csv",
+                "xlsx"
+              ],
+              "title": "Format",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "pendiente",
+                    "confirmado",
+                    "recibido",
+                    "anulado"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "qr_bancario",
+                    "efectivo",
+                    "especie"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Channel"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "description": "Primer día incluido (AAAA-MM-DD)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Primer día incluido (AAAA-MM-DD)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "Último día incluido (AAAA-MM-DD)",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Último día incluido (AAAA-MM-DD)",
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
+              "text/csv; charset=utf-8": {}
+            },
+            "description": "Archivo CSV o Excel con todas las filas que cumplen el filtro"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Donations",
         "tags": [
           "Donaciones"
         ]
@@ -8245,6 +8507,29 @@
         "parameters": [
           {
             "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
             "name": "status",
             "required": false,
             "schema": {
@@ -8308,26 +8593,41 @@
             }
           },
           {
+            "description": "Primer día incluido (AAAA-MM-DD)",
             "in": "query",
-            "name": "limit",
+            "name": "from",
             "required": false,
             "schema": {
-              "default": 50,
-              "maximum": 200,
-              "minimum": 1,
-              "title": "Limit",
-              "type": "integer"
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Primer día incluido (AAAA-MM-DD)",
+              "title": "From"
             }
           },
           {
+            "description": "Último día incluido (AAAA-MM-DD)",
             "in": "query",
-            "name": "offset",
+            "name": "to",
             "required": false,
             "schema": {
-              "default": 0,
-              "minimum": 0,
-              "title": "Offset",
-              "type": "integer"
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Último día incluido (AAAA-MM-DD)",
+              "title": "To"
             }
           }
         ],
@@ -8354,6 +8654,153 @@
           }
         },
         "summary": "List Inquiries",
+        "tags": [
+          "Solicitudes"
+        ]
+      }
+    },
+    "/api/v1/inquiries/export": {
+      "get": {
+        "description": "Todas las solicitudes del filtro de la bandeja.",
+        "operationId": "export_inquiries_api_v1_inquiries_export_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "default": "xlsx",
+              "enum": [
+                "csv",
+                "xlsx"
+              ],
+              "title": "Format",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "recibida",
+                    "por_contactar",
+                    "contactada",
+                    "inscrita",
+                    "cerrada"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "orientacion",
+                    "voluntariado",
+                    "especie",
+                    "participar",
+                    "asistencia",
+                    "otro"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "description": "Primer día incluido (AAAA-MM-DD)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Primer día incluido (AAAA-MM-DD)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "Último día incluido (AAAA-MM-DD)",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Último día incluido (AAAA-MM-DD)",
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
+              "text/csv; charset=utf-8": {}
+            },
+            "description": "Archivo CSV o Excel con todas las filas que cumplen el filtro"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Inquiries",
         "tags": [
           "Solicitudes"
         ]
@@ -8630,9 +9077,32 @@
     },
     "/api/v1/inventory": {
       "get": {
-        "description": "Materiales por nombre, con filtros de origen, categoría y condición.",
+        "description": "Materiales por nombre, con filtros de origen, categoría, condición y fechas de ingreso.",
         "operationId": "list_items_api_v1_inventory_get",
         "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
           {
             "in": "query",
             "name": "search",
@@ -8727,26 +9197,41 @@
             }
           },
           {
+            "description": "Primer día incluido (AAAA-MM-DD)",
             "in": "query",
-            "name": "limit",
+            "name": "from",
             "required": false,
             "schema": {
-              "default": 50,
-              "maximum": 200,
-              "minimum": 1,
-              "title": "Limit",
-              "type": "integer"
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Primer día incluido (AAAA-MM-DD)",
+              "title": "From"
             }
           },
           {
+            "description": "Último día incluido (AAAA-MM-DD)",
             "in": "query",
-            "name": "offset",
+            "name": "to",
             "required": false,
             "schema": {
-              "default": 0,
-              "minimum": 0,
-              "title": "Offset",
-              "type": "integer"
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Último día incluido (AAAA-MM-DD)",
+              "title": "To"
             }
           }
         ],
@@ -8820,7 +9305,7 @@
     },
     "/api/v1/inventory/export": {
       "get": {
-        "description": "Inventario activo para la rendición de cuentas (Alcaldía) y el resto.",
+        "description": "Todos los materiales del filtro: la Alcaldía en una hoja y el resto en otra.",
         "operationId": "export_inventory_api_v1_inventory_export_get",
         "parameters": [
           {
@@ -8836,18 +9321,146 @@
               "title": "Format",
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "origin",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "propio",
+                    "donado",
+                    "alcaldia"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Origin"
+            }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "fisioterapia",
+                    "movilidad",
+                    "mobiliario",
+                    "papeleria",
+                    "otro"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          },
+          {
+            "in": "query",
+            "name": "condition",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "nuevo",
+                    "bueno",
+                    "regular",
+                    "dañado"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Condition"
+            }
+          },
+          {
+            "in": "query",
+            "name": "includeInactive",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Includeinactive",
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Primer día incluido (AAAA-MM-DD)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Primer día incluido (AAAA-MM-DD)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "Último día incluido (AAAA-MM-DD)",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Último día incluido (AAAA-MM-DD)",
+              "title": "To"
+            }
           }
         ],
         "responses": {
           "200": {
             "content": {
-              "application/json": {
-                "schema": {}
-              },
               "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
               "text/csv; charset=utf-8": {}
             },
-            "description": "Archivo CSV o Excel; los bienes de la Alcaldía van aparte"
+            "description": "Archivo CSV o Excel con todas las filas que cumplen el filtro"
           },
           "422": {
             "content": {
@@ -9160,6 +9773,44 @@
               ],
               "title": "Visibility"
             }
+          },
+          {
+            "description": "Primer día incluido (AAAA-MM-DD)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Primer día incluido (AAAA-MM-DD)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "Último día incluido (AAAA-MM-DD)",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Último día incluido (AAAA-MM-DD)",
+              "title": "To"
+            }
           }
         ],
         "responses": {
@@ -9228,6 +9879,109 @@
           }
         },
         "summary": "Create Album",
+        "tags": [
+          "Galería y contenido"
+        ]
+      }
+    },
+    "/api/v1/media/albums/export": {
+      "get": {
+        "description": "Todos los álbumes del filtro, con cuántos archivos tienen y su estado de permisos.",
+        "operationId": "export_albums_api_v1_media_albums_export_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "visibility",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "privado",
+                    "publico"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Visibility"
+            }
+          },
+          {
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "default": "xlsx",
+              "enum": [
+                "csv",
+                "xlsx"
+              ],
+              "title": "Format",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Primer día incluido (AAAA-MM-DD)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Primer día incluido (AAAA-MM-DD)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "Último día incluido (AAAA-MM-DD)",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Último día incluido (AAAA-MM-DD)",
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
+              "text/csv; charset=utf-8": {}
+            },
+            "description": "Archivo CSV o Excel con todas las filas que cumplen el filtro"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Albums",
         "tags": [
           "Galería y contenido"
         ]
@@ -9669,6 +10423,29 @@
         "parameters": [
           {
             "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
             "name": "search",
             "required": false,
             "schema": {
@@ -9779,26 +10556,41 @@
             }
           },
           {
+            "description": "Primer día incluido (AAAA-MM-DD)",
             "in": "query",
-            "name": "limit",
+            "name": "from",
             "required": false,
             "schema": {
-              "default": 50,
-              "maximum": 200,
-              "minimum": 1,
-              "title": "Limit",
-              "type": "integer"
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Primer día incluido (AAAA-MM-DD)",
+              "title": "From"
             }
           },
           {
+            "description": "Último día incluido (AAAA-MM-DD)",
             "in": "query",
-            "name": "offset",
+            "name": "to",
             "required": false,
             "schema": {
-              "default": 0,
-              "minimum": 0,
-              "title": "Offset",
-              "type": "integer"
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Último día incluido (AAAA-MM-DD)",
+              "title": "To"
             }
           }
         ],
@@ -9869,9 +10661,203 @@
         ]
       }
     },
+    "/api/v1/patients/export": {
+      "get": {
+        "description": "Todas las fichas que cumplen el filtro del listado (sin datos clínicos).",
+        "operationId": "export_patients_api_v1_patients_export_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "default": "xlsx",
+              "enum": [
+                "csv",
+                "xlsx"
+              ],
+              "title": "Format",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 20,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "includeInactive",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Includeinactive",
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Pestaña del listado; si se indica, reemplaza a includeInactive",
+            "in": "query",
+            "name": "group",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "all",
+                    "active",
+                    "consent_pending",
+                    "inactive"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Pestaña del listado; si se indica, reemplaza a includeInactive",
+              "title": "Group"
+            }
+          },
+          {
+            "description": "Solo quienes vinieron a esa actividad en los últimos 6 meses",
+            "in": "query",
+            "name": "activity",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "fisioterapia",
+                    "arteterapia",
+                    "fonoaudiologia",
+                    "psicologia",
+                    "teatro",
+                    "familias",
+                    "comunitario"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Solo quienes vinieron a esa actividad en los últimos 6 meses",
+              "title": "Activity"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "default": "recent",
+              "enum": [
+                "name",
+                "-name",
+                "recent",
+                "oldest"
+              ],
+              "title": "Order",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Primer día incluido (AAAA-MM-DD)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Primer día incluido (AAAA-MM-DD)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "Último día incluido (AAAA-MM-DD)",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Último día incluido (AAAA-MM-DD)",
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
+              "text/csv; charset=utf-8": {}
+            },
+            "description": "Archivo CSV o Excel con todas las filas que cumplen el filtro"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Patients",
+        "tags": [
+          "Afiliados"
+        ]
+      }
+    },
     "/api/v1/patients/summary": {
       "get": {
-        "description": "Contadores de las pestañas (con la misma búsqueda y actividad del listado).",
+        "description": "Contadores de las pestañas (con la misma búsqueda, actividad y fechas del listado).",
         "operationId": "patient_counts_api_v1_patients_summary_get",
         "parameters": [
           {
@@ -9914,6 +10900,44 @@
                 }
               ],
               "title": "Activity"
+            }
+          },
+          {
+            "description": "Primer día incluido (AAAA-MM-DD)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Primer día incluido (AAAA-MM-DD)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "Último día incluido (AAAA-MM-DD)",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Último día incluido (AAAA-MM-DD)",
+              "title": "To"
             }
           }
         ],
@@ -11380,40 +12404,6 @@
         "parameters": [
           {
             "in": "query",
-            "name": "from",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "format": "date",
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "From"
-            }
-          },
-          {
-            "in": "query",
-            "name": "to",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "format": "date",
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "To"
-            }
-          },
-          {
-            "in": "query",
             "name": "status",
             "required": false,
             "schema": {
@@ -11454,6 +12444,44 @@
               "minimum": 0,
               "title": "Offset",
               "type": "integer"
+            }
+          },
+          {
+            "description": "Primer día incluido (AAAA-MM-DD)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Primer día incluido (AAAA-MM-DD)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "Último día incluido (AAAA-MM-DD)",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Último día incluido (AAAA-MM-DD)",
+              "title": "To"
             }
           }
         ],
@@ -11519,6 +12547,110 @@
           }
         },
         "summary": "Create Schedule",
+        "tags": [
+          "Actividades"
+        ]
+      }
+    },
+    "/api/v1/schedules/export": {
+      "get": {
+        "description": "Todas las actividades del rango, con interesados y cuántos vinieron.",
+        "operationId": "export_schedules_api_v1_schedules_export_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "borrador",
+                    "publicada",
+                    "cancelada"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "default": "xlsx",
+              "enum": [
+                "csv",
+                "xlsx"
+              ],
+              "title": "Format",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Primer día incluido (AAAA-MM-DD)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Primer día incluido (AAAA-MM-DD)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "Último día incluido (AAAA-MM-DD)",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Último día incluido (AAAA-MM-DD)",
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
+              "text/csv; charset=utf-8": {}
+            },
+            "description": "Archivo CSV o Excel con todas las filas que cumplen el filtro"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Schedules",
         "tags": [
           "Actividades"
         ]
@@ -12115,7 +13247,7 @@
     },
     "/api/v1/users": {
       "get": {
-        "description": "Equipo, con búsqueda por nombre o correo y filtro por rol.",
+        "description": "Equipo, con búsqueda por nombre o correo, filtro por rol y fecha de alta.",
         "operationId": "list_users_api_v1_users_get",
         "parameters": [
           {
@@ -12175,6 +13307,44 @@
               "minimum": 0,
               "title": "Offset",
               "type": "integer"
+            }
+          },
+          {
+            "description": "Primer día incluido (AAAA-MM-DD)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Primer día incluido (AAAA-MM-DD)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "Último día incluido (AAAA-MM-DD)",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Último día incluido (AAAA-MM-DD)",
+              "title": "To"
             }
           }
         ],
@@ -12240,6 +13410,125 @@
           }
         },
         "summary": "Create User",
+        "tags": [
+          "Usuarios y roles"
+        ]
+      }
+    },
+    "/api/v1/users/export": {
+      "get": {
+        "description": "Todas las cuentas del filtro (sin contraseñas ni datos de sesión).",
+        "operationId": "export_users_api_v1_users_export_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 150,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "description": "Clave del rol, o «pendiente» para las cuentas que esperan aprobación",
+            "in": "query",
+            "name": "role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 30,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Clave del rol, o «pendiente» para las cuentas que esperan aprobación",
+              "title": "Role"
+            }
+          },
+          {
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "default": "xlsx",
+              "enum": [
+                "csv",
+                "xlsx"
+              ],
+              "title": "Format",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Primer día incluido (AAAA-MM-DD)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Primer día incluido (AAAA-MM-DD)",
+              "title": "From"
+            }
+          },
+          {
+            "description": "Último día incluido (AAAA-MM-DD)",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Último día incluido (AAAA-MM-DD)",
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
+              "text/csv; charset=utf-8": {}
+            },
+            "description": "Archivo CSV o Excel con todas las filas que cumplen el filtro"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Users",
         "tags": [
           "Usuarios y roles"
         ]

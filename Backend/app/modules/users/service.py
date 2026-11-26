@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.errors import Conflict, NotFound, ValidationError
 from app.core.pagination import PageParams, PageResult
+from app.core.reports import DateRange
 from app.core.security import hash_password
 from app.modules.audit import service as audit_service
 from app.modules.auth import repository as session_repository
@@ -202,8 +203,9 @@ def list_users(
     search: str | None = None,
     page: PageParams | None = None,
     role: str | None = None,
+    period: DateRange | None = None,
 ) -> PageResult:
-    return user_repository.list_users(db, search, page, role)
+    return user_repository.list_users(db, search, page, role, period)
 
 
 def get_user(db: Session, user_id: uuid.UUID) -> User:

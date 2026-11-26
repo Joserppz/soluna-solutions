@@ -18,6 +18,10 @@ import type {
   PatientSummary,
 } from '../../../api/types'
 import RegisterPatientDialog from '../../../components/patients/RegisterPatientDialog.vue'
+import DateRangeFilter from '../../../components/reports/DateRangeFilter.vue'
+import ExportMenu, {
+  type ExportFormat,
+} from '../../../components/reports/ExportMenu.vue'
 import AppAlert from '../../../components/ui/AppAlert.vue'
 import AppButton from '../../../components/ui/AppButton.vue'
 import EmptyState from '../../../components/ui/EmptyState.vue'
@@ -39,6 +43,13 @@ import {
   sinceLabel,
 } from '../../../utils/patients'
 import { rowsThatFit } from '../../../utils/pagination'
+import {
+  isActive,
+  rangeQuery,
+  readRange,
+  writeRange,
+  type DateRangeValue,
+} from '../../../utils/dateRange'
 
 type Category = ActivityTag['category']
 
@@ -90,6 +101,8 @@ const activity = ref<Category | ''>(
 const searchInput = ref(text(route.query, 'buscar'))
 const search = ref(normalizeSearch(searchInput.value))
 const page = ref(Math.max(1, Number(text(route.query, 'pagina')) || 1))
+/** Fecha de registro de la ficha (?desde=&hasta=) */
+const period = ref<DateRangeValue>(readRange(route.query))
 
 const list = ref<PatientPage | null>(null)
 const counts = ref<PatientCounts | null>(null)
@@ -127,9 +140,13 @@ const columns: Column[] = [
 ]
 
 const rows = computed(() => list.value?.items ?? [])
-const filtered = computed(() => Boolean(search.value || activity.value))
+const filtered = computed(() =>
+  Boolean(search.value || activity.value || isActive(period.value)),
+)
 
 const emptyMessage = computed(() => {
+  if (isActive(period.value) && !search.value && !activity.value)
+    return 'No hay fichas registradas en esas fechas en esta pestaña.'
   if (search.value && activity.value)
     return `Nadie con «${search.value}» vino a esa actividad en los últimos seis meses.`
   if (search.value)
@@ -145,6 +162,25 @@ const emptyMessage = computed(() => {
   }[group.value]
 })
 
+/** Búsqueda, actividad y fechas: iguales para la tabla, las pestañas y la descarga. */
+function currentFilters() {
+  return {
+    search: search.value || undefined,
+    activity: activity.value || undefined,
+    ...rangeQuery(period.value),
+  }
+}
+
+/** «Descargar»: todas las fichas de la pestaña y el filtro, no solo esta página. */
+function exportPatients(format: ExportFormat) {
+  return api.patients.export({
+    ...currentFilters(),
+    group: group.value,
+    order: order.value,
+    format,
+  })
+}
+
 // Cada carga lleva un número: si llega tarde una respuesta vieja, se descarta
 let request = 0
 
@@ -152,10 +188,7 @@ async function load() {
   const current = ++request
   loading.value = true
   loadError.value = null
-  const filters = {
-    search: search.value || undefined,
-    activity: activity.value || undefined,
-  }
+  const filters = currentFilters()
   try {
     const [pageResult, countResult] = await Promise.all([
       api.patients.list({
@@ -193,6 +226,7 @@ function syncQuery() {
   if (activity.value) query.actividad = activity.value
   if (order.value !== 'name') query.orden = keyOf(ORDERS, order.value)
   if (page.value > 1) query.pagina = String(page.value)
+  writeRange(period.value, query)
   void router
     .replace({ query })
     .then(() => rememberPatientsList(route.fullPath))
@@ -208,7 +242,7 @@ function refresh() {
 }
 
 // Un filtro nuevo vuelve a la primera página (y esa carga es la única)
-watch([group, search, activity, order], () => {
+watch([group, search, activity, order, period], () => {
   if (page.value === 1) refresh()
   else page.value = 1
 })
@@ -233,6 +267,7 @@ function clearFilters() {
   searchInput.value = ''
   search.value = ''
   activity.value = ''
+  period.value = { from: '', to: '' }
 }
 
 function showCi(ci: string) {
@@ -329,12 +364,23 @@ rememberPatientsList(route.fullPath)
         </PageHeader>
 
         <div class="patients__card-top">
-          <AppTabs
-            v-model="group"
-            :items="tabs"
-            label="Fichas por estado"
-            id-prefix="afiliados"
-          />
+          <div class="patients__tabs-row">
+            <AppTabs
+              v-model="group"
+              :items="tabs"
+              label="Fichas por estado"
+              id-prefix="afiliados"
+            />
+            <div class="patients__report">
+              <DateRangeFilter v-model="period" label="Fecha de registro" />
+              <ExportMenu
+                :download="exportPatients"
+                filename="afiliados"
+                what="afiliados"
+                :total="list?.total ?? null"
+              />
+            </div>
+          </div>
           <form class="toolbar" role="search" @submit.prevent="searchNow">
             <label class="visually-hidden" for="buscar-afiliado">
               Buscar por nombre o carnet
@@ -597,6 +643,42 @@ rememberPatientsList(route.fullPath)
   display: grid;
   grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--space-3);
+}
+
+/* Fechas y «Descargar» van debajo de las pestañas; desde 1440 px, a su derecha. El
+   lugar no depende de los contadores: la tabla no cambia de alto al llegar los datos */
+.patients__tabs-row {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.patients__report {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.patients__report :deep(.range) {
+  flex: 1 1 13rem;
+  min-width: 0;
+  max-width: 16rem;
+}
+
+@media (min-width: 1440px) {
+  .patients__tabs-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: var(--space-4);
+  }
+
+  .patients__report {
+    margin-bottom: var(--space-2);
+  }
+}
+
+.patients__report :deep(.range__trigger),
+.patients__report :deep(.export__trigger) {
+  min-height: 2.5rem;
+  font-size: var(--text-sm);
 }
 
 .toolbar__search {

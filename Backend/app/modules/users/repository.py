@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import escape_like
 from app.core.pagination import PageParams, PageResult, paginate
+from app.core.reports import DateRange, filter_range
 from app.modules.users.models import ADMIN, Role, User
 
 
@@ -29,8 +30,11 @@ def list_users(
     search: str | None = None,
     page: PageParams | None = None,
     role: str | None = None,
+    period: DateRange | None = None,
 ) -> PageResult:
+    """Equipo filtrado; el rango de fechas es por el día en que se creó la cuenta."""
     query = select(User).order_by(User.created_at, User.name, User.id)
+    query = filter_range(query, User.created_at, period)
     if role == PENDING_FILTER:
         query = query.where(User.role_id.is_(None))
     elif role:

@@ -4,6 +4,7 @@ Dos partes: el resumen por canal y el detalle de cada aporte del mes, con su est
 referencias, para conciliar con el extracto del banco.
 """
 
+from app.core.reports import Sheet
 from app.core.spreadsheet import csv_bytes, safe, xlsx_bytes
 from app.modules.donations.models import CHANNEL_LABELS, STATUS_LABELS, Donation
 
@@ -51,6 +52,29 @@ def _detail_rows(donations: list[Donation]) -> list[tuple]:
         )
         for d in donations
     ]
+
+
+def detail_sheet(donations: list[Donation]) -> Sheet:
+    """Hoja del registro filtrado (la usa «Descargar» de la tabla de aportes)."""
+    return Sheet(
+        "Aportes",
+        DETAIL_HEADERS,
+        [
+            [
+                d.date,
+                d.donor_name or "Anónimo",
+                CHANNEL_LABELS[d.channel],
+                float(d.amount_bs) if d.amount_bs is not None else None,
+                d.in_kind_description,
+                STATUS_LABELS[d.status],
+                d.declared_reference,
+                d.bank_reference,
+                d.credited_on,
+                d.cancellation_reason,
+            ]
+            for d in donations
+        ],
+    )
 
 
 def to_csv(summary: dict, donations: list[Donation]) -> bytes:

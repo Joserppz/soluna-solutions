@@ -11,6 +11,9 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { isApiError } from '../../../api/errors'
 import type { ScheduleOut } from '../../../api/types'
 import ActivityDialog from '../../../components/ops/ActivityDialog.vue'
+import ExportMenu, {
+  type ExportFormat,
+} from '../../../components/reports/ExportMenu.vue'
 import AppAlert from '../../../components/ui/AppAlert.vue'
 import AppButton from '../../../components/ui/AppButton.vue'
 import AppPagination from '../../../components/ui/AppPagination.vue'
@@ -20,6 +23,7 @@ import StatusBadge from '../../../components/ui/StatusBadge.vue'
 import { useApi } from '../../../composables/useApi'
 import { useFitLayout } from '../../../composables/useFitLayout'
 import { useFitRows } from '../../../composables/useFitRows'
+import { rangeQuery, type DateRangeValue } from '../../../utils/dateRange'
 import {
   SCHEDULE_STATUS_LABELS,
   SCHEDULE_STATUS_TONES,
@@ -200,6 +204,14 @@ function capitalize(text: string) {
 function shortDay(isoDay: string) {
   return `${capitalize(weekdayShort(isoDay))} ${shortDayLabel(isoDay)}`
 }
+
+/** «Descargar»: las actividades del rango elegido en el menú (por defecto, el mes que se ve). */
+function exportSchedules(format: ExportFormat, range?: DateRangeValue) {
+  return api.schedules.export({
+    ...rangeQuery(range ?? monthBounds(month.value)),
+    format,
+  })
+}
 </script>
 
 <template>
@@ -208,8 +220,16 @@ function shortDay(isoDay: string) {
       title="Actividades"
       subtitle="Prepara la agenda y decide qué encuentros se ven en el sitio."
     >
-      <template v-if="canEdit" #actions>
-        <AppButton size="lg" @click="startNew">+ Nueva actividad</AppButton>
+      <template #actions>
+        <ExportMenu
+          :download="exportSchedules"
+          :range="monthBounds(month)"
+          filename="actividades"
+          what="actividades"
+        />
+        <AppButton v-if="canEdit" size="lg" @click="startNew"
+          >+ Nueva actividad</AppButton
+        >
       </template>
     </PageHeader>
 

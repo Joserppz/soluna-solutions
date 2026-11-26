@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import escape_like
 from app.core.pagination import PageParams, PageResult, paginate
+from app.core.reports import DateRange, filter_range
 from app.modules.inventory.models import InventoryItem, InventoryMovement
 from app.modules.users.models import User
 
@@ -15,8 +16,10 @@ def _filtered(
     category: str | None,
     condition: str | None,
     include_inactive: bool,
+    period: DateRange | None = None,
 ):
-    query = select(InventoryItem)
+    """Filtros del listado; la descarga usa los mismos. Las fechas son las de ingreso."""
+    query = filter_range(select(InventoryItem), InventoryItem.entry_date, period)
     if not include_inactive:
         query = query.where(InventoryItem.deleted_at.is_(None))
     if search and search.strip():
@@ -39,16 +42,6 @@ def _filtered(
 
 def list_items(db: Session, page: PageParams, **filters) -> PageResult:
     return paginate(db, _filtered(**filters), page)
-
-
-def all_active(db: Session) -> list[InventoryItem]:
-    return list(
-        db.scalars(
-            select(InventoryItem)
-            .where(InventoryItem.deleted_at.is_(None))
-            .order_by(InventoryItem.origin, InventoryItem.name, InventoryItem.id)
-        )
-    )
 
 
 def get(db: Session, item_id: uuid.UUID, lock: bool = False) -> InventoryItem | None:

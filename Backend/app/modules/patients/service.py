@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.core import clock
 from app.core.errors import Conflict, Forbidden, NotFound, ValidationError
 from app.core.pagination import PageParams, PageResult
+from app.core.reports import DateRange
 from app.modules.audit import service as audit_service
 from app.modules.auth.dependencies import CurrentUser
 from app.modules.patients import repository as patient_repository
@@ -134,8 +135,10 @@ def list_patients(
     group: str | None = None,
     activity: str | None = None,
     order: str = "recent",
+    period: DateRange | None = None,
 ) -> tuple[PageResult, dict[uuid.UUID, list[str]]]:
-    """Una página del listado y las actividades de cada ficha de la página."""
+    """Una página del listado (o todas las filas, para la descarga) y las actividades de
+    cada ficha."""
     since = activity_since()
     result = patient_repository.list_patients(
         db,
@@ -147,15 +150,18 @@ def list_patients(
         activity=activity,
         since=since,
         order=order,
+        period=period,
     )
     ids = [patient.id for patient in result.items]
     return result, patient_repository.activities_by_patient(db, ids, since)
 
 
-def patient_counts(db: Session, search: str | None, activity: str | None) -> dict:
+def patient_counts(
+    db: Session, search: str | None, activity: str | None, period: DateRange | None = None
+) -> dict:
     since = activity_since()
     by_activity = patient_repository.patients_by_activity(db, since)
-    return patient_repository.counts(db, search, activity, since) | {
+    return patient_repository.counts(db, search, activity, since, period) | {
         "activities": [
             {"category": category, "label": label, "patients": by_activity.get(category, 0)}
             for category, label in CATEGORY_LABELS.items()

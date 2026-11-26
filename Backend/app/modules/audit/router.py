@@ -1,21 +1,33 @@
-from datetime import datetime
-from typing import Literal
+from datetime import timedelta
 
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import Response
 
-from app.core import clock
 from app.core.database import DbSession
 from app.core.pagination import Pagination
-from app.core.spreadsheet import CSV_MEDIA_TYPE, XLSX_MEDIA_TYPE
+from app.core.reports import (
+    EXPORT_PERMISSION,
+    EXPORT_RESPONSES,
+    FORMAT_QUERY,
+    DateRange,
+    FileFormat,
+    Report,
+    date_range,
+    day_start,
+    describe,
+    download,
+    log_query,
+)
 from app.modules.audit import export
 from app.modules.audit import service as audit_service
+from app.modules.audit.models import AUDIT_AREAS
 from app.modules.audit.schemas import AuditArea, AuditPage, AuditSummary, to_audit_out
 from app.modules.auth.dependencies import CurrentUser, require_permission
 from app.modules.users.models import AUDIT_READ
 
 router = APIRouter(prefix="/api/v1/audit", tags=["Bitácora de auditoría"])
 readers = require_permission(AUDIT_READ)
+exporters = require_permission(AUDIT_READ, EXPORT_PERMISSION)
 
 
 class Filters:
@@ -39,9 +51,20 @@ class Filters:
             default=False,
             description="Solo situaciones para revisar (accesos bloqueados y aportes anulados)",
         ),
-        date_from: datetime | None = Query(default=None, alias="from"),
-        date_to: datetime | None = Query(default=None, alias="to"),
+        period: DateRange = Depends(date_range),
     ):
+        self.period = period
+        self.labels = {
+            "Área": AUDIT_AREAS[area][0] if area else None,
+            "Categoría": category,
+            "Severidad": severity,
+            "Persona": actor,
+            "Búsqueda": search,
+            "Solo para revisar": "Sí" if review else None,
+            "Últimos días": None if period.start else days,
+        }
+        date_from = day_start(period.start) if period.start else None
+        date_to = day_start(period.end + timedelta(days=1)) if period.end else None
         self.values = {
             "category": category,
             "severity": severity,
@@ -53,6 +76,9 @@ class Filters:
             "date_to": date_to,
         }
 
+    def described(self) -> dict[str, str]:
+        return describe(self.period, self.labels)
+
 
 @router.get("", response_model=AuditPage, response_model_by_alias=True)
 def list_audit_events(
@@ -62,6 +88,7 @@ def list_audit_events(
     current: CurrentUser = Depends(readers),
 ):
     result, names = audit_service.list_entries(db, page=page, **filters.values)
+    log_query("Registro de actividad", filters.described(), result.total)
     return AuditPage.of(result, lambda entry: to_audit_out(entry, names))
 
 
@@ -75,25 +102,16 @@ def audit_summary(
     return audit_service.summary(db, days)
 
 
-@router.get(
-    "/export",
-    response_class=Response,
-    responses={200: {"content": {CSV_MEDIA_TYPE: {}, XLSX_MEDIA_TYPE: {}}}},
-)
+@router.get("/export", response_class=Response, responses=EXPORT_RESPONSES)
 def export_audit(
     db: DbSession,
     filters: Filters = Depends(),
-    file_format: Literal["csv", "xlsx"] = Query(default="xlsx", alias="format"),
-    current: CurrentUser = Depends(readers),
+    file_format: FileFormat = FORMAT_QUERY,
+    current: CurrentUser = Depends(exporters),
 ):
-    """«Descargar registro»: lo que muestra el filtro (hasta 5000 movimientos)."""
-    entries, names = audit_service.export_entries(db, current, **filters.values)
-    content = (
-        export.to_csv(entries, names) if file_format == "csv" else export.to_xlsx(entries, names)
+    """«Descargar registro»: todos los movimientos del filtro de la pantalla."""
+    entries, names = audit_service.export_entries(db, **filters.values)
+    report = Report(
+        "Registro de actividad", "registro-de-actividad", "SISTEMA", filters.described()
     )
-    name = f"registro-de-actividad-{clock.today().isoformat()}.{file_format}"
-    return Response(
-        content=content,
-        media_type=CSV_MEDIA_TYPE if file_format == "csv" else XLSX_MEDIA_TYPE,
-        headers={"Content-Disposition": f'attachment; filename="{name}"'},
-    )
+    return download(db, current, report, [export.sheet(entries, names)], file_format)

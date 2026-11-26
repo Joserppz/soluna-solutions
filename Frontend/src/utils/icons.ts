@@ -18,6 +18,8 @@ export type IconName =
   | 'site'
   | 'logout'
   | 'print'
+  | 'download'
+  | 'calendar'
   | 'search'
   | 'goal'
 
@@ -99,6 +101,13 @@ const ICON_PATHS: Record<IconName, string[]> = {
     'M7 14h10v6.5H7z',
   ],
   search: ['M10.5 17a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13z', 'm15.5 15.5 5 5'],
+  download: ['M12 4v11', 'm7.5 10.5 4.5 4.5 4.5-4.5', 'M5 19.5h14'],
+  calendar: [
+    'M4 6.5A1.5 1.5 0 0 1 5.5 5h13A1.5 1.5 0 0 1 20 6.5v12a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5z',
+    'M4 10h16',
+    'M8 3v4',
+    'M16 3v4',
+  ],
   goal: [
     'M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16z',
     'M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',

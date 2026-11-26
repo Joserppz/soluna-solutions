@@ -19,6 +19,10 @@ import type {
 } from '../../../api/types'
 import EnrollDialog from '../../../components/inquiries/EnrollDialog.vue'
 import InquiryPanel from '../../../components/inquiries/InquiryPanel.vue'
+import DateRangeFilter from '../../../components/reports/DateRangeFilter.vue'
+import ExportMenu, {
+  type ExportFormat,
+} from '../../../components/reports/ExportMenu.vue'
 import AppAlert from '../../../components/ui/AppAlert.vue'
 import AppButton from '../../../components/ui/AppButton.vue'
 import EmptyState from '../../../components/ui/EmptyState.vue'
@@ -34,6 +38,13 @@ import { useFitLayout, useMediaQuery } from '../../../composables/useFitLayout'
 import { useFitRows } from '../../../composables/useFitRows'
 import { useToast } from '../../../composables/useToast'
 import { refreshTeamCounters } from '../../../utils/counters'
+import {
+  isActive,
+  rangeQuery,
+  readRange,
+  writeRange,
+  type DateRangeValue,
+} from '../../../utils/dateRange'
 import {
   INQUIRY_KINDS,
   INQUIRY_TABS,
@@ -75,6 +86,8 @@ const kind = ref<InquiryKind | ''>(
 const searchInput = ref(text('buscar'))
 const search = ref(normalizeSearch(searchInput.value))
 const page = ref(Math.max(1, Number(text('pagina')) || 1))
+/** Día en que llegó la solicitud (?desde=&hasta=) */
+const period = ref<DateRangeValue>(readRange(route.query))
 const selectedId = ref<string | null>(text('solicitud') || null)
 
 const items = ref<InquiryOut[]>([])
@@ -100,6 +113,23 @@ const tabs = computed<TabItem<InquiryTab>[]>(() =>
   })),
 )
 
+/** Pestaña, motivo, búsqueda y fechas: los mismos para la bandeja y la descarga. */
+function currentFilters(): InquiryListQuery {
+  return {
+    status:
+      tab.value === 'todas'
+        ? undefined
+        : (tab.value as InquiryListQuery['status']),
+    kind: kind.value || undefined,
+    search: search.value || undefined,
+    ...rangeQuery(period.value),
+  }
+}
+
+function exportInquiries(format: ExportFormat) {
+  return api.inquiries.export({ ...currentFilters(), format })
+}
+
 let request = 0
 
 async function load() {
@@ -107,12 +137,7 @@ async function load() {
   loading.value = true
   loadError.value = null
   const query: InquiryListQuery = {
-    status:
-      tab.value === 'todas'
-        ? undefined
-        : (tab.value as InquiryListQuery['status']),
-    kind: kind.value || undefined,
-    search: search.value || undefined,
+    ...currentFilters(),
     limit: pageSize.value,
     offset: (page.value - 1) * pageSize.value,
   }
@@ -146,6 +171,7 @@ function syncQuery() {
   if (kind.value) query.motivo = kind.value
   if (search.value) query.buscar = search.value
   if (page.value > 1) query.pagina = String(page.value)
+  writeRange(period.value, query)
   if (selectedId.value) query.solicitud = selectedId.value
   void router.replace({ query })
 }
@@ -163,7 +189,7 @@ watch(searchInput, (value) => {
   }, 300)
 })
 
-watch([tab, kind, search], () => {
+watch([tab, kind, search, period], () => {
   if (page.value === 1) refresh()
   else page.value = 1
 })
@@ -219,10 +245,16 @@ function clearFilters() {
   search.value = ''
   kind.value = ''
   tab.value = 'todas'
+  period.value = { from: '', to: '' }
 }
 
 const filtered = computed(() =>
-  Boolean(search.value || kind.value || tab.value !== 'todas'),
+  Boolean(
+    search.value ||
+    kind.value ||
+    tab.value !== 'todas' ||
+    isActive(period.value),
+  ),
 )
 
 onMounted(load)
@@ -235,17 +267,24 @@ onMounted(load)
       subtitle="Personas que nos escribieron. Llamar a tiempo es parte del acompañamiento."
     >
       <template #actions>
-        <label class="visually-hidden" for="filtro-motivo">Motivo</label>
-        <select id="filtro-motivo" v-model="kind" class="select inq__kind">
-          <option value="">Todos los motivos</option>
-          <option
-            v-for="item in INQUIRY_KINDS"
-            :key="item.value"
-            :value="item.value"
-          >
-            {{ item.label }}
-          </option>
-        </select>
+        <div class="inq__filters">
+          <label class="visually-hidden" for="filtro-motivo">Motivo</label>
+          <select id="filtro-motivo" v-model="kind" class="select inq__kind">
+            <option value="">Todos los motivos</option>
+            <option
+              v-for="item in INQUIRY_KINDS"
+              :key="item.value"
+              :value="item.value"
+            >
+              {{ item.label }}
+            </option>
+          </select>
+          <DateRangeFilter
+            v-model="period"
+            class="inq__range"
+            label="Fecha en que llegó"
+          />
+        </div>
       </template>
     </PageHeader>
 
@@ -277,6 +316,13 @@ onMounted(load)
               type="search"
               placeholder="Nombre o teléfono"
               autocomplete="off"
+            />
+            <ExportMenu
+              :download="exportInquiries"
+              filename="solicitudes"
+              what="solicitudes"
+              :total="loading ? null : total"
+              size="sm"
             />
           </form>
 
@@ -441,6 +487,15 @@ onMounted(load)
   width: min(16rem, 100%);
 }
 
+.inq__range {
+  width: min(14rem, 100%);
+}
+
+.inq__filters {
+  display: flex;
+  gap: var(--space-2);
+}
+
 .inq__body {
   display: grid;
   grid-template-columns: minmax(25rem, 0.9fr) minmax(0, 1.1fr);
@@ -473,7 +528,19 @@ onMounted(load)
 }
 
 .inbox__search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   padding: var(--space-3) var(--space-4);
+}
+
+.inbox__search .input {
+  flex: 1;
+  min-width: 0;
+}
+
+.inbox__search :deep(.export__trigger) {
+  min-height: var(--control-height, 3rem);
 }
 
 .inbox__skeleton {
@@ -604,7 +671,13 @@ onMounted(load)
 
 @media (max-width: 640px) {
   .inq :deep(.page-header__actions),
-  .inq__kind {
+  .inq__kind,
+  .inq__range {
+    width: 100%;
+  }
+
+  .inq__filters {
+    flex-direction: column;
     width: 100%;
   }
 

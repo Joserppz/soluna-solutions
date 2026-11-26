@@ -319,7 +319,7 @@ class TestResumenMensual:
         assert body["month"] == month
 
     def test_csv_para_excel_en_espanol(self, client, auth_headers, month):
-        response = self.summary(client, auth_headers("volunteer"), month, "csv")
+        response = self.summary(client, auth_headers("coordination"), month, "csv")
 
         assert response.status_code == 200
         assert response.headers["content-type"].startswith("text/csv")

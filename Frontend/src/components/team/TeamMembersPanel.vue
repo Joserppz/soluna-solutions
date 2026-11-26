@@ -12,9 +12,18 @@ import type { RoleOut, UserOut, UserPage } from '../../api/types'
 import { useApi } from '../../composables/useApi'
 import { useFitRows } from '../../composables/useFitRows'
 import { useToast } from '../../composables/useToast'
+import {
+  isActive,
+  rangeQuery,
+  readRange,
+  writeRange,
+  type DateRangeValue,
+} from '../../utils/dateRange'
 import { firstName } from '../../utils/format'
 import { normalizeSearch } from '../../utils/patients'
 import { lastSeenLabel } from '../../utils/team'
+import DateRangeFilter from '../reports/DateRangeFilter.vue'
+import ExportMenu, { type ExportFormat } from '../reports/ExportMenu.vue'
 import AppAlert from '../ui/AppAlert.vue'
 import AppButton from '../ui/AppButton.vue'
 import AppPagination from '../ui/AppPagination.vue'
@@ -47,6 +56,8 @@ const searchInput = ref(text('buscar'))
 const search = ref(normalizeSearch(searchInput.value))
 const role = ref(text('rol'))
 const page = ref(Math.max(1, Number(text('pagina')) || 1))
+/** Fecha de alta de la cuenta (?desde=&hasta=) */
+const period = ref<DateRangeValue>(readRange(route.query))
 
 const list = ref<UserPage | null>(null)
 const loading = ref(true)
@@ -68,7 +79,22 @@ const columns: Column[] = [
 ]
 
 const rows = computed(() => list.value?.items ?? [])
-const filtered = computed(() => Boolean(search.value || role.value))
+const filtered = computed(() =>
+  Boolean(search.value || role.value || isActive(period.value)),
+)
+
+/** Búsqueda, rol y fechas: los mismos para la tabla y la descarga. */
+function currentFilters() {
+  return {
+    search: search.value || undefined,
+    role: role.value || undefined,
+    ...rangeQuery(period.value),
+  }
+}
+
+function exportMembers(format: ExportFormat) {
+  return api.users.export({ ...currentFilters(), format })
+}
 
 const emptyMessage = computed(() => {
   const roleName = props.roles.find((item) => item.key === role.value)?.name
@@ -88,8 +114,7 @@ async function load() {
   loadError.value = null
   try {
     const result = await api.users.list({
-      search: search.value || undefined,
-      role: role.value || undefined,
+      ...currentFilters(),
       limit: pageSize.value,
       offset: (page.value - 1) * pageSize.value,
     })
@@ -115,9 +140,12 @@ function syncQuery() {
   delete query.buscar
   delete query.rol
   delete query.pagina
+  delete query.desde
+  delete query.hasta
   if (search.value) query.buscar = search.value
   if (role.value) query.rol = role.value
   if (page.value > 1) query.pagina = String(page.value)
+  writeRange(period.value, query as Record<string, string>)
   void router.replace({ query })
 }
 
@@ -126,7 +154,7 @@ function refresh() {
   void load()
 }
 
-watch([search, role], () => {
+watch([search, role, period], () => {
   if (page.value === 1) refresh()
   else page.value = 1
 })
@@ -158,6 +186,7 @@ function clearFilters() {
   searchInput.value = ''
   search.value = ''
   role.value = ''
+  period.value = { from: '', to: '' }
 }
 
 async function reactivate(user: UserOut) {
@@ -219,6 +248,13 @@ defineExpose({ reload: load })
           {{ item.name }}
         </option>
       </select>
+      <DateRangeFilter v-model="period" label="Fecha de alta" />
+      <ExportMenu
+        :download="exportMembers"
+        filename="equipo"
+        what="personas del equipo"
+        :total="list?.total ?? null"
+      />
     </form>
 
     <AppAlert v-if="loadError" tone="error">
@@ -340,7 +376,7 @@ defineExpose({ reload: load })
 
 .toolbar {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr) auto;
   gap: var(--space-3);
 }
 
@@ -421,6 +457,12 @@ defineExpose({ reload: load })
   flex: 1 1 18rem;
   color: var(--color-text-muted);
   font-size: var(--text-sm);
+}
+
+@media (max-width: 1100px) {
+  .toolbar {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
 }
 
 @media (max-width: 640px) {

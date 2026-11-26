@@ -8,10 +8,11 @@ import { expect, request, test, type Page } from '@playwright/test'
 import {
   ACCOUNTS,
   ADMIN_STATE,
-  API_URL,
-  FITS,
   adminApi,
+  API_URL,
+  downloadReport,
   evidence,
+  FITS,
   fitsWindow,
   login,
 } from './support'
@@ -135,22 +136,15 @@ test('descarga el registro en Excel y la descarga queda anotada', async ({
   page,
 }) => {
   await openLog(page, '?area=accesos')
-  const [download] = await Promise.all([
-    page.waitForEvent('download'),
-    page.getByRole('button', { name: 'Descargar registro' }).click(),
-  ])
+  const download = await downloadReport(page, 'Excel')
   expect(download.suggestedFilename()).toMatch(
     /^registro-de-actividad-\d{4}-\d{2}-\d{2}\.xlsx$/,
   )
-  await expect(
-    page.getByText(
-      'Descargamos el registro. La descarga también quedó anotada.',
-    ),
-  ).toBeVisible()
+  await expect(page.getByText(/^Descargamos \d+ filas?\.$/)).toBeVisible()
 
-  // Es lo más reciente del área Accesos
+  // Es lo más reciente del área Accesos, con el filtro y las filas que salieron
   await expect(page.locator('.entry').first()).toContainText(
-    'Descarga del registro de actividad',
+    'Descarga de reporte',
   )
 })
 

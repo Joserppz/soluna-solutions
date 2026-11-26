@@ -185,9 +185,15 @@ class TestDescarga:
         assert all(row[5] == "Donaciones" for row in rows[1:])
         assert str(target.id)  # la fila existe en la base
         logged = db_session.scalar(
-            select(AuditLog).where(AuditLog.action == "Descarga del registro de actividad")
+            select(AuditLog).where(
+                AuditLog.action == "Descarga de reporte",
+                AuditLog.detail.startswith("Registro de actividad:"),
+            )
         )
         assert logged is not None
+        # Queda qué filtro se usó y cuántas filas salieron
+        assert f"{len(rows) - 1} filas en CSV" in logged.detail
+        assert "Área: Donaciones" in logged.detail and "Últimos días: 7" in logged.detail
 
     def test_excel(self, client, auth_headers):
         response = client.get(f"{AUDIT}/export", headers=auth_headers())

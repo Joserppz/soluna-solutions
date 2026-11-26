@@ -6,6 +6,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from app.core.pagination import PageParams, PageResult, paginate
+from app.core.reports import DateRange, filter_range
 from app.modules.attendance.models import MARKED, Attendance
 from app.modules.patients.models import Patient
 from app.modules.schedules.models import Schedule
@@ -107,6 +108,22 @@ def monthly(db: Session, first: dt.date, last: dt.date) -> list[tuple[Schedule, 
         .order_by(Schedule.date, Schedule.start_time, Schedule.id)
     )
     return [(schedule, c, n) for schedule, c, n in rows.all()]
+
+
+def marks(db: Session, period: DateRange, status: str | None, page: PageParams) -> PageResult:
+    """Asistencias marcadas (vino / no vino) de las actividades del rango, por fecha y
+    nombre. Es la consulta del reporte de asistencia."""
+    query = (
+        select(Attendance, Schedule, Patient)
+        .join(Schedule, Schedule.id == Attendance.schedule_id)
+        .join(Patient, Patient.id == Attendance.patient_id)
+        .where(Attendance.status.in_((status,) if status else MARKED))
+        .order_by(Schedule.date, Schedule.start_time, Schedule.id, Patient.name, Attendance.id)
+    )
+    query = filter_range(query, Schedule.date, period)
+    total = db.scalar(select(func.count()).select_from(query.order_by(None).subquery())) or 0
+    rows = db.execute(query.limit(page.limit).offset(page.offset)).all()
+    return PageResult(items=[tuple(row) for row in rows], total=total, limit=page.limit, offset=0)
 
 
 def patient_history(db: Session, patient_id: uuid.UUID, page: PageParams) -> PageResult:

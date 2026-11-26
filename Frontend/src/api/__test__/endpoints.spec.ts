@@ -342,7 +342,56 @@ function requestsFor(api: ReturnType<typeof createEndpoints>): Request[] {
       'POST',
       '/inventory/i1/deactivate',
     ],
-    [() => api.inventory.export('csv'), 'GET', '/inventory/export?format=csv'],
+    [
+      () =>
+        api.inventory.export({
+          format: 'csv',
+          origin: 'donado',
+          from: '2026-01-01',
+        }),
+      'GET',
+      '/inventory/export?format=csv&origin=donado&from=2026-01-01',
+    ],
+    [
+      () =>
+        api.patients.export({
+          group: 'active',
+          from: '2026-01-01',
+          to: '2026-11-30',
+        }),
+      'GET',
+      '/patients/export?group=active&from=2026-01-01&to=2026-11-30',
+    ],
+    [
+      () => api.schedules.export({ from: '2026-11-01', format: 'csv' }),
+      'GET',
+      '/schedules/export?from=2026-11-01&format=csv',
+    ],
+    [
+      () => api.attendance.export({ from: '2026-11-01', to: '2026-11-30' }),
+      'GET',
+      '/attendance/export?from=2026-11-01&to=2026-11-30',
+    ],
+    [
+      () => api.donations.export({ status: 'confirmado' }),
+      'GET',
+      '/donations/export?status=confirmado',
+    ],
+    [
+      () => api.inquiries.export({ kind: 'voluntariado' }),
+      'GET',
+      '/inquiries/export?kind=voluntariado',
+    ],
+    [
+      () => api.users.export({ role: 'admin' }),
+      'GET',
+      '/users/export?role=admin',
+    ],
+    [
+      () => api.media.exportAlbums({ visibility: 'publico' }),
+      'GET',
+      '/media/albums/export?visibility=publico',
+    ],
     [
       () => api.donations.list({ status: 'pendiente' }),
       'GET',
@@ -400,7 +449,7 @@ function requestsFor(api: ReturnType<typeof createEndpoints>): Request[] {
       '/public/donations/notice/d1',
     ],
     [
-      () => api.media.albums('publico'),
+      () => api.media.albums({ visibility: 'publico' }),
       'GET',
       '/media/albums?visibility=publico',
     ],

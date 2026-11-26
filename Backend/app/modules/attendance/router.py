@@ -4,8 +4,23 @@ from typing import Literal
 from fastapi import APIRouter, Depends, Query, Response, status
 
 from app.core.database import DbSession
+from app.core.errors import Forbidden, ValidationError
 from app.core.pagination import Pagination
+from app.core.reports import (
+    EXPORT_PAGE,
+    EXPORT_PERMISSION,
+    EXPORT_RESPONSES,
+    FORMAT_QUERY,
+    FileFormat,
+    Range,
+    Report,
+    Sheet,
+    describe,
+    download,
+    exportable,
+)
 from app.modules.attendance import export
+from app.modules.attendance import repository as attendance_repository
 from app.modules.attendance import service as attendance_service
 from app.modules.attendance.schemas import (
     AttendanceActivity,
@@ -18,7 +33,9 @@ from app.modules.attendance.schemas import (
     NewcomerOut,
     PatientAttendancePage,
 )
+from app.modules.audit import service as audit_service
 from app.modules.auth.dependencies import CurrentUser, require_permission
+from app.modules.schedules.models import CATEGORY_LABELS
 from app.modules.users.models import ATTENDANCE_WRITE, PATIENTS_READ, SCHEDULES_MANAGE
 
 router = APIRouter(prefix="/api/v1/schedules/{schedule_id}/attendance", tags=["Asistencia"])
@@ -28,6 +45,7 @@ patient_router = APIRouter(prefix="/api/v1/patients/{patient_id}/attendance", ta
 takers = require_permission(ATTENDANCE_WRITE)
 managers = require_permission(SCHEDULES_MANAGE)
 readers = require_permission(ATTENDANCE_WRITE, SCHEDULES_MANAGE, any_of=True)
+exporter = require_permission(EXPORT_PERMISSION)
 
 MEDIA_TYPES = {
     "csv": "text/csv; charset=utf-8",
@@ -153,7 +171,19 @@ def monthly_summary(
     summary = attendance_service.monthly_summary(db, month)
     if file_format == "json":
         return summary
+    if not current.can(EXPORT_PERMISSION):
+        raise Forbidden(f"Tu rol ({current.user.role_name}) no puede descargar reportes.")
     content = export.to_csv(summary) if file_format == "csv" else export.to_xlsx(summary)
+    audit_service.audit(
+        db,
+        current,
+        category="ASISTENCIA",
+        action="Descarga de reporte",
+        detail=(
+            f"Resumen mensual de asistencia: {len(summary.activities)} filas en "
+            f"{file_format.upper()} (Mes: {summary.month})"
+        ),
+    )
     return Response(
         content=content,
         media_type=MEDIA_TYPES[file_format],
@@ -163,6 +193,48 @@ def monthly_summary(
             )
         },
     )
+
+
+MARK_LABELS = {"vino": "Vino", "no_vino": "No vino"}
+
+
+@summary_router.get(
+    "/export",
+    response_class=Response,
+    responses=EXPORT_RESPONSES,
+    dependencies=[Depends(exporter)],
+)
+def export_attendance(
+    db: DbSession,
+    period: Range,
+    status_filter: Literal["vino", "no_vino"] | None = Query(default=None, alias="status"),
+    file_format: FileFormat = FORMAT_QUERY,
+    current: CurrentUser = Depends(readers),
+):
+    """Cada asistencia marcada en las actividades del rango (quién, cuándo y a qué)."""
+    if not period.start or not period.end:
+        raise ValidationError("Elige el rango de fechas del reporte de asistencia.")
+    rows = exportable(attendance_repository.marks(db, period, status_filter, EXPORT_PAGE))
+    sheet = Sheet(
+        "Asistencia",
+        ["Fecha", "Actividad", "Tipo", "Afiliado", "Carnet", "Asistencia", "Nota", "Marcada"],
+        [
+            [
+                schedule.date,
+                schedule.title,
+                CATEGORY_LABELS[schedule.category],
+                patient.name,
+                patient.ci,
+                MARK_LABELS[mark.status],
+                mark.note,
+                mark.marked_at,
+            ]
+            for mark, schedule, patient in rows
+        ],
+    )
+    filters = describe(period, {"Asistencia": MARK_LABELS.get(status_filter or "")})
+    report = Report("Asistencia", "asistencia", "ASISTENCIA", filters)
+    return download(db, current, report, [sheet], file_format)
 
 
 @patient_router.get("", response_model=PatientAttendancePage, response_model_by_alias=True)

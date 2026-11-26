@@ -1,6 +1,7 @@
-"""Exportación del inventario: los bienes de la Alcaldía van aparte (rendición de cuentas)."""
+"""Descarga del inventario: los bienes de la Alcaldía van en su propia hoja (rendición de
+cuentas) y el resto en otra. Las filas son las del filtro del listado."""
 
-from app.core.spreadsheet import csv_bytes, safe, xlsx_bytes
+from app.core.reports import Sheet
 from app.modules.inventory.models import (
     CATEGORY_LABELS,
     CONDITION_LABELS,
@@ -18,36 +19,29 @@ HEADERS = (
     "Donante o institución",
     "Ingreso",
     "Ubicación",
+    "Estado",
 )
 MUNICIPAL_TITLE = "Bienes de la Alcaldía"
 OTHERS_TITLE = "Bienes propios y donados"
 
 
-def _row(item: InventoryItem) -> tuple:
-    return (
-        safe(item.code or ""),
-        safe(item.name),
+def _row(item: InventoryItem) -> list:
+    return [
+        item.code or "",
+        item.name,
         CATEGORY_LABELS[item.category],
         item.quantity,
         CONDITION_LABELS[item.condition],
         ORIGIN_LABELS[item.origin],
-        safe(item.donor_or_institution),
-        item.entry_date.strftime("%d/%m/%Y"),
-        safe(item.location),
-    )
+        item.donor_or_institution,
+        item.entry_date,
+        item.location,
+        "Dado de baja" if item.deleted_at else "Activo",
+    ]
 
 
-def to_csv(municipal: list[InventoryItem], others: list[InventoryItem]) -> bytes:
-    rows: list[tuple] = []
-    for title, items in ((MUNICIPAL_TITLE, municipal), (OTHERS_TITLE, others)):
-        rows += [(title,), HEADERS, *(_row(item) for item in items), ()]
-    return csv_bytes(rows)
-
-
-def to_xlsx(municipal: list[InventoryItem], others: list[InventoryItem]) -> bytes:
-    return xlsx_bytes(
-        [
-            ("Alcaldía", HEADERS, [_row(item) for item in municipal]),
-            ("Propios y donados", HEADERS, [_row(item) for item in others]),
-        ]
-    )
+def sheets(municipal: list[InventoryItem], others: list[InventoryItem]) -> list[Sheet]:
+    return [
+        Sheet("Alcaldía", HEADERS, [_row(item) for item in municipal], MUNICIPAL_TITLE),
+        Sheet("Propios y donados", HEADERS, [_row(item) for item in others], OTHERS_TITLE),
+    ]

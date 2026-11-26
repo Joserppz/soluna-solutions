@@ -18,6 +18,10 @@ import type {
 import DonationPanel from '../../../components/donations/DonationPanel.vue'
 import GoalDialog from '../../../components/donations/GoalDialog.vue'
 import RegisterDonationDialog from '../../../components/donations/RegisterDonationDialog.vue'
+import DateRangeFilter from '../../../components/reports/DateRangeFilter.vue'
+import ExportMenu, {
+  type ExportFormat,
+} from '../../../components/reports/ExportMenu.vue'
 import AppAlert from '../../../components/ui/AppAlert.vue'
 import AppButton from '../../../components/ui/AppButton.vue'
 import EmptyState from '../../../components/ui/EmptyState.vue'
@@ -43,6 +47,13 @@ import {
   recentMonths,
   referenceLine,
 } from '../../../utils/donations'
+import {
+  isActive,
+  rangeQuery,
+  readRange,
+  writeRange,
+  type DateRangeValue,
+} from '../../../utils/dateRange'
 import { saveBlob } from '../../../utils/download'
 import {
   monthBounds,
@@ -55,7 +66,8 @@ import { normalizeSearch } from '../../../utils/patients'
 const ROW_HEIGHT = 56
 const SCROLL_PAGE_SIZE = 10
 
-const { api } = useApi()
+const { api, session } = useApi()
+const canExport = computed(() => session.can('reports:export'))
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
@@ -73,6 +85,8 @@ const currentMonth = today().slice(0, 7)
 const month = ref(
   /^\d{4}-\d{2}$/.test(text('mes')) ? text('mes') : currentMonth,
 )
+/** Fechas propias de la tabla (?desde=&hasta=); sin ellas, la tabla muestra el mes. */
+const period = ref<DateRangeValue>(readRange(route.query))
 const tab = ref<DonationTab>(
   DONATION_TABS.some((item) => item.key === text('estado'))
     ? (text('estado') as DonationTab)
@@ -162,22 +176,34 @@ const monthName = computed(() =>
 )
 const isCurrentMonth = computed(() => month.value === currentMonth)
 
-let request = 0
-
-async function load() {
-  const current = ++request
-  loading.value = true
-  loadError.value = null
-  const { from, to } = monthBounds(month.value)
-  const query: DonationListQuery = {
-    from,
-    to,
+/** Filtros de la tabla: los mismos para la descarga. Las fechas, las elegidas o el mes. */
+function currentFilters(): DonationListQuery {
+  const dates = isActive(period.value)
+    ? rangeQuery(period.value)
+    : monthBounds(month.value)
+  return {
+    ...dates,
     search: search.value || undefined,
     channel: (channel.value || undefined) as DonationListQuery['channel'],
     status:
       tab.value === 'todos'
         ? undefined
         : (tab.value as DonationListQuery['status']),
+  }
+}
+
+function exportDonations(format: ExportFormat) {
+  return api.donations.export({ ...currentFilters(), format })
+}
+
+let request = 0
+
+async function load() {
+  const current = ++request
+  loading.value = true
+  loadError.value = null
+  const query: DonationListQuery = {
+    ...currentFilters(),
     limit: pageSize.value,
     offset: (page.value - 1) * pageSize.value,
   }
@@ -222,6 +248,7 @@ function syncQuery() {
   if (channel.value) query.canal = channel.value
   if (search.value) query.buscar = search.value
   if (page.value > 1) query.pagina = String(page.value)
+  writeRange(period.value, query)
   if (selectedId.value) query.aporte = selectedId.value
   void router.replace({ query })
 }
@@ -239,7 +266,11 @@ watch(searchInput, (value) => {
   }, 300)
 })
 
-watch([search, channel, tab, month], () => {
+// Elegir otro mes vuelve a mostrar ese mes completo en la tabla
+watch(month, () => {
+  period.value = { from: '', to: '' }
+})
+watch([search, channel, tab, month, period], () => {
   if (page.value === 1) refresh()
   else page.value = 1
 })
@@ -340,10 +371,16 @@ function clearFilters() {
   search.value = ''
   channel.value = ''
   tab.value = 'todos'
+  period.value = { from: '', to: '' }
 }
 
 const filtered = computed(() =>
-  Boolean(search.value || channel.value || tab.value !== 'todos'),
+  Boolean(
+    search.value ||
+    channel.value ||
+    tab.value !== 'todos' ||
+    isActive(period.value),
+  ),
 )
 
 onMounted(async () => {
@@ -397,7 +434,12 @@ onMounted(async () => {
             }}.
           </p>
         </template>
-        <p class="downloads" role="group" aria-labelledby="resumen-mes">
+        <p
+          v-if="canExport"
+          class="downloads"
+          role="group"
+          aria-labelledby="resumen-mes"
+        >
           <span id="resumen-mes">Descargar el resumen del mes:</span>
           <button
             type="button"
@@ -532,6 +574,13 @@ onMounted(async () => {
                 {{ item.label }}
               </option>
             </select>
+            <DateRangeFilter v-model="period" label="Fechas de la tabla" />
+            <ExportMenu
+              :download="exportDonations"
+              filename="donaciones-registro"
+              what="aportes"
+              :total="loading ? null : total"
+            />
           </form>
 
           <AppAlert v-if="loadError" tone="error">
@@ -945,8 +994,21 @@ onMounted(async () => {
 
 .filters {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns:
+    minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)
+    auto;
   gap: var(--space-2);
+}
+
+.filters :deep(.range__trigger) {
+  font-size: var(--text-sm);
+}
+
+/* Con el panel del aporte al costado, la tabla es más angosta: dos filas de filtros */
+@media (max-width: 1599.98px) {
+  .filters {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr);
+  }
 }
 
 .filters .select,
@@ -1139,6 +1201,11 @@ onMounted(async () => {
   .don__table th,
   .don__table td {
     padding-inline: 0.35rem;
+  }
+
+  /* «Confirmar» entra en la fila del celular (360 px) sin empujar la tabla de lado */
+  .don__table td.end :deep(.btn) {
+    padding-inline: var(--space-3);
   }
 
   .don :deep(.tabs) {

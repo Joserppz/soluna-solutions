@@ -4,6 +4,26 @@
  */
 
 export interface paths {
+  '/api/v1/attendance/export': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Export Attendance
+     * @description Cada asistencia marcada en las actividades del rango (quién, cuándo y a qué).
+     */
+    get: operations['export_attendance_api_v1_attendance_export_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/attendance/monthly': {
     parameters: {
       query?: never
@@ -50,7 +70,7 @@ export interface paths {
     }
     /**
      * Export Audit
-     * @description «Descargar registro»: lo que muestra el filtro (hasta 5000 movimientos).
+     * @description «Descargar registro»: todos los movimientos del filtro de la pantalla.
      */
     get: operations['export_audit_api_v1_audit_export_get']
     put?: never
@@ -406,6 +426,26 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/donations/export': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Export Donations
+     * @description Todos los aportes del filtro de la tabla (no solo la página que se ve).
+     */
+    get: operations['export_donations_api_v1_donations_export_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/donations/goal': {
     parameters: {
       query?: never
@@ -566,6 +606,26 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/inquiries/export': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Export Inquiries
+     * @description Todas las solicitudes del filtro de la bandeja.
+     */
+    get: operations['export_inquiries_api_v1_inquiries_export_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/inquiries/summary': {
     parameters: {
       query?: never
@@ -676,7 +736,7 @@ export interface paths {
     }
     /**
      * List Items
-     * @description Materiales por nombre, con filtros de origen, categoría y condición.
+     * @description Materiales por nombre, con filtros de origen, categoría, condición y fechas de ingreso.
      */
     get: operations['list_items_api_v1_inventory_get']
     put?: never
@@ -700,7 +760,7 @@ export interface paths {
     }
     /**
      * Export Inventory
-     * @description Inventario activo para la rendición de cuentas (Alcaldía) y el resto.
+     * @description Todos los materiales del filtro: la Alcaldía en una hoja y el resto en otra.
      */
     get: operations['export_inventory_api_v1_inventory_export_get']
     put?: never
@@ -808,6 +868,26 @@ export interface paths {
     put?: never
     /** Create Album */
     post: operations['create_album_api_v1_media_albums_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/media/albums/export': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Export Albums
+     * @description Todos los álbumes del filtro, con cuántos archivos tienen y su estado de permisos.
+     */
+    get: operations['export_albums_api_v1_media_albums_export_get']
+    put?: never
+    post?: never
     delete?: never
     options?: never
     head?: never
@@ -974,6 +1054,26 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/patients/export': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Export Patients
+     * @description Todas las fichas que cumplen el filtro del listado (sin datos clínicos).
+     */
+    get: operations['export_patients_api_v1_patients_export_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/patients/summary': {
     parameters: {
       query?: never
@@ -983,7 +1083,7 @@ export interface paths {
     }
     /**
      * Patient Counts
-     * @description Contadores de las pestañas (con la misma búsqueda y actividad del listado).
+     * @description Contadores de las pestañas (con la misma búsqueda, actividad y fechas del listado).
      */
     get: operations['patient_counts_api_v1_patients_summary_get']
     put?: never
@@ -1469,6 +1569,26 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/schedules/export': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Export Schedules
+     * @description Todas las actividades del rango, con interesados y cuántos vinieron.
+     */
+    get: operations['export_schedules_api_v1_schedules_export_get']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/schedules/{schedule_id}': {
     parameters: {
       query?: never
@@ -1680,12 +1800,32 @@ export interface paths {
     }
     /**
      * List Users
-     * @description Equipo, con búsqueda por nombre o correo y filtro por rol.
+     * @description Equipo, con búsqueda por nombre o correo, filtro por rol y fecha de alta.
      */
     get: operations['list_users_api_v1_users_get']
     put?: never
     /** Create User */
     post: operations['create_user_api_v1_users_post']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/users/export': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * Export Users
+     * @description Todas las cuentas del filtro (sin contraseñas ni datos de sesión).
+     */
+    get: operations['export_users_api_v1_users_export_get']
+    put?: never
+    post?: never
     delete?: never
     options?: never
     head?: never
@@ -3548,6 +3688,7 @@ export interface components {
         | 'users:manage'
         | 'roles:manage'
         | 'audit:read'
+        | 'reports:export'
     }
     /** PermissionWarning */
     PermissionWarning: {
@@ -3820,6 +3961,7 @@ export interface components {
         | 'users:manage'
         | 'roles:manage'
         | 'audit:read'
+        | 'reports:export'
       )[]
     }
     /** RolePermissionsUpdate */
@@ -3848,6 +3990,7 @@ export interface components {
         | 'users:manage'
         | 'roles:manage'
         | 'audit:read'
+        | 'reports:export'
       )[]
     }
     /** SaturdayAttendance */
@@ -4108,6 +4251,7 @@ export interface components {
         | 'users:manage'
         | 'roles:manage'
         | 'audit:read'
+        | 'reports:export'
       )[]
       user: components['schemas']['SessionUserOut']
     }
@@ -4395,6 +4539,43 @@ export interface components {
 }
 export type $defs = Record<string, never>
 export interface operations {
+  export_attendance_api_v1_attendance_export_get: {
+    parameters: {
+      query?: {
+        status?: ('vino' | 'no_vino') | null
+        format?: 'csv' | 'xlsx'
+        /** @description Primer día incluido (AAAA-MM-DD) */
+        from?: string | null
+        /** @description Último día incluido (AAAA-MM-DD) */
+        to?: string | null
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Archivo CSV o Excel con todas las filas que cumplen el filtro */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': unknown
+          'text/csv; charset=utf-8': unknown
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
   monthly_summary_api_v1_attendance_monthly_get: {
     parameters: {
       query?: {
@@ -4455,7 +4636,9 @@ export interface operations {
         days?: number | null
         /** @description Solo situaciones para revisar (accesos bloqueados y aportes anulados) */
         review?: boolean
+        /** @description Primer día incluido (AAAA-MM-DD) */
         from?: string | null
+        /** @description Último día incluido (AAAA-MM-DD) */
         to?: string | null
       }
       header?: never
@@ -4509,7 +4692,9 @@ export interface operations {
         days?: number | null
         /** @description Solo situaciones para revisar (accesos bloqueados y aportes anulados) */
         review?: boolean
+        /** @description Primer día incluido (AAAA-MM-DD) */
         from?: string | null
+        /** @description Último día incluido (AAAA-MM-DD) */
         to?: string | null
       }
       header?: never
@@ -4518,7 +4703,7 @@ export interface operations {
     }
     requestBody?: never
     responses: {
-      /** @description Successful Response */
+      /** @description Archivo CSV o Excel con todas las filas que cumplen el filtro */
       200: {
         headers: {
           [name: string]: unknown
@@ -5067,13 +5252,15 @@ export interface operations {
   list_donations_api_v1_donations_get: {
     parameters: {
       query?: {
+        limit?: number
+        offset?: number
         status?: ('pendiente' | 'confirmado' | 'recibido' | 'anulado') | null
         channel?: ('qr_bancario' | 'efectivo' | 'especie') | null
         search?: string | null
+        /** @description Primer día incluido (AAAA-MM-DD) */
         from?: string | null
+        /** @description Último día incluido (AAAA-MM-DD) */
         to?: string | null
-        limit?: number
-        offset?: number
       }
       header?: never
       path?: never
@@ -5121,6 +5308,45 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['DonationOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  export_donations_api_v1_donations_export_get: {
+    parameters: {
+      query?: {
+        format?: 'csv' | 'xlsx'
+        status?: ('pendiente' | 'confirmado' | 'recibido' | 'anulado') | null
+        channel?: ('qr_bancario' | 'efectivo' | 'especie') | null
+        search?: string | null
+        /** @description Primer día incluido (AAAA-MM-DD) */
+        from?: string | null
+        /** @description Último día incluido (AAAA-MM-DD) */
+        to?: string | null
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Archivo CSV o Excel con todas las filas que cumplen el filtro */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': unknown
+          'text/csv; charset=utf-8': unknown
         }
       }
       /** @description Validation Error */
@@ -5369,6 +5595,8 @@ export interface operations {
   list_inquiries_api_v1_inquiries_get: {
     parameters: {
       query?: {
+        limit?: number
+        offset?: number
         status?:
           | (
               | 'recibida'
@@ -5389,8 +5617,10 @@ export interface operations {
             )
           | null
         search?: string | null
-        limit?: number
-        offset?: number
+        /** @description Primer día incluido (AAAA-MM-DD) */
+        from?: string | null
+        /** @description Último día incluido (AAAA-MM-DD) */
+        to?: string | null
       }
       header?: never
       path?: never
@@ -5405,6 +5635,62 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['InquiryPage']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  export_inquiries_api_v1_inquiries_export_get: {
+    parameters: {
+      query?: {
+        format?: 'csv' | 'xlsx'
+        status?:
+          | (
+              | 'recibida'
+              | 'por_contactar'
+              | 'contactada'
+              | 'inscrita'
+              | 'cerrada'
+            )
+          | null
+        kind?:
+          | (
+              | 'orientacion'
+              | 'voluntariado'
+              | 'especie'
+              | 'participar'
+              | 'asistencia'
+              | 'otro'
+            )
+          | null
+        search?: string | null
+        /** @description Primer día incluido (AAAA-MM-DD) */
+        from?: string | null
+        /** @description Último día incluido (AAAA-MM-DD) */
+        to?: string | null
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Archivo CSV o Excel con todas las filas que cumplen el filtro */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': unknown
+          'text/csv; charset=utf-8': unknown
         }
       }
       /** @description Validation Error */
@@ -5608,6 +5894,8 @@ export interface operations {
   list_items_api_v1_inventory_get: {
     parameters: {
       query?: {
+        limit?: number
+        offset?: number
         search?: string | null
         origin?: ('propio' | 'donado' | 'alcaldia') | null
         category?:
@@ -5615,8 +5903,10 @@ export interface operations {
           | null
         condition?: ('nuevo' | 'bueno' | 'regular' | 'dañado') | null
         includeInactive?: boolean
-        limit?: number
-        offset?: number
+        /** @description Primer día incluido (AAAA-MM-DD) */
+        from?: string | null
+        /** @description Último día incluido (AAAA-MM-DD) */
+        to?: string | null
       }
       header?: never
       path?: never
@@ -5681,6 +5971,17 @@ export interface operations {
     parameters: {
       query?: {
         format?: 'csv' | 'xlsx'
+        search?: string | null
+        origin?: ('propio' | 'donado' | 'alcaldia') | null
+        category?:
+          | ('fisioterapia' | 'movilidad' | 'mobiliario' | 'papeleria' | 'otro')
+          | null
+        condition?: ('nuevo' | 'bueno' | 'regular' | 'dañado') | null
+        includeInactive?: boolean
+        /** @description Primer día incluido (AAAA-MM-DD) */
+        from?: string | null
+        /** @description Último día incluido (AAAA-MM-DD) */
+        to?: string | null
       }
       header?: never
       path?: never
@@ -5688,13 +5989,12 @@ export interface operations {
     }
     requestBody?: never
     responses: {
-      /** @description Archivo CSV o Excel; los bienes de la Alcaldía van aparte */
+      /** @description Archivo CSV o Excel con todas las filas que cumplen el filtro */
       200: {
         headers: {
           [name: string]: unknown
         }
         content: {
-          'application/json': unknown
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': unknown
           'text/csv; charset=utf-8': unknown
         }
@@ -5901,6 +6201,10 @@ export interface operations {
     parameters: {
       query?: {
         visibility?: ('privado' | 'publico') | null
+        /** @description Primer día incluido (AAAA-MM-DD) */
+        from?: string | null
+        /** @description Último día incluido (AAAA-MM-DD) */
+        to?: string | null
       }
       header?: never
       path?: never
@@ -5948,6 +6252,43 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['AlbumOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  export_albums_api_v1_media_albums_export_get: {
+    parameters: {
+      query?: {
+        visibility?: ('privado' | 'publico') | null
+        format?: 'csv' | 'xlsx'
+        /** @description Primer día incluido (AAAA-MM-DD) */
+        from?: string | null
+        /** @description Último día incluido (AAAA-MM-DD) */
+        to?: string | null
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Archivo CSV o Excel con todas las filas que cumplen el filtro */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': unknown
+          'text/csv; charset=utf-8': unknown
         }
       }
       /** @description Validation Error */
@@ -6259,6 +6600,8 @@ export interface operations {
   list_patients_api_v1_patients_get: {
     parameters: {
       query?: {
+        limit?: number
+        offset?: number
         search?: string | null
         status?: string | null
         includeInactive?: boolean
@@ -6277,8 +6620,10 @@ export interface operations {
             )
           | null
         order?: 'name' | '-name' | 'recent' | 'oldest'
-        limit?: number
-        offset?: number
+        /** @description Primer día incluido (AAAA-MM-DD) */
+        from?: string | null
+        /** @description Último día incluido (AAAA-MM-DD) */
+        to?: string | null
       }
       header?: never
       path?: never
@@ -6339,6 +6684,60 @@ export interface operations {
       }
     }
   }
+  export_patients_api_v1_patients_export_get: {
+    parameters: {
+      query?: {
+        format?: 'csv' | 'xlsx'
+        search?: string | null
+        status?: string | null
+        includeInactive?: boolean
+        /** @description Pestaña del listado; si se indica, reemplaza a includeInactive */
+        group?: ('all' | 'active' | 'consent_pending' | 'inactive') | null
+        /** @description Solo quienes vinieron a esa actividad en los últimos 6 meses */
+        activity?:
+          | (
+              | 'fisioterapia'
+              | 'arteterapia'
+              | 'fonoaudiologia'
+              | 'psicologia'
+              | 'teatro'
+              | 'familias'
+              | 'comunitario'
+            )
+          | null
+        order?: 'name' | '-name' | 'recent' | 'oldest'
+        /** @description Primer día incluido (AAAA-MM-DD) */
+        from?: string | null
+        /** @description Último día incluido (AAAA-MM-DD) */
+        to?: string | null
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Archivo CSV o Excel con todas las filas que cumplen el filtro */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': unknown
+          'text/csv; charset=utf-8': unknown
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
   patient_counts_api_v1_patients_summary_get: {
     parameters: {
       query?: {
@@ -6354,6 +6753,10 @@ export interface operations {
               | 'comunitario'
             )
           | null
+        /** @description Primer día incluido (AAAA-MM-DD) */
+        from?: string | null
+        /** @description Último día incluido (AAAA-MM-DD) */
+        to?: string | null
       }
       header?: never
       path?: never
@@ -7296,11 +7699,13 @@ export interface operations {
   list_schedules_api_v1_schedules_get: {
     parameters: {
       query?: {
-        from?: string | null
-        to?: string | null
         status?: ('borrador' | 'publicada' | 'cancelada') | null
         limit?: number
         offset?: number
+        /** @description Primer día incluido (AAAA-MM-DD) */
+        from?: string | null
+        /** @description Último día incluido (AAAA-MM-DD) */
+        to?: string | null
       }
       header?: never
       path?: never
@@ -7348,6 +7753,43 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['ScheduleOut']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  export_schedules_api_v1_schedules_export_get: {
+    parameters: {
+      query?: {
+        status?: ('borrador' | 'publicada' | 'cancelada') | null
+        format?: 'csv' | 'xlsx'
+        /** @description Primer día incluido (AAAA-MM-DD) */
+        from?: string | null
+        /** @description Último día incluido (AAAA-MM-DD) */
+        to?: string | null
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Archivo CSV o Excel con todas las filas que cumplen el filtro */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': unknown
+          'text/csv; charset=utf-8': unknown
         }
       }
       /** @description Validation Error */
@@ -7760,6 +8202,10 @@ export interface operations {
         role?: string | null
         limit?: number
         offset?: number
+        /** @description Primer día incluido (AAAA-MM-DD) */
+        from?: string | null
+        /** @description Último día incluido (AAAA-MM-DD) */
+        to?: string | null
       }
       header?: never
       path?: never
@@ -7807,6 +8253,45 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['UserCreated']
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['HTTPValidationError']
+        }
+      }
+    }
+  }
+  export_users_api_v1_users_export_get: {
+    parameters: {
+      query?: {
+        search?: string | null
+        /** @description Clave del rol, o «pendiente» para las cuentas que esperan aprobación */
+        role?: string | null
+        format?: 'csv' | 'xlsx'
+        /** @description Primer día incluido (AAAA-MM-DD) */
+        from?: string | null
+        /** @description Último día incluido (AAAA-MM-DD) */
+        to?: string | null
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Archivo CSV o Excel con todas las filas que cumplen el filtro */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': unknown
+          'text/csv; charset=utf-8': unknown
         }
       }
       /** @description Validation Error */

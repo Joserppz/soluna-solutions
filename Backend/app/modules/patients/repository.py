@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import escape_like
 from app.core.pagination import PageParams, PageResult, paginate
+from app.core.reports import DateRange, filter_range
 from app.modules.attendance.models import Attendance
 from app.modules.patients.models import Patient
 from app.modules.schedules.models import Schedule
@@ -36,7 +37,16 @@ def _attended(category: str, since: dt.date):
     )
 
 
-def _filtered(query, search: str | None, activity: str | None, since: dt.date | None):
+def _filtered(
+    query,
+    search: str | None,
+    activity: str | None,
+    since: dt.date | None,
+    period: DateRange | None = None,
+):
+    """Búsqueda, actividad y rango de fechas de registro: iguales en listado, pestañas y
+    descarga."""
+    query = filter_range(query, Patient.created_at, period)
     if search:
         pattern = f"%{escape_like(search.strip())}%"
         query = query.where(
@@ -58,8 +68,9 @@ def list_patients(
     activity: str | None = None,
     since: dt.date | None = None,
     order: str = "recent",
+    period: DateRange | None = None,
 ) -> PageResult:
-    query = _filtered(select(Patient), search, activity, since).order_by(*ORDERS[order])
+    query = _filtered(select(Patient), search, activity, since, period).order_by(*ORDERS[order])
     if group == "active":
         query = query.where(Patient.deleted_at.is_(None))
     elif group == "consent_pending":
@@ -74,7 +85,11 @@ def list_patients(
 
 
 def counts(
-    db: Session, search: str | None, activity: str | None, since: dt.date | None
+    db: Session,
+    search: str | None,
+    activity: str | None,
+    since: dt.date | None,
+    period: DateRange | None = None,
 ) -> dict[str, int]:
     """Cuántas fichas hay en cada pestaña, con la misma búsqueda y actividad del listado."""
     active = Patient.deleted_at.is_(None)
@@ -89,6 +104,7 @@ def counts(
             search,
             activity,
             since,
+            period,
         )
     ).one()
     return dict(zip(GROUPS, row, strict=True))

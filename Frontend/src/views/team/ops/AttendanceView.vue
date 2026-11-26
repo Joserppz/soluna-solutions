@@ -16,6 +16,9 @@ import type {
   ScheduleOut,
 } from '../../../api/types'
 import AttendancePrintSheet from '../../../components/ops/AttendancePrintSheet.vue'
+import ExportMenu, {
+  type ExportFormat,
+} from '../../../components/reports/ExportMenu.vue'
 import AppAlert from '../../../components/ui/AppAlert.vue'
 import AppButton from '../../../components/ui/AppButton.vue'
 import AppIcon from '../../../components/ui/AppIcon.vue'
@@ -34,11 +37,13 @@ import { firstName } from '../../../utils/format'
 import {
   dayLabel,
   daysFromToday,
+  monthBounds,
   monthOf,
   monthTitle,
   timeRange,
   today,
 } from '../../../utils/ops'
+import { rangeQuery, type DateRangeValue } from '../../../utils/dateRange'
 
 /** Para buscar sin importar tildes ni mayúsculas: «gutierrez» encuentra «Gutiérrez». */
 function foldText(text: string): string {
@@ -67,6 +72,7 @@ const canClose = computed(() =>
   session.canAny('schedules:manage', 'attendance:write'),
 )
 const canDownload = computed(() => session.can('schedules:manage'))
+const canExport = computed(() => session.can('reports:export'))
 
 /*
  * La asistencia se toma por día: arriba se elige la fecha (se puede escribir o
@@ -119,7 +125,7 @@ const { pageSize } = useFitRows(listArea, {
   rowHeight: ROW_HEIGHT,
   fallback: SCROLL_PAGE_SIZE,
   headHeight: 0,
-  min: 4,
+  min: 2,
 })
 
 const counts = computed(() => {
@@ -501,6 +507,14 @@ onMounted(async () => {
   await loadSheet()
   void loadMonthly()
 })
+
+/** «Descargar»: cada asistencia marcada en las actividades del rango elegido. */
+function exportMarks(format: ExportFormat, range?: DateRangeValue) {
+  return api.attendance.export({
+    ...rangeQuery(range ?? monthBounds(month.value)),
+    format,
+  })
+}
 </script>
 
 <template>
@@ -665,11 +679,12 @@ onMounted(async () => {
                 variant="secondary"
                 size="md"
                 class="toolbar__print"
+                aria-label="Imprimir lista"
                 :disabled="!counts.total"
                 @click="printSheet"
               >
                 <AppIcon name="print" :size="18" />
-                Imprimir lista
+                Imprimir<span class="toolbar__print-more"> lista</span>
               </AppButton>
             </div>
             <AttendancePrintSheet :sheet="sheet" />
@@ -825,26 +840,38 @@ onMounted(async () => {
             </li>
           </ul>
           <p v-else class="card__text">Todavía no hay asistencias este mes.</p>
-          <p class="downloads">
-            <span>Descargar resumen mensual:</span>
-            <button
-              type="button"
-              class="link"
-              aria-label="Descargar resumen mensual en CSV"
-              @click="download('csv')"
+          <div v-if="canExport" class="card__export">
+            <ExportMenu
+              :download="exportMarks"
+              :range="monthBounds(month)"
+              filename="asistencia-detalle"
+              what="asistencias marcadas"
+              size="sm"
             >
-              CSV
-            </button>
-            <span aria-hidden="true">·</span>
-            <button
-              type="button"
-              class="link"
-              aria-label="Descargar resumen mensual en Excel"
-              @click="download('xlsx')"
-            >
-              Excel
-            </button>
-          </p>
+              <template #extra>
+                <p class="downloads">
+                  <span>Resumen del mes:</span>
+                  <button
+                    type="button"
+                    class="link"
+                    aria-label="Descargar resumen mensual en CSV"
+                    @click="download('csv')"
+                  >
+                    CSV
+                  </button>
+                  <span aria-hidden="true">·</span>
+                  <button
+                    type="button"
+                    class="link"
+                    aria-label="Descargar resumen mensual en Excel"
+                    @click="download('xlsx')"
+                  >
+                    Excel
+                  </button>
+                </p>
+              </template>
+            </ExportMenu>
+          </div>
         </section>
 
         <p class="volunteer-note">
@@ -1012,11 +1039,19 @@ onMounted(async () => {
   flex: 1;
 }
 
+.card__export {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
 .downloads {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
+  margin: 0;
   font-size: var(--text-sm);
 }
 
@@ -1165,6 +1200,23 @@ onMounted(async () => {
 
 .toolbar__print {
   gap: var(--space-2);
+}
+
+/* En laptops angostas (1024 px) la búsqueda y «Imprimir» entran en una fila, y las
+   tarjetas del costado son más compactas: nada se desplaza */
+@media (min-width: 1024px) and (max-width: 1180px) {
+  .toolbar__search {
+    flex-basis: 9rem;
+  }
+
+  .toolbar__print-more {
+    display: none;
+  }
+
+  .att--fit .att__side .card {
+    gap: var(--space-2);
+    padding: var(--space-4);
+  }
 }
 
 .toolbar__search .input {

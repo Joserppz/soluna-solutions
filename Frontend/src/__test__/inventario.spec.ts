@@ -18,6 +18,7 @@ import {
   type ApiFake,
   type RecordedCall,
 } from './apiFake'
+import { downloadAs } from './reports'
 
 const PATH = '/equipo/inventario'
 
@@ -256,7 +257,7 @@ describe('Inventario', () => {
     vi.useRealTimers()
   })
 
-  it('exporta CSV o Excel con los bienes de la Alcaldía aparte', async () => {
+  it('descarga en CSV o Excel lo que muestra el filtro de la tabla', async () => {
     const createObjectURL = vi.fn(() => 'blob:inventario')
     vi.stubGlobal(
       'URL',
@@ -271,14 +272,17 @@ describe('Inventario', () => {
     fake.on('GET /inventory/export', { body: 'contenido' })
     const { wrapper } = await mountApp(PATH, fake)
 
-    await wrapper.get('button[aria-label="Exportar CSV"]').trigger('click')
+    await wrapper.get('#filtro-origen').setValue('donado')
     await settle()
+    await downloadAs(wrapper, 'CSV')
 
-    expect(lastQuery(fake, 'GET /inventory/export')).toEqual({ format: 'csv' })
+    // La descarga lleva los mismos filtros de la tabla
+    expect(lastQuery(fake, 'GET /inventory/export')).toEqual({
+      format: 'csv',
+      origin: 'donado',
+    })
     expect(click).toHaveBeenCalledTimes(1)
-    expect(wrapper.text()).toContain(
-      'Los bienes de la Alcaldía van en un archivo aparte.',
-    )
+    expect(wrapper.text()).toContain('Descargamos')
   })
 
   it('cambiar la cantidad pide el motivo; sin cambiarla, el motivo no hace falta', async () => {

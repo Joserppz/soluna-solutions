@@ -15,6 +15,10 @@ import type {
 } from '../../../api/types'
 import AlbumPanel from '../../../components/media/AlbumPanel.vue'
 import NewAlbumDialog from '../../../components/media/NewAlbumDialog.vue'
+import DateRangeFilter from '../../../components/reports/DateRangeFilter.vue'
+import ExportMenu, {
+  type ExportFormat,
+} from '../../../components/reports/ExportMenu.vue'
 import AppAlert from '../../../components/ui/AppAlert.vue'
 import AppButton from '../../../components/ui/AppButton.vue'
 import EmptyState from '../../../components/ui/EmptyState.vue'
@@ -25,6 +29,13 @@ import StatusBadge from '../../../components/ui/StatusBadge.vue'
 import { useApi } from '../../../composables/useApi'
 import { useFitLayout } from '../../../composables/useFitLayout'
 import { useToast } from '../../../composables/useToast'
+import {
+  isActive,
+  rangeQuery,
+  readRange,
+  writeRange,
+  type DateRangeValue,
+} from '../../../utils/dateRange'
 import {
   ACCEPT_ATTRIBUTE,
   MAX_FILES,
@@ -52,6 +63,8 @@ const tab = ref<Tab>(
     ? (route.query.ver as Tab)
     : 'todos',
 )
+/** Fecha de creación del álbum (?desde=&hasta=) */
+const period = ref<DateRangeValue>(readRange(route.query))
 const albums = ref<AlbumSummary[]>([])
 const loading = ref(true)
 const loadError = ref<string | null>(null)
@@ -79,8 +92,21 @@ const progress = computed(() =>
 function syncQuery() {
   const query: Record<string, string> = {}
   if (tab.value !== 'todos') query.ver = tab.value
+  writeRange(period.value, query)
   if (selectedId.value) query.album = selectedId.value
   void router.replace({ query })
+}
+
+/** Estado y fechas: los mismos para la lista y la descarga. */
+function albumFilters() {
+  return {
+    visibility: tab.value === 'todos' ? undefined : tab.value,
+    ...rangeQuery(period.value),
+  }
+}
+
+function exportAlbums(format: ExportFormat) {
+  return api.media.exportAlbums({ ...albumFilters(), format })
 }
 
 let request = 0
@@ -89,9 +115,7 @@ async function loadAlbums() {
   loading.value = true
   loadError.value = null
   try {
-    const list = await api.media.albums(
-      tab.value === 'todos' ? undefined : tab.value,
-    )
+    const list = await api.media.albums(albumFilters())
     if (current === request) albums.value = list
   } catch (failure) {
     if (current !== request) return
@@ -127,7 +151,7 @@ function closeAlbum() {
   syncQuery()
 }
 
-watch(tab, () => {
+watch([tab, period], () => {
   syncQuery()
   void loadAlbums()
 })
@@ -353,6 +377,16 @@ function hideBroken(event: Event) {
               label="Álbumes por estado"
               id-prefix="albumes"
             />
+            <div class="albums__tools">
+              <DateRangeFilter v-model="period" label="Fecha de creación" />
+              <ExportMenu
+                :download="exportAlbums"
+                filename="galeria"
+                what="álbumes"
+                :total="loading ? null : albums.length"
+                size="sm"
+              />
+            </div>
           </header>
           <div
             id="albumes-panel"
@@ -375,19 +409,30 @@ function hideBroken(event: Event) {
               v-else-if="!albums.length"
               icon="gallery"
               :title="
-                tab === 'publico'
-                  ? 'Todavía no hay álbumes publicados.'
-                  : tab === 'privado'
-                    ? 'No hay álbumes privados.'
-                    : 'Todavía no hay álbumes.'
+                isActive(period)
+                  ? 'No hay álbumes en esas fechas.'
+                  : tab === 'publico'
+                    ? 'Todavía no hay álbumes publicados.'
+                    : tab === 'privado'
+                      ? 'No hay álbumes privados.'
+                      : 'Todavía no hay álbumes.'
               "
               :text="
-                tab === 'todos'
+                tab === 'todos' && !isActive(period)
                   ? 'Un álbum junta las fotos y videos de un encuentro.'
                   : undefined
               "
             >
-              <template v-if="tab === 'todos'" #actions>
+              <template v-if="isActive(period)" #actions>
+                <AppButton
+                  variant="link"
+                  size="sm"
+                  @click="period = { from: '', to: '' }"
+                >
+                  Ver todas las fechas
+                </AppButton>
+              </template>
+              <template v-else-if="tab === 'todos'" #actions>
                 <AppButton size="sm" @click="newOpen = true">
                   + Crear el primer álbum
                 </AppButton>
@@ -576,6 +621,22 @@ function hideBroken(event: Event) {
   align-items: flex-end;
   justify-content: space-between;
   gap: var(--space-3);
+}
+
+.albums__tools {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.albums__tools :deep(.range) {
+  flex: 1;
+}
+
+.albums__tools :deep(.range__trigger) {
+  min-height: 2.5rem;
+  font-size: var(--text-sm);
 }
 
 .grid {

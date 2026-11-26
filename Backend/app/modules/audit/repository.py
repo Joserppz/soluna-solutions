@@ -63,7 +63,8 @@ def _filtered(
     if date_from:
         query = query.where(AuditLog.date >= date_from)
     if date_to:
-        query = query.where(AuditLog.date <= date_to)
+        # «hasta» llega como el inicio del día siguiente al último: ese día entra completo
+        query = query.where(AuditLog.date < date_to)
     return query
 
 
@@ -72,14 +73,6 @@ def list_entries(db: Session, *, page: PageParams | None = None, **filters) -> P
         AuditLog.date.desc(), AuditLog.id.desc()
     )
     return paginate(db, query, page or PageParams())
-
-
-def all_entries(db: Session, limit: int, **filters) -> list[AuditLog]:
-    """Las filas de un filtro para descargarlas (de la más reciente), con un tope."""
-    query = _filtered(select(AuditLog), **filters).order_by(
-        AuditLog.date.desc(), AuditLog.id.desc()
-    )
-    return list(db.scalars(query.limit(limit)))
 
 
 def counts_by_category(db: Session, date_from: datetime) -> dict[str, int]:

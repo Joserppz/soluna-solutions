@@ -1,4 +1,3 @@
-import datetime as dt
 import uuid
 from typing import Literal
 
@@ -7,16 +6,30 @@ from fastapi import APIRouter, Depends, Query, Request, Response, status
 from app.adapters.turnstile import TurnstileVerifier, get_turnstile
 from app.core import rate_limit
 from app.core.database import DbSession
-from app.core.errors import NotFound
+from app.core.errors import Forbidden, NotFound
 from app.core.network import client_ip
 from app.core.pagination import Pagination
+from app.core.reports import (
+    EXPORT_PAGE,
+    EXPORT_PERMISSION,
+    EXPORT_RESPONSES,
+    FORMAT_QUERY,
+    FileFormat,
+    Range,
+    Report,
+    describe,
+    download,
+    exportable,
+    log_query,
+)
 from app.core.spreadsheet import CSV_MEDIA_TYPE, XLSX_MEDIA_TYPE
+from app.modules.audit import service as audit_service
 from app.modules.auth.dependencies import CurrentUser, require_permission
 from app.modules.auth.service import require_human
 from app.modules.donations import export
 from app.modules.donations import repository as donation_repository
 from app.modules.donations import service as donation_service
-from app.modules.donations.models import STATUS_LABELS
+from app.modules.donations.models import CHANNEL_LABELS, STATUS_LABELS
 from app.modules.donations.schemas import (
     DonationCancel,
     DonationChannel,
@@ -39,6 +52,7 @@ router = APIRouter(prefix="/api/v1/donations", tags=["Donaciones"])
 public_router = APIRouter(prefix="/api/v1/public/donations", tags=["Sitio público"])
 
 managers = require_permission(DONATIONS_MANAGE)
+exporters = require_permission(DONATIONS_MANAGE, EXPORT_PERMISSION)
 
 
 def _tracking(donation) -> DonationTrackingOut:
@@ -92,28 +106,61 @@ def public_goal(db: DbSession):
     return PublicGoalOut(**progress)
 
 
+class DonationFilters:
+    """Filtros del registro de aportes, iguales para la tabla y su descarga. El rango es
+    por la fecha del aporte."""
+
+    def __init__(
+        self,
+        period: Range,
+        status_filter: DonationStatus | None = Query(default=None, alias="status"),
+        channel: DonationChannel | None = None,
+        search: str | None = Query(default=None, max_length=120),
+    ):
+        self.period = period
+        self.values = {
+            "status": status_filter,
+            "channel": channel,
+            "search": search,
+            "date_from": period.start,
+            "date_to": period.end,
+        }
+
+    def described(self) -> dict[str, str]:
+        return describe(
+            self.period,
+            {
+                "Estado": STATUS_LABELS.get(self.values["status"] or ""),
+                "Canal": CHANNEL_LABELS.get(self.values["channel"] or ""),
+                "Búsqueda": self.values["search"],
+            },
+        )
+
+
 @router.get("", response_model=DonationPage, response_model_by_alias=True)
 def list_donations(
     db: DbSession,
     page: Pagination,
-    status_filter: DonationStatus | None = Query(default=None, alias="status"),
-    channel: DonationChannel | None = None,
-    search: str | None = Query(default=None, max_length=120),
-    date_from: dt.date | None = Query(default=None, alias="from"),
-    date_to: dt.date | None = Query(default=None, alias="to"),
+    filters: DonationFilters = Depends(),
     current: CurrentUser = Depends(managers),
 ):
     """Registro de aportes; busca por donante o comprobante."""
-    result = donation_service.list_donations(
-        db,
-        page,
-        status=status_filter,
-        channel=channel,
-        search=search,
-        date_from=date_from,
-        date_to=date_to,
-    )
+    result = donation_service.list_donations(db, page, **filters.values)
+    log_query("Donaciones", filters.described(), result.total)
     return DonationPage.of(result, to_donation_out)
+
+
+@router.get("/export", response_class=Response, responses=EXPORT_RESPONSES)
+def export_donations(
+    db: DbSession,
+    filters: DonationFilters = Depends(),
+    file_format: FileFormat = FORMAT_QUERY,
+    current: CurrentUser = Depends(exporters),
+):
+    """Todos los aportes del filtro de la tabla (no solo la página que se ve)."""
+    donations = exportable(donation_service.list_donations(db, EXPORT_PAGE, **filters.values))
+    report = Report("Donaciones", "donaciones", "DONACIONES", filters.described())
+    return download(db, current, report, [export.detail_sheet(donations)], file_format)
 
 
 @router.get(
@@ -140,6 +187,18 @@ def summary(
     report, donations = donation_service.month_report(db, month)
     if file_format == "json":
         return DonationSummary(**report)
+    if not current.can(EXPORT_PERMISSION):
+        raise Forbidden(f"Tu rol ({current.user.role_name}) no puede descargar reportes.")
+    audit_service.audit(
+        db,
+        current,
+        category="DONACIONES",
+        action="Descarga de reporte",
+        detail=(
+            f"Resumen mensual de donaciones: {len(donations)} filas en "
+            f"{file_format.upper()} (Mes: {report['month']})"
+        ),
+    )
     if file_format == "csv":
         content, media = export.to_csv(report, donations), CSV_MEDIA_TYPE
     else:

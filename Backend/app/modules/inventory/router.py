@@ -1,16 +1,29 @@
 import uuid
-from typing import Literal
 
 from fastapi import APIRouter, Depends, Query, Response, status
 
-from app.core import clock
 from app.core.database import DbSession
 from app.core.pagination import Pagination
-from app.core.spreadsheet import CSV_MEDIA_TYPE, XLSX_MEDIA_TYPE
+from app.core.reports import (
+    EXPORT_PERMISSION,
+    EXPORT_RESPONSES,
+    FORMAT_QUERY,
+    FileFormat,
+    Range,
+    Report,
+    describe,
+    download,
+    log_query,
+)
 from app.modules.auth.dependencies import CurrentUser, require_permission
 from app.modules.inventory import export
 from app.modules.inventory import service as inventory_service
-from app.modules.inventory.models import MOVEMENT_LABELS
+from app.modules.inventory.models import (
+    CATEGORY_LABELS,
+    CONDITION_LABELS,
+    MOVEMENT_LABELS,
+    ORIGIN_LABELS,
+)
 from app.modules.inventory.schemas import (
     InventorySummary,
     ItemCategory,
@@ -30,6 +43,7 @@ from app.modules.users.models import INVENTORY_MANAGE
 router = APIRouter(prefix="/api/v1/inventory", tags=["Inventario"])
 
 managers = require_permission(INVENTORY_MANAGE)
+exporters = require_permission(INVENTORY_MANAGE, EXPORT_PERMISSION)
 
 
 def _movement_out(movement, user_name: str | None) -> MovementOut:
@@ -45,27 +59,53 @@ def _movement_out(movement, user_name: str | None) -> MovementOut:
     )
 
 
+class ItemFilters:
+    """Filtros del inventario: los mismos para el listado y la descarga. El rango de
+    fechas es por fecha de ingreso del material."""
+
+    def __init__(
+        self,
+        period: Range,
+        search: str | None = Query(default=None, max_length=120),
+        origin: ItemOrigin | None = None,
+        category: ItemCategory | None = None,
+        condition: ItemCondition | None = None,
+        include_inactive: bool = Query(default=False, alias="includeInactive"),
+    ):
+        self.values = {
+            "search": search,
+            "origin": origin,
+            "category": category,
+            "condition": condition,
+            "include_inactive": include_inactive,
+            "period": period,
+        }
+        self.period = period
+
+    def described(self) -> dict[str, str]:
+        v = self.values
+        return describe(
+            self.period,
+            {
+                "Búsqueda": v["search"],
+                "Origen": ORIGIN_LABELS.get(v["origin"] or ""),
+                "Categoría": CATEGORY_LABELS.get(v["category"] or ""),
+                "Condición": CONDITION_LABELS.get(v["condition"] or ""),
+                "Incluye dados de baja": "Sí" if v["include_inactive"] else None,
+            },
+        )
+
+
 @router.get("", response_model=ItemPage, response_model_by_alias=True)
 def list_items(
     db: DbSession,
     page: Pagination,
-    search: str | None = Query(default=None, max_length=120),
-    origin: ItemOrigin | None = None,
-    category: ItemCategory | None = None,
-    condition: ItemCondition | None = None,
-    include_inactive: bool = Query(default=False, alias="includeInactive"),
+    filters: ItemFilters = Depends(),
     current: CurrentUser = Depends(managers),
 ):
-    """Materiales por nombre, con filtros de origen, categoría y condición."""
-    result = inventory_service.list_items(
-        db,
-        page,
-        search=search,
-        origin=origin,
-        category=category,
-        condition=condition,
-        include_inactive=include_inactive,
-    )
+    """Materiales por nombre, con filtros de origen, categoría, condición y fechas de ingreso."""
+    result = inventory_service.list_items(db, page, **filters.values)
+    log_query("Inventario", filters.described(), result.total)
     return ItemPage.of(result, to_item_out)
 
 
@@ -75,31 +115,23 @@ def summary(db: DbSession, current: CurrentUser = Depends(managers)):
     return InventorySummary(**inventory_service.summary(db))
 
 
-@router.get(
-    "/export",
-    responses={
-        200: {
-            "content": {CSV_MEDIA_TYPE: {}, XLSX_MEDIA_TYPE: {}},
-            "description": "Archivo CSV o Excel; los bienes de la Alcaldía van aparte",
-        }
-    },
-)
+@router.get("/export", response_class=Response, responses=EXPORT_RESPONSES)
 def export_inventory(
     db: DbSession,
-    file_format: Literal["csv", "xlsx"] = Query(default="xlsx", alias="format"),
-    current: CurrentUser = Depends(managers),
+    filters: ItemFilters = Depends(),
+    file_format: FileFormat = FORMAT_QUERY,
+    current: CurrentUser = Depends(exporters),
 ):
-    """Inventario activo para la rendición de cuentas (Alcaldía) y el resto."""
-    municipal, others = inventory_service.export_items(db)
-    if file_format == "csv":
-        content, media = export.to_csv(municipal, others), CSV_MEDIA_TYPE
-    else:
-        content, media = export.to_xlsx(municipal, others), XLSX_MEDIA_TYPE
-    name = f"inventario-{clock.today():%Y-%m-%d}.{file_format}"
-    return Response(
-        content=content,
-        media_type=media,
-        headers={"Content-Disposition": f'attachment; filename="{name}"'},
+    """Todos los materiales del filtro: la Alcaldía en una hoja y el resto en otra."""
+    municipal, others = inventory_service.export_items(db, **filters.values)
+    report = Report("Inventario", "inventario", "INVENTARIO", filters.described())
+    return download(
+        db,
+        current,
+        report,
+        export.sheets(municipal, others),
+        file_format,
+        counted=len(municipal) + len(others),
     )
 
 

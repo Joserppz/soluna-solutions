@@ -31,6 +31,8 @@ export type PatientUpdate = Schemas['PatientUpdate']
 export type PatientDeactivate = Schemas['PatientDeactivate']
 export type PatientReactivate = Schemas['PatientReactivate']
 export type PatientListQuery = QueryOf<'list_patients_api_v1_patients_get'>
+export type PatientExportQuery =
+  QueryOf<'export_patients_api_v1_patients_export_get'>
 export type PatientCountsQuery =
   QueryOf<'patient_counts_api_v1_patients_summary_get'>
 export type PatientCounts = Schemas['PatientCounts']
@@ -58,6 +60,7 @@ export type UserCreate = Schemas['UserCreate']
 export type UserCreated = Schemas['UserCreated']
 export type UserUpdate = Schemas['UserUpdate']
 export type UserListQuery = QueryOf<'list_users_api_v1_users_get'>
+export type UserExportQuery = QueryOf<'export_users_api_v1_users_export_get'>
 export type PasswordResetOut = Schemas['PasswordResetOut']
 export type UserApprove = Schemas['UserApprove']
 
@@ -74,6 +77,10 @@ export type ScheduleUpdate = Schemas['ScheduleUpdate']
 export type ScheduleCancel = Schemas['ScheduleCancel']
 export type SchedulePage = Schemas['SchedulePage']
 export type ScheduleListQuery = QueryOf<'list_schedules_api_v1_schedules_get'>
+export type ScheduleExportQuery =
+  QueryOf<'export_schedules_api_v1_schedules_export_get'>
+export type AttendanceExportQuery =
+  QueryOf<'export_attendance_api_v1_attendance_export_get'>
 export type PublicSchedule = Schemas['PublicScheduleOut']
 export type PublicScheduleQuery =
   QueryOf<'public_schedules_api_v1_public_schedules_get'>
@@ -94,6 +101,8 @@ export type ItemUpdate = Schemas['ItemUpdate']
 export type ItemPage = Schemas['ItemPage']
 export type ItemDeactivate = Schemas['ItemDeactivate']
 export type ItemListQuery = QueryOf<'list_items_api_v1_inventory_get'>
+export type ItemExportQuery =
+  QueryOf<'export_inventory_api_v1_inventory_export_get'>
 export type MovementIn = Schemas['MovementIn']
 export type MovementOut = Schemas['MovementOut']
 export type InventorySummary = Schemas['InventorySummary']
@@ -105,6 +114,8 @@ export type PublicGoal = Schemas['PublicGoalOut']
 export type DonationOut = Schemas['DonationOut']
 export type DonationPage = Schemas['DonationPage']
 export type DonationListQuery = QueryOf<'list_donations_api_v1_donations_get'>
+export type DonationExportQuery =
+  QueryOf<'export_donations_api_v1_donations_export_get'>
 export type DonationConfirm = Schemas['DonationConfirm']
 export type DonationCancel = Schemas['DonationCancel']
 export type DonationManualIn = Schemas['DonationManualIn']
@@ -136,6 +147,11 @@ export type InquiryOut = Schemas['InquiryOut']
 export type InquiryDetail = Schemas['InquiryDetailOut']
 export type InquiryPage = Schemas['InquiryPage']
 export type InquiryListQuery = QueryOf<'list_inquiries_api_v1_inquiries_get'>
+export type InquiryExportQuery =
+  QueryOf<'export_inquiries_api_v1_inquiries_export_get'>
+export type AlbumListQuery = QueryOf<'list_albums_api_v1_media_albums_get'>
+export type AlbumExportQuery =
+  QueryOf<'export_albums_api_v1_media_albums_export_get'>
 export type InquiryUpdate = Schemas['InquiryUpdate']
 export type InquirySummary = Schemas['InquirySummary']
 export type NoteIn = Schemas['NoteIn']

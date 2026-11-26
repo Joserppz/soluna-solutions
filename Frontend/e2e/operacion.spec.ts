@@ -9,10 +9,11 @@ import { expect, test } from '@playwright/test'
 import {
   ACCOUNTS,
   ADMIN_STATE,
-  FITS,
   adminApi,
+  downloadReport,
   evidence,
   fakeExternalWidgets,
+  FITS,
   fitsWindow,
   login,
 } from './support'
@@ -234,6 +235,8 @@ test('el voluntariado marca asistencia, pero no ve el resumen del mes', async ({
   await page.goto('/equipo/asistencia')
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Asistencia')
   await expect(page.getByText('Descargar resumen mensual')).toHaveCount(0)
+  // Sin «reports:export», el Voluntariado no descarga reportes
+  await expect(page.locator('.export')).toHaveCount(0)
   await expect(
     page.getByText('Las historias clínicas solo las ve el personal clínico.'),
   ).toBeVisible()
@@ -330,11 +333,15 @@ test('inventario: alta, cambio de cantidad con motivo, movimiento, baja y export
     .click()
   await expect(page.getByText(/Dimos de baja/)).toBeVisible()
 
-  // La exportación arranca una descarga de Excel con la Alcaldía aparte
-  const [download] = await Promise.all([
-    page.waitForEvent('download'),
-    page.getByRole('button', { name: 'Exportar Excel' }).click(),
-  ])
+  // Dado de baja ya no aparece con la búsqueda: sin filas, no hay nada que descargar
+  await page.locator('.export__trigger').click()
+  await expect(page.getByText('No hay filas con este filtro.')).toBeVisible()
+  await page.locator('.export__trigger').click()
+
+  // Sin la búsqueda, «Descargar» trae todo el inventario (la Alcaldía aparte)
+  await page.getByLabel('Nombre del material').fill('')
+  await expect(page.locator('tbody tr').first()).toBeVisible()
+  const download = await downloadReport(page, 'Excel')
   expect(download.suggestedFilename()).toMatch(
     /^inventario-\d{4}-\d{2}-\d{2}\.xlsx$/,
   )

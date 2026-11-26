@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from app.core import clock
 from app.core.errors import Conflict, NotFound, ValidationError
 from app.core.pagination import PageParams, PageResult
+from app.core.reports import EXPORT_PAGE, exportable
 from app.modules.audit import service as audit_service
 from app.modules.auth.dependencies import CurrentUser
 from app.modules.inventory import repository as inventory_repository
@@ -219,9 +220,10 @@ def summary(db: Session) -> dict[str, int]:
     return inventory_repository.summary(db)
 
 
-def export_items(db: Session) -> tuple[list[InventoryItem], list[InventoryItem]]:
-    """Materiales activos separados: los de la Alcaldía (rendición de cuentas) y los demás."""
-    items = inventory_repository.all_active(db)
+def export_items(db: Session, **filters) -> tuple[list[InventoryItem], list[InventoryItem]]:
+    """Todos los materiales del filtro del listado, separados: los de la Alcaldía
+    (rendición de cuentas) y los demás."""
+    items = exportable(inventory_repository.list_items(db, EXPORT_PAGE, **filters))
     return (
         [item for item in items if item.origin == "alcaldia"],
         [item for item in items if item.origin != "alcaldia"],

@@ -10,13 +10,16 @@ import { useRoute, useRouter } from 'vue-router'
 
 import { isApiError } from '../../../api/errors'
 import type { AuditArea, AuditPage, AuditSummary } from '../../../api/types'
+import DateRangeFilter from '../../../components/reports/DateRangeFilter.vue'
+import ExportMenu, {
+  type ExportFormat,
+} from '../../../components/reports/ExportMenu.vue'
 import AppAlert from '../../../components/ui/AppAlert.vue'
 import AppButton from '../../../components/ui/AppButton.vue'
 import PageHeader from '../../../components/ui/PageHeader.vue'
 import SkeletonBlock from '../../../components/ui/SkeletonBlock.vue'
 import { useApi } from '../../../composables/useApi'
 import { useFitLayout } from '../../../composables/useFitLayout'
-import { useToast } from '../../../composables/useToast'
 import {
   AUDIT_AREAS,
   DAY_OPTIONS,
@@ -28,8 +31,14 @@ import {
   reviewSentence,
   timeOfDay,
 } from '../../../utils/audit'
-import { saveBlob } from '../../../utils/download'
-import { todayIso } from '../../../utils/format'
+import {
+  isActive,
+  periodLabel,
+  rangeQuery,
+  readRange,
+  writeRange,
+  type DateRangeValue,
+} from '../../../utils/dateRange'
 import { rangeLabel, rowsThatFit } from '../../../utils/pagination'
 import { normalizeSearch } from '../../../utils/patients'
 
@@ -44,7 +53,6 @@ const DEFAULT_DAYS = 7
 const { api } = useApi()
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
 const fit = useFitLayout()
 
 function text(key: string): string {
@@ -66,6 +74,8 @@ const days = ref(
     : DEFAULT_DAYS,
 )
 
+/** Rango propio (?desde=&hasta=); si está, reemplaza a «Últimos N días». */
+const period = ref<DateRangeValue>(readRange(route.query))
 const page = ref<AuditPage | null>(null)
 const loading = ref(true)
 const loadError = ref<string | null>(null)
@@ -73,7 +83,6 @@ const offset = ref(0)
 /** Dónde empezaba cada página anterior, para volver con «Más recientes». */
 const previous = ref<number[]>([])
 const summary = ref<AuditSummary | null>(null)
-const downloading = ref(false)
 
 // En escritorio la página no se desplaza: entran los movimientos que caben
 const listArea = ref<HTMLElement | null>(null)
@@ -109,17 +118,18 @@ const groups = computed(() =>
 const total = computed(() => page.value?.total ?? 0)
 const hasOlder = computed(() => offset.value + shownCount.value < total.value)
 const filtered = computed(() =>
-  Boolean(search.value || area.value || review.value),
+  Boolean(search.value || area.value || review.value || isActive(period.value)),
 )
 
 const emptyMessage = computed(() => {
-  const period =
-    DAY_OPTIONS.find((option) => option.days === days.value)?.label ?? ''
+  const when = isActive(period.value)
+    ? periodLabel(period.value)
+    : (DAY_OPTIONS.find((option) => option.days === days.value)?.label ?? '')
   if (review.value)
-    return `No hubo situaciones para revisar (${period.toLocaleLowerCase('es')}).`
+    return `No hubo situaciones para revisar (${when.toLocaleLowerCase('es')}).`
   if (search.value)
-    return `No hay actividad de «${search.value}» con estos filtros (${period.toLocaleLowerCase('es')}).`
-  return `No hay actividad con estos filtros (${period.toLocaleLowerCase('es')}).`
+    return `No hay actividad de «${search.value}» con estos filtros (${when.toLocaleLowerCase('es')}).`
+  return `No hay actividad con estos filtros (${when.toLocaleLowerCase('es')}).`
 })
 
 /** La semana, por área: las del diseño y el resto juntas en «Otras áreas». */
@@ -143,12 +153,15 @@ const weekMax = computed(() =>
   Math.max(1, ...weekRows.value.main.map((row) => row.count)),
 )
 
+/** Filtros del registro: los mismos para la lista y la descarga. */
 function filters() {
   return {
     search: search.value || undefined,
     area: area.value || undefined,
     review: review.value || undefined,
-    days: days.value,
+    ...(isActive(period.value)
+      ? rangeQuery(period.value)
+      : { days: days.value }),
   }
 }
 
@@ -190,6 +203,7 @@ function syncQuery() {
   if (area.value) query.area = area.value
   if (review.value) query.revisar = '1'
   if (days.value !== DEFAULT_DAYS) query.dias = String(days.value)
+  writeRange(period.value, query)
   void router.replace({ query })
 }
 
@@ -201,7 +215,7 @@ function restart() {
   void load()
 }
 
-watch([search, area, review, days], restart)
+watch([search, area, review, days, period], restart)
 
 let searchTimer: ReturnType<typeof setTimeout> | undefined
 watch(searchInput, (value) => {
@@ -222,6 +236,7 @@ function clearFilters() {
   search.value = ''
   area.value = ''
   review.value = false
+  period.value = { from: '', to: '' }
 }
 
 function older() {
@@ -245,24 +260,14 @@ function showArea(key: AuditArea) {
   area.value = area.value === key ? '' : key
 }
 
-async function download() {
-  downloading.value = true
-  try {
-    const blob = await api.audit.download({ ...filters(), format: 'xlsx' })
-    saveBlob(blob, `registro-de-actividad-${todayIso()}.xlsx`)
-    toast.success('Descargamos el registro. La descarga también quedó anotada.')
-    // La descarga queda en el propio registro
-    void load()
-    void loadSummary()
-  } catch (failure) {
-    toast.error(
-      isApiError(failure)
-        ? failure.message
-        : 'No pudimos descargar el registro. Intenta de nuevo.',
-    )
-  } finally {
-    downloading.value = false
-  }
+function exportLog(format: ExportFormat) {
+  return api.audit.download({ ...filters(), format })
+}
+
+/** La descarga queda en el propio registro: se vuelve a mostrar. */
+function onDownloaded() {
+  void load()
+  void loadSummary()
 }
 
 function measure() {
@@ -309,15 +314,13 @@ onBeforeUnmount(() => {
       subtitle="Lo que pasa en el espacio del equipo, quién lo hizo y cuándo."
     >
       <template #actions>
-        <AppButton
-          variant="secondary"
-          size="lg"
-          :loading="downloading"
-          loading-label="Preparando la descarga…"
-          @click="download"
-        >
-          Descargar registro
-        </AppButton>
+        <ExportMenu
+          :download="exportLog"
+          filename="registro-de-actividad"
+          what="movimientos del registro"
+          :total="loading ? null : total"
+          @downloaded="onDownloaded"
+        />
       </template>
     </PageHeader>
 
@@ -357,7 +360,17 @@ onBeforeUnmount(() => {
             <option :value="true">Solo para revisar</option>
           </select>
           <label class="visually-hidden" for="filtro-dias">Período</label>
-          <select id="filtro-dias" v-model="days" class="select">
+          <select
+            id="filtro-dias"
+            v-model="days"
+            class="select"
+            :disabled="isActive(period)"
+            :title="
+              isActive(period)
+                ? 'Se usan las fechas elegidas. Quítalas para volver a los últimos días.'
+                : undefined
+            "
+          >
             <option
               v-for="option in DAY_OPTIONS"
               :key="option.days"
@@ -366,6 +379,7 @@ onBeforeUnmount(() => {
               {{ option.label }}
             </option>
           </select>
+          <DateRangeFilter v-model="period" label="Fechas del registro" />
         </form>
 
         <AppAlert v-if="loadError" tone="error">
@@ -580,7 +594,7 @@ onBeforeUnmount(() => {
 
 .toolbar {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.4fr) repeat(4, minmax(0, 1fr));
   gap: var(--space-3);
 }
 

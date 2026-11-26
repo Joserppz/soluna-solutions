@@ -159,6 +159,7 @@ export const ALL_PERMISSIONS: SessionOut['permissions'] = [
   'users:manage',
   'roles:manage',
   'audit:read',
+  'reports:export',
 ]
 
 export const ADMIN_SESSION = sessionFor({}, ALL_PERMISSIONS)
