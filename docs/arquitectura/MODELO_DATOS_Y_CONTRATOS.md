@@ -46,8 +46,9 @@ Los permisos **no están escritos en el código** de cada pantalla: viven en las
 | `users:manage` | Equipo, aprobación de cuentas y asignación de roles | ⚠️ | — |
 | `roles:manage` | Cambiar los permisos de los roles | ⚠️ | — |
 | `audit:read` | Consultar el registro de actividad | ⚠️ | — |
+| `reports:export` | Descargar en CSV o Excel el resultado completo de un filtro ([ADR-015](./adr/ADR-015-filtros-por-fecha-y-reportes.md)) | ⚠️ | Coord., Recep. |
 
-«Todos» son Coordinación, Profesional, Recepción y Voluntariado. **Administración** (`admin`, rol del sistema) tiene siempre los 17 permisos.
+«Todos» son Coordinación, Profesional, Recepción y Voluntariado. **Administración** (`admin`, rol del sistema) tiene siempre los 18 permisos.
 
 **Reglas:**
 

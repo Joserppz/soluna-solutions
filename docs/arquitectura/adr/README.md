@@ -18,5 +18,6 @@ Cada ADR documenta una decisión técnica: el contexto, la decisión, las altern
 | [ADR-012](./ADR-012-sesion-en-cookies-y-permisos-en-la-base.md) | Sesión en cookies HttpOnly con CSRF y permisos por rol en la base | Aceptada | RF-01, RF-11, RNF-02, RNF-06 |
 | [ADR-013](./ADR-013-contrato-openapi-y-capa-src-api.md) | Contrato único OpenAPI → TypeScript y capa de datos `src/api/` | Aceptada | RNF-11 |
 | [ADR-014](./ADR-014-despliegue-y-operacion.md) | Despliegue: API en Cloud Run, frontend en Cloudflare Pages, Secret Manager, staging separado y respaldos cifrados | Propuesta | RNF-02, RNF-04, RNF-06, RNF-07, RNF-10, RNF-11 |
+| [ADR-015](./ADR-015-filtros-por-fecha-y-reportes.md) | Filtro por rango de fechas y reportes descargables iguales en todas las pantallas | Aceptada | RF-02 a RF-06, RF-11, RF-12, RF-16, RF-17, RNF-06 |
 
 **Formato:** cada archivo sigue la plantilla *Contexto → Decisión → Alternativas → Consecuencias → Evidencia*. Una decisión nueva o que reemplaza a otra se agrega como un ADR nuevo con el número siguiente; los ADR aceptados no se editan, se marcan como «Reemplazada por ADR-XXX».

@@ -7,13 +7,13 @@ Esta matriz une cada requisito funcional (**RF-01 a RF-17**) y no funcional (**R
 - sus endpoints;
 - las pruebas automáticas que lo verifican.
 
-Refleja el **cierre del Sprint 2**: el Backend completo y los **bloques F1 a F6 del Frontend** (diseño base, sesión real y acceso; afiliados; equipo, permisos y registro de actividad; operación de la sede; donaciones, galería y contenido; sitio público; solicitudes, resumen y retiro del modo demo). Todas las pantallas usan la API: no queda modo demo ([ADR-008](../arquitectura/adr/ADR-008-modo-local-de-respaldo-en-frontend.md), retirada). Los requisitos RF-11 a RF-17 y RNF-06 a RNF-11 están definidos en la [adenda del SRS](../srs/SRS_ADENDA_SPRINT1.md).
+Refleja el **cierre del Sprint 2** y, en el Sprint 3, el plan de mejora de la evaluación (filtro por fechas y reportes en cada pantalla, [sección 1.1](#11-filtro-por-fechas-y-reportes-en-cada-pantalla-sprint-3)): el Backend completo y los **bloques F1 a F6 del Frontend** (diseño base, sesión real y acceso; afiliados; equipo, permisos y registro de actividad; operación de la sede; donaciones, galería y contenido; sitio público; solicitudes, resumen y retiro del modo demo). Todas las pantallas usan la API: no queda modo demo ([ADR-008](../arquitectura/adr/ADR-008-modo-local-de-respaldo-en-frontend.md), retirada). Los requisitos RF-11 a RF-17 y RNF-06 a RNF-11 están definidos en la [adenda del SRS](../srs/SRS_ADENDA_SPRINT1.md).
 
 | Suite | Pruebas | Cobertura | Dónde corre |
 | :--- | ---: | :--- | :--- |
-| Backend (pytest, PostgreSQL real) | **443** en 33 archivos | 98 % de sentencias (mínimo 70 %) | `.github/workflows/ci-backend.yml` |
-| Frontend (Vitest) | **374** en 35 archivos | 92,5 % de líneas (mínimo 70 %) | `.github/workflows/ci-frontend.yml` |
-| Frontend E2E (Playwright, API real de Docker) | **118** recorridos en 15 archivos | — | `npm run e2e` (local, con `docker compose`) |
+| Backend (pytest, PostgreSQL real) | **477** en 34 archivos | 98 % de sentencias (mínimo 70 %) | `.github/workflows/ci-backend.yml` |
+| Frontend (Vitest) | **406** en 37 archivos | 92,9 % de líneas (mínimo 70 %) | `.github/workflows/ci-frontend.yml` |
+| Frontend E2E (Playwright, API real de Docker) | **121** recorridos en 16 archivos | — | `npm run e2e` (local, con `docker compose`) |
 
 **Columnas:**
 
@@ -55,6 +55,22 @@ Refleja el **cierre del Sprint 2**: el Backend completo y los **bloques F1 a F6 
 - `test_donations.py`: conciliación con el extracto, referencia bancaria única (migración 003), meta sin datos de donantes y exportación CSV/Excel.
 - `test_content.py`: borrador y publicación de secciones.
 - `test_inquiries.py`: formulario público, seguimiento e inscripción como afiliado.
+
+### 1.1 Filtro por fechas y reportes en cada pantalla (Sprint 3)
+
+Respuesta a la evaluación de los Sprints 1 y 2 ([ADR-015](../arquitectura/adr/ADR-015-filtros-por-fecha-y-reportes.md), [evidencia](../evidencias/EVIDENCIAS_SPRINT3_REPORTES.md)). Cada listado acepta `from`/`to` (los dos días incluidos, en hora de Bolivia) y tiene su `…/export?format=csv|xlsx` con los mismos filtros. Descargar exige además el permiso `reports:export`.
+
+| Pantalla | Req. | Fecha del filtro | Descarga | Pruebas |
+| :--- | :--- | :--- | :--- | :--- |
+| Afiliados | RF-02 | Registro de la ficha | `GET /patients/export` | `test_reports.py`, `reportes.spec.ts`, E2E `reportes.spec.ts` |
+| Inventario | RF-03 / RF-09 | Ingreso | `GET /inventory/export` (ahora respeta los filtros) | `test_reports.py`, `test_inventory.py`, `inventario.spec.ts`, `reportes.spec.ts`, E2E `operacion.spec.ts` y `reportes.spec.ts` |
+| Actividades | RF-04 | Fecha de la actividad | `GET /schedules/export` | `test_reports.py`, `reportes.spec.ts` |
+| Asistencia | RF-12 | Fecha de la actividad | `GET /attendance/export` | `test_reports.py`, `test_attendance.py`, `asistencia.spec.ts` |
+| Galería | RF-05 | Creación del álbum | `GET /media/albums/export` | `test_reports.py`, `reportes.spec.ts` |
+| Donaciones | RF-06 / RF-14 | Fecha del aporte | `GET /donations/export` | `test_reports.py`, `reportes.spec.ts` |
+| Solicitudes | RF-16 | Día en que llegó | `GET /inquiries/export` | `test_reports.py`, `reportes.spec.ts`, E2E `reportes.spec.ts` |
+| Equipo y permisos | RF-11 | Alta de la cuenta | `GET /users/export` | `test_reports.py` |
+| Registro de actividad | RF-17 | Fecha del movimiento | `GET /audit/export` (sin el corte de 5000) | `test_reports.py`, `test_audit_activity.py`, `registroActividad.spec.ts`, `reportes.spec.ts`, E2E `registro-actividad.spec.ts` |
 
 ## 2. Requisitos no funcionales
 
