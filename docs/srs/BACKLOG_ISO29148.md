@@ -48,12 +48,12 @@ Donde el SRS no fija un atributo, la celda dice «Por confirmar en Jira» en lug
 | RNF-01 | — | La página pública carga en 3 s o menos con 50 usuarios a la vez | Must | Medio | Análisis (estrés, Lighthouse) | Se mide en el despliegue ([matriz, sección 5](../trazabilidad/MATRIZ_RF01_RF17.md#5-comprobaciones-manuales-en-staging)) |
 | RNF-02 | SCRUM-12 | Contraseñas con bcrypt; sesión de 30 min como máximo y 15 min de inactividad; bloqueo tras 5 intentos | Must | Alto | Análisis (revisión de código) | `test_security.py`, `test_sessions.py`, `test_auth_credentials.py` |
 | RNF-03 | — | WCAG 2.1 AA | Should | Medio | Inspección (herramientas de accesibilidad) | E2E `accesibilidad.spec.ts` (sin desplazamiento lateral de 360 a 1920 px, foco y etiquetas) |
-| RNF-04 | — | Disponibilidad del 99,5 % mensual | Must | Bajo | Análisis (monitoreo) | Se mide en Cloud Run ([ADR-014](../arquitectura/adr/ADR-014-despliegue-y-operacion.md)) |
+| RNF-04 | — | Disponibilidad del 99,5 % mensual | Must | Bajo | Análisis (monitoreo) | Monitoreo cada 6 horas ([`disponibilidad.yml`](../../.github/workflows/disponibilidad.yml)); el porcentaje se mide en Cloud Run ([ADR-014](../arquitectura/adr/ADR-014-despliegue-y-operacion.md)) |
 | RNF-05 | — | Cobertura de pruebas del 70 % o más | Could | Medio | Análisis (reporte de cobertura) | CI: Backend 98 %, Frontend 92 % ([evidencia](../evidencias/EVIDENCIAS_CI_Y_COBERTURA_SPRINT1.md)) |
 | RNF-06 | SCRUM-123 | Datos clínicos solo para el personal clínico, con consentimiento firmado y acceso Activo | Must | Alto | Prueba | `test_patient_privacy.py`, `tests/unit/test_reglas_afiliados.py` |
 | RNF-07 | SCRUM-124 | Respaldo automático fuera del servidor, con RPO y RTO medidos | Por confirmar en Jira | — | Prueba | `test_backup.py` |
 | RNF-08 | SCRUM-125 | Chrome, Firefox, Edge y Safari, de 360 a 1920 px | Por confirmar en Jira | — | Inspección | E2E `accesibilidad.spec.ts`, `pantallas-completas.spec.ts` |
-| RNF-09 | SCRUM-126 | Prueba de usabilidad con ASPAR y manual breve | Por confirmar en Jira | — | Demostración | Con personas de ASPAR (fuera del repositorio) |
+| RNF-09 | SCRUM-126 | Prueba de usabilidad con ASPAR y manual breve | Por confirmar en Jira | — | Demostración | [Manual del usuario](../manual/MANUAL_DE_USUARIO.md); la sesión de usabilidad, con personas de ASPAR |
 | RNF-10 | SCRUM-127 | Consumo de Cloudinary controlado, con plan de contingencia | Por confirmar en Jira | — | Análisis | `test_media.py` (tamaños máximos) |
 | RNF-11 | SCRUM-128 | Estándares automáticos y documentación: ESLint, Prettier, Ruff, migraciones y OpenAPI | Should | Bajo | Inspección | CI, `test_openapi.py`, `test_migrations.py` |
 

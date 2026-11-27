@@ -28,6 +28,8 @@ Repositorio oficial de **Soluna Solutions** para el proyecto **ASPAR (Asociació
   - [`docs/srs/SRS_ADENDA_SPRINT1.md`](./docs/srs/SRS_ADENDA_SPRINT1.md): Adenda al SRS con RF-11, RF-17, RNF-06 y RNF-11 y los cambios de RF-01, RNF-02 y RNF-05.
   - [`docs/srs/BACKLOG_ISO29148.md`](./docs/srs/BACKLOG_ISO29148.md): Requisitos con fuente, prioridad MoSCoW, riesgo, estabilidad y verificación (ISO/IEC/IEEE 29148).
   - [`docs/arquitectura/UML_CLASES_Y_SECUENCIAS.md`](./docs/arquitectura/UML_CLASES_Y_SECUENCIAS.md): Diagrama de clases del dominio y diagramas de secuencia.
+  - [`docs/arquitectura/PRINCIPIOS_DE_DISENO.md`](./docs/arquitectura/PRINCIPIOS_DE_DISENO.md): Monolito modular, SOLID y buenas prácticas con ejemplos del código.
+  - [`docs/manual/MANUAL_DE_USUARIO.md`](./docs/manual/MANUAL_DE_USUARIO.md): Manual del espacio del equipo, por pantalla y por rol.
   - `docs/arquitectura/DOCUMENTO_3.pdf` y [`MODELO_DATOS_Y_CONTRATOS.md`](./docs/arquitectura/MODELO_DATOS_Y_CONTRATOS.md): Modelo C4 (C1, C2, C3) y contratos de datos.
   - [`docs/arquitectura/C4_Y_MODELO_ER_ACTUALIZADO.md`](./docs/arquitectura/C4_Y_MODELO_ER_ACTUALIZADO.md) y [`docs/arquitectura/adr/`](./docs/arquitectura/adr/README.md): Diagramas C4 y E-R vigentes y decisiones técnicas (ADR).
   - [`docs/trazabilidad/MATRIZ_RF01_RF17.md`](./docs/trazabilidad/MATRIZ_RF01_RF17.md): Trazabilidad completa RF01–RF17 y RNF01–RNF11.

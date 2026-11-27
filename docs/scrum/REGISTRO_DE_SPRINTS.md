@@ -1,5 +1,7 @@
 # Registro de sprints: objetivo, incremento, aporte y ceremonias
 
+El proyecto se organiza en **3 sprints**, los mismos de la rúbrica: arquitectura y base de datos; UML, Jira y API; frontend e integración. En Jira el Sprint 3 aparece dividido en dos partes porque los sprints cerrados no se pueden unir. Las tareas de la entrega a ASPAR (despliegue en producción, Go/No-Go y defensa) quedan en el backlog, después del Sprint 3.
+
 Este registro resume, por sprint:
 
 - el objetivo y lo que se entregó;
@@ -22,7 +24,7 @@ git shortlog -sne sprint2-final..Sprint3              # Sprint 3
 
 | | |
 | :--- | :--- |
-| **Fechas** | 12/08/2026 al 28/10/2026 (etiqueta `sprint1-final`, `v1.0`) |
+| **Fechas** | Jira: 19/10 al 01/11/2026, cerrado el 28/10 (etiqueta `sprint1-final`, `v1.0`). Antes, desde el 12/08: entrevista, SRS, C4, BPMN y wireframes |
 | **Objetivo** | Arquitectura aprobada (C4, ADR), base de datos con migraciones y el primer incremento de punta a punta: acceso del personal, fichas de afiliados con protección clínica, usuarios con roles y bitácora |
 | **Historias** | RF-01, RNF-02, RF-02, RNF-06, RF-11, RF-17, RNF-11 ([DoD y estado](../calidad/DEFINICION_DE_HECHO_Y_ESTADO_SPRINT1.md)) |
 | **Incremento** | Login con bloqueo por intentos, sesión con expiración, fichas y anamnesis, usuarios y roles, bitácora; CI con cobertura mínima ([evidencias](../evidencias/EVIDENCIAS_SPRINT1.md)) |
@@ -34,7 +36,7 @@ git shortlog -sne sprint2-final..Sprint3              # Sprint 3
 
 | | |
 | :--- | :--- |
-| **Fechas** | 30/10/2026 al 13/11/2026 (etiqueta `sprint2-final`, `v2.0`) |
+| **Fechas** | Jira: 01/11 al 16/11/2026 (etiqueta `sprint2-final`, `v2.0`, del 13/11) |
 | **Objetivo** | API REST completa por módulos de dominio con contrato OpenAPI, y todas las pantallas del equipo y del sitio conectadas a ella |
 | **Historias** | RF-03 a RF-10, RF-12 a RF-16 (alcance en [§4.3 del DoD](../calidad/DEFINICION_DE_HECHO_Y_ESTADO_SPRINT1.md#43-alcance-de-los-sprints-siguientes)) |
 | **Incremento** | Inventario con movimientos, actividades y asistencia, galería en Cloudinary, donaciones sin pasarela con meta pública, solicitudes, contenido del sitio, permisos editables por rol; frontend F1 a F7 ([evidencias F1](../evidencias/EVIDENCIAS_FRONTEND_F1.md) … [F7](../evidencias/EVIDENCIAS_FRONTEND_F7.md)); despliegue en Cloud Run, Supabase y Cloudflare Pages |
@@ -45,9 +47,9 @@ git shortlog -sne sprint2-final..Sprint3              # Sprint 3
 
 | | |
 | :--- | :--- |
-| **Fechas** | Después del cierre del Sprint 2 (13/11/2026); cierra con la etiqueta `v3.0` |
+| **Fechas** | Jira lo registra en dos partes: «Sprint 3 (parte 1) — Frontend: portal y multimedia» (11/11 al 25/11/2026) y «Sprint 3 (parte 2) — Integración, reportes y cierre» (18/11 al 27/11/2026). Cierra con la etiqueta `v3.0` |
 | **Objetivo** | Responder a la evaluación de los Sprints 1 y 2: filtro por fechas y reportes completos en cada pantalla, logging de lo filtrado y lo exportado, y un incremento integrado y probado de punta a punta |
-| **Incremento** | Rango de fechas y «Descargar» en 9 pantallas, Excel y PDF ([ADR-015](../arquitectura/adr/ADR-015-filtros-por-fecha-y-reportes.md), [evidencia](../evidencias/EVIDENCIAS_SPRINT3_REPORTES.md)); calendario propio y menús flotantes; diagramas UML ([paquete UML](../arquitectura/UML_CLASES_Y_SECUENCIAS.md)); pruebas unitarias de reglas de negocio ([`tests/unit`](../../Backend/tests/unit/)); backlog según [ISO 29148](../srs/BACKLOG_ISO29148.md) |
+| **Incremento** | Rango de fechas y «Descargar» en 9 pantallas, Excel y PDF ([ADR-015](../arquitectura/adr/ADR-015-filtros-por-fecha-y-reportes.md), [evidencia](../evidencias/EVIDENCIAS_SPRINT3_REPORTES.md)); calendario propio y menús flotantes; diagramas UML ([paquete UML](../arquitectura/UML_CLASES_Y_SECUENCIAS.md)); pruebas unitarias de reglas de negocio ([`tests/unit`](../../Backend/tests/unit/)); backlog según [ISO 29148](../srs/BACKLOG_ISO29148.md); [manual del usuario](../manual/MANUAL_DE_USUARIO.md); monitoreo de disponibilidad; despliegue en la región de la base |
 | **Commits (hasta ahora)** | José 6 |
 
 ## Ceremonias Scrum
