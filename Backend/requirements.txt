@@ -14,7 +14,7 @@ httpx==0.28.1
 openpyxl==3.1.5
 et-xmlfile==2.0.0
 # Reportes en PDF (fuentes estándar del PDF, sin dependencias del sistema)
-fpdf2==2.8.4
+fpdf2==2.8.9
 pillow==13.0.0
 fonttools==4.69.1
 defusedxml==0.7.1
