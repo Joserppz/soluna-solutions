@@ -220,3 +220,40 @@ Revisión del historial de `Sprint1` (commits desde `main`) contra las subtareas
 | 5 | Las subtareas de verificación no tenían commits | No aparecían en el panel *Development* de Jira | Resuelto: un commit por subtarea (`434e8de` a `fe1def6`) |
 | 6 | Los 17 commits de verificación se subieron **directo a `Sprint1`**, sin PR | Como en la observación 3, esas subtareas no tienen PR enlazado | Se incluyen en el PR de cierre `Sprint1` → `main`; desde el Sprint 2, todo cambio entra por PR (5.3) |
 | 7 | Desde el repositorio no se puede comprobar si Jira muestra los enlaces | — | Revisar en Jira el panel *Development* de 3 subtareas al azar (por ejemplo SCRUM-28, SCRUM-137 y SCRUM-161) |
+
+## 7. Etiquetas de versión
+
+Cada sprint cerrado tiene una etiqueta anotada con versión semántica. `sprintN-final` se conserva por compatibilidad y apunta al mismo commit.
+
+| Versión | Commit | Sprint | Qué incluye |
+| :--- | :--- | :--- | :--- |
+| `v1.0` | `6fe8ee8` (`sprint1-final`, 28/10/2026) | Sprint 1 | Arquitectura, base de datos, acceso seguro, fichas, usuarios y bitácora |
+| `v2.0` | `4c3ce1f` (`sprint2-final`, 13/11/2026) | Sprint 2 | API completa, todas las pantallas conectadas y despliegue |
+| `v3.0` | Cierre de `Sprint3` en `main` | Sprint 3 | Filtros y reportes en Excel y PDF, UML, pruebas unitarias y ajustes de diseño |
+
+Para crearlas (una sola vez, la persona que integra):
+
+```bash
+git fetch origin --tags
+git tag -a v1.0 sprint1-final -m "v1.0 — cierre del Sprint 1: arquitectura, BD y acceso seguro"
+git tag -a v2.0 sprint2-final -m "v2.0 — cierre del Sprint 2: API completa y pantallas integradas"
+git push origin v1.0 v2.0
+
+# Al integrar Sprint3 en main con su Pull Request:
+git checkout main && git pull
+git tag -a v3.0 -m "v3.0 — cierre del Sprint 3: reportes, UML, pruebas unitarias y diseño"
+git push origin v3.0
+```
+
+En GitHub, **Releases → Draft a new release** sobre cada etiqueta permite adjuntar las notas del sprint (el resumen de [docs/scrum/REGISTRO_DE_SPRINTS.md](../scrum/REGISTRO_DE_SPRINTS.md)).
+
+## 8. Una identidad por persona
+
+[`.mailmap`](../../.mailmap) une el nombre de usuario y el nombre real de una misma persona, así `git shortlog -sne` cuenta bien el aporte de cada integrante. Para que no aparezcan identidades nuevas, cada integrante configura una sola vez su nombre y su correo:
+
+```bash
+git config --global user.name "Nombre Apellido"
+git config --global user.email "correo@ucb.edu.bo"
+```
+
+Es el mismo correo que tiene registrado en GitHub.

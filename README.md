@@ -1,7 +1,7 @@
 # Soluna Solutions — Sistema Web y de Gestión para ASPAR
 
-[![Frontend CI](https://github.com/Joserppz/soluna-solutions/actions/workflows/ci-frontend.yml/badge.svg?branch=Sprint1)](https://github.com/Joserppz/soluna-solutions/actions/workflows/ci-frontend.yml)
-[![Backend CI](https://github.com/Joserppz/soluna-solutions/actions/workflows/ci-backend.yml/badge.svg?branch=Sprint1)](https://github.com/Joserppz/soluna-solutions/actions/workflows/ci-backend.yml)
+[![Frontend CI](https://github.com/Joserppz/soluna-solutions/actions/workflows/ci-frontend.yml/badge.svg?branch=Sprint3)](https://github.com/Joserppz/soluna-solutions/actions/workflows/ci-frontend.yml)
+[![Backend CI](https://github.com/Joserppz/soluna-solutions/actions/workflows/ci-backend.yml/badge.svg?branch=Sprint3)](https://github.com/Joserppz/soluna-solutions/actions/workflows/ci-backend.yml)
 
 Repositorio oficial de **Soluna Solutions** para el proyecto **ASPAR (Asociación de Parkinson "Mario Lagrava")**, desarrollado en la materia de Ingeniería de Software — Universidad Católica Boliviana "San Pablo" (La Paz, Bolivia).
 
@@ -11,15 +11,23 @@ Repositorio oficial de **Soluna Solutions** para el proyecto **ASPAR (Asociació
 - **Dayana Gretel Rojas Valencia** — Arquitecta de Software y Desarrolladora Backend
 - **Fabián Mauricio Condorena Lazarte** — Especialista QA y Desarrollador Frontend
 
+## Evaluación
+
+[**Guía de evaluación de los Sprints 1 a 3**](./docs/RUBRICA_SPRINTS_1_A_3.md): cada criterio de la rúbrica con su evidencia y cómo comprobarla en pocos minutos.
+
 ## Arquitectura del Repositorio
 
 - [`Frontend/`](./Frontend/README.md): Aplicación web SPA en Vue 3 + TypeScript + Vite (Portal público y Panel administrativo/clínico). La capa `src/api/` habla con la API con cookies y CSRF, y sus tipos se generan desde el contrato OpenAPI ([ADR-013](./docs/arquitectura/adr/ADR-013-contrato-openapi-y-capa-src-api.md)).
 - [`Backend/`](./Backend/README.md): API RESTful en Python + FastAPI sobre **Supabase PostgreSQL**, organizada por módulos de dominio (`app/modules/<dominio>/` con router, service, repository, schemas y models; [ADR-011](./docs/arquitectura/adr/ADR-011-backend-por-modulos-de-dominio.md)). Incluye sesión en cookies HttpOnly, permisos por rol en la base ([ADR-012](./docs/arquitectura/adr/ADR-012-sesion-en-cookies-y-permisos-en-la-base.md)), afiliados con protección RNF-06, documentos privados y bitácora de auditoría.
+- [`modelos/`](./modelos/): modelos fuente: C4 (`c4/`) y UML (`uml/`, diagramas de clases y de secuencia en Mermaid).
 - [`docs/`](./docs/):
+  - [`docs/RUBRICA_SPRINTS_1_A_3.md`](./docs/RUBRICA_SPRINTS_1_A_3.md): Guía de evaluación con la evidencia de cada criterio.
   - `docs/entrevistas/DOCUMENTO_1.pdf`: Minuta de entrevista y relevamiento AS-IS / TO-BE.
   - `docs/srs/DOCUMENTO_2.pdf`: Especificación de Requisitos de Software (SRS v1.0).
   - [`docs/api/CONTRATO_API_LOGIN_PACIENTES.md`](./docs/api/CONTRATO_API_LOGIN_PACIENTES.md) y [`docs/api/openapi.json`](./docs/api/openapi.json): Contrato API Backend ↔ Frontend y especificación OpenAPI.
   - [`docs/srs/SRS_ADENDA_SPRINT1.md`](./docs/srs/SRS_ADENDA_SPRINT1.md): Adenda al SRS con RF-11, RF-17, RNF-06 y RNF-11 y los cambios de RF-01, RNF-02 y RNF-05.
+  - [`docs/srs/BACKLOG_ISO29148.md`](./docs/srs/BACKLOG_ISO29148.md): Requisitos con fuente, prioridad MoSCoW, riesgo, estabilidad y verificación (ISO/IEC/IEEE 29148).
+  - [`docs/arquitectura/UML_CLASES_Y_SECUENCIAS.md`](./docs/arquitectura/UML_CLASES_Y_SECUENCIAS.md): Diagrama de clases del dominio y diagramas de secuencia.
   - `docs/arquitectura/DOCUMENTO_3.pdf` y [`MODELO_DATOS_Y_CONTRATOS.md`](./docs/arquitectura/MODELO_DATOS_Y_CONTRATOS.md): Modelo C4 (C1, C2, C3) y contratos de datos.
   - [`docs/arquitectura/C4_Y_MODELO_ER_ACTUALIZADO.md`](./docs/arquitectura/C4_Y_MODELO_ER_ACTUALIZADO.md) y [`docs/arquitectura/adr/`](./docs/arquitectura/adr/README.md): Diagramas C4 y E-R vigentes y decisiones técnicas (ADR).
   - [`docs/trazabilidad/MATRIZ_RF01_RF17.md`](./docs/trazabilidad/MATRIZ_RF01_RF17.md): Trazabilidad completa RF01–RF17 y RNF01–RNF11.
@@ -27,7 +35,8 @@ Repositorio oficial de **Soluna Solutions** para el proyecto **ASPAR (Asociació
   - `docs/wireframes/`: Wireframes del portal público y del panel administrativo.
   - `docs/evidencias/`: Capturas, recorrido integrado, evidencias del Backend y de CI/cobertura del Sprint 1.
   - `docs/calidad/`: Informe de verificación, Definición de Hecho (DoD) y estado real del Sprint 1.
-  - `docs/git/`: Convención de ramas, commits y Pull Requests, y trazabilidad con Jira.
+  - `docs/git/`: Convención de ramas, commits y Pull Requests, etiquetas de versión y trazabilidad con Jira.
+  - [`docs/scrum/REGISTRO_DE_SPRINTS.md`](./docs/scrum/REGISTRO_DE_SPRINTS.md): Objetivo, incremento, aporte por integrante y ceremonias de cada sprint.
   - [`docs/despliegue/GUIA_DE_DESPLIEGUE.md`](./docs/despliegue/GUIA_DE_DESPLIEGUE.md): Despliegue en Cloud Run con Secret Manager, staging, servicios externos y respaldos ([ADR-014](./docs/arquitectura/adr/ADR-014-despliegue-y-operacion.md)).
 
 ## Puesta en marcha con Docker (recomendado)
@@ -79,7 +88,7 @@ La guía completa del Backend (variables, migraciones, permisos por rol, pruebas
 | :--- | :--- | :--- |
 | `npm run lint` · `npm run test:coverage` · `npm run build` | `Frontend/` | ESLint, pruebas con cobertura mínima de 70% y tipos TypeScript |
 | `npm run api:types:check` · `npm audit` | `Frontend/` | Tipos de la API iguales al contrato `docs/api/openapi.json`; dependencias sin vulnerabilidades conocidas |
-| `ruff check .` · `ruff format --check .` · `pytest --cov=app` | `Backend/` | Estilo, pruebas unitarias y de API, cobertura mínima de 70% |
+| `ruff check .` · `ruff format --check .` · `pytest --cov=app` | `Backend/` | Estilo, pruebas unitarias (`tests/unit/`, reglas de negocio con dobles) y de API, cobertura mínima de 70% |
 | `pip-audit -r requirements.txt` · `docker build --target runtime Backend` | `Backend/` | Dependencias sin vulnerabilidades conocidas; la imagen de producción se construye, corre sin root y rechaza una configuración insegura |
 
 - Los mismos pasos corren en GitHub Actions en cada push a `Sprint*`, `SCRUM-*` o `main`. El pipeline del Backend corre cuando cambian `Backend/` o `docs/api/openapi.json`; el del Frontend, en cada push (también verifica que `src/api/` coincida con el contrato). Ver [`docs/evidencias/EVIDENCIAS_CI_Y_COBERTURA_SPRINT1.md`](./docs/evidencias/EVIDENCIAS_CI_Y_COBERTURA_SPRINT1.md).
@@ -104,4 +113,4 @@ Paso a paso: [`docs/despliegue/GUIA_DE_DESPLIEGUE.md`](./docs/despliegue/GUIA_DE
 
 ## Flujo de trabajo
 
-Cada subtarea de Jira se trabaja en la rama de su historia o tarea (`SCRUM-XX`), con commits `tipo(SCRUM-XX/SCRUM-YY): descripción`, y se integra por Pull Request hacia la rama del sprint (`Sprint1`). Detalle en [`docs/git/FLUJO_GIT_Y_PULL_REQUESTS.md`](./docs/git/FLUJO_GIT_Y_PULL_REQUESTS.md).
+Cada subtarea de Jira se trabaja en la rama de su historia o tarea (`SCRUM-XX`), con commits `tipo(SCRUM-XX/SCRUM-YY): descripción`, y se integra por Pull Request hacia la rama del sprint (`SprintN`). Detalle en [`docs/git/FLUJO_GIT_Y_PULL_REQUESTS.md`](./docs/git/FLUJO_GIT_Y_PULL_REQUESTS.md).
