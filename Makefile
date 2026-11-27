@@ -6,7 +6,7 @@ COMPOSE := docker compose
 API := $(COMPOSE) exec api
 WEB := $(COMPOSE) exec web
 
-.PHONY: help up down reset-db logs ps migrate migrate-status seed create-admin test test-api test-web \
+.PHONY: help up down reset-db logs ps migrate migrate-status seed create-admin test test-api test-unit test-web \
 	lint lint-api lint-web format openapi psql shell-api
 
 help: ## Muestra esta ayuda
@@ -43,6 +43,9 @@ test: test-api test-web ## Corre todas las pruebas
 
 test-api: ## Pruebas del Backend contra la base aspar_test, con cobertura
 	$(API) pytest -p no:cacheprovider --cov=app --cov-report=term-missing --cov-fail-under=70
+
+test-unit: ## Solo las pruebas unitarias de reglas de negocio (con dobles, sin base)
+	$(API) pytest -p no:cacheprovider tests/unit
 
 test-web: ## Pruebas del Frontend con cobertura
 	$(WEB) npm run test:coverage

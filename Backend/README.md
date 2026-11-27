@@ -218,6 +218,7 @@ pytest
 pytest --cov=app --cov-report=term-missing   # cobertura (mínimo 70%, RNF-05)
 ```
 
+- **Reglas de negocio aisladas (`tests/unit/`)**: confirmar y anular aportes, stock del inventario, toma de asistencia, alta de afiliados y privacidad clínica. Reemplazan la sesión, los repositorios, el registro de actividad y el reloj por dobles (`unittest.mock`), como xUnit con Moq: `pytest tests/unit` (o `make test-unit`), sin base de datos y en menos de un segundo.
 - Sin más configuración, `pytest` ejecuta las **pruebas unitarias** (seguridad, migraciones, mapeos, contrato, adaptador de Storage) y omite las que necesitan base de datos.
 - Las **pruebas de API** necesitan un PostgreSQL **dedicado a pruebas**, porque borran y recrean su esquema `public`: `TEST_DATABASE_URL=postgresql://usuario:clave@localhost:5432/aspar_test pytest`. Por seguridad, las pruebas se niegan a correr si la URL apunta a Supabase. En GitHub Actions se ejecutan siempre (ver `.github/workflows/ci-backend.yml`).
 
@@ -248,7 +249,7 @@ Backend/
 │       └── audit/           #   models.py   tabla ORM y valores de dominio
 ├── migrations/              # SQL versionado (NNN_nombre.sql)
 ├── scripts/                 # migrate, export_openapi, create_admin, seed_demo, backup_db
-├── tests/                   # pytest
+├── tests/                   # pytest (unit/: reglas de negocio con dobles, sin base)
 ├── Dockerfile               # Etapas dev (docker compose) y runtime (Cloud Run)
 ├── pyproject.toml           # Configuración de Ruff y pytest
 ├── requirements.txt         # Dependencias de ejecución
