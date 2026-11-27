@@ -1,6 +1,6 @@
 # Registro de sprints: objetivo, incremento, aporte y ceremonias
 
-El proyecto se organiza en **3 sprints**, los mismos de la rúbrica: arquitectura y base de datos; UML, Jira y API; frontend e integración. En Jira el Sprint 3 aparece dividido en dos partes porque los sprints cerrados no se pueden unir. Las tareas de la entrega a ASPAR (despliegue en producción, Go/No-Go y defensa) quedan en el backlog, después del Sprint 3.
+En Jira el proyecto tiene **4 sprints**: arquitectura y base de datos; UML, Jira y API; frontend del portal y multimedia; integración, reportes y cierre. La rúbrica evalúa 3: su Sprint 3 (frontend e incremento integrado) corresponde a los Sprints 3 y 4 de Jira, que se trabajaron en la rama `Sprint3` y cierran juntos con la etiqueta `v3.0`. Las tareas de la entrega a ASPAR (despliegue en producción, Go/No-Go y defensa) quedan en el backlog.
 
 Este registro resume, por sprint:
 
@@ -15,7 +15,7 @@ Las cifras de commits se obtienen con:
 ```bash
 git shortlog -sne sprint1-final                       # Sprint 1
 git shortlog -sne sprint1-final..sprint2-final        # Sprint 2
-git shortlog -sne sprint2-final..Sprint3              # Sprint 3
+git shortlog -sne sprint2-final..Sprint3              # Sprints 3 y 4 (rama Sprint3)
 ```
 
 [`.mailmap`](../../.mailmap) une las identidades de una misma persona (por ejemplo, el nombre de usuario y el nombre real), así cada integrante se cuenta una sola vez.
@@ -43,14 +43,23 @@ git shortlog -sne sprint2-final..Sprint3              # Sprint 3
 | **Artefactos** | ADR-011 a ADR-014, contrato [`openapi.json`](../api/openapi.json), [matriz de trazabilidad](../trazabilidad/MATRIZ_RF01_RF17.md) |
 | **Commits** | Mauricio 29 · Dayana 24 · José 4 |
 
-## Sprint 3 — Frontend integrado, reportes y plan de mejora
+## Sprint 3 — Frontend: portal y multimedia
 
 | | |
 | :--- | :--- |
-| **Fechas** | Jira lo registra en dos partes: «Sprint 3 (parte 1) — Frontend: portal y multimedia» (11/11 al 25/11/2026) y «Sprint 3 (parte 2) — Integración, reportes y cierre» (18/11 al 27/11/2026). Cierra con la etiqueta `v3.0` |
+| **Fechas** | Jira: 11/11 al 25/11/2026 |
+| **Objetivo** | Frontend del portal público y del espacio del equipo: galería, contenido institucional, redes, contacto, preinscripción y cronograma público, con rendimiento, accesibilidad y pantallas de 360 a 1920 px verificados |
+| **Incremento** | Historias del portal (galería, contenido institucional, redes, contacto, preinscripción y cronograma) cerradas en Jira con accesibilidad y pantallas de 360 a 1920 px verificadas; `main` definida como rama de producción |
+
+## Sprint 4 — Integración, reportes y cierre
+
+| | |
+| :--- | :--- |
+| **Fechas** | Jira: 25/11 al 27/11/2026. Cierra con la etiqueta `v3.0` |
 | **Objetivo** | Responder a la evaluación de los Sprints 1 y 2: filtro por fechas y reportes completos en cada pantalla, logging de lo filtrado y lo exportado, y un incremento integrado y probado de punta a punta |
 | **Incremento** | Rango de fechas y «Descargar» en 9 pantallas, Excel y PDF ([ADR-015](../arquitectura/adr/ADR-015-filtros-por-fecha-y-reportes.md), [evidencia](../evidencias/EVIDENCIAS_SPRINT3_REPORTES.md)); calendario propio y menús flotantes; diagramas UML ([paquete UML](../arquitectura/UML_CLASES_Y_SECUENCIAS.md)); pruebas unitarias de reglas de negocio ([`tests/unit`](../../Backend/tests/unit/)); backlog según [ISO 29148](../srs/BACKLOG_ISO29148.md); [manual del usuario](../manual/MANUAL_DE_USUARIO.md); monitoreo de disponibilidad; despliegue en la región de la base |
-| **Commits** | José 13 |
+
+**Commits de los Sprints 3 y 4** (rama `Sprint3`, desde `sprint2-final`): José 13.
 
 ## Ceremonias Scrum
 

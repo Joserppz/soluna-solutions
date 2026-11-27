@@ -42,6 +42,8 @@ git tag -n                               # versiones v1.0, v2.0, v3.0
 
 ## Sprint 3 — Frontend e incremento integrado (25 pts)
 
+En Jira este sprint de la rúbrica se registra como dos: **Sprint 3** (portal y multimedia) y **Sprint 4** (integración, reportes y cierre). Ver el [registro de sprints](./scrum/REGISTRO_DE_SPRINTS.md).
+
 | Entregable | Criterio de validación | Evidencia |
 | :--- | :--- | :--- |
 | **3.1 Cliente frontend** | UI reactiva que consume endpoints asíncronos con JWT | SPA Vue 3 ([`Frontend/`](../Frontend/README.md)): capa [`src/api/`](../Frontend/src/api/) con `fetch` asíncrono, cookies de sesión, CSRF y renovación del JWT; pantallas reactivas (listas, filtros en la dirección, paneles y modales). Evidencias por pantalla: F1 a F7 en [`docs/evidencias/`](./evidencias/). [Manual del usuario](./manual/MANUAL_DE_USUARIO.md) con capturas actuales |

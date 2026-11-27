@@ -229,7 +229,7 @@ Cada sprint cerrado tiene una etiqueta anotada con versión semántica. `sprintN
 | :--- | :--- | :--- | :--- |
 | `v1.0` | `6fe8ee8` (`sprint1-final`, 28/10/2026) | Sprint 1 | Arquitectura, base de datos, acceso seguro, fichas, usuarios y bitácora |
 | `v2.0` | `4c3ce1f` (`sprint2-final`, 13/11/2026) | Sprint 2 | API completa, todas las pantallas conectadas y despliegue |
-| `v3.0` | Cierre de `Sprint3` en `main` | Sprint 3 | Filtros y reportes en Excel y PDF, UML, pruebas unitarias y ajustes de diseño |
+| `v3.0` | Cierre de `Sprint3` en `main` | Sprints 3 y 4 de Jira | Filtros y reportes en Excel y PDF, UML, pruebas unitarias y ajustes de diseño |
 
 Para crearlas (una sola vez, la persona que integra):
 
