@@ -15,6 +15,8 @@ Repositorio oficial de **Soluna Solutions** para el proyecto **ASPAR (Asociació
 
 [**Guía de evaluación de los Sprints 1 a 3**](./docs/RUBRICA_SPRINTS_1_A_3.md): cada criterio de la rúbrica con su evidencia y cómo comprobarla en pocos minutos.
 
+[**Guion de defensa**](./docs/defensa/GUION_DE_DEFENSA.md): reparto de la presentación, orden de la demostración y preguntas probables con su respuesta.
+
 ## Arquitectura del Repositorio
 
 - [`Frontend/`](./Frontend/README.md): Aplicación web SPA en Vue 3 + TypeScript + Vite (Portal público y Panel administrativo/clínico). La capa `src/api/` habla con la API con cookies y CSRF, y sus tipos se generan desde el contrato OpenAPI ([ADR-013](./docs/arquitectura/adr/ADR-013-contrato-openapi-y-capa-src-api.md)).
