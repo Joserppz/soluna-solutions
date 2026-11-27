@@ -1,0 +1,43 @@
+%% Secuencia 1: registrar un afiliado con consentimiento (RF-02)
+%% Frontend/src/components/patients/RegisterPatientDialog.vue → POST /api/v1/patients
+%% → patients/router.py → patients/service.py:create_patient → repository → audit
+sequenceDiagram
+  autonumber
+  actor R as Recepción
+  participant UI as RegisterPatientDialog (Vue)
+  participant API as src/api (cliente HTTP)
+  participant RT as patients/router.py
+  participant AU as auth/dependencies.py
+  participant SV as patients/service.py
+  participant RP as patients/repository.py
+  participant AD as audit/service.py
+  participant DB as PostgreSQL
+
+  R->>UI: Completa datos, consentimiento y contactos
+  UI->>UI: Valida carnet, teléfono, fechas y 1 a 5 contactos
+  UI->>API: api.patients.create(datos)
+  API->>RT: POST /api/v1/patients (cookie de sesión + CSRF)
+  RT->>AU: require_permission("patients:write")
+  AU->>DB: sesión vigente y permisos del rol
+  DB-->>AU: usuario y permisos
+  alt sin permiso
+    AU-->>API: 403 y queda en el registro de actividad
+  end
+  AU-->>RT: CurrentUser
+  RT->>SV: create_patient(db, datos, usuario)
+  SV->>SV: Recepción no carga datos clínicos (RNF-06)
+  SV->>SV: validate_fields() y new_contacts()
+  SV->>RP: get_by_ci(carnet)
+  RP->>DB: SELECT … WHERE ci = :ci
+  DB-->>RP: sin coincidencia
+  alt carnet repetido
+    SV-->>API: 409 «Ya existe un afiliado registrado con esa Cédula de Identidad»
+  end
+  SV->>RP: add(Patient con contactos)
+  RP->>DB: INSERT patients, patient_contacts
+  SV->>AD: audit("Registro de ficha y anamnesis de afiliado")
+  AD->>DB: INSERT audit_logs
+  RT->>DB: COMMIT (una transacción por petición)
+  RT-->>API: 201 PatientOut
+  API-->>UI: ficha creada
+  UI-->>R: Abre la ficha y avisa «Registramos a …»

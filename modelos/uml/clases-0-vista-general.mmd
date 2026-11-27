@@ -1,0 +1,50 @@
+%% Vista general del dominio: clases y relaciones (detalle de atributos en clases-1, 2 y 3)
+%% Fuente: Backend/app/modules/*/models.py
+classDiagram
+  direction TB
+  namespace Acceso {
+    class User
+    class Role
+    class Permission
+    class UserSession
+    class AuditLog
+  }
+  namespace Afiliados {
+    class Patient
+    class PatientContact
+    class PatientEvaluation
+    class PatientDocument
+    class Inquiry
+    class InquiryNote
+  }
+  namespace Actividades {
+    class Schedule
+    class Attendance
+    class MediaAlbum
+    class MediaAsset
+  }
+  namespace Recursos {
+    class Donation
+    class DonationGoal
+    class DonationGoalMilestone
+    class InventoryItem
+    class InventoryMovement
+  }
+  Role "*" -- "*" Permission
+  User "*" --> "0..1" Role
+  User "1" *-- "*" UserSession
+  Patient "1" *-- "1..5" PatientContact
+  Patient "1" *-- "*" PatientEvaluation
+  Patient "1" *-- "*" PatientDocument
+  Inquiry "1" *-- "*" InquiryNote
+  Inquiry "*" --> "0..1" Patient : se inscribe como
+  Inquiry "*" --> "0..1" Schedule : interés en
+  Schedule "1" -- "*" Attendance
+  Patient "1" -- "*" Attendance
+  MediaAlbum "1" *-- "*" MediaAsset
+  MediaAlbum "*" --> "0..1" Schedule
+  MediaAsset "*" -- "*" Patient : etiquetas
+  DonationGoal "1" *-- "*" DonationGoalMilestone
+  Donation "*" --> "0..1" DonationGoal : suma a
+  Donation "*" --> "0..1" InventoryItem : especie
+  InventoryItem "1" *-- "*" InventoryMovement

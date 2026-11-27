@@ -1,0 +1,87 @@
+%% Donaciones, meta del sitio e inventario
+classDiagram
+  direction LR
+  class Donation {
+    +UUID id
+    +str donor_name
+    +Channel channel
+    +str source
+    +Decimal amount_bs
+    +str in_kind_description
+    +Decimal estimated_value_bs
+    +str purpose
+    +DonationStatus status
+    +str declared_reference
+    +str bank_reference
+    +date credited_on
+    +str cancellation_reason
+    +date date
+  }
+  class DonationGoal {
+    +UUID id
+    +str title
+    +Decimal target_bs
+    +Decimal manual_adjustment_bs
+    +bool visible
+    +date starts_on
+  }
+  class DonationGoalMilestone {
+    +UUID id
+    +str label
+    +str status
+    +int position
+  }
+  class InventoryItem {
+    +UUID id
+    +str code
+    +str name
+    +str category
+    +int quantity
+    +Condition condition
+    +Origin origin
+    +str donor_or_institution
+    +date entry_date
+    +str location
+    +datetime deleted_at
+  }
+  class InventoryMovement {
+    +UUID id
+    +MovementType movement_type
+    +int quantity_delta
+    +str reason
+    +str counterpart
+    +datetime created_at
+  }
+  class Channel {
+    <<enumeration>>
+    qr_bancario
+    efectivo
+    especie
+  }
+  class DonationStatus {
+    <<enumeration>>
+    pendiente
+    confirmado
+    recibido
+    anulado
+  }
+  class Origin {
+    <<enumeration>>
+    propio
+    donado
+    alcaldia
+  }
+  class MovementType {
+    <<enumeration>>
+    ingreso
+    prestamo
+    devolucion
+    baja
+    ajuste
+  }
+  DonationGoal "1" *-- "*" DonationGoalMilestone : hitos
+  Donation "*" --> "0..1" DonationGoal : suma a
+  Donation "*" --> "0..1" InventoryItem : especie ingresa como
+  InventoryItem "1" *-- "*" InventoryMovement : historial
+  note for Donation "bank_reference es única (migración 003):<br>un extracto nunca confirma dos aportes."
+  note for InventoryItem "La cantidad nunca es negativa; todo cambio<br>queda como InventoryMovement. Nada se borra."

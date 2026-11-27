@@ -1,0 +1,127 @@
+%% Afiliados, solicitudes, actividades, asistencia y galería
+classDiagram
+  direction LR
+  class Patient {
+    +UUID id
+    +str name
+    +str ci
+    +date birth_date
+    +str phone
+    +str address
+    +str zone
+    +bool consent
+    +date consent_date
+    +bool image_consent
+    +AccessStatus access_status
+    +str diagnosis
+    +str stage
+    +str symptom_notes
+    +str medications
+    +datetime deleted_at
+    +str deactivation_reason
+  }
+  class PatientContact {
+    +UUID id
+    +str name
+    +str relation
+    +str phone
+    +bool is_primary
+  }
+  class PatientEvaluation {
+    +UUID id
+    +str area
+    +date evaluated_on
+    +str notes
+  }
+  class PatientDocument {
+    +UUID id
+    +str document_type
+    +str file_name
+    +str storage_path
+    +int size_bytes
+  }
+  class Inquiry {
+    +UUID id
+    +str kind
+    +str source
+    +str name
+    +str phone
+    +str zone
+    +str message
+    +InquiryStatus status
+    +bool contact_consent
+  }
+  class InquiryNote {
+    +UUID id
+    +str author_name
+    +str note
+  }
+  class Schedule {
+    +UUID id
+    +str title
+    +str category
+    +date date
+    +time start_time
+    +time end_time
+    +str location
+    +int spots
+    +ScheduleStatus status
+    +datetime attendance_closed_at
+  }
+  class Attendance {
+    +UUID id
+    +AttendanceStatus status
+    +str note
+    +datetime marked_at
+  }
+  class MediaAlbum {
+    +UUID id
+    +str title
+    +str visibility
+    +bool permissions_reviewed
+  }
+  class MediaAsset {
+    +UUID id
+    +str kind
+    +str url
+    +int size_bytes
+  }
+  class AccessStatus {
+    <<enumeration>>
+    Activo
+    Pendiente
+    Revocado
+  }
+  class InquiryStatus {
+    <<enumeration>>
+    recibida
+    por_contactar
+    contactada
+    inscrita
+    cerrada
+  }
+  class ScheduleStatus {
+    <<enumeration>>
+    borrador
+    publicada
+    cancelada
+  }
+  class AttendanceStatus {
+    <<enumeration>>
+    vino
+    no_vino
+    sin_marcar
+  }
+  Patient "1" *-- "1..5" PatientContact : familiares
+  Patient "1" *-- "*" PatientEvaluation : evaluaciones
+  Patient "1" *-- "*" PatientDocument : documentos
+  Inquiry "1" *-- "*" InquiryNote : seguimiento
+  Inquiry "*" --> "0..1" Patient : se inscribe como
+  Inquiry "*" --> "0..1" Schedule : interés en
+  Schedule "1" -- "*" Attendance
+  Patient "1" -- "*" Attendance
+  MediaAlbum "1" *-- "*" MediaAsset : archivos
+  MediaAlbum "*" --> "0..1" Schedule : de la actividad
+  MediaAsset "*" -- "*" Patient : media_patient_tags
+  note for Patient "Datos clínicos solo para el personal clínico,<br>con consentimiento firmado y acceso Activo (RNF-06)."
+  note for Attendance "Una fila por afiliado y actividad (único).<br>Se marca desde el día de la actividad hasta cerrarla."

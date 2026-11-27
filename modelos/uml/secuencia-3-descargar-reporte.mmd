@@ -1,0 +1,38 @@
+%% Secuencia 3: descargar un reporte con el filtro de la pantalla (ADR-015)
+%% Frontend/src/components/reports/ExportMenu.vue → GET /api/v1/patients/export?…&format=pdf
+%% → patients/router.py → core/reports.py:download → core/pdf.py o core/spreadsheet.py
+sequenceDiagram
+  autonumber
+  actor U as Coordinación
+  participant V as PatientsListView (Vue)
+  participant M as ExportMenu (Vue)
+  participant RT as patients/router.py
+  participant AU as auth/dependencies.py
+  participant SV as patients/service.py
+  participant RE as core/reports.py
+  participant AD as audit/service.py
+  participant DB as PostgreSQL
+
+  U->>V: Elige pestaña, búsqueda y «Este año»
+  V->>RT: GET /patients?from=…&to=…&limit=…
+  RT-->>V: página 1 y total (37)
+  U->>M: Descargar → PDF
+  M->>RT: GET /patients/export?group=…&from=…&to=…&format=pdf
+  RT->>AU: patients:read y reports:export
+  alt el rol no descarga
+    AU-->>M: 403 y queda en el registro
+  end
+  RT->>SV: list_patients(mismos filtros, sin paginar)
+  SV->>DB: misma consulta del listado (EXPORT_PAGE)
+  DB-->>SV: 37 filas
+  RT->>RE: exportable(resultado)
+  alt más de 10 000 filas (o más de 2000 en PDF)
+    RE-->>M: 422 «Acota el rango de fechas…»
+  end
+  RT->>RE: download(reporte, hojas, "pdf")
+  RE->>AD: audit("Descarga de reporte", filtro y filas)
+  AD->>DB: INSERT audit_logs
+  RE->>RE: log aspar.reports (pantalla, filtro, filas, formato)
+  RE->>RE: pdf_bytes(): marca, filtro, tabla y «Página N de M»
+  RE-->>M: 200 application/pdf, X-Report-Rows: 37
+  M-->>U: Guarda afiliados-AAAA-MM-DD.pdf y avisa «Descargamos 37 filas»

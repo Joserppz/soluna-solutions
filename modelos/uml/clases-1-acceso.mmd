@@ -1,0 +1,52 @@
+%% Acceso, roles y registro de actividad (users, auth, roles, audit)
+classDiagram
+  direction LR
+  class User {
+    +UUID id
+    +str name
+    +str email
+    +str password_hash
+    +str google_sub
+    +bool email_verified
+    +bool must_change_password
+    +str department
+    +bool active
+    +int failed_login_attempts
+    +datetime locked_until
+    +datetime last_login_at
+    +can(permission) bool
+  }
+  class Role {
+    +UUID id
+    +str key
+    +str name
+    +str description
+    +bool is_system
+  }
+  class Permission {
+    +str key
+    +str description
+    +bool is_sensitive
+  }
+  class UserSession {
+    +UUID id
+    +datetime expires_at
+    +datetime absolute_expires_at
+    +datetime revoked_at
+  }
+  class AuditLog {
+    +UUID id
+    +datetime date
+    +str actor
+    +str actor_role
+    +str category
+    +str severity
+    +str action
+    +str detail
+  }
+  User "*" --> "0..1" Role : tiene
+  Role "*" -- "*" Permission : role_permissions
+  User "1" *-- "*" UserSession : sesiones
+  User <.. AuditLog : actor (correo, sin FK)
+  note for Role "Administración (is_system) tiene todos los permisos.<br>Los demás roles se editan en «Qué puede ver cada rol»."
+  note for AuditLog "Inmutable: no se edita ni se borra (ADR-006)."

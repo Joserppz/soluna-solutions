@@ -1,0 +1,45 @@
+%% Secuencia 2: confirmar un aviso de QR bancario con el extracto (RF-06 / RF-14 / RF-15)
+%% Frontend/src/components/donations/DonationPanel.vue → POST /api/v1/donations/{id}/confirm
+%% → donations/service.py:confirm (índice único de la migración 003)
+sequenceDiagram
+  autonumber
+  actor D as Donante
+  actor C as Coordinación
+  participant SITIO as Sitio público (Vue)
+  participant UI as DonationPanel (Vue)
+  participant RT as donations/router.py
+  participant SV as donations/service.py
+  participant RP as donations/repository.py
+  participant AD as audit/service.py
+  participant DB as PostgreSQL
+
+  D->>SITIO: Paga con el QR y envía el aviso
+  SITIO->>RT: POST /public/donations/notice (Turnstile, límite por IP)
+  RT->>SV: register_notice()
+  SV->>DB: INSERT donations (estado pendiente)
+  C->>UI: Busca el aporte en el extracto y escribe la referencia
+  UI->>RT: POST /donations/{id}/confirm {bankReference, creditedOn}
+  RT->>SV: confirm(db, id, referencia, fecha, usuario)
+  SV->>RP: get_donation(id, lock=True)
+  RP->>DB: SELECT … FOR UPDATE
+  DB-->>SV: donación pendiente
+  alt no es un QR pendiente
+    SV-->>UI: 409 «Solo se confirma un aviso de QR bancario pendiente»
+  else fecha futura
+    SV-->>UI: 422 «La fecha de acreditación no puede ser futura»
+  else referencia ya usada
+    SV->>RP: bank_reference_used(referencia)
+    SV-->>UI: 409 «Esa referencia del extracto ya confirmó otro aporte»
+  end
+  SV->>SV: estado = confirmado, revisó = usuario
+  SV->>RP: visible_goal()
+  SV->>DB: UPDATE donations (flush)
+  alt otra persona confirmó la misma referencia a la vez
+    DB-->>SV: IntegrityError (índice único)
+    SV-->>UI: 409, nunca suma dos veces a la meta
+  end
+  SV->>AD: audit("Confirmación de aporte")
+  RT->>DB: COMMIT
+  RT-->>UI: 200 DonationOut
+  UI-->>C: «Confirmamos el aporte de Bs. … Ya suma a la meta.»
+  Note over SITIO,DB: La meta pública (GET /public/donations/goal) ya muestra el nuevo total

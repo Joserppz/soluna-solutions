@@ -1,0 +1,32 @@
+%% Secuencia 4: tomar asistencia el día de la actividad (RF-12)
+%% Frontend/src/views/team/ops/AttendanceView.vue → PUT /api/v1/schedules/{id}/attendance/{patientId}
+sequenceDiagram
+  autonumber
+  actor VO as Voluntariado
+  participant UI as AttendanceView (Vue)
+  participant RT as attendance/router.py
+  participant SV as attendance/service.py
+  participant RP as attendance/repository.py
+  participant DB as PostgreSQL
+
+  VO->>UI: Abre el día (calendario) y la actividad
+  UI->>RT: GET /schedules/{id}/attendance
+  RT->>SV: sheet()
+  SV->>RP: roster(actividad)
+  RP->>DB: afiliados activos + marcas
+  RT-->>UI: lista y contadores
+  VO->>UI: Toca «Vino» en una persona
+  UI->>RT: PUT /schedules/{id}/attendance/{afiliado} {status: vino}
+  RT->>SV: mark()
+  SV->>SV: _check_open(): publicada, ya es el día y no está cerrada
+  alt borrador, cancelada, futura o cerrada
+    SV-->>UI: 409 con el motivo
+  end
+  SV->>RP: ensure_rows() y lock()
+  SV->>DB: UPDATE attendance (estado, quién y cuándo)
+  RT->>DB: COMMIT
+  RT-->>UI: 200 marca guardada
+  VO->>UI: «Cerrar asistencia del día»
+  UI->>RT: POST /schedules/{id}/attendance/close
+  RT->>SV: close(): cierra y audit("Cierre de asistencia del día")
+  RT-->>UI: 200, la lista queda de solo lectura
