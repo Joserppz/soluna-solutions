@@ -345,12 +345,12 @@ function requestsFor(api: ReturnType<typeof createEndpoints>): Request[] {
     [
       () =>
         api.inventory.export({
-          format: 'csv',
+          format: 'pdf',
           origin: 'donado',
           from: '2026-01-01',
         }),
       'GET',
-      '/inventory/export?format=csv&origin=donado&from=2026-01-01',
+      '/inventory/export?format=pdf&origin=donado&from=2026-01-01',
     ],
     [
       () =>
@@ -363,9 +363,9 @@ function requestsFor(api: ReturnType<typeof createEndpoints>): Request[] {
       '/patients/export?group=active&from=2026-01-01&to=2026-11-30',
     ],
     [
-      () => api.schedules.export({ from: '2026-11-01', format: 'csv' }),
+      () => api.schedules.export({ from: '2026-11-01', format: 'pdf' }),
       'GET',
-      '/schedules/export?from=2026-11-01&format=csv',
+      '/schedules/export?from=2026-11-01&format=pdf',
     ],
     [
       () => api.attendance.export({ from: '2026-11-01', to: '2026-11-30' }),
@@ -593,9 +593,9 @@ function requestsFor(api: ReturnType<typeof createEndpoints>): Request[] {
     ],
     [() => api.audit.summary(), 'GET', '/audit/summary?days=7'],
     [
-      () => api.audit.download({ format: 'csv', area: 'donaciones' }),
+      () => api.audit.download({ format: 'pdf', area: 'donaciones' }),
       'GET',
-      '/audit/export?format=csv&area=donaciones',
+      '/audit/export?format=pdf&area=donaciones',
     ],
   ]
 }
@@ -618,10 +618,10 @@ describe('Endpoints', () => {
       new HttpClient({ baseUrl: BASE, fetch: fetchMock }),
     )
 
-    const file = await api.attendance.downloadMonthly('csv', '2026-10')
+    const file = await api.attendance.downloadMonthly('pdf', '2026-10')
 
     expect(call(fetchMock).url).toBe(
-      `${BASE}/attendance/monthly?month=2026-10&format=csv`,
+      `${BASE}/attendance/monthly?month=2026-10&format=pdf`,
     )
     // En las pruebas el Blob de fetch (Node) y el global (jsdom) son de clases distintas
     expect(file.size).toBe(15)

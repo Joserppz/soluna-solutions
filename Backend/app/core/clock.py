@@ -11,6 +11,28 @@ from app.core.errors import ValidationError
 BOLIVIA = timezone(timedelta(hours=-4), "BOT")
 
 
+MONTHS = (
+    "enero",
+    "febrero",
+    "marzo",
+    "abril",
+    "mayo",
+    "junio",
+    "julio",
+    "agosto",
+    "septiembre",
+    "octubre",
+    "noviembre",
+    "diciembre",
+)
+
+
+def month_title(month: str) -> str:
+    """«2026-11» → «noviembre de 2026»."""
+    year, number = month.split("-")
+    return f"{MONTHS[int(number) - 1]} de {year}"
+
+
 def now() -> datetime:
     return datetime.now(BOLIVIA)
 

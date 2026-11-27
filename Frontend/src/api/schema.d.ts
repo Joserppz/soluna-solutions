@@ -33,7 +33,7 @@ export interface paths {
     }
     /**
      * Monthly Summary
-     * @description Resumen del mes por actividad y por tipo. Con format=csv o xlsx se descarga.
+     * @description Resumen del mes por actividad y por tipo. Con format=xlsx o pdf se descarga.
      */
     get: operations['monthly_summary_api_v1_attendance_monthly_get']
     put?: never
@@ -478,7 +478,7 @@ export interface paths {
      * Summary
      * @description Resumen del mes: confirmado por canal, avisos por confirmar, especie y anulados.
      *
-     *     Con format=csv o xlsx se descarga el resumen y el detalle de cada aporte del mes.
+     *     Con format=xlsx o pdf se descarga el resumen y el detalle de cada aporte del mes.
      */
     get: operations['summary_api_v1_donations_summary_get']
     put?: never
@@ -4543,7 +4543,7 @@ export interface operations {
     parameters: {
       query?: {
         status?: ('vino' | 'no_vino') | null
-        format?: 'csv' | 'xlsx'
+        format?: 'xlsx' | 'pdf'
         /** @description Primer día incluido (AAAA-MM-DD) */
         from?: string | null
         /** @description Último día incluido (AAAA-MM-DD) */
@@ -4555,14 +4555,14 @@ export interface operations {
     }
     requestBody?: never
     responses: {
-      /** @description Archivo CSV o Excel con todas las filas que cumplen el filtro */
+      /** @description Excel o PDF con todas las filas que cumplen el filtro */
       200: {
         headers: {
           [name: string]: unknown
         }
         content: {
+          'application/pdf': unknown
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': unknown
-          'text/csv; charset=utf-8': unknown
         }
       }
       /** @description Validation Error */
@@ -4580,7 +4580,7 @@ export interface operations {
     parameters: {
       query?: {
         month?: string | null
-        format?: 'json' | 'csv' | 'xlsx'
+        format?: 'json' | 'xlsx' | 'pdf'
       }
       header?: never
       path?: never
@@ -4588,15 +4588,15 @@ export interface operations {
     }
     requestBody?: never
     responses: {
-      /** @description JSON, o el archivo CSV / Excel con format=csv o format=xlsx */
+      /** @description JSON, o el archivo Excel / PDF con format=xlsx o format=pdf */
       200: {
         headers: {
           [name: string]: unknown
         }
         content: {
           'application/json': components['schemas']['MonthlySummaryOut']
+          'application/pdf': unknown
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': unknown
-          'text/csv; charset=utf-8': unknown
         }
       }
       /** @description Validation Error */
@@ -4670,7 +4670,7 @@ export interface operations {
   export_audit_api_v1_audit_export_get: {
     parameters: {
       query?: {
-        format?: 'csv' | 'xlsx'
+        format?: 'xlsx' | 'pdf'
         category?: string | null
         severity?: string | null
         actor?: string | null
@@ -4703,14 +4703,14 @@ export interface operations {
     }
     requestBody?: never
     responses: {
-      /** @description Archivo CSV o Excel con todas las filas que cumplen el filtro */
+      /** @description Excel o PDF con todas las filas que cumplen el filtro */
       200: {
         headers: {
           [name: string]: unknown
         }
         content: {
+          'application/pdf': unknown
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': unknown
-          'text/csv; charset=utf-8': unknown
         }
       }
       /** @description Validation Error */
@@ -5324,7 +5324,7 @@ export interface operations {
   export_donations_api_v1_donations_export_get: {
     parameters: {
       query?: {
-        format?: 'csv' | 'xlsx'
+        format?: 'xlsx' | 'pdf'
         status?: ('pendiente' | 'confirmado' | 'recibido' | 'anulado') | null
         channel?: ('qr_bancario' | 'efectivo' | 'especie') | null
         search?: string | null
@@ -5339,14 +5339,14 @@ export interface operations {
     }
     requestBody?: never
     responses: {
-      /** @description Archivo CSV o Excel con todas las filas que cumplen el filtro */
+      /** @description Excel o PDF con todas las filas que cumplen el filtro */
       200: {
         headers: {
           [name: string]: unknown
         }
         content: {
+          'application/pdf': unknown
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': unknown
-          'text/csv; charset=utf-8': unknown
         }
       }
       /** @description Validation Error */
@@ -5417,7 +5417,7 @@ export interface operations {
     parameters: {
       query?: {
         month?: string | null
-        format?: 'json' | 'csv' | 'xlsx'
+        format?: 'json' | 'xlsx' | 'pdf'
       }
       header?: never
       path?: never
@@ -5425,15 +5425,15 @@ export interface operations {
     }
     requestBody?: never
     responses: {
-      /** @description JSON, o el archivo CSV / Excel con format=csv o format=xlsx */
+      /** @description JSON, o el archivo Excel / PDF con format=xlsx o format=pdf */
       200: {
         headers: {
           [name: string]: unknown
         }
         content: {
           'application/json': components['schemas']['DonationSummary']
+          'application/pdf': unknown
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': unknown
-          'text/csv; charset=utf-8': unknown
         }
       }
       /** @description Validation Error */
@@ -5651,7 +5651,7 @@ export interface operations {
   export_inquiries_api_v1_inquiries_export_get: {
     parameters: {
       query?: {
-        format?: 'csv' | 'xlsx'
+        format?: 'xlsx' | 'pdf'
         status?:
           | (
               | 'recibida'
@@ -5683,14 +5683,14 @@ export interface operations {
     }
     requestBody?: never
     responses: {
-      /** @description Archivo CSV o Excel con todas las filas que cumplen el filtro */
+      /** @description Excel o PDF con todas las filas que cumplen el filtro */
       200: {
         headers: {
           [name: string]: unknown
         }
         content: {
+          'application/pdf': unknown
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': unknown
-          'text/csv; charset=utf-8': unknown
         }
       }
       /** @description Validation Error */
@@ -5970,7 +5970,7 @@ export interface operations {
   export_inventory_api_v1_inventory_export_get: {
     parameters: {
       query?: {
-        format?: 'csv' | 'xlsx'
+        format?: 'xlsx' | 'pdf'
         search?: string | null
         origin?: ('propio' | 'donado' | 'alcaldia') | null
         category?:
@@ -5989,14 +5989,14 @@ export interface operations {
     }
     requestBody?: never
     responses: {
-      /** @description Archivo CSV o Excel con todas las filas que cumplen el filtro */
+      /** @description Excel o PDF con todas las filas que cumplen el filtro */
       200: {
         headers: {
           [name: string]: unknown
         }
         content: {
+          'application/pdf': unknown
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': unknown
-          'text/csv; charset=utf-8': unknown
         }
       }
       /** @description Validation Error */
@@ -6269,7 +6269,7 @@ export interface operations {
     parameters: {
       query?: {
         visibility?: ('privado' | 'publico') | null
-        format?: 'csv' | 'xlsx'
+        format?: 'xlsx' | 'pdf'
         /** @description Primer día incluido (AAAA-MM-DD) */
         from?: string | null
         /** @description Último día incluido (AAAA-MM-DD) */
@@ -6281,14 +6281,14 @@ export interface operations {
     }
     requestBody?: never
     responses: {
-      /** @description Archivo CSV o Excel con todas las filas que cumplen el filtro */
+      /** @description Excel o PDF con todas las filas que cumplen el filtro */
       200: {
         headers: {
           [name: string]: unknown
         }
         content: {
+          'application/pdf': unknown
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': unknown
-          'text/csv; charset=utf-8': unknown
         }
       }
       /** @description Validation Error */
@@ -6687,7 +6687,7 @@ export interface operations {
   export_patients_api_v1_patients_export_get: {
     parameters: {
       query?: {
-        format?: 'csv' | 'xlsx'
+        format?: 'xlsx' | 'pdf'
         search?: string | null
         status?: string | null
         includeInactive?: boolean
@@ -6717,14 +6717,14 @@ export interface operations {
     }
     requestBody?: never
     responses: {
-      /** @description Archivo CSV o Excel con todas las filas que cumplen el filtro */
+      /** @description Excel o PDF con todas las filas que cumplen el filtro */
       200: {
         headers: {
           [name: string]: unknown
         }
         content: {
+          'application/pdf': unknown
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': unknown
-          'text/csv; charset=utf-8': unknown
         }
       }
       /** @description Validation Error */
@@ -7770,7 +7770,7 @@ export interface operations {
     parameters: {
       query?: {
         status?: ('borrador' | 'publicada' | 'cancelada') | null
-        format?: 'csv' | 'xlsx'
+        format?: 'xlsx' | 'pdf'
         /** @description Primer día incluido (AAAA-MM-DD) */
         from?: string | null
         /** @description Último día incluido (AAAA-MM-DD) */
@@ -7782,14 +7782,14 @@ export interface operations {
     }
     requestBody?: never
     responses: {
-      /** @description Archivo CSV o Excel con todas las filas que cumplen el filtro */
+      /** @description Excel o PDF con todas las filas que cumplen el filtro */
       200: {
         headers: {
           [name: string]: unknown
         }
         content: {
+          'application/pdf': unknown
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': unknown
-          'text/csv; charset=utf-8': unknown
         }
       }
       /** @description Validation Error */
@@ -8272,7 +8272,7 @@ export interface operations {
         search?: string | null
         /** @description Clave del rol, o «pendiente» para las cuentas que esperan aprobación */
         role?: string | null
-        format?: 'csv' | 'xlsx'
+        format?: 'xlsx' | 'pdf'
         /** @description Primer día incluido (AAAA-MM-DD) */
         from?: string | null
         /** @description Último día incluido (AAAA-MM-DD) */
@@ -8284,14 +8284,14 @@ export interface operations {
     }
     requestBody?: never
     responses: {
-      /** @description Archivo CSV o Excel con todas las filas que cumplen el filtro */
+      /** @description Excel o PDF con todas las filas que cumplen el filtro */
       200: {
         headers: {
           [name: string]: unknown
         }
         content: {
+          'application/pdf': unknown
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': unknown
-          'text/csv; charset=utf-8': unknown
         }
       }
       /** @description Validation Error */

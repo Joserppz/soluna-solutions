@@ -11,10 +11,10 @@ export function exportPanel(): HTMLElement {
   return panel
 }
 
-/** Abre «Descargar» (el primero, o el de `what`) y elige Excel o CSV de la opción `item`. */
+/** Abre «Descargar» (el primero, o el de `what`) y elige Excel o PDF de la opción `item`. */
 export async function downloadAs(
   root: Root,
-  format: 'Excel' | 'CSV',
+  format: 'Excel' | 'PDF',
   what?: string,
   item?: string,
 ) {

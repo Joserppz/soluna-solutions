@@ -72,6 +72,7 @@ export function useFloating(
       top: `${Math.round(top)}px`,
       left: `${Math.round(left)}px`,
       maxHeight: `${Math.round(Math.max(120, room))}px`,
+      overflowX: 'hidden',
       overflowY: 'auto',
       visibility: 'visible',
     }

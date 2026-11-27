@@ -26,7 +26,7 @@ import { todayIso } from '../../utils/format'
 import AppIcon from '../ui/AppIcon.vue'
 import CalendarGrid from '../ui/CalendarGrid.vue'
 
-export type ExportFormat = 'xlsx' | 'csv'
+export type ExportFormat = 'xlsx' | 'pdf'
 
 export interface ExportItem {
   /** «Registro de aportes», «Resumen de noviembre»… */
@@ -275,10 +275,10 @@ async function save(item: ExportItem, index: number, format: ExportFormat) {
               type="button"
               class="export__option"
               :disabled="blocked(item, index)"
-              :aria-label="`Descargar ${item.title.toLowerCase()} en CSV`"
-              @click="save(item, index, 'csv')"
+              :aria-label="`Descargar ${item.title.toLowerCase()} en PDF`"
+              @click="save(item, index, 'pdf')"
             >
-              {{ busy === `${index}-csv` ? 'Preparando…' : 'CSV' }}
+              {{ busy === `${index}-pdf` ? 'Preparando…' : 'PDF' }}
             </button>
           </div>
         </section>

@@ -40,7 +40,7 @@ Antes de este cambio, solo Donaciones, Actividades y el Registro de actividad ac
    | Equipo | Alta de la cuenta |
    | Registro de actividad | Fecha del movimiento |
 
-3. **Cada pantalla tiene `GET …/export?format=csv|xlsx` con los mismos filtros de su listado.**
+3. **Cada pantalla tiene `GET …/export?format=xlsx|pdf` con los mismos filtros de su listado.**
    - La descarga ejecuta **la misma función de consulta** del listado, sin paginar. Así el archivo trae exactamente las filas del filtro: ni solo la página que se ve, ni filas de fuera del filtro.
    - Por encima de 10 000 filas se pide acotar el filtro (422) en vez de cortar.
 4. **Permiso nuevo `reports:export`** (migración 005). Descargar exige el permiso de la pantalla **y** `reports:export`.
@@ -52,7 +52,7 @@ Antes de este cambio, solo Donaciones, Actividades y el Registro de actividad ac
    - cada descarga además queda en el registro de actividad («Descarga de reporte», con pantalla, filas, formato y filtro), porque saca datos del sistema.
 6. **En el front, dos componentes compartidos:**
    - `DateRangeFilter`: un botón compacto con atajos («Este mes», «Últimos 30 días», «Este año»…) y un rango propio, guardado en la dirección como `?desde=&hasta=`;
-   - `ExportMenu`: «Descargar» en Excel o CSV, dice cuántas filas salen y solo aparece para los roles con `reports:export`.
+   - `ExportMenu`: «Descargar» en Excel o PDF, dice cuántas filas salen y solo aparece para los roles con `reports:export`.
 
 ## Alternativas consideradas
 
@@ -69,5 +69,14 @@ Antes de este cambio, solo Donaciones, Actividades y el Registro de actividad ac
 ## Evidencia
 
 - `Backend/tests/test_reports.py`: límites de los rangos, filas exportadas = filtradas en cada pantalla, tope, permisos por rol, fórmulas neutralizadas, y lo que queda en el log y en el registro.
-- `Frontend/src/__test__/reportes.spec.ts` y `Frontend/e2e/reportes.spec.ts`: el CSV de Afiliados trae todas las filas del filtro, no solo la página.
+- `Frontend/src/__test__/reportes.spec.ts` y `Frontend/e2e/reportes.spec.ts`: el Excel y el PDF de Afiliados traen todas las filas del filtro, no solo la página.
 - [Evidencia del plan de mejora](../../evidencias/EVIDENCIAS_SPRINT3_REPORTES.md).
+
+## Actualización (27/11/2026): Excel y PDF en lugar de CSV
+
+El CSV se quitó. Para el equipo de ASPAR era el formato más frágil: según la configuración regional de la computadora se abría en una sola columna o con las tildes rotas, y no tiene formato ni hojas. Ahora cada reporte se descarga en:
+
+- **Excel (`.xlsx`)**, para trabajar los datos (filtrar, sumar, hacer gráficos). Trae todas las columnas.
+- **PDF**, para imprimir o enviar el reporte tal cual (`app/core/pdf.py`, con fpdf2 y las fuentes estándar del PDF, que cubren el español y no dependen de fuentes del servidor). Cada página lleva la marca de ASPAR, el nombre del reporte y «Página N de M»; la primera, el filtro, las filas y quién lo descargó y cuándo. La tabla repite su encabezado en cada página y la hoja va horizontal con siete columnas o más. Los resúmenes del mes (Donaciones y Asistencia) muestran sus cifras en recuadros antes de la tabla.
+
+Un PDF de miles de filas son cientos de páginas que nadie imprime: el PDF admite hasta **2000 filas** (`PDF_LIMIT`); por encima, la API responde 422 y pide acotar el rango o descargar en Excel, que sigue con el tope de 10 000. La migración `006_reportes_en_pdf.sql` solo cambia el texto del permiso `reports:export`.

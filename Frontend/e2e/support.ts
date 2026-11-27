@@ -114,12 +114,12 @@ export async function fitsWindow(page: Page) {
 export const FITS = { pageScrolls: false, sideways: false, inner: [] }
 
 /**
- * «Descargar» (el primero de la pantalla, o el de `scope`) en Excel o CSV; devuelve la
+ * «Descargar» (el primero de la pantalla, o el de `scope`) en Excel o PDF; devuelve la
  * descarga del navegador.
  */
 export async function downloadReport(
   page: Page,
-  format: 'Excel' | 'CSV',
+  format: 'Excel' | 'PDF',
   scope: ReturnType<Page['locator']> = page.locator('.export').first(),
   item?: string,
 ) {

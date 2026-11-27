@@ -1,11 +1,12 @@
-"""Resumen mensual de asistencia en CSV (Excel en español) y en Excel (.xlsx)."""
+"""Resumen mensual de asistencia en Excel (.xlsx) y en PDF."""
 
-import csv
 import io
 
 from openpyxl import Workbook
 from openpyxl.styles import Font
 
+from app.core import clock
+from app.core.pdf import PdfReport, PdfTable, number, pdf_bytes
 from app.core.spreadsheet import safe
 from app.modules.attendance.schemas import MonthlySummaryOut
 
@@ -26,18 +27,39 @@ def _rows(summary: MonthlySummaryOut) -> list[tuple]:
     ]
 
 
-def to_csv(summary: MonthlySummaryOut) -> bytes:
-    """CSV con BOM y punto y coma: Excel en español lo abre con tildes y columnas."""
-    buffer = io.StringIO()
-    writer = csv.writer(buffer, delimiter=";", lineterminator="\r\n")
-    writer.writerow(HEADERS)
-    writer.writerows(_rows(summary))
-    writer.writerow(())
-    writer.writerow(("Personas por tipo de actividad",))
-    for category in summary.by_category:
-        writer.writerow((category.label, category.came))
-    writer.writerow(("Total de asistencias", summary.total_came))
-    return ("﻿" + buffer.getvalue()).encode("utf-8")
+def to_pdf(summary: MonthlySummaryOut, author: str) -> bytes:
+    """Personas por tipo de actividad en recuadros y cada actividad del mes debajo."""
+    title = clock.month_title(summary.month)
+    facts = [("Asistencias del mes", number(summary.total_came))]
+    facts += [(category.label, number(category.came)) for category in summary.by_category]
+    rows = [
+        (
+            activity.date,
+            activity.title,
+            activity.category_label,
+            activity.came,
+            activity.not_came,
+            "Cerrada" if activity.closed else "Abierta",
+        )
+        for activity in summary.activities
+    ]
+    return pdf_bytes(
+        PdfReport(
+            title=f"Resumen de asistencia de {title}",
+            filters=f"Mes: {title}",
+            rows=len(rows),
+            author=author,
+            facts=facts,
+            tables=[
+                PdfTable(
+                    ("Fecha", "Actividad", "Tipo", "Vinieron", "No vinieron", "Asistencia"),
+                    rows,
+                    heading="Actividades del mes",
+                    empty="No hubo actividades este mes.",
+                )
+            ],
+        )
+    )
 
 
 def to_xlsx(summary: MonthlySummaryOut) -> bytes:

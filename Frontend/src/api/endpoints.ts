@@ -159,7 +159,7 @@ export function createEndpoints(http: HttpClient) {
     patients: {
       list: (query: PatientListQuery = {}) =>
         http.get<PatientPage>('/patients', { query }),
-      /** Todas las fichas del filtro del listado, en CSV o Excel. */
+      /** Todas las fichas del filtro del listado, en Excel o PDF. */
       export: (query: PatientExportQuery = {}) =>
         http.get<Blob>('/patients/export', { query, blob: true }),
       /** Contadores de las pestañas y opciones del filtro por actividad. */
@@ -336,11 +336,11 @@ export function createEndpoints(http: HttpClient) {
         ),
       monthly: (month?: string) =>
         http.get<MonthlySummary>('/attendance/monthly', { query: { month } }),
-      /** Cada asistencia marcada en las actividades de un rango (CSV o Excel). */
+      /** Cada asistencia marcada en las actividades de un rango (Excel o PDF). */
       export: (query: AttendanceExportQuery) =>
         http.get<Blob>('/attendance/export', { query, blob: true }),
-      /** Archivo del resumen mensual para descargar (CSV o Excel). */
-      downloadMonthly: (format: 'csv' | 'xlsx', month?: string) =>
+      /** Archivo del resumen mensual para descargar (Excel o PDF). */
+      downloadMonthly: (format: 'xlsx' | 'pdf', month?: string) =>
         http.get<Blob>('/attendance/monthly', {
           query: { month, format },
           blob: true,
@@ -375,7 +375,7 @@ export function createEndpoints(http: HttpClient) {
       summary: (month?: string) =>
         http.get<DonationSummary>('/donations/summary', { query: { month } }),
       /** «Descargar resumen del mes»: resumen y detalle de los aportes. */
-      downloadSummary: (format: 'csv' | 'xlsx', month?: string) =>
+      downloadSummary: (format: 'xlsx' | 'pdf', month?: string) =>
         http.get<Blob>('/donations/summary', {
           query: { month, format },
           blob: true,
@@ -526,7 +526,7 @@ export function createEndpoints(http: HttpClient) {
       /** Movimientos por área y situaciones para revisar de los últimos días. */
       summary: (days = 7) =>
         http.get<AuditSummary>('/audit/summary', { query: { days } }),
-      /** «Descargar registro»: lo filtrado, en CSV o Excel (queda registrado). */
+      /** «Descargar registro»: lo filtrado, en Excel o PDF (queda registrado). */
       download: (query: AuditExportQuery = {}) =>
         http.get<Blob>('/audit/export', { query, blob: true }),
     },

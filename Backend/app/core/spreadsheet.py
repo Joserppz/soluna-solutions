@@ -1,6 +1,5 @@
-"""Exportaciones a CSV (Excel en español) y a Excel (.xlsx) compartidas por los módulos."""
+"""Exportaciones a Excel (.xlsx) compartidas por los módulos."""
 
-import csv
 import io
 from collections.abc import Iterable, Sequence
 
@@ -11,20 +10,11 @@ from openpyxl.styles import Font
 FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
 
 XLSX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-CSV_MEDIA_TYPE = "text/csv; charset=utf-8"
 
 
 def safe(value: str) -> str:
     """Evita la inyección de fórmulas en los textos que escribe una persona."""
     return f"'{value}" if value.startswith(FORMULA_PREFIXES) else value
-
-
-def csv_bytes(rows: Iterable[Sequence]) -> bytes:
-    """CSV con BOM y punto y coma: Excel en español lo abre con tildes y columnas."""
-    buffer = io.StringIO()
-    writer = csv.writer(buffer, delimiter=";", lineterminator="\r\n")
-    writer.writerows(rows)
-    return ("﻿" + buffer.getvalue()).encode("utf-8")
 
 
 def xlsx_bytes(sheets: Sequence[tuple[str, Sequence[str], Iterable[Sequence]]]) -> bytes:

@@ -247,7 +247,9 @@ onMounted(load)
               </div>
             </template>
           </div>
-          <img :src="movementPhoto" alt="" class="today__photo" />
+          <div class="today__media">
+            <img :src="movementPhoto" alt="" class="today__photo" />
+          </div>
         </section>
 
         <!-- Para revisar -->
@@ -546,10 +548,18 @@ onMounted(load)
   margin-top: var(--space-3);
 }
 
+/* La foto llena todo su lado aunque la tarjeta crezca a la altura de «Para revisar»:
+   no queda una franja verde vacía debajo */
+.today__media {
+  position: relative;
+  min-height: 12rem;
+}
+
 .today__photo {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  min-height: 12rem;
   object-fit: cover;
 }
 
@@ -731,7 +741,7 @@ onMounted(load)
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .today__photo {
+  .today__media {
     display: none;
   }
 }
@@ -760,9 +770,8 @@ onMounted(load)
   padding: clamp(var(--space-4), 2.6vh, var(--space-6));
 }
 
-.summary--fit .today__photo {
+.summary--fit .today__media {
   min-height: 0;
-  max-height: 32vh;
 }
 
 .summary--fit .summary__grid {

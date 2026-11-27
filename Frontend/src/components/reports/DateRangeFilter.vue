@@ -144,46 +144,48 @@ function clear() {
         @keydown.esc.stop="close()"
       >
         <p class="range__title">{{ label }}</p>
-        <div class="range__presets">
-          <button
-            v-for="preset in PRESETS"
-            :key="preset.key"
-            type="button"
-            class="range__chip"
-            :aria-pressed="current === preset.key"
-            @click="choose(preset.key)"
-          >
-            {{ preset.label }}
-          </button>
-        </div>
-
-        <div class="range__custom">
-          <p class="range__hint" aria-live="polite">{{ draftText }}</p>
-          <CalendarGrid
-            mode="range"
-            :range="draft"
-            label="Rango propio"
-            @update:range="draft = $event"
-          />
-          <p v-if="error" class="range__error" role="alert">{{ error }}</p>
-          <div class="range__actions">
+        <div class="range__layout">
+          <div class="range__presets" role="group" aria-label="Atajos">
             <button
-              v-if="!required"
+              v-for="preset in PRESETS"
+              :key="preset.key"
               type="button"
-              class="range__link"
-              @click="clear"
+              class="range__chip"
+              :aria-pressed="current === preset.key"
+              @click="choose(preset.key)"
             >
-              {{ emptyLabel }}
-            </button>
-            <button
-              type="button"
-              class="range__apply"
-              :disabled="Boolean(error) || !draft.from"
-              @click="apply"
-            >
-              Aplicar
+              {{ preset.label }}
             </button>
           </div>
+
+          <div class="range__custom">
+            <p class="range__hint" aria-live="polite">{{ draftText }}</p>
+            <CalendarGrid
+              mode="range"
+              :range="draft"
+              label="Rango propio"
+              @update:range="draft = $event"
+            />
+            <p v-if="error" class="range__error" role="alert">{{ error }}</p>
+          </div>
+        </div>
+        <div class="range__actions">
+          <button
+            v-if="!required"
+            type="button"
+            class="range__link"
+            @click="clear"
+          >
+            {{ emptyLabel }}
+          </button>
+          <button
+            type="button"
+            class="range__apply"
+            :disabled="Boolean(error) || !draft.from"
+            @click="apply"
+          >
+            Aplicar
+          </button>
         </div>
       </div>
     </Teleport>
@@ -249,7 +251,7 @@ function clear() {
   z-index: calc(var(--z-sticky) + 5);
   display: grid;
   gap: var(--space-3);
-  width: min(19.5rem, calc(100vw - 1.5rem));
+  width: min(31rem, calc(100vw - 1.5rem));
   padding: var(--space-4);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -263,25 +265,39 @@ function clear() {
   font-weight: 600;
 }
 
+/* Atajos en una columna a la izquierda y el calendario a la derecha: el panel es bajo y
+   entra sin barras de desplazamiento */
+.range__layout {
+  display: grid;
+  grid-template-columns: 9.5rem minmax(0, 1fr);
+  gap: var(--space-4);
+}
+
 .range__presets {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
+  display: grid;
+  align-content: start;
+  gap: var(--space-1);
+  padding-right: var(--space-4);
+  border-right: 1px solid var(--color-border);
 }
 
 .range__chip {
-  min-height: 2rem;
+  min-height: 2.1rem;
   padding: 0 var(--space-3);
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-pill);
-  background: var(--color-surface);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
   color: var(--color-text);
   font: inherit;
   font-size: var(--text-sm);
+  text-align: left;
   cursor: pointer;
 }
 
-.range__chip:hover,
+.range__chip:hover {
+  background: var(--color-surface-sunken, #f3f1ec);
+}
+
 .range__chip[aria-pressed='true'] {
   border-color: var(--aspar-guindo);
   background: var(--rosa-100);
@@ -292,9 +308,8 @@ function clear() {
 .range__custom {
   display: grid;
   justify-items: center;
+  align-content: start;
   gap: var(--space-2);
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--color-border);
 }
 
 .range__hint {
@@ -316,7 +331,29 @@ function clear() {
   justify-content: flex-end;
   align-items: center;
   gap: var(--space-3);
-  width: 100%;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+/* Celular: los atajos arriba, en fila, y el calendario debajo */
+@media (max-width: 560px) {
+  .range__layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-3);
+  }
+
+  .range__presets {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 0 0 var(--space-3);
+    border-right: 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .range__chip {
+    border-color: var(--color-border-strong);
+    border-radius: var(--radius-pill);
+  }
 }
 
 .range__link {

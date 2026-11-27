@@ -223,20 +223,7 @@ def monthly_summary(db: Session, month: str | None) -> MonthlySummaryOut:
     )
 
 
-MONTHS = (
-    "enero",
-    "febrero",
-    "marzo",
-    "abril",
-    "mayo",
-    "junio",
-    "julio",
-    "agosto",
-    "septiembre",
-    "octubre",
-    "noviembre",
-    "diciembre",
-)
+MONTHS = clock.MONTHS
 
 
 def quarter_of(today: dt.date) -> tuple[str, dt.date]:

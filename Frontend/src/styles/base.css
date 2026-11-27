@@ -144,3 +144,18 @@ textarea {
     scroll-behavior: auto !important;
   }
 }
+
+/* Paneles flotantes (fechas, calendario, «Descargar»): sin barras de desplazamiento a la
+   vista. Caben en la ventana; si una ventana muy baja los corta, se desplazan con la rueda
+   o el dedo igual. */
+.range__panel,
+.date-panel,
+.export__panel {
+  scrollbar-width: none;
+}
+
+.range__panel::-webkit-scrollbar,
+.date-panel::-webkit-scrollbar,
+.export__panel::-webkit-scrollbar {
+  display: none;
+}

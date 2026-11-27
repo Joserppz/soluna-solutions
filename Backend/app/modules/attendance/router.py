@@ -48,8 +48,8 @@ readers = require_permission(ATTENDANCE_WRITE, SCHEDULES_MANAGE, any_of=True)
 exporter = require_permission(EXPORT_PERMISSION)
 
 MEDIA_TYPES = {
-    "csv": "text/csv; charset=utf-8",
     "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "pdf": "application/pdf",
 }
 
 
@@ -157,23 +157,27 @@ def add_newcomer(
     responses={
         200: {
             "content": {media: {} for media in MEDIA_TYPES.values()},
-            "description": "JSON, o el archivo CSV / Excel con format=csv o format=xlsx",
+            "description": "JSON, o el archivo Excel / PDF con format=xlsx o format=pdf",
         }
     },
 )
 def monthly_summary(
     db: DbSession,
     month: str | None = Query(default=None, pattern=r"^\d{4}-\d{2}$", examples=["2026-10"]),
-    file_format: Literal["json", "csv", "xlsx"] = Query(default="json", alias="format"),
+    file_format: Literal["json", "xlsx", "pdf"] = Query(default="json", alias="format"),
     current: CurrentUser = Depends(readers),
 ):
-    """Resumen del mes por actividad y por tipo. Con format=csv o xlsx se descarga."""
+    """Resumen del mes por actividad y por tipo. Con format=xlsx o pdf se descarga."""
     summary = attendance_service.monthly_summary(db, month)
     if file_format == "json":
         return summary
     if not current.can(EXPORT_PERMISSION):
         raise Forbidden(f"Tu rol ({current.user.role_name}) no puede descargar reportes.")
-    content = export.to_csv(summary) if file_format == "csv" else export.to_xlsx(summary)
+    content = (
+        export.to_pdf(summary, current.user.name)
+        if file_format == "pdf"
+        else export.to_xlsx(summary)
+    )
     audit_service.audit(
         db,
         current,

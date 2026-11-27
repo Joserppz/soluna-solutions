@@ -7,10 +7,10 @@ Responde al [informe de evaluación de los Sprints 1 y 2](#informe-de-evaluació
 | Hallazgo o plan de mejora | Qué pedía | Qué se hizo |
 | :--- | :--- | :--- |
 | **Búsquedas filtradas** | Filtro por rango de fechas en cada pantalla | Filtro «Fechas» con atajos y rango propio en las 9 pantallas con listados (tabla de abajo) |
-| **Exportaciones** | Reportes completos y exportables desde cada pantalla, no solo la vista actual | «Descargar» en Excel o CSV en las 9 pantallas. Trae todas las filas del filtro, de todas las páginas |
+| **Exportaciones** | Reportes completos y exportables desde cada pantalla, no solo la vista actual | «Descargar» en Excel o PDF en las 9 pantallas. Trae todas las filas del filtro, de todas las páginas |
 | **Mejora de desarrollo** | Filtro por fechas y exportar el resultado completo | `app/core/reports.py` (API) y los componentes `DateRangeFilter` y `ExportMenu` (front), iguales en todas las pantallas |
 | **Logging** | Registrar qué filtros se aplican y cuántas filas se exportan | Log `aspar.reports` con pantalla, filtro y filas en cada consulta filtrada y en cada descarga. Las descargas también quedan en el **registro de actividad** |
-| **Pruebas** | Límites de los rangos de fechas; filas exportadas contra filas filtradas | `test_reports.py` (34 pruebas), `reportes.spec.ts` (Vitest, 18) y `e2e/reportes.spec.ts` (3 recorridos con la API real) |
+| **Pruebas** | Límites de los rangos de fechas; filas exportadas contra filas filtradas | `test_reports.py` (40 pruebas), `reportes.spec.ts` (Vitest, 18) y `e2e/reportes.spec.ts` (3 recorridos con la API real) |
 | **Seguridad** | Exportar según el rol, sin registros fuera del filtro | Permiso nuevo `reports:export` además del permiso de la pantalla. La descarga usa la misma consulta del listado. Afiliados no exporta datos clínicos |
 | **Asignar responsables en el tablero** · **Coordinación interna** | Organización del equipo | Fuera del código: se registra en Jira (ver [Pendiente del equipo](#pendiente-del-equipo)) |
 
@@ -32,8 +32,9 @@ En todas, descargar exige además `reports:export`. Contenido (las 7 secciones d
 
 ## Cómo se ve en cada pantalla
 
-- **Un solo botón «Descargar» por pantalla**, cuadrado y con el ícono, junto a los filtros o al título de la tarjeta. Si la pantalla tiene más de un reporte (Donaciones: resumen del mes y registro; Asistencia: resumen mensual y asistencias marcadas), los dos están en el mismo menú, cada uno con su Excel y su CSV.
+- **Un solo botón «Descargar» por pantalla**, cuadrado y con el ícono, junto a los filtros o al título de la tarjeta. Si la pantalla tiene más de un reporte (Donaciones: resumen del mes y registro; Asistencia: resumen mensual y asistencias marcadas), los dos están en el mismo menú, cada uno con su Excel y su PDF.
 - **Un solo calendario en todo el sistema** (`CalendarGrid`): el filtro de fechas, el rango de «Descargar», el día de Asistencia y cada campo de fecha de los formularios. Semana de lunes a domingo, hoy marcado, mes y año para saltar lejos y los días no permitidos apagados (por ejemplo, fechas futuras en un nacimiento o en una firma).
+- **Excel o PDF.** Excel para trabajar los datos; PDF para imprimir o enviar: marca de ASPAR, filtro, filas, quién lo descargó y cuándo, encabezado de la tabla en cada página y «Página N de M». Hasta 2000 filas en PDF; más, se pide acotar o usar Excel.
 - **Los menús flotan sobre la página** (`useFloating`): se abren debajo del botón o encima si no hay lugar, y ninguna tarjeta los recorta.
 
 ## Reglas comunes
@@ -41,7 +42,7 @@ En todas, descargar exige además `reports:export`. Contenido (las 7 secciones d
 - **Los dos días se incluyen.** Las columnas con hora se cortan en hora de Bolivia: un registro de las 21:30 del último día entra, aunque en UTC ya sea el día siguiente.
 - **«Desde» posterior a «hasta»:** la API responde 422 y el filtro del front no deja aplicarlo.
 - **Filas exportadas = filas filtradas.** La descarga ejecuta la misma función de consulta del listado, sin paginar, con los mismos filtros (pestaña, búsqueda, estado, fechas…).
-- **Tope de 10 000 filas:** por encima se pide acotar el rango o los filtros; nunca se corta en silencio.
+- **Tope de 10 000 filas (2000 en PDF):** por encima se pide acotar el rango o los filtros (o usar Excel); nunca se corta en silencio.
 - **Fórmulas neutralizadas:** un texto que empieza con `=`, `+`, `-` o `@` sale con un apóstrofo y no se ejecuta en Excel.
 - **El rango queda en la dirección** (`?desde=&hasta=`): recargar o volver atrás lo conserva.
 
@@ -65,7 +66,7 @@ Administración puede cambiar el permiso de cada rol en **Equipo y permisos → 
 {"message": "Consulta filtrada de Donaciones", "report_screen": "Donaciones",
  "report_filters": {"Estado": "Confirmado"}, "report_rows": 12}
 {"message": "Descarga de Donaciones", "report_screen": "Donaciones",
- "report_filters": {"Estado": "Confirmado"}, "report_rows": 12, "report_format": "csv"}
+ "report_filters": {"Estado": "Confirmado"}, "report_rows": 12, "report_format": "pdf"}
 ```
 
 Un listado sin filtros no escribe nada.
@@ -78,10 +79,10 @@ Un listado sin filtros no escribe nada.
 
 | Suite | Qué prueba |
 | :--- | :--- |
-| `Backend/tests/test_reports.py` (34) | Etiquetas y bordes del rango; 422 si «desde» > «hasta» en 6 listados; extremos incluidos en columnas de fecha (ingreso) y de fecha con hora (registro, a las 00:00, 21:30 y 23:59 de Bolivia); solo desde o solo hasta; **filas exportadas = total del listado** en 9 combinaciones de pantalla, rol y filtro, más Galería y Asistencia; la página no limita la descarga; nada de fuera del filtro; Excel con la misma cantidad; tope de 10 000; fórmulas; 7 combinaciones de rol sin permiso → 403; permiso visible en la matriz de roles; sin datos clínicos; registro y log con filtro y filas |
+| `Backend/tests/test_reports.py` (40) | Etiquetas y bordes del rango; 422 si «desde» > «hasta» en 6 listados; extremos incluidos en columnas de fecha (ingreso) y de fecha con hora (registro, a las 00:00, 21:30 y 23:59 de Bolivia); solo desde o solo hasta; **filas exportadas = total del listado** en 9 combinaciones de pantalla, rol y filtro, más Galería y Asistencia; la página no limita la descarga; nada de fuera del filtro; Excel con la misma cantidad; tope de 10 000; **PDF**: mismas filas que el listado, marca, filtro, «Página N de M», encabezado repetido, tope de 2000 y registro como PDF; CSV ya no se acepta; fórmulas; 7 combinaciones de rol sin permiso → 403; permiso visible en la matriz de roles; sin datos clínicos; registro y log con filtro y filas |
 | `Frontend/src/__test__/reportes.spec.ts` (18) | Atajos, etiquetas, errores y dirección del rango; el componente de fechas (atajo, rango al revés, quitar, Esc); en Afiliados las fechas van a la tabla, a las pestañas y a la dirección, y la descarga lleva todo el filtro sin `limit`; un rol sin permiso no ve «Descargar»; error de tope; Inventario, Solicitudes, Donaciones (mes o rango propio), Galería, Actividades y Registro |
 | `Frontend/src/__test__/calendario.spec.ts` (7) | El calendario propio: semana de lunes a domingo, hoy marcado, días fuera de mínimo y máximo apagados, teclado (flechas, Re Pág, Fin), días con actividad marcados; el campo de fecha (elegir, «Hoy», «Borrar», formato largo, Esc, deshabilitado) |
-| `Frontend/e2e/reportes.spec.ts` (3) | Con la API real: el CSV de Afiliados de «Este año» tiene tantas filas como el total del filtro, aunque la tabla muestre una página; un rango sin datos no deja descargar; la descarga de Inventario queda en el registro con su filtro y sus filas |
+| `Frontend/e2e/reportes.spec.ts` (3) | Con la API real: el Excel y el PDF de Afiliados de «Este año» traen tantas filas como el total del filtro, aunque la tabla muestre una página; un rango sin datos no deja descargar; la descarga de Inventario queda en el registro con su filtro y sus filas |
 
 ## Pendiente del equipo
 

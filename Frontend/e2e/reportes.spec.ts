@@ -3,8 +3,6 @@
  * Sprints 1 y 2): el archivo trae exactamente las filas del filtro que muestra la
  * pantalla, no solo la página que se ve.
  */
-import { readFile } from 'node:fs/promises'
-
 import { expect, test, type Page } from '@playwright/test'
 
 import { ADMIN_STATE, downloadReport } from './support'
@@ -20,14 +18,6 @@ async function totalShown(page: Page): Promise<number> {
   return Number(text!.match(/de (\d+)$/)![1])
 }
 
-async function csvRows(download: Awaited<ReturnType<typeof downloadReport>>) {
-  const content = await readFile((await download.path())!, 'utf-8')
-  return content
-    .replace(/^\uFEFF/, '')
-    .split('\r\n')
-    .filter((line) => line.trim())
-}
-
 /** Elige un atajo y espera a que la lista llegue con esas fechas (no la de antes). */
 async function choosePreset(page: Page, label: string) {
   await page.locator('.range__trigger').first().click()
@@ -41,7 +31,7 @@ async function choosePreset(page: Page, label: string) {
   await expect(page.locator('.range__trigger').first()).toContainText(label)
 }
 
-test('Afiliados: el CSV trae todas las fichas del filtro (todas las páginas)', async ({
+test('Afiliados: el Excel y el PDF traen todas las fichas del filtro (todas las páginas)', async ({
   page,
 }) => {
   await page.goto('/equipo/afiliados')
@@ -51,12 +41,20 @@ test('Afiliados: el CSV trae todas las fichas del filtro (todas las páginas)', 
   const visible = await page.locator('tbody tr').count()
   expect(visible).toBeLessThan(total)
 
-  const download = await downloadReport(page, 'CSV')
-
-  expect(download.suggestedFilename()).toMatch(/^afiliados-.*\.csv$/)
-  const rows = await csvRows(download)
-  expect(rows[0]).toContain('Nombre;Carnet')
-  expect(rows.length - 1).toBe(total)
+  for (const [format, extension] of [
+    ['Excel', 'xlsx'],
+    ['PDF', 'pdf'],
+  ] as const) {
+    // La API dice cuántas filas puso en el archivo (X-Report-Rows)
+    const [response, download] = await Promise.all([
+      page.waitForResponse((r) => r.url().includes('/patients/export')),
+      downloadReport(page, format),
+    ])
+    expect(download.suggestedFilename()).toMatch(
+      new RegExp(`^afiliados-\\d{4}-\\d{2}-\\d{2}\\.${extension}$`),
+    )
+    expect(response.headers()['x-report-rows']).toBe(String(total))
+  }
 })
 
 test('Solicitudes: un rango sin solicitudes deja la bandeja vacía y no descarga', async ({

@@ -4,11 +4,12 @@ from typing import Literal
 from fastapi import APIRouter, Depends, Query, Request, Response, status
 
 from app.adapters.turnstile import TurnstileVerifier, get_turnstile
-from app.core import rate_limit
+from app.core import clock, rate_limit
 from app.core.database import DbSession
 from app.core.errors import Forbidden, NotFound
 from app.core.network import client_ip
 from app.core.pagination import Pagination
+from app.core.pdf import PDF_MEDIA_TYPE
 from app.core.reports import (
     EXPORT_PAGE,
     EXPORT_PERMISSION,
@@ -22,7 +23,7 @@ from app.core.reports import (
     exportable,
     log_query,
 )
-from app.core.spreadsheet import CSV_MEDIA_TYPE, XLSX_MEDIA_TYPE
+from app.core.spreadsheet import XLSX_MEDIA_TYPE
 from app.modules.audit import service as audit_service
 from app.modules.auth.dependencies import CurrentUser, require_permission
 from app.modules.auth.service import require_human
@@ -169,20 +170,20 @@ def export_donations(
     response_model_by_alias=True,
     responses={
         200: {
-            "content": {CSV_MEDIA_TYPE: {}, XLSX_MEDIA_TYPE: {}},
-            "description": "JSON, o el archivo CSV / Excel con format=csv o format=xlsx",
+            "content": {XLSX_MEDIA_TYPE: {}, PDF_MEDIA_TYPE: {}},
+            "description": "JSON, o el archivo Excel / PDF con format=xlsx o format=pdf",
         }
     },
 )
 def summary(
     db: DbSession,
     month: str | None = Query(default=None, pattern=r"^\d{4}-\d{2}$", examples=["2026-10"]),
-    file_format: Literal["json", "csv", "xlsx"] = Query(default="json", alias="format"),
+    file_format: Literal["json", "xlsx", "pdf"] = Query(default="json", alias="format"),
     current: CurrentUser = Depends(managers),
 ):
     """Resumen del mes: confirmado por canal, avisos por confirmar, especie y anulados.
 
-    Con format=csv o xlsx se descarga el resumen y el detalle de cada aporte del mes.
+    Con format=xlsx o pdf se descarga el resumen y el detalle de cada aporte del mes.
     """
     report, donations = donation_service.month_report(db, month)
     if file_format == "json":
@@ -199,8 +200,10 @@ def summary(
             f"{file_format.upper()} (Mes: {report['month']})"
         ),
     )
-    if file_format == "csv":
-        content, media = export.to_csv(report, donations), CSV_MEDIA_TYPE
+    if file_format == "pdf":
+        title = clock.month_title(report["month"])
+        content = export.to_pdf(report, donations, title, current.user.name)
+        media = PDF_MEDIA_TYPE
     else:
         content, media = export.to_xlsx(report, donations), XLSX_MEDIA_TYPE
     name = f"donaciones-{report['month']}.{file_format}"

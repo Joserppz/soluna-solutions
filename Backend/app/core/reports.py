@@ -25,7 +25,8 @@ from sqlalchemy.sql.elements import ColumnElement
 from app.core import clock
 from app.core.errors import ValidationError
 from app.core.pagination import PageParams, PageResult
-from app.core.spreadsheet import CSV_MEDIA_TYPE, XLSX_MEDIA_TYPE, csv_bytes, safe, xlsx_bytes
+from app.core.pdf import PDF_MEDIA_TYPE, PdfReport, PdfTable, pdf_bytes
+from app.core.spreadsheet import XLSX_MEDIA_TYPE, safe, xlsx_bytes
 
 logger = logging.getLogger("aspar.reports")
 
@@ -33,8 +34,10 @@ EXPORT_PERMISSION = "reports:export"
 # Una descarga nunca se corta en silencio: por encima de este tope se pide acotar el filtro
 EXPORT_LIMIT = 10_000
 EXPORT_PAGE = PageParams(limit=EXPORT_LIMIT + 1, offset=0)
+# Un PDF de miles de filas son cientos de páginas que nadie imprime: ahí va Excel
+PDF_LIMIT = 2_000
 
-FileFormat = Literal["csv", "xlsx"]
+FileFormat = Literal["xlsx", "pdf"]
 
 
 @dataclass(frozen=True)
@@ -113,7 +116,7 @@ class Sheet:
     title: str  # nombre de la hoja de Excel (hasta 31 caracteres)
     headers: Sequence[str]
     rows: list[Sequence[Any]] = field(default_factory=list)
-    heading: str | None = None  # título del bloque en el CSV (por defecto, el de la hoja)
+    heading: str | None = None  # subtítulo de la tabla en el PDF (por defecto, el de la hoja)
 
 
 @dataclass
@@ -174,16 +177,32 @@ def _cell(value: object) -> object:
     return value
 
 
-def _csv(sheets: Sequence[Sheet]) -> bytes:
-    rows: list[Sequence[object]] = []
-    for index, sheet in enumerate(sheets):
-        if len(sheets) > 1:
-            if index:
-                rows.append([])
-            rows.append([sheet.heading or sheet.title])
-        rows.append(list(sheet.headers))
-        rows.extend([_cell(value) for value in row] for row in sheet.rows)
-    return csv_bytes(rows)
+def check_pdf_size(rows: int) -> None:
+    """Un PDF se lee o se imprime: con demasiadas filas se pide acotar o usar Excel."""
+    if rows > PDF_LIMIT:
+        raise ValidationError(
+            f"El filtro tiene {rows} filas y un PDF admite hasta {PDF_LIMIT}. "
+            "Acota el rango de fechas o descárgalo en Excel."
+        )
+
+
+def _pdf(report: Report, sheets: Sequence[Sheet], rows: int, current) -> bytes:
+    return pdf_bytes(
+        PdfReport(
+            title=report.screen,
+            filters=filters_text(report.filters),
+            rows=rows,
+            author=getattr(getattr(current, "user", None), "name", None),
+            tables=[
+                PdfTable(
+                    sheet.headers,
+                    sheet.rows,
+                    heading=(sheet.heading or sheet.title) if len(sheets) > 1 else None,
+                )
+                for sheet in sheets
+            ],
+        )
+    )
 
 
 def _xlsx(sheets: Sequence[Sheet]) -> bytes:
@@ -211,6 +230,8 @@ def download(
     from app.modules.audit import service as audit_service
 
     rows = len(sheets[0].rows) if counted is None else counted
+    if file_format == "pdf":
+        check_pdf_size(sum(len(sheet.rows) for sheet in sheets))
     text = filters_text(report.filters)
     audit_service.audit(
         db,
@@ -229,11 +250,11 @@ def download(
             "report_format": file_format,
         },
     )
-    content = _csv(sheets) if file_format == "csv" else _xlsx(sheets)
+    content = _pdf(report, sheets, rows, current) if file_format == "pdf" else _xlsx(sheets)
     name = f"{report.filename}-{clock.today():%Y-%m-%d}.{file_format}"
     return Response(
         content=content,
-        media_type=CSV_MEDIA_TYPE if file_format == "csv" else XLSX_MEDIA_TYPE,
+        media_type=PDF_MEDIA_TYPE if file_format == "pdf" else XLSX_MEDIA_TYPE,
         headers={
             "Content-Disposition": f'attachment; filename="{name}"',
             "X-Report-Rows": str(rows),
@@ -249,8 +270,8 @@ def rows_of(items: Iterable, convert: Callable[[Any], Sequence[Any]]) -> list[Se
 # Documentación OpenAPI común de las descargas
 EXPORT_RESPONSES = {
     200: {
-        "content": {CSV_MEDIA_TYPE: {}, XLSX_MEDIA_TYPE: {}},
-        "description": "Archivo CSV o Excel con todas las filas que cumplen el filtro",
+        "content": {XLSX_MEDIA_TYPE: {}, PDF_MEDIA_TYPE: {}},
+        "description": "Excel o PDF con todas las filas que cumplen el filtro",
     }
 }
 FORMAT_QUERY = Query(default="xlsx", alias="format")

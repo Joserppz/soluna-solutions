@@ -221,12 +221,6 @@ function exportSchedules(format: ExportFormat, range?: DateRangeValue) {
       subtitle="Prepara la agenda y decide qué encuentros se ven en el sitio."
     >
       <template #actions>
-        <ExportMenu
-          :download="exportSchedules"
-          :range="monthBounds(month)"
-          filename="actividades"
-          what="actividades"
-        />
         <AppButton v-if="canEdit" size="lg" @click="startNew"
           >+ Nueva actividad</AppButton
         >
@@ -257,23 +251,32 @@ function exportSchedules(format: ExportFormat, range?: DateRangeValue) {
               ›
             </button>
           </div>
-          <div class="toggle" role="group" aria-label="Vista de la agenda">
-            <button
-              type="button"
-              :aria-pressed="view === 'lista'"
-              :class="{ 'is-on': view === 'lista' }"
-              @click="view = 'lista'"
-            >
-              Lista
-            </button>
-            <button
-              type="button"
-              :aria-pressed="view === 'mes'"
-              :class="{ 'is-on': view === 'mes' }"
-              @click="view = 'mes'"
-            >
-              Mes
-            </button>
+          <div class="card__tools">
+            <div class="toggle" role="group" aria-label="Vista de la agenda">
+              <button
+                type="button"
+                :aria-pressed="view === 'lista'"
+                :class="{ 'is-on': view === 'lista' }"
+                @click="view = 'lista'"
+              >
+                Lista
+              </button>
+              <button
+                type="button"
+                :aria-pressed="view === 'mes'"
+                :class="{ 'is-on': view === 'mes' }"
+                @click="view = 'mes'"
+              >
+                Mes
+              </button>
+            </div>
+            <ExportMenu
+              :download="exportSchedules"
+              :range="monthBounds(month)"
+              filename="actividades"
+              what="actividades"
+              size="sm"
+            />
           </div>
         </header>
 
@@ -446,6 +449,13 @@ function exportSchedules(format: ExportFormat, range?: DateRangeValue) {
 </template>
 
 <style scoped>
+/* Lista / Mes y «Descargar» juntos, a la derecha del mes */
+.card__tools {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 .ops {
   display: grid;
   gap: var(--space-6);

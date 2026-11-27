@@ -257,7 +257,7 @@ describe('Inventario', () => {
     vi.useRealTimers()
   })
 
-  it('descarga en CSV o Excel lo que muestra el filtro de la tabla', async () => {
+  it('descarga en PDF o Excel lo que muestra el filtro de la tabla', async () => {
     const createObjectURL = vi.fn(() => 'blob:inventario')
     vi.stubGlobal(
       'URL',
@@ -266,7 +266,7 @@ describe('Inventario', () => {
     const click = vi
       .spyOn(HTMLAnchorElement.prototype, 'click')
       .mockImplementation(function (this: HTMLAnchorElement) {
-        expect(this.download).toMatch(/^inventario-\d{4}-\d{2}-\d{2}\.csv$/)
+        expect(this.download).toMatch(/^inventario-\d{4}-\d{2}-\d{2}\.pdf$/)
       })
     const fake = fakeApi()
     fake.on('GET /inventory/export', { body: 'contenido' })
@@ -274,11 +274,11 @@ describe('Inventario', () => {
 
     await wrapper.get('#filtro-origen').setValue('donado')
     await settle()
-    await downloadAs(wrapper, 'CSV')
+    await downloadAs(wrapper, 'PDF')
 
     // La descarga lleva los mismos filtros de la tabla
     expect(lastQuery(fake, 'GET /inventory/export')).toEqual({
-      format: 'csv',
+      format: 'pdf',
       origin: 'donado',
     })
     expect(click).toHaveBeenCalledTimes(1)

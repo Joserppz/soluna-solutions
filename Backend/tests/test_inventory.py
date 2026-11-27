@@ -1,6 +1,5 @@
 """Inventario SRS v2.0 (diseño pág. 11): materiales, movimientos, bajas y exportación."""
 
-import csv
 import io
 
 import pytest
@@ -8,7 +7,7 @@ from openpyxl import load_workbook
 from sqlalchemy import select
 
 from app.models import AuditLog, InventoryMovement
-from tests.conftest import requires_db
+from tests.conftest import pdf_text, requires_db
 
 pytestmark = requires_db
 
@@ -171,22 +170,19 @@ def test_baja_con_motivo_deja_historial_y_bloquea_cambios(client, auth_headers, 
     ).all()
 
 
-def test_exportar_csv_separando_la_alcaldia(client, auth_headers):
+def test_exportar_pdf_separando_la_alcaldia(client, auth_headers):
     headers = auth_headers("coordination")
     create(client, headers, name="=CMD()")
 
-    response = client.get(f"{URL}/export", params={"format": "csv"}, headers=headers)
+    response = client.get(f"{URL}/export", params={"format": "pdf"}, headers=headers)
 
     assert response.status_code == 200
     assert 'filename="inventario-' in response.headers["content-disposition"]
-    rows = list(csv.reader(io.StringIO(response.content.decode("utf-8-sig")), delimiter=";"))
-    municipal_end = rows.index([])
-    municipal, others = rows[:municipal_end], rows[municipal_end + 1 :]
-    assert municipal[0] == ["Bienes de la Alcaldía"]
-    assert {r[1] for r in municipal[2:]} == {"Colchonetas", "Sillas plegables"}
-    assert others[0] == ["Bienes propios y donados"]
-    assert "'=CMD()" in {r[1] for r in others[2:] if len(r) > 1}
-    assert "Colchonetas" not in {r[1] for r in others[2:] if len(r) > 1}
+    content = pdf_text(response.content)
+    municipal, others = content.split("Bienes propios y donados", 1)
+    assert "Bienes de la Alcald" in municipal
+    assert "Colchonetas" in municipal and "Sillas plegables" in municipal
+    assert "=CMD()" in others and "Colchonetas" not in others
 
 
 def test_exportar_excel_con_una_hoja_para_la_alcaldia(client, auth_headers):

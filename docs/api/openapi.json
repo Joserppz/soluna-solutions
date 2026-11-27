@@ -6585,8 +6585,8 @@
             "schema": {
               "default": "xlsx",
               "enum": [
-                "csv",
-                "xlsx"
+                "xlsx",
+                "pdf"
               ],
               "title": "Format",
               "type": "string"
@@ -6634,10 +6634,10 @@
         "responses": {
           "200": {
             "content": {
-              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
-              "text/csv; charset=utf-8": {}
+              "application/pdf": {},
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {}
             },
-            "description": "Archivo CSV o Excel con todas las filas que cumplen el filtro"
+            "description": "Excel o PDF con todas las filas que cumplen el filtro"
           },
           "422": {
             "content": {
@@ -6658,7 +6658,7 @@
     },
     "/api/v1/attendance/monthly": {
       "get": {
-        "description": "Resumen del mes por actividad y por tipo. Con format=csv o xlsx se descarga.",
+        "description": "Resumen del mes por actividad y por tipo. Con format=xlsx o pdf se descarga.",
         "operationId": "monthly_summary_api_v1_attendance_monthly_get",
         "parameters": [
           {
@@ -6689,8 +6689,8 @@
               "default": "json",
               "enum": [
                 "json",
-                "csv",
-                "xlsx"
+                "xlsx",
+                "pdf"
               ],
               "title": "Format",
               "type": "string"
@@ -6705,10 +6705,10 @@
                   "$ref": "#/components/schemas/MonthlySummaryOut"
                 }
               },
-              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
-              "text/csv; charset=utf-8": {}
+              "application/pdf": {},
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {}
             },
-            "description": "JSON, o el archivo CSV / Excel con format=csv o format=xlsx"
+            "description": "JSON, o el archivo Excel / PDF con format=xlsx o format=pdf"
           },
           "422": {
             "content": {
@@ -6959,8 +6959,8 @@
             "schema": {
               "default": "xlsx",
               "enum": [
-                "csv",
-                "xlsx"
+                "xlsx",
+                "pdf"
               ],
               "title": "Format",
               "type": "string"
@@ -7134,10 +7134,10 @@
         "responses": {
           "200": {
             "content": {
-              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
-              "text/csv; charset=utf-8": {}
+              "application/pdf": {},
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {}
             },
-            "description": "Archivo CSV o Excel con todas las filas que cumplen el filtro"
+            "description": "Excel o PDF con todas las filas que cumplen el filtro"
           },
           "422": {
             "content": {
@@ -8030,8 +8030,8 @@
             "schema": {
               "default": "xlsx",
               "enum": [
-                "csv",
-                "xlsx"
+                "xlsx",
+                "pdf"
               ],
               "title": "Format",
               "type": "string"
@@ -8139,10 +8139,10 @@
         "responses": {
           "200": {
             "content": {
-              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
-              "text/csv; charset=utf-8": {}
+              "application/pdf": {},
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {}
             },
-            "description": "Archivo CSV o Excel con todas las filas que cumplen el filtro"
+            "description": "Excel o PDF con todas las filas que cumplen el filtro"
           },
           "422": {
             "content": {
@@ -8232,7 +8232,7 @@
     },
     "/api/v1/donations/summary": {
       "get": {
-        "description": "Resumen del mes: confirmado por canal, avisos por confirmar, especie y anulados.\n\nCon format=csv o xlsx se descarga el resumen y el detalle de cada aporte del mes.",
+        "description": "Resumen del mes: confirmado por canal, avisos por confirmar, especie y anulados.\n\nCon format=xlsx o pdf se descarga el resumen y el detalle de cada aporte del mes.",
         "operationId": "summary_api_v1_donations_summary_get",
         "parameters": [
           {
@@ -8263,8 +8263,8 @@
               "default": "json",
               "enum": [
                 "json",
-                "csv",
-                "xlsx"
+                "xlsx",
+                "pdf"
               ],
               "title": "Format",
               "type": "string"
@@ -8279,10 +8279,10 @@
                   "$ref": "#/components/schemas/DonationSummary"
                 }
               },
-              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
-              "text/csv; charset=utf-8": {}
+              "application/pdf": {},
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {}
             },
-            "description": "JSON, o el archivo CSV / Excel con format=csv o format=xlsx"
+            "description": "JSON, o el archivo Excel / PDF con format=xlsx o format=pdf"
           },
           "422": {
             "content": {
@@ -8671,8 +8671,8 @@
             "schema": {
               "default": "xlsx",
               "enum": [
-                "csv",
-                "xlsx"
+                "xlsx",
+                "pdf"
               ],
               "title": "Format",
               "type": "string"
@@ -8784,10 +8784,10 @@
         "responses": {
           "200": {
             "content": {
-              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
-              "text/csv; charset=utf-8": {}
+              "application/pdf": {},
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {}
             },
-            "description": "Archivo CSV o Excel con todas las filas que cumplen el filtro"
+            "description": "Excel o PDF con todas las filas que cumplen el filtro"
           },
           "422": {
             "content": {
@@ -9315,8 +9315,8 @@
             "schema": {
               "default": "xlsx",
               "enum": [
-                "csv",
-                "xlsx"
+                "xlsx",
+                "pdf"
               ],
               "title": "Format",
               "type": "string"
@@ -9457,10 +9457,10 @@
         "responses": {
           "200": {
             "content": {
-              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
-              "text/csv; charset=utf-8": {}
+              "application/pdf": {},
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {}
             },
-            "description": "Archivo CSV o Excel con todas las filas que cumplen el filtro"
+            "description": "Excel o PDF con todas las filas que cumplen el filtro"
           },
           "422": {
             "content": {
@@ -9916,8 +9916,8 @@
             "schema": {
               "default": "xlsx",
               "enum": [
-                "csv",
-                "xlsx"
+                "xlsx",
+                "pdf"
               ],
               "title": "Format",
               "type": "string"
@@ -9965,10 +9965,10 @@
         "responses": {
           "200": {
             "content": {
-              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
-              "text/csv; charset=utf-8": {}
+              "application/pdf": {},
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {}
             },
-            "description": "Archivo CSV o Excel con todas las filas que cumplen el filtro"
+            "description": "Excel o PDF con todas las filas que cumplen el filtro"
           },
           "422": {
             "content": {
@@ -10673,8 +10673,8 @@
             "schema": {
               "default": "xlsx",
               "enum": [
-                "csv",
-                "xlsx"
+                "xlsx",
+                "pdf"
               ],
               "title": "Format",
               "type": "string"
@@ -10833,10 +10833,10 @@
         "responses": {
           "200": {
             "content": {
-              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
-              "text/csv; charset=utf-8": {}
+              "application/pdf": {},
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {}
             },
-            "description": "Archivo CSV o Excel con todas las filas que cumplen el filtro"
+            "description": "Excel o PDF con todas las filas que cumplen el filtro"
           },
           "422": {
             "content": {
@@ -12585,8 +12585,8 @@
             "schema": {
               "default": "xlsx",
               "enum": [
-                "csv",
-                "xlsx"
+                "xlsx",
+                "pdf"
               ],
               "title": "Format",
               "type": "string"
@@ -12634,10 +12634,10 @@
         "responses": {
           "200": {
             "content": {
-              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
-              "text/csv; charset=utf-8": {}
+              "application/pdf": {},
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {}
             },
-            "description": "Archivo CSV o Excel con todas las filas que cumplen el filtro"
+            "description": "Excel o PDF con todas las filas que cumplen el filtro"
           },
           "422": {
             "content": {
@@ -13463,8 +13463,8 @@
             "schema": {
               "default": "xlsx",
               "enum": [
-                "csv",
-                "xlsx"
+                "xlsx",
+                "pdf"
               ],
               "title": "Format",
               "type": "string"
@@ -13512,10 +13512,10 @@
         "responses": {
           "200": {
             "content": {
-              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
-              "text/csv; charset=utf-8": {}
+              "application/pdf": {},
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {}
             },
-            "description": "Archivo CSV o Excel con todas las filas que cumplen el filtro"
+            "description": "Excel o PDF con todas las filas que cumplen el filtro"
           },
           "422": {
             "content": {

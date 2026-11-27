@@ -7,7 +7,7 @@ from sqlalchemy import select
 
 from app.core import clock
 from app.models import AuditLog, Donation, InventoryItem, InventoryMovement
-from tests.conftest import requires_db
+from tests.conftest import pdf_text, requires_db
 
 pytestmark = requires_db
 
@@ -357,26 +357,21 @@ class TestRegistroYMeta:
 
 
 class TestExportarResumen:
-    def test_csv_con_resumen_y_detalle(self, client, auth_headers):
-        import csv
-        import io
-
+    def test_pdf_con_resumen_y_detalle(self, client, auth_headers):
         month = clock.today().strftime("%Y-%m")
 
         response = client.get(
-            f"{URL}/summary", params={"month": month, "format": "csv"}, headers=auth_headers()
+            f"{URL}/summary", params={"month": month, "format": "pdf"}, headers=auth_headers()
         )
 
         assert response.status_code == 200
-        assert response.headers["content-type"].startswith("text/csv")
-        assert f'filename="donaciones-{month}.csv"' in response.headers["content-disposition"]
-        assert response.content.startswith("﻿".encode())
-        rows = list(csv.reader(io.StringIO(response.content.decode("utf-8-sig")), delimiter=";"))
-        assert rows[0] == ["Resumen del mes"] and rows[2] == ["Mes", month]
-        detail = rows[rows.index(["Aportes del mes"]) + 1 :]
-        assert detail[0][:6] == ["Fecha", "Donante", "Canal", "Monto (Bs.)", "En especie", "Estado"]
-        donors = {row[1] for row in detail[1:]}
-        assert "Anónimo" in donors and "Marcela Quispe" in donors
+        assert response.headers["content-type"] == "application/pdf"
+        assert f'filename="donaciones-{month}.pdf"' in response.headers["content-disposition"]
+        content = pdf_text(response.content)
+        assert f"Resumen de donaciones de {clock.month_title(month)}" in content
+        assert "Confirmado" in content and "Por confirmar" in content
+        assert "Aportes del mes" in content and "Monto (Bs.)" in content
+        assert "Marcela Quispe" in content
 
     def test_excel_con_dos_hojas(self, client, auth_headers):
         import io
@@ -393,13 +388,13 @@ class TestExportarResumen:
     def test_formato_invalido_y_permisos(self, client, auth_headers):
         assert (
             client.get(
-                f"{URL}/summary", params={"format": "pdf"}, headers=auth_headers()
+                f"{URL}/summary", params={"format": "csv"}, headers=auth_headers()
             ).status_code
             == 422
         )
         assert (
             client.get(
-                f"{URL}/summary", params={"format": "csv"}, headers=auth_headers("volunteer")
+                f"{URL}/summary", params={"format": "pdf"}, headers=auth_headers("volunteer")
             ).status_code
             == 403
         )

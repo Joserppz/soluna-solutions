@@ -376,7 +376,7 @@ describe('Afiliados: fechas de registro y descarga', () => {
     })
     await mountApp('/equipo/afiliados', api)
 
-    await downloadAs(body(), 'CSV')
+    await downloadAs(body(), 'PDF')
 
     expect(body().text()).toContain('Acota el rango de fechas.')
     expect(saved).toEqual([])
@@ -401,7 +401,7 @@ describe('Las demás pantallas', () => {
     await mountApp('/equipo/inventario', api)
 
     await choosePreset('Este año')
-    await downloadAs(body(), 'CSV')
+    await downloadAs(body(), 'PDF')
 
     expect(lastQuery(api, 'GET /inventory')).toMatchObject({
       from: '2026-01-01',
@@ -410,7 +410,7 @@ describe('Las demás pantallas', () => {
     expect(lastQuery(api, 'GET /inventory/export')).toEqual({
       from: '2026-01-01',
       to: TODAY,
-      format: 'csv',
+      format: 'pdf',
     })
   })
 
@@ -466,11 +466,11 @@ describe('Las demás pantallas', () => {
         (t) => t.textContent,
       ),
     ).toEqual(['Resumen de noviembre', 'Registro de aportes'])
-    await downloadAs(body(), 'CSV', 'donaciones', 'Registro de aportes')
+    await downloadAs(body(), 'PDF', 'donaciones', 'Registro de aportes')
     expect(lastQuery(api, 'GET /donations/export')).toEqual({
       from: '2026-11-01',
       to: '2026-11-30',
-      format: 'csv',
+      format: 'pdf',
     })
 
     await choosePreset('Mes pasado')
@@ -534,12 +534,12 @@ describe('Las demás pantallas', () => {
     await body().get('.export__change').trigger('click')
     await settle()
     await pickRange(exportPanel(), '2026-09-01', '2026-11-30')
-    await downloadAs(body(), 'CSV')
+    await downloadAs(body(), 'PDF')
 
     expect(lastQuery(api, 'GET /schedules/export')).toEqual({
       from: '2026-09-01',
       to: '2026-11-30',
-      format: 'csv',
+      format: 'pdf',
     })
   })
 

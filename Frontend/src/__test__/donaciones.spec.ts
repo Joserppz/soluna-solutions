@@ -388,7 +388,7 @@ describe('Donaciones', () => {
     )
   })
 
-  it('descarga el resumen del mes en CSV o Excel', async () => {
+  it('descarga el resumen del mes en PDF o Excel', async () => {
     vi.stubGlobal(
       'URL',
       Object.assign(URL, {
@@ -408,9 +408,9 @@ describe('Donaciones', () => {
     // El único «Descargar» de la pantalla está junto al mes, arriba
     const band = wrapper.get('.band__month')
     expect(wrapper.findAll('.export__trigger')).toHaveLength(1)
-    await downloadAs(band, 'CSV', 'donaciones', 'Resumen de noviembre')
+    await downloadAs(band, 'PDF', 'donaciones', 'Resumen de noviembre')
     await downloadAs(band, 'Excel', 'donaciones', 'Resumen de noviembre')
-    expect(names).toEqual(['donaciones-2026-11.csv', 'donaciones-2026-11.xlsx'])
+    expect(names).toEqual(['donaciones-2026-11.pdf', 'donaciones-2026-11.xlsx'])
   })
 
   it('registra efectivo, QR bancario y en especie desde la sede', async () => {

@@ -1,7 +1,6 @@
 """Registro de actividad (diseño pág. 19): áreas, búsqueda por persona o afiliado,
 últimos días, situaciones para revisar, resumen semanal y descarga."""
 
-import csv
 import io
 from datetime import UTC, datetime, timedelta
 
@@ -170,13 +169,17 @@ class TestDescarga:
         )
         headers = auth_headers()
 
-        response = client.get(f"{AUDIT}/export?format=csv&area=donaciones&days=7", headers=headers)
+        response = client.get(f"{AUDIT}/export?area=donaciones&days=7", headers=headers)
 
         assert response.status_code == 200
-        assert response.headers["content-type"].startswith("text/csv")
         assert "registro-de-actividad-" in response.headers["content-disposition"]
-        rows = list(csv.reader(io.StringIO(response.content.decode("utf-8-sig")), delimiter=";"))
-        assert rows[0][:3] == ["Fecha", "Hora", "Persona"]
+        rows = [
+            [cell if cell is not None else "" for cell in row]
+            for row in load_workbook(io.BytesIO(response.content)).active.iter_rows(
+                values_only=True
+            )
+        ]
+        assert list(rows[0][:3]) == ["Fecha", "Hora", "Persona"]
         line = next(row for row in rows[1:] if "no estaba en el extracto" in row[7])
         assert line[5] == "Donaciones"
         assert line[9] == "Aporte anulado"
@@ -192,7 +195,7 @@ class TestDescarga:
         )
         assert logged is not None
         # Queda qué filtro se usó y cuántas filas salieron
-        assert f"{len(rows) - 1} filas en CSV" in logged.detail
+        assert f"{len(rows) - 1} filas en XLSX" in logged.detail
         assert "Área: Donaciones" in logged.detail and "Últimos días: 7" in logged.detail
 
     def test_excel(self, client, auth_headers):

@@ -1,6 +1,5 @@
 """Asistencia de los sábados (diseño págs. 3 y 10): marcar, cerrar, personas nuevas y resumen."""
 
-import csv
 import io
 from datetime import timedelta
 
@@ -10,7 +9,7 @@ from sqlalchemy import select
 
 from app.core import clock
 from app.models import AuditLog, Inquiry
-from tests.conftest import requires_db
+from tests.conftest import pdf_text, requires_db
 
 pytestmark = requires_db
 
@@ -318,26 +317,19 @@ class TestResumenMensual:
         assert body["totalCame"] == sum(c["came"] for c in body["byCategory"])
         assert body["month"] == month
 
-    def test_csv_para_excel_en_espanol(self, client, auth_headers, month):
-        response = self.summary(client, auth_headers("coordination"), month, "csv")
+    def test_pdf_para_imprimir(self, client, auth_headers, month):
+        response = self.summary(client, auth_headers("coordination"), month, "pdf")
 
         assert response.status_code == 200
-        assert response.headers["content-type"].startswith("text/csv")
-        assert f'filename="asistencia-{month}.csv"' in response.headers["content-disposition"]
-        assert response.content.startswith("﻿".encode())
-        rows = list(csv.reader(io.StringIO(response.content.decode("utf-8-sig")), delimiter=";"))
-        assert rows[0] == [
-            "Fecha",
-            "Actividad",
-            "Tipo",
-            "Vinieron",
-            "No vinieron",
-            "Asistencia cerrada",
-        ]
-        titles = [row[1] for row in rows[1:] if len(row) == 6]
-        # Un título que empieza con "=" no se ejecuta como fórmula al abrirlo
-        assert '\'=HYPERLINK("http://x")' in titles
-        assert ["Total de asistencias", str(rows[-1][1])] == rows[-1]
+        assert response.headers["content-type"] == "application/pdf"
+        assert f'filename="asistencia-{month}.pdf"' in response.headers["content-disposition"]
+        content = pdf_text(response.content)
+        assert "Resumen de asistencia de" in content
+        assert "Asistencias del mes" in content and "Fisioterapia" in content
+        for header in ("Fecha", "Actividad", "Tipo", "Vinieron", "No vinieron"):
+            assert header in content
+        # El título va tal cual (en un PDF no hay fórmulas que neutralizar)
+        assert "=HYPERLINK" in content
 
     def test_excel(self, client, auth_headers, month):
         response = self.summary(client, auth_headers("coordination"), month, "xlsx")

@@ -46,7 +46,7 @@ Los permisos **no están escritos en el código** de cada pantalla: viven en las
 | `users:manage` | Equipo, aprobación de cuentas y asignación de roles | ⚠️ | — |
 | `roles:manage` | Cambiar los permisos de los roles | ⚠️ | — |
 | `audit:read` | Consultar el registro de actividad | ⚠️ | — |
-| `reports:export` | Descargar en CSV o Excel el resultado completo de un filtro ([ADR-015](./adr/ADR-015-filtros-por-fecha-y-reportes.md)) | ⚠️ | Coord., Recep. |
+| `reports:export` | Descargar en Excel o PDF el resultado completo de un filtro ([ADR-015](./adr/ADR-015-filtros-por-fecha-y-reportes.md)) | ⚠️ | Coord., Recep. |
 
 «Todos» son Coordinación, Profesional, Recepción y Voluntariado. **Administración** (`admin`, rol del sistema) tiene siempre los 18 permisos.
 
@@ -85,7 +85,7 @@ Cada módulo está en `Backend/app/modules/<dominio>/` con `router.py`, `service
 
 En total, **104 operaciones** publicadas en [`openapi.json`](../api/openapi.json). `system` está en `app/main.py` porque no tiene reglas de negocio.
 
-**Núcleo común (`app/core/`):** configuración y validaciones de producción, `DbSession` (una transacción por petición, con `after_commit`), errores de dominio, paginación, límites de intentos, reloj de Bolivia, exportación CSV/Excel segura y cabeceras de seguridad.
+**Núcleo común (`app/core/`):** configuración y validaciones de producción, `DbSession` (una transacción por petición, con `after_commit`), errores de dominio, paginación, límites de intentos, reloj de Bolivia, exportación a Excel y PDF segura y cabeceras de seguridad.
 
 **Adaptadores (`app/adapters/`):** Supabase Storage, Cloudinary, correo (Resend, Brevo o consola), Google y Turnstile. Las pruebas los reemplazan por dobles, así ninguna prueba llama a internet.
 
@@ -111,7 +111,7 @@ Backend (Pydantic, camelCase)
 - **Formato:** JSON en camelCase en todas las rutas (`CamelModel`). Fechas ISO 8601; montos en bolivianos como número.
 - **Errores:** siempre `{"detail": "<mensaje en español>"}`. El frontend lo muestra tal cual (`ApiError.message`).
 - **Listados:** sobre paginado `{items, total, limit, offset}` con `?limit=` (1 a 200, por defecto 50) y `?offset=`.
-- **Archivos:** `GET /inventory/export` y `GET /donations/summary?format=csv|xlsx` devuelven el archivo con `Content-Disposition: attachment`. El frontend los pide con `blob: true`.
+- **Archivos:** `GET /inventory/export` y `GET /donations/summary?format=xlsx|pdf` devuelven el archivo con `Content-Disposition: attachment`. El frontend los pide con `blob: true`.
 
 **Capa del frontend (`Frontend/src/api/`):**
 

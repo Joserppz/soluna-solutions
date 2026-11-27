@@ -539,7 +539,7 @@ describe('Asistencia', () => {
     )
   })
 
-  it('descarga el resumen mensual en CSV o en Excel', async () => {
+  it('descarga el resumen mensual en PDF o en Excel', async () => {
     const createObjectURL = vi.fn(() => 'blob:asistencia')
     vi.stubGlobal(
       'URL',
@@ -560,19 +560,19 @@ describe('Asistencia', () => {
 
     // El resumen del mes está dentro de «Descargar», junto al detalle por rango
     expect(wrapper.findAll('.export__trigger')).toHaveLength(1)
-    await downloadAs(wrapper, 'CSV', 'asistencia', 'Resumen mensual')
+    await downloadAs(wrapper, 'PDF', 'asistencia', 'Resumen mensual')
     await downloadAs(wrapper, 'Excel', 'asistencia', 'Resumen mensual')
 
     expect(click).toHaveBeenCalledTimes(2)
     expect(names).toEqual([
-      'resumen-mensual-asistencia-2026-11.csv',
+      'resumen-mensual-asistencia-2026-11.pdf',
       'resumen-mensual-asistencia-2026-11.xlsx',
     ])
     const formats = fake
       .callsTo('GET /attendance/monthly')
       .map((call) => call.query.get('format'))
       .filter(Boolean)
-    expect(formats).toEqual(['csv', 'xlsx'])
+    expect(formats).toEqual(['pdf', 'xlsx'])
     expect(wrapper.text()).toContain('Fisioterapia')
     expect(wrapper.text()).toContain('Arteterapia')
 

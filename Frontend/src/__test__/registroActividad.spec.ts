@@ -437,7 +437,7 @@ describe('Descargar registro', () => {
     })
     const { wrapper } = await mountApp(PATH, fake)
 
-    await downloadAs(wrapper, 'CSV')
+    await downloadAs(wrapper, 'PDF')
 
     expect(wrapper.text()).toContain(
       'No tienes permiso para realizar esta acción.',

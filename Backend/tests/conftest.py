@@ -6,7 +6,9 @@ Sin esa variable, solo se ejecutan las pruebas unitarias.
 """
 
 import os
+import re
 import uuid  # noqa: F401 - usado en anotaciones
+import zlib
 
 import pytest
 
@@ -220,3 +222,17 @@ def google(client):
     fake = FakeGoogle()
     app.dependency_overrides[get_google_verifier] = lambda: fake
     return fake
+
+
+def pdf_text(content: bytes) -> str:
+    """El texto que dibuja un PDF (sus contenidos comprimidos), para buscar en él."""
+    assert content.startswith(b"%PDF-")
+    parts = []
+    for data in re.findall(rb"stream\r?\n(.*?)\r?\nendstream", content, re.DOTALL):
+        try:
+            parts.append(zlib.decompress(data).decode("latin-1"))
+        except zlib.error:
+            continue
+    # En el PDF los paréntesis y la barra de un texto van escapados: \( \) \\
+    joined = "\n".join(parts)
+    return joined.replace("\\(", "(").replace("\\)", ")").replace("\\\\", "\\")

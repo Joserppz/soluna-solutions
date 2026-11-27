@@ -30,7 +30,7 @@ export interface RequestOptions {
    * "datos incorrectos", no "la sesión venció".
    */
   anonymous?: boolean
-  /** Devuelve el archivo (Blob) en vez de leer JSON: descargas CSV o Excel. */
+  /** Devuelve el archivo (Blob) en vez de leer JSON: descargas en Excel o PDF. */
   blob?: boolean
   signal?: AbortSignal
 }

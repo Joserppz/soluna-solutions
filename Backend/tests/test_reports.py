@@ -9,7 +9,6 @@ Sprints 1 y 2).
 - Cada descarga queda en el registro de actividad y en el log con su filtro y sus filas.
 """
 
-import csv
 import datetime as dt
 import io
 import itertools
@@ -22,17 +21,18 @@ from sqlalchemy import select
 from app.core import clock, reports
 from app.core.reports import DateRange, day_start
 from app.models import AuditLog, InventoryItem, Patient
-from tests.conftest import requires_db
+from tests.conftest import pdf_text, requires_db
 
 API = "/api/v1"
 _ci = itertools.count(9300001)
 
 
-def csv_rows(response) -> list[list[str]]:
-    """Filas de datos de un CSV de una sola hoja (sin el encabezado)."""
+def xlsx_rows(response, sheet: int = 0) -> list[list]:
+    """Filas de datos de una hoja del Excel (sin el encabezado)."""
     assert response.status_code == 200, response.text
-    rows = list(csv.reader(io.StringIO(response.content.decode("utf-8-sig")), delimiter=";"))
-    return rows[1:]
+    book = load_workbook(io.BytesIO(response.content))
+    rows = list(book.worksheets[sheet].iter_rows(values_only=True))
+    return [list(row) for row in rows[1:]]
 
 
 def total(client, headers, path, **params) -> int:
@@ -193,18 +193,13 @@ class TestDescargaCompleta:
         expected = total(client, headers, listing, **filters)
 
         response = client.get(
-            f"{API}{export}", params={**filters, "format": "csv"}, headers=headers
+            f"{API}{export}", params={**filters, "format": "xlsx"}, headers=headers
         )
 
-        if export == "/inventory/export":
-            # Dos bloques (Alcaldía y el resto), cada uno con título y encabezados
-            rows = list(
-                csv.reader(io.StringIO(response.content.decode("utf-8-sig")), delimiter=";")
-            )
-            data = [r for r in rows if len(r) > 1 and r[0] != "Código"]
-            assert len(data) == expected, screen
-        else:
-            assert len(csv_rows(response)) == expected, screen
+        sheets = len(load_workbook(io.BytesIO(response.content)).worksheets)
+        # Inventario: la Alcaldía en su propia hoja y el resto en otra
+        rows = sum(len(xlsx_rows(response, index)) for index in range(sheets))
+        assert rows == expected, screen
         assert response.headers["x-report-rows"] == str(expected)
 
     def test_la_pagina_no_limita_la_descarga(self, client, auth_headers, db_session):
@@ -215,9 +210,9 @@ class TestDescargaCompleta:
         filters = {"search": "Página", "group": "all"}
 
         page = client.get(f"{API}/patients", params={**filters, "limit": 3}, headers=headers)
-        rows = csv_rows(
+        rows = xlsx_rows(
             client.get(
-                f"{API}/patients/export", params={**filters, "format": "csv"}, headers=headers
+                f"{API}/patients/export", params={**filters, "format": "xlsx"}, headers=headers
             )
         )
 
@@ -236,18 +231,18 @@ class TestDescargaCompleta:
         )
         db_session.flush()
         headers = auth_headers()
-        inactive = csv_rows(
+        inactive = xlsx_rows(
             client.get(
                 f"{API}/patients/export",
-                params={"group": "inactive", "format": "csv"},
+                params={"group": "inactive", "format": "xlsx"},
                 headers=headers,
             )
         )
         assert inactive and all(row[10] == "Inactiva" for row in inactive)
-        active = csv_rows(
+        active = xlsx_rows(
             client.get(
                 f"{API}/patients/export",
-                params={"group": "active", "format": "csv"},
+                params={"group": "active", "format": "xlsx"},
                 headers=headers,
             )
         )
@@ -266,17 +261,17 @@ class TestDescargaCompleta:
     def test_galeria_y_asistencia(self, client, auth_headers):
         headers = auth_headers("coordination")
         albums = client.get(f"{API}/media/albums", params=YEAR, headers=headers).json()
-        rows = csv_rows(
+        rows = xlsx_rows(
             client.get(
-                f"{API}/media/albums/export", params={**YEAR, "format": "csv"}, headers=headers
+                f"{API}/media/albums/export", params={**YEAR, "format": "xlsx"}, headers=headers
             )
         )
         assert len(rows) == len(albums)
 
         response = client.get(
-            f"{API}/attendance/export", params={**YEAR, "format": "csv"}, headers=headers
+            f"{API}/attendance/export", params={**YEAR, "format": "xlsx"}, headers=headers
         )
-        marks = csv_rows(response)
+        marks = xlsx_rows(response)
         assert response.headers["x-report-rows"] == str(len(marks))
         assert all(row[5] in {"Vino", "No vino"} for row in marks)
         # La asistencia siempre se pide por rango
@@ -297,15 +292,90 @@ class TestDescargaCompleta:
         db_session.add(Patient(name="=HYPERLINK(1)", ci=str(next(_ci)), phone="70000000"))
         db_session.flush()
 
-        rows = csv_rows(
+        rows = xlsx_rows(
             client.get(
                 f"{API}/patients/export",
-                params={"search": "HYPERLINK", "group": "all", "format": "csv"},
+                params={"search": "HYPERLINK", "group": "all", "format": "xlsx"},
                 headers=auth_headers(),
             )
         )
 
         assert rows[0][0] == "'=HYPERLINK(1)"
+
+
+# ---------------------------------------------------------------------------
+# PDF: el mismo filtro y las mismas filas, listo para imprimir
+# ---------------------------------------------------------------------------
+@requires_db
+class TestPdf:
+    def test_mismas_filas_que_el_listado_con_marca_filtro_y_paginas(
+        self, client, auth_headers, db_session
+    ):
+        names = [f"Pdf Reporte {n:02d}" for n in range(45)]
+        for name in names:
+            db_session.add(Patient(name=name, ci=str(next(_ci)), phone="70000000"))
+        db_session.flush()
+        headers = auth_headers()
+        filters = {"search": "Pdf Reporte", "group": "all"}
+
+        response = client.get(
+            f"{API}/patients/export", params={**filters, "format": "pdf"}, headers=headers
+        )
+
+        assert response.status_code == 200, response.text
+        assert response.headers["content-type"] == "application/pdf"
+        assert response.headers["content-disposition"].endswith(f'{TODAY:%Y-%m-%d}.pdf"')
+        assert response.headers["x-report-rows"] == "45"
+        content = pdf_text(response.content)
+        assert all(name in content for name in names)
+        assert "Afiliados" in content and "ASPAR" in content
+        assert "Búsqueda: Pdf Reporte" in content
+        # 45 filas no entran en una hoja: varias páginas, el encabezado en cada una
+        assert "Página 1 de" in content and "Página 2 de" in content
+        assert content.count("Carnet") >= 2
+        # Quién lo descargó
+        assert "Lucía Choque" in content or "por " in content
+
+    def test_un_pdf_largo_pide_acotar_o_usar_excel(self, client, auth_headers, monkeypatch):
+        monkeypatch.setattr(reports, "PDF_LIMIT", 1)
+
+        response = client.get(
+            f"{API}/patients/export",
+            params={"group": "all", "format": "pdf"},
+            headers=auth_headers(),
+        )
+
+        assert response.status_code == 422
+        assert "descárgalo en Excel" in response.json()["detail"]
+
+    def test_queda_en_el_registro_como_pdf(self, client, auth_headers, db_session):
+        headers = auth_headers("coordination")
+        expected = total(client, headers, "/inquiries")
+
+        client.get(f"{API}/inquiries/export", params={"format": "pdf"}, headers=headers)
+
+        entry = db_session.scalar(
+            select(AuditLog)
+            .where(AuditLog.action == "Descarga de reporte", AuditLog.category == "SOLICITUDES")
+            .order_by(AuditLog.date.desc())
+        )
+        assert entry.detail.startswith(f"Solicitudes: {expected} filas en PDF")
+
+    def test_inventario_separa_la_alcaldia_en_el_pdf(self, client, auth_headers):
+        response = client.get(
+            f"{API}/inventory/export",
+            params={"format": "pdf"},
+            headers=auth_headers("coordination"),
+        )
+        content = pdf_text(response.content)
+        assert response.status_code == 200
+        assert "Alcald" in content
+
+    def test_csv_ya_no_se_ofrece(self, client, auth_headers):
+        response = client.get(
+            f"{API}/patients/export", params={"format": "csv"}, headers=auth_headers()
+        )
+        assert response.status_code == 422
 
 
 # ---------------------------------------------------------------------------
@@ -320,7 +390,8 @@ class TestPermisos:
             ("volunteer", "/patients/export"),
             ("professional", "/patients/export"),
             ("volunteer", "/attendance/export?from=2026-01-01&to=2026-12-31"),
-            ("volunteer", "/attendance/monthly?format=csv"),
+            ("volunteer", "/attendance/monthly?format=pdf"),
+            ("volunteer", "/patients/export?format=pdf"),
             # Sin el permiso de la pantalla
             ("reception", "/inventory/export"),
             ("coordination", "/users/export"),
@@ -341,14 +412,17 @@ class TestPermisos:
         assert "reports:export" not in by_role["professional"]
 
     def test_la_descarga_no_trae_datos_clinicos(self, client, auth_headers):
-        response = client.get(
-            f"{API}/patients/export",
-            params={"group": "all", "format": "csv"},
-            headers=auth_headers(),
+        params = {"group": "all"}
+        excel = client.get(f"{API}/patients/export", params=params, headers=auth_headers())
+        header = [cell.value for cell in load_workbook(io.BytesIO(excel.content)).active[1]]
+        pdf = pdf_text(
+            client.get(
+                f"{API}/patients/export", params={**params, "format": "pdf"}, headers=auth_headers()
+            ).content
         )
-        header = response.content.decode("utf-8-sig").splitlines()[0]
         for clinical in ("Diagnóstico", "Medicación", "Síntomas", "Etapa"):
             assert clinical not in header
+            assert clinical.encode("latin-1").decode("latin-1") not in pdf
 
 
 # ---------------------------------------------------------------------------
@@ -386,7 +460,7 @@ class TestRegistro:
             ).json()
             client.get(
                 f"{API}/donations/export",
-                params={"status": "confirmado", "format": "csv"},
+                params={"status": "confirmado", "format": "pdf"},
                 headers=headers,
             )
 
@@ -394,7 +468,7 @@ class TestRegistro:
         assert query.report_screen == "Donaciones"
         assert query.report_filters == {"Estado": "Confirmado"}
         assert query.report_rows == listed["total"]
-        assert download.report_rows == listed["total"] and download.report_format == "csv"
+        assert download.report_rows == listed["total"] and download.report_format == "pdf"
 
     def test_un_listado_sin_filtros_no_llena_el_log(self, client, auth_headers, caplog):
         with caplog.at_level(logging.INFO, logger="aspar.reports"):
