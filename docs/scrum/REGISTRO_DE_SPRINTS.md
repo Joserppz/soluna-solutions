@@ -41,7 +41,7 @@ git shortlog -sne sprint2-final..Sprint3              # Sprint 3
 | **Historias** | RF-03 a RF-10, RF-12 a RF-16 (alcance en [§4.3 del DoD](../calidad/DEFINICION_DE_HECHO_Y_ESTADO_SPRINT1.md#43-alcance-de-los-sprints-siguientes)) |
 | **Incremento** | Inventario con movimientos, actividades y asistencia, galería en Cloudinary, donaciones sin pasarela con meta pública, solicitudes, contenido del sitio, permisos editables por rol; frontend F1 a F7 ([evidencias F1](../evidencias/EVIDENCIAS_FRONTEND_F1.md) … [F7](../evidencias/EVIDENCIAS_FRONTEND_F7.md)); despliegue en Cloud Run, Supabase y Cloudflare Pages |
 | **Artefactos** | ADR-011 a ADR-014, contrato [`openapi.json`](../api/openapi.json), [matriz de trazabilidad](../trazabilidad/MATRIZ_RF01_RF17.md) |
-| **Commits** | Mauricio 29 · Rosav-dotcom 24 · José 4 |
+| **Commits** | Mauricio 29 · Dayana 24 · José 4 |
 
 ## Sprint 3 — Frontend integrado, reportes y plan de mejora
 
@@ -50,7 +50,7 @@ git shortlog -sne sprint2-final..Sprint3              # Sprint 3
 | **Fechas** | Jira lo registra en dos partes: «Sprint 3 (parte 1) — Frontend: portal y multimedia» (11/11 al 25/11/2026) y «Sprint 3 (parte 2) — Integración, reportes y cierre» (18/11 al 27/11/2026). Cierra con la etiqueta `v3.0` |
 | **Objetivo** | Responder a la evaluación de los Sprints 1 y 2: filtro por fechas y reportes completos en cada pantalla, logging de lo filtrado y lo exportado, y un incremento integrado y probado de punta a punta |
 | **Incremento** | Rango de fechas y «Descargar» en 9 pantallas, Excel y PDF ([ADR-015](../arquitectura/adr/ADR-015-filtros-por-fecha-y-reportes.md), [evidencia](../evidencias/EVIDENCIAS_SPRINT3_REPORTES.md)); calendario propio y menús flotantes; diagramas UML ([paquete UML](../arquitectura/UML_CLASES_Y_SECUENCIAS.md)); pruebas unitarias de reglas de negocio ([`tests/unit`](../../Backend/tests/unit/)); backlog según [ISO 29148](../srs/BACKLOG_ISO29148.md); [manual del usuario](../manual/MANUAL_DE_USUARIO.md); monitoreo de disponibilidad; despliegue en la región de la base |
-| **Commits (hasta ahora)** | José 6 |
+| **Commits** | José 13 |
 
 ## Ceremonias Scrum
 
@@ -79,3 +79,4 @@ Para que el aporte de cada integrante se vea en el repositorio:
 - Cada integrante trabaja su parte en su propia rama (`SCRUM-XX`) y la integra por Pull Request.
 - Otro integrante revisa y aprueba ese PR: la revisión también queda registrada con su nombre.
 - Cada quien hace sus commits con su propia cuenta y con un único correo configurado en `git config user.email`.
+- Si alguien ya hizo commits con dos cuentas, [`.mailmap`](../../.mailmap) las une: Dayana aparece como `Rosav-dotcom` en el Sprint 2 y José como `Jose Rodriguez` en el Sprint 1, y `git shortlog -sn` cuenta cada persona una sola vez.
