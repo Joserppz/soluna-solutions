@@ -10,7 +10,9 @@ API del Sistema Web y de Gestión de la Asociación de Parkinson "Mario Lagrava"
 | Proyecto Supabase | Plan Free | Base PostgreSQL + Storage |
 | Git | — | — |
 
-La forma recomendada de trabajar es con Docker desde la raíz del repositorio (`docker compose up --build`, ver el [README principal](../README.md)). El [`Dockerfile`](./Dockerfile) tiene dos etapas: `dev` (la usa `docker-compose.yml`, con recarga automática) y `runtime` (la imagen que se despliega en Google Cloud Run, con usuario sin privilegios y el puerto de `$PORT`). Lo que sigue es la instalación sin Docker.
+La forma recomendada de trabajar es con Docker desde la raíz del repositorio (`docker compose up --build`, ver el [README principal](../README.md)). El [`Dockerfile`](./Dockerfile) tiene dos etapas: `dev` (la usa `docker-compose.yml`, con recarga automática) y `runtime` (la imagen que se despliega en Google Cloud Run, con usuario sin privilegios y el puerto de `$PORT`). Cuando cambia `requirements.txt`, reconstruye la imagen con `docker compose up --build -d`: sin eso, la API no encuentra la dependencia nueva y se detiene al arrancar.
+
+Lo que sigue es la instalación sin Docker.
 
 ## 2. Instalación
 

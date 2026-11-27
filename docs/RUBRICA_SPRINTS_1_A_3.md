@@ -62,7 +62,7 @@ En Jira este sprint de la rúbrica se registra como dos: **Sprint 3** (portal y 
 
 | Entregable | Criterio de validación | Evidencia |
 | :--- | :--- | :--- |
-| **5.1 Ceremonias Scrum** | Cumplimiento del objetivo del sprint y estimación en story points | Jira: sprints con objetivo, historias con story points y responsable. [Registro de sprints](./scrum/REGISTRO_DE_SPRINTS.md): objetivo, incremento y acciones de cada sprint. [Definición de Hecho](./calidad/DEFINICION_DE_HECHO_Y_ESTADO_SPRINT1.md) |
+| **5.1 Ceremonias Scrum** | Cumplimiento del objetivo del sprint y estimación en story points | Jira: sprints con objetivo, historias con story points y responsable. [Registro de sprints](./scrum/REGISTRO_DE_SPRINTS.md): objetivo, incremento y acciones de cada sprint. [Retrospectivas](./scrum/RETROSPECTIVAS.md) con acciones y responsables. [Definición de Hecho](./calidad/DEFINICION_DE_HECHO_Y_ESTADO_SPRINT1.md) |
 | **5.2 Colaboración equitativa** | Aporte visible en los commits de cada integrante | `git shortlog -sne` por sprint, en el [registro de sprints](./scrum/REGISTRO_DE_SPRINTS.md#colaboración-equitativa). [`.mailmap`](../.mailmap) une las identidades de una misma persona |
 
 ## Lo que el equipo debe dejar listo antes de la revisión
@@ -70,5 +70,5 @@ En Jira este sprint de la rúbrica se registra como dos: **Sprint 3** (portal y 
 Estas acciones viven fuera del código. Están en la [lista de acciones del registro de sprints](./scrum/REGISTRO_DE_SPRINTS.md#retroalimentación-recibida-y-acciones):
 
 1. Crear las etiquetas `v1.0` y `v2.0` y, al cerrar el sprint, integrar `Sprint3` en `main` por Pull Request y etiquetar `v3.0`.
-2. En Jira: objetivo de cada sprint, story points, prioridad MoSCoW y responsable en cada historia, y una página de retrospectiva por sprint.
+2. En Jira: objetivo de cada sprint, story points, prioridad MoSCoW y responsable en cada historia (completo). Las retrospectivas están en [`RETROSPECTIVAS.md`](./scrum/RETROSPECTIVAS.md).
 3. Que cada integrante tenga commits o Pull Requests propios en el Sprint 3, aunque sea revisar y aprobar los PR de los demás.

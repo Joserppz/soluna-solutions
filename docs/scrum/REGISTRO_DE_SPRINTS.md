@@ -70,14 +70,14 @@ Se registran en Jira, que es lo que revisa el docente. Esta tabla dice qué debe
 | **Sprint Planning** | Objetivo del sprint, historias elegidas por prioridad MoSCoW, estimación en story points y responsable de cada subtarea | Jira: el sprint y su objetivo, el backlog y las historias con story points y responsable |
 | **Daily** | Avance y bloqueos de cada integrante | Jira: comentarios o un registro breve por día en la historia o en Confluence |
 | **Sprint Review** | Incremento demostrado y aceptado | Este registro, `docs/evidencias/` y el recorrido E2E |
-| **Retrospectiva** | Qué salió bien, qué mejorar y acciones concretas con responsable | Jira o Confluence: una página por sprint. Las acciones pasan como tareas al sprint siguiente |
+| **Retrospectiva** | Qué salió bien, qué mejorar y acciones concretas con responsable | [Retrospectivas de cada sprint](./RETROSPECTIVAS.md). Las acciones pasan como tareas al sprint siguiente |
 
 ### Retroalimentación recibida y acciones
 
 | Origen | Hallazgo | Acción | Estado |
 | :--- | :--- | :--- | :--- |
 | Evaluación de los Sprints 1 y 2 (18/11/2026) | Faltaban filtro por fechas y reportes completos | Filtro y descarga en 9 pantallas, logging y pruebas | Hecho ([evidencia](../evidencias/EVIDENCIAS_SPRINT3_REPORTES.md)) |
-| Evaluación de los Sprints 1 y 2 | Asignar responsables en el tablero | Cada historia y subtarea con responsable en Jira | Pendiente del equipo |
+| Evaluación de los Sprints 1 y 2 | Asignar responsables en el tablero | Cada historia y subtarea con responsable en Jira | Hecho |
 | Evaluación de los Sprints 1 y 2 | Coordinación interna | Revisión cruzada de cada pantalla antes de cerrarla | Pendiente del equipo |
 | Rúbrica de Sprints 1 a 3 | Paquete UML, pruebas unitarias con dobles, etiquetas de versión | UML, `tests/unit` y etiquetas `v1.0`, `v2.0` y `v3.0` | Hecho en el repositorio; las etiquetas las crea el equipo ([guía](../git/FLUJO_GIT_Y_PULL_REQUESTS.md#7-etiquetas-de-versión)) |
 
