@@ -5,8 +5,8 @@ Esta guía publica ASPAR **sin comprar un dominio**, para que el equipo y la aso
 | Pieza | Dónde | Dirección |
 | :--- | :--- | :--- |
 | Sitio y espacio del equipo | Cloudflare Pages | `https://<tu-proyecto>.pages.dev` |
-| API | Google Cloud Run (us-east1, Carolina del Sur) | `https://aspar-api-….run.app` (nadie la escribe a mano) |
-| Base y documentos privados | Supabase (us-east-1, Virginia) | — |
+| API | Google Cloud Run (southamerica-east1, São Paulo) | `https://aspar-api-….run.app` (nadie la escribe a mano) |
+| Base y documentos privados | Supabase (sa-east-1, São Paulo) | — |
 
 Todas las cuentas técnicas son de quien mantiene el sistema. El único dato de ASPAR es su correo, que se usa como remitente.
 
@@ -33,7 +33,7 @@ Necesitas cuentas en:
 
 ## 1. Supabase: la base
 
-1. **New project** → nombre `aspar`, región **East US (North Virginia)**, cerca de la API en Cloud Run (`us-east1`).
+1. **New project** → nombre `aspar`, región **South America (São Paulo)**, junto a la API en Cloud Run (`southamerica-east1`).
    - En *Security*: **desmarca** «Enable Data API» y «Automatically expose new tables», y **marca** «Enable automatic RLS». ASPAR solo usa la base desde la API ([ADR-007](../arquitectura/adr/ADR-007-supabase-solo-desde-el-backend.md)).
    - El aviso «Client libraries need Data API» no aplica a ASPAR: ignóralo.
 2. Guarda la contraseña de la base e inventa otra para el usuario de la API (`aspar_api`). Usa **solo letras y números**, de 20 caracteres o más: los símbolos rompen las direcciones de conexión.

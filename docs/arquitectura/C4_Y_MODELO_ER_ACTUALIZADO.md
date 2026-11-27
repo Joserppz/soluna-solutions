@@ -54,13 +54,13 @@ flowchart TB
         turnstile[["Turnstile<br/>siteverify"]]
     end
 
-    subgraph gcp["Google Cloud · us-east1"]
+    subgraph gcp["Google Cloud · southamerica-east1"]
         api["API Backend · Cloud Run<br/>Python 3.12 + FastAPI<br/><i>Backend/app</i> · api.aspar.com"]
         job["Cloud Run Job aspar-migrate<br/><i>scripts.migrate</i>"]
         secretos[["Secret Manager<br/>aspar-&lt;entorno&gt;-*"]]
     end
 
-    subgraph supabase["Supabase · us-east-1"]
+    subgraph supabase["Supabase · sa-east-1"]
         db[("PostgreSQL 17<br/>25 tablas · RLS sin políticas<br/>migraciones 001 a 004")]
         bucket[["Storage privado<br/>documentos-pacientes"]]
     end

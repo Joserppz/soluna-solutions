@@ -17,7 +17,7 @@ Pasos para publicar el sistema según [ADR-014](../arquitectura/adr/ADR-014-desp
 
 ## 1. Supabase: proyecto, conexiones y rol de la API
 
-1. Crea el proyecto `aspar-<entorno>` en la región **East US (North Virginia)**. Guarda la contraseña de la base en un gestor de contraseñas.
+1. Crea el proyecto `aspar-<entorno>` en la región **South America (São Paulo)**. Guarda la contraseña de la base en un gestor de contraseñas.
 2. En **Connect**, copia dos cadenas:
    - **Session pooler** (puerto 5432) → será `MIGRATION_DATABASE_URL` (usuario `postgres`, dueño del esquema).
    - **Transaction pooler** (puerto 6543) → servirá para armar `DATABASE_URL`, con el usuario `aspar_api` del paso 4.
@@ -41,7 +41,7 @@ Pasos para publicar el sistema según [ADR-014](../arquitectura/adr/ADR-014-desp
 
    - Las tablas tienen RLS activo y sin políticas ([ADR-007](../arquitectura/adr/ADR-007-supabase-solo-desde-el-backend.md)). Por eso `aspar_api` necesita `bypassrls`: sin él vería 0 filas.
    - Si Supabase rechaza `bypassrls`, deja la API con el usuario `postgres` por ahora y anótalo como pendiente. **No** crees políticas abiertas para `anon` ni `authenticated`.
-   - `DATABASE_URL` queda así: `postgresql://aspar_api.<project-ref>:<contraseña>@aws-0-us-east-1.pooler.supabase.com:6543/postgres`.
+   - `DATABASE_URL` queda así: `postgresql://aspar_api.<project-ref>:<contraseña>@aws-0-sa-east-1.pooler.supabase.com:6543/postgres`.
    - Verificado en PostgreSQL 16 (Docker): con este rol la API inicia sesión, lista, crea cuentas y agrupa intentos fallidos. `create table`, `drop table` y `delete from audit_logs` responden *permission denied*.
 5. **Storage:** la migración 001 crea el bucket privado `documentos-pacientes`. Copia la `service_role` de **Project Settings → API Keys**: será `SUPABASE_SERVICE_ROLE_KEY`, solo para el Backend.
 6. **Backups:** revisa en **Database → Backups** qué incluye el plan. Los respaldos propios del paso 8 se hacen igual.
@@ -54,9 +54,9 @@ gcloud services enable run.googleapis.com secretmanager.googleapis.com \
   artifactregistry.googleapis.com cloudscheduler.googleapis.com
 
 # Repositorio de imágenes y build (desde la raíz del repositorio)
-gcloud artifacts repositories create aspar --repository-format=docker --location=us-east1
-gcloud builds submit Backend --region=us-east1 \
-  --tag us-east1-docker.pkg.dev/<proyecto>/aspar/api:<versión>
+gcloud artifacts repositories create aspar --repository-format=docker --location=southamerica-east1
+gcloud builds submit Backend --region=southamerica-east1 \
+  --tag southamerica-east1-docker.pkg.dev/<proyecto>/aspar/api:<versión>
 ```
 
 > `gcloud builds submit` construye la última etapa del Dockerfile, que es `runtime`. Para fijarla explícitamente, construye con `docker build --target runtime` y sube con `docker push`.
@@ -93,17 +93,17 @@ printf '%s' '<MIGRATION_DATABASE_URL>'          | crear aspar-<entorno>-migratio
 `scripts.migrate` carga la configuración de la API: necesita `DATABASE_URL` y un `JWT_SECRET` de 32+ caracteres, aunque no firma tokens. Por eso el job usa la URL de migraciones en los dos lugares y un `JWT_SECRET` aleatorio propio.
 
 ```bash
-gcloud run jobs create aspar-migrate-<entorno> --region=us-east1 \
-  --image=us-east1-docker.pkg.dev/<proyecto>/aspar/api:<versión> \
+gcloud run jobs create aspar-migrate-<entorno> --region=southamerica-east1 \
+  --image=southamerica-east1-docker.pkg.dev/<proyecto>/aspar/api:<versión> \
   --service-account=aspar-migrate-<entorno>@<proyecto>.iam.gserviceaccount.com \
   --set-secrets=MIGRATION_DATABASE_URL=aspar-<entorno>-migration-database-url:latest,DATABASE_URL=aspar-<entorno>-migration-database-url:latest \
   --set-env-vars=JWT_SECRET=$(python3 -c "import secrets; print(secrets.token_urlsafe(48))") \
   --command=python --args=-m,scripts.migrate --max-retries=0
 
 # En cada versión: actualizar la imagen del job, migrar y recién después desplegar la API
-gcloud run jobs update aspar-migrate-<entorno> --region=us-east1 \
-  --image=us-east1-docker.pkg.dev/<proyecto>/aspar/api:<versión>
-gcloud run jobs execute aspar-migrate-<entorno> --region=us-east1 --wait
+gcloud run jobs update aspar-migrate-<entorno> --region=southamerica-east1 \
+  --image=southamerica-east1-docker.pkg.dev/<proyecto>/aspar/api:<versión>
+gcloud run jobs execute aspar-migrate-<entorno> --region=southamerica-east1 --wait
 ```
 
 Si el job termina con *«fue modificada después de aplicarse»*, alguien editó una migración ya aplicada. No se corrige en la base: se revierte el archivo y el cambio va en la siguiente migración `NNN_...sql`.
@@ -130,8 +130,8 @@ CLOUDINARY_API_KEY: '<api-key>'
 ```
 
 ```bash
-gcloud run deploy aspar-api-<entorno> --region=us-east1 \
-  --image=us-east1-docker.pkg.dev/<proyecto>/aspar/api:<versión> \
+gcloud run deploy aspar-api-<entorno> --region=southamerica-east1 \
+  --image=southamerica-east1-docker.pkg.dev/<proyecto>/aspar/api:<versión> \
   --service-account=aspar-api-<entorno>@<proyecto>.iam.gserviceaccount.com \
   --env-vars-file=env.<entorno>.yaml \
   --set-secrets=JWT_SECRET=aspar-<entorno>-jwt-secret:latest,DATABASE_URL=aspar-<entorno>-database-url:latest,SUPABASE_SERVICE_ROLE_KEY=aspar-<entorno>-supabase-service-role:latest,RESEND_API_KEY=aspar-<entorno>-resend-api-key:latest,TURNSTILE_SECRET_KEY=aspar-<entorno>-turnstile-secret:latest,CLOUDINARY_API_SECRET=aspar-<entorno>-cloudinary-secret:latest \

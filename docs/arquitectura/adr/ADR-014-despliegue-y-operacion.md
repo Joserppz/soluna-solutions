@@ -39,7 +39,7 @@ Al comprar el dominio se pasa al plan de abajo sin cambios de código: el mismo 
 
 - La API sigue la arquitectura modular de [ADR-011](./ADR-011-backend-por-modulos-de-dominio.md) y el frontend usa la capa `src/api/` de [ADR-013](./ADR-013-contrato-openapi-y-capa-src-api.md).
 - **Staging es una copia completa y separada:** su propia API, base, bucket, secretos y cookies (`COOKIE_DOMAIN` vacío, ver [ADR-012](./ADR-012-sesion-en-cookies-y-permisos-en-la-base.md)). Corre con `ENV=prod`, así valida lo mismo que producción. Nunca tiene datos reales de afiliados.
-- Región `us-east1` (Carolina del Sur), junto a Supabase `us-east-1` (Virginia): la API y la base quedan en la misma zona, así cada consulta tarda milisegundos. (Primero se planificó São Paulo; el proyecto de Supabase se creó en `us-east-1` y la API se movió con él.)
+- Región `southamerica-east1` (São Paulo), junto a Supabase `sa-east-1` (São Paulo): la API y la base quedan en la misma zona, así cada consulta tarda milisegundos, y es la región más cercana a Bolivia.
 
 ### Secretos en Google Secret Manager
 
