@@ -5,8 +5,8 @@ Esta guía publica ASPAR **sin comprar un dominio**, para que el equipo y la aso
 | Pieza | Dónde | Dirección |
 | :--- | :--- | :--- |
 | Sitio y espacio del equipo | Cloudflare Pages | `https://<tu-proyecto>.pages.dev` |
-| API | Google Cloud Run (São Paulo) | `https://aspar-api-….run.app` (nadie la escribe a mano) |
-| Base y documentos privados | Supabase (São Paulo) | — |
+| API | Google Cloud Run (us-east1, Carolina del Sur) | `https://aspar-api-….run.app` (nadie la escribe a mano) |
+| Base y documentos privados | Supabase (us-east-1, Virginia) | — |
 
 Todas las cuentas técnicas son de quien mantiene el sistema. El único dato de ASPAR es su correo, que se usa como remitente.
 
@@ -33,7 +33,7 @@ Necesitas cuentas en:
 
 ## 1. Supabase: la base
 
-1. **New project** → nombre `aspar`, región **South America (São Paulo)**.
+1. **New project** → nombre `aspar`, región **East US (North Virginia)**, cerca de la API en Cloud Run (`us-east1`).
    - En *Security*: **desmarca** «Enable Data API» y «Automatically expose new tables», y **marca** «Enable automatic RLS». ASPAR solo usa la base desde la API ([ADR-007](../arquitectura/adr/ADR-007-supabase-solo-desde-el-backend.md)).
    - El aviso «Client libraries need Data API» no aplica a ASPAR: ignóralo.
 2. Guarda la contraseña de la base e inventa otra para el usuario de la API (`aspar_api`). Usa **solo letras y números**, de 20 caracteres o más: los símbolos rompen las direcciones de conexión.
@@ -167,6 +167,17 @@ bash Backend/deploy/cloud_run.sh admin      # primera cuenta de Administración
 - [ ] **Registro de actividad**: tu ingreso aparece con **tu** IP. Si todas las personas aparecen con la misma IP, que no es la de nadie, cambia `PROXY_TRUSTED_HOPS` en `cloud-run.env` (prueba con `3`) y vuelve a correr `api`.
 - [ ] En una ficha de prueba, subes un documento pequeño y lo abres.
 
+## 7. Monitoreo y base siempre activa
+
+En GitHub → **Settings → Secrets and variables → Actions → Variables → New repository variable**: `API_URL` = la dirección de la API (`https://aspar-api-….run.app`, sin `/` al final).
+
+Desde ese momento, el workflow **«Disponibilidad de la API y la base»** ([`.github/workflows/disponibilidad.yml`](../../.github/workflows/disponibilidad.yml)) consulta `/api/v1/health/db` cada 6 horas:
+
+- Si la API o la base no responden, queda en rojo y GitHub avisa por correo (RNF-04).
+- Cada consulta usa la base, así Supabase gratis no la pausa por inactividad aunque ASPAR la use solo los sábados.
+
+GitHub corre estas tareas programadas solo desde `main`. Si el repositorio pasa 60 días sin cambios, GitHub las desactiva: se reactivan en **Actions → el workflow → Enable workflow**.
+
 ## Opcional
 
 - **Galería (Cloudinary):** crea la cuenta y copia *Cloud name* y *API key* en `cloud-run.env`. Corre `secretos` (el *API secret* va ahí) y después `api`.
@@ -191,5 +202,5 @@ Para cambiar una clave, corre `secretos` y presiona Enter en las demás; despué
 | :--- | :--- |
 | Los correos salen desde un Gmail y pueden caer en spam | SPF, DKIM y DMARC del dominio |
 | Quien conozca la dirección `run.app` puede llamar a la API sin pasar por Pages. La sesión, el CSRF y los permisos siguen protegiendo los datos; lo único que se debilita es el límite de intentos por IP | La API en `api.<dominio>` |
-| Supabase gratis pausa la base tras 7 días sin uso; se reactiva desde su panel | Plan de pago o uso semanal constante |
+| Supabase gratis pausa la base tras 7 días sin uso; el monitoreo de la sección 7 la mantiene activa | Plan de pago si el uso crece |
 | La primera visita después de un rato tarda unos segundos, porque la API se apaga sola cuando nadie la usa | `--min-instances=1` si molesta (tiene costo) |

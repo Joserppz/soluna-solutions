@@ -1,0 +1,50 @@
+name: ASPAR — Disponibilidad de la API y la base (RNF-04)
+
+# Cada 6 horas consulta /api/v1/health/db: la API responde y llega a PostgreSQL.
+#   - Si falla, el workflow queda en rojo y GitHub avisa por correo a quien lo activó.
+#   - Cada consulta usa la base: Supabase gratis no la pausa por falta de uso (se pausa
+#     tras 7 días sin actividad), aunque ASPAR solo la use los sábados.
+# Se activa al definir la variable del repositorio API_URL (Settings → Secrets and
+# variables → Actions → Variables) con la dirección de Cloud Run, sin «/» al final.
+# GitHub solo corre los «schedule» de la rama principal (main).
+on:
+  schedule:
+    - cron: '23 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: disponibilidad
+  cancel-in-progress: true
+
+jobs:
+  health:
+    name: API y base responden
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      API_URL: ${{ vars.API_URL }}
+    steps:
+      - name: Consultar /api/v1/health/db (con reintentos)
+        run: |
+          if [ -z "$API_URL" ]; then
+            echo "::notice::Falta la variable API_URL: el monitoreo queda en pausa hasta el despliegue."
+            exit 0
+          fi
+          url="${API_URL%/}/api/v1/health/db"
+          # Cloud Run apaga la API cuando nadie la usa: el primer intento puede tardar
+          for intento in 1 2 3 4 5; do
+            code=$(curl -s -o respuesta.json -w '%{http_code}' --max-time 30 "$url" || echo 000)
+            if [ "$code" = "200" ]; then
+              echo "### ✅ API y base disponibles ($(date -u '+%d/%m/%Y %H:%M') UTC)" >> "$GITHUB_STEP_SUMMARY"
+              cat respuesta.json
+              exit 0
+            fi
+            echo "Intento $intento: HTTP $code"
+            sleep 15
+          done
+          echo "### ❌ La API o la base no responden (HTTP $code)" >> "$GITHUB_STEP_SUMMARY"
+          echo "::error::$url respondió HTTP $code en 5 intentos"
+          exit 1

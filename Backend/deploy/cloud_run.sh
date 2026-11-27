@@ -26,7 +26,7 @@ load_config() {
   [ -f "$CONFIG" ] || fail "Falta $CONFIG. Cópialo de cloud-run.env.example y complétalo."
   # shellcheck disable=SC1090
   set -a && . "$CONFIG" && set +a
-  REGION="${REGION:-southamerica-east1}"
+  REGION="${REGION:-us-east1}"
   SERVICE="${SERVICE:-aspar-api}"
   PROXY_TRUSTED_HOPS="${PROXY_TRUSTED_HOPS:-2}"
   EMAIL_PROVIDER="${EMAIL_PROVIDER:-brevo}"
